@@ -70,9 +70,9 @@ export async function createTask(input: TaskInput) {
 }
 
 export async function updateTask(id: string, input: Partial<TaskInput>) {
-  const patch: Record<string, unknown> = { ...input };
+  const patch: Partial<TaskInput> & { completed_at?: string | null } = { ...input };
   if (input.status) {
-    patch['completed_at'] = input.status === "completed" ? new Date().toISOString() : null;
+    patch.completed_at = input.status === "completed" ? new Date().toISOString() : null;
   }
   return unwrap(await supabase.from("tasks").update(patch).eq("id", id).select().single());
 }
