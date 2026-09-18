@@ -191,10 +191,10 @@ function DashboardPage() {
                   ) : null}
                   <div className="mt-9 flex flex-wrap gap-3">
                     <Button asChild className="rounded-lg shadow-[0_0_20px_var(--color-accent)]">
-                      <Link to="/tasks" search={{ task: directive.id }}>Initiate Directive <ArrowRight className="size-4" /></Link>
+                      <Link to="/tasks" hash={directive.id}>Initiate Directive <ArrowRight className="size-4" /></Link>
                     </Button>
                     <Button asChild variant="outline" className="rounded-lg bg-card">
-                      <Link to="/tasks" search={{ task: directive.id }}>View Details</Link>
+                      <Link to="/tasks" hash={directive.id}>View Details</Link>
                     </Button>
                   </div>
                 </>

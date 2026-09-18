@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -42,9 +42,6 @@ import { formatDate } from "@/lib/date";
 
 
 export const Route = createFileRoute("/_authenticated/tasks")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    task: typeof search["task"] === "string" ? search["task"] : undefined,
-  }),
   head: () => ({
     meta: [
       { title: "Tasks — Life OS" },
@@ -82,7 +79,7 @@ const NEW_PROJECT = "new-project";
 const NEW_CAPABILITY = "new-capability";
 
 function TasksPage() {
-  const search = Route.useSearch();
+  const taskHash = useLocation({ select: (location) => location.hash });
   const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const tasks = useQuery(tasksQuery());
@@ -237,11 +234,11 @@ function TasksPage() {
   }
 
   useEffect(() => {
-    if (!search.task || !tasks.data) return;
-    const selectedTask = tasks.data.find((task) => task.id === search.task);
+    if (!taskHash || !tasks.data) return;
+    const selectedTask = tasks.data.find((task) => task.id === taskHash);
     if (selectedTask) openEdit(selectedTask);
-    navigate({ search: {}, replace: true });
-  }, [navigate, search.task, tasks.data]);
+    navigate({ hash: "", replace: true });
+  }, [navigate, taskHash, tasks.data]);
 
 
   const visible = filterTasks(tasks.data ?? [], filter);
