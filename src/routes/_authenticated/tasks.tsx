@@ -123,6 +123,7 @@ function TasksPage() {
         due_date: null,
       }),
     onSuccess: (project) => {
+      if (!project) return;
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
       setForm((current) => ({ ...current, project_id: project.id }));
       setNewProjectName("");
@@ -135,6 +136,7 @@ function TasksPage() {
   const addCapability = useMutation({
     mutationFn: () => createCapability({ name: newCapabilityName.trim(), description: null }),
     onSuccess: (capability) => {
+      if (!capability) return;
       queryClient.invalidateQueries({ queryKey: capabilityKeys.all });
       setForm((current) => ({ ...current, capability_id: capability.id }));
       setNewCapabilityName("");

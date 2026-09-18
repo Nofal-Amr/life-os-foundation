@@ -18,12 +18,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const initialTheme: Theme = stored === "dark" ? "dark" : "light";
     setTheme(initialTheme);
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
-    document.documentElement.dataset.theme = initialTheme;
+    document.documentElement.dataset["theme"] = initialTheme;
   }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset["theme"] = theme;
     window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
