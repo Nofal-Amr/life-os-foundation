@@ -21,11 +21,11 @@ export const capabilitiesQuery = () =>
       ) as Capability[],
   });
 
-export async function createCapability(input: CapabilityInput) {
+export async function createCapability(input: CapabilityInput): Promise<Capability> {
   const user_id = await currentUserId();
   return unwrap(
     await supabase.from("capabilities").insert({ ...input, user_id }).select().single(),
-  );
+  ) as Capability;
 }
 
 export async function updateCapability(id: string, input: Partial<CapabilityInput>) {
