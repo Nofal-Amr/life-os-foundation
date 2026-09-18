@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { capabilitiesQuery } from "@/data/capabilities";
 import { PRIORITIES, TASK_STATUSES, labelOf } from "@/data/enums";
+import { createEvidence, evidenceKeys } from "@/data/evidence";
+import { goalsQuery } from "@/data/goals";
 import { projectsQuery } from "@/data/projects";
 import {
   completeTask,
@@ -36,6 +39,7 @@ import {
   type TaskInput,
 } from "@/data/tasks";
 import { formatDate } from "@/lib/date";
+
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
