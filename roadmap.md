@@ -9,4 +9,4 @@
 - [x] Calm warm-neutral visual direction
 - [x] Executive dashboard restyle with persisted light/dark theme
 - [x] Inline project and capability creation in the task form
-- [ ] Confirm email/password sign-in is switched on in the connected Supabase project's Auth settings (owner action)
+- [x] Confirm email/password sign-in is switched on in the connected backend's Auth settings

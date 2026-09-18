@@ -142,7 +142,7 @@ function DashboardPage() {
           </div>
           <div className="py-9 sm:py-12">
             <p className="text-sm text-muted-foreground">{format(new Date(), "EEEE, d MMMM yyyy")}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            <h1 className="mt-2 text-3xl font-semibold tracking-normal text-foreground sm:text-4xl">
               {greeting()}, {firstName}
             </h1>
           </div>
@@ -162,7 +162,7 @@ function DashboardPage() {
               <SystemLabel>System Directive</SystemLabel>
               {directive ? (
                 <>
-                  <h2 className="mt-7 max-w-3xl text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                  <h2 className="mt-7 max-w-3xl text-3xl font-bold leading-tight tracking-normal text-foreground sm:text-4xl lg:text-5xl">
                     {directive.title}
                   </h2>
                   <div className="mt-5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -191,16 +191,16 @@ function DashboardPage() {
                   ) : null}
                   <div className="mt-9 flex flex-wrap gap-3">
                     <Button asChild className="rounded-lg shadow-[0_0_20px_var(--color-accent)]">
-                      <Link to="/tasks">Initiate Directive <ArrowRight className="size-4" /></Link>
+                      <Link to="/tasks" search={{ task: directive.id }}>Initiate Directive <ArrowRight className="size-4" /></Link>
                     </Button>
                     <Button asChild variant="outline" className="rounded-lg bg-card">
-                      <Link to="/tasks">View Details</Link>
+                      <Link to="/tasks" search={{ task: directive.id }}>View Details</Link>
                     </Button>
                   </div>
                 </>
               ) : (
                 <div className="py-16 sm:py-24">
-                  <h2 className="text-2xl font-semibold tracking-tight text-foreground">The system is clear.</h2>
+                  <h2 className="text-2xl font-semibold tracking-normal text-foreground">The system is clear.</h2>
                   <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">Create a task when you are ready to set the next directive.</p>
                   <Button asChild className="mt-6 rounded-lg"><Link to="/tasks">Create a task</Link></Button>
                 </div>
@@ -224,7 +224,7 @@ function DashboardPage() {
                 <SystemLabel>Capability Readout</SystemLabel>
                 {topCapability ? (
                   <div className="mt-7">
-                    <h2 className="text-xl font-semibold tracking-tight text-foreground">{topCapability.name}</h2>
+                    <h2 className="text-xl font-semibold tracking-normal text-foreground">{topCapability.name}</h2>
                     <p className="mt-2 text-sm text-muted-foreground">
                       <span className="font-semibold text-primary">{topEvidenceCount}</span>{" "}
                       verified evidence {topEvidenceCount === 1 ? "event" : "events"}

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
@@ -42,6 +42,9 @@ import { formatDate } from "@/lib/date";
 
 
 export const Route = createFileRoute("/_authenticated/tasks")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    task: typeof search["task"] === "string" ? search["task"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Tasks — Life OS" },
@@ -79,6 +82,8 @@ const NEW_PROJECT = "new-project";
 const NEW_CAPABILITY = "new-capability";
 
 function TasksPage() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const tasks = useQuery(tasksQuery());
   const projects = useQuery(projectsQuery());
@@ -124,6 +129,10 @@ function TasksPage() {
       }),
     onSuccess: (project) => {
       if (!project) return;
+      queryClient.setQueryData(projectKeys.all, (current: typeof projects.data) => [
+        project,
+        ...(current ?? []).filter((item) => item.id !== project.id),
+      ]);
       queryClient.invalidateQueries({ queryKey: projectKeys.all });
       setForm((current) => ({ ...current, project_id: project.id }));
       setNewProjectName("");
@@ -137,6 +146,10 @@ function TasksPage() {
     mutationFn: () => createCapability({ name: newCapabilityName.trim(), description: null }),
     onSuccess: (capability) => {
       if (!capability) return;
+      queryClient.setQueryData(capabilityKeys.all, (current: typeof capabilities.data) => [
+        capability,
+        ...(current ?? []).filter((item) => item.id !== capability.id),
+      ]);
       queryClient.invalidateQueries({ queryKey: capabilityKeys.all });
       setForm((current) => ({ ...current, capability_id: capability.id }));
       setNewCapabilityName("");
@@ -222,6 +235,13 @@ function TasksPage() {
     setShowNewCapability(false);
     setDialogOpen(true);
   }
+
+  useEffect(() => {
+    if (!search.task || !tasks.data) return;
+    const selectedTask = tasks.data.find((task) => task.id === search.task);
+    if (selectedTask) openEdit(selectedTask);
+    navigate({ search: {}, replace: true });
+  }, [navigate, search.task, tasks.data]);
 
 
   const visible = filterTasks(tasks.data ?? [], filter);
