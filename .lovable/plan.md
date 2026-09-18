@@ -1,35 +1,25 @@
-# Life OS — Foundation
+# Dashboard System Restyle and Task Inline Creation
 
-A calm, minimal personal productivity app with accounts, private data, and eight core areas.
+## What will change
 
-## What you'll get
+- Restyle only `/dashboard` as a premium executive briefing using real tasks, projects, goals, capabilities, evidence, profile, and account data.
+- Add a persisted light/dark theme toggle. Light remains the default; semantic global colors adapt so existing pages stay readable without changing their layouts.
+- Add inline “New project” and “New capability” flows inside the existing task form, creating and selecting each item without closing the form.
 
-- **Sign in / sign up** with email + password. Every person only ever sees their own data.
-- **Persistent layout**: a slim sidebar on desktop, a bottom/slide-out navigation on mobile, with the current section highlighted.
-- **Dashboard** — quick-add buttons, today's tasks and habits, and simple overview counts.
-- **Projects** — planning, active, on hold, completed, archived; low/medium/high priority.
-- **Tasks** — statuses and priorities, optional project link, filters for Today, Upcoming, Overdue, Inbox.
-- **Habits** — daily or weekly habits with one-tap logging and streak count.
-- **Goals** — status plus a progress number you can update.
-- **Notes** — title, body, tags, and instant search.
-- **Calendar** — month grid with add/edit/delete of events.
-- **Daily Review** — a structured reflection form (wins, challenges, gratitude, mood, tomorrow's focus), one per day.
+## Dashboard structure
 
-No sample data, no AI, no third-party services. Empty states guide first use.
+- Header with LIFE OS status, greeting, date, profile avatar, and sun/moon toggle.
+- Primary Directive from the highest-priority incomplete task, ordered by due date then priority; optional project, goal, rationale, and due-based stakes only when real data exists.
+- Honest System Observation empty state with no generated analysis.
+- Capability Readout from the capability with the highest real evidence count.
+- Up Next queue from the next 2–3 incomplete tasks.
+- Dashboard-only four-item floating navigation dock using existing destinations.
+- Calm empty states when required data is absent.
 
-## Design direction
+## Technical details
 
-Warm neutral background, single muted accent, generous spacing, small type scale, subtle borders instead of heavy shadows. Fully responsive.
-
-## Technical outline
-
-- Enable Lovable Cloud (auth + Postgres). Email/password auth turned on.
-- Tables: `profiles`, `projects`, `tasks`, `habits`, `habit_logs`, `goals`, `notes`, `events`, `daily_reviews`. Each row carries `user_id`; RLS enabled with owner-only select/insert/update/delete policies plus explicit grants. Enum types for statuses and priorities. Trigger creates a profile on signup.
-- Routes: public `/auth`; everything else under the protected `_authenticated` layout — `/dashboard`, `/projects`, `/tasks`, `/habits`, `/goals`, `/notes`, `/calendar`, `/review`. `/` redirects to the dashboard when signed in, otherwise to sign-in.
-- Data access through authenticated server functions (`requireSupabaseAuth`) with TanStack Query for caching and optimistic-free simple invalidation.
-- Shared UI: layout shell, page header, empty state, and form dialogs reused across sections.
-- Per-page `head()` metadata with unique titles and descriptions.
-
-## Out of scope for this pass
-
-Sharing/collaboration, notifications, recurring tasks, file attachments, imports.
+- Define light and dark semantic tokens in the existing global stylesheet and load Inter through document head links.
+- Persist the theme in local storage and apply it to the document root after hydration, with accessible toggle labeling and reduced-motion support.
+- Keep database schema, authentication, RLS, routes, and existing page structure unchanged.
+- Reuse existing project/capability creation functions and invalidate their query caches after inline creation.
+- Verify the dashboard at desktop and mobile sizes, toggle persistence, real-data rendering, inline creation behavior, and current build/runtime diagnostics.
