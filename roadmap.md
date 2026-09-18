@@ -7,4 +7,6 @@
 - [x] Protected layout, sidebar + mobile navigation
 - [x] Dashboard, Projects, Tasks, Habits, Goals, Notes, Calendar, Daily Review
 - [x] Calm warm-neutral visual direction
-- [ ] Confirm email/password sign-in is switched on in the connected Supabase project's Auth settings (owner action)
+- [x] Executive dashboard restyle with persisted light/dark theme
+- [x] Inline project and capability creation in the task form
+- [x] Confirm email/password sign-in is switched on in the connected backend's Auth settings

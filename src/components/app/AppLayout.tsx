@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { LogOut, Menu } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -20,6 +20,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const signOut = useSignOut();
   const { user } = useAuth();
+  const isDashboard = useLocation({ select: (location) => location.pathname === "/dashboard" });
+
+  if (isDashboard) {
+    return <main className="min-h-screen bg-background">{children}</main>;
+  }
 
   return (
     <div className="min-h-screen bg-background">

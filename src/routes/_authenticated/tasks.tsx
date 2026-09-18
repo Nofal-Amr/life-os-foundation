@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
@@ -20,11 +20,11 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { capabilitiesQuery } from "@/data/capabilities";
+import { capabilitiesQuery, capabilityKeys, createCapability } from "@/data/capabilities";
 import { PRIORITIES, TASK_STATUSES, labelOf } from "@/data/enums";
 import { createEvidence, evidenceKeys } from "@/data/evidence";
 import { goalsQuery } from "@/data/goals";
-import { projectsQuery } from "@/data/projects";
+import { createProject, projectKeys, projectsQuery } from "@/data/projects";
 import {
   completeTask,
   createTask,
@@ -75,8 +75,12 @@ const emptyForm: TaskInput = {
 
 const NO_PROJECT = "none";
 const NONE = "none";
+const NEW_PROJECT = "new-project";
+const NEW_CAPABILITY = "new-capability";
 
 function TasksPage() {
+  const taskHash = useLocation({ select: (location) => location.hash });
+  const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const tasks = useQuery(tasksQuery());
   const projects = useQuery(projectsQuery());
@@ -90,6 +94,10 @@ function TasksPage() {
   const [evidenceTask, setEvidenceTask] = useState<Task | null>(null);
   const [evidenceCapability, setEvidenceCapability] = useState<string | null>(null);
   const [evidenceNote, setEvidenceNote] = useState("");
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [showNewCapability, setShowNewCapability] = useState(false);
+  const [newCapabilityName, setNewCapabilityName] = useState("");
   const loggedRef = useRef<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: taskKeys.all });
@@ -102,6 +110,48 @@ function TasksPage() {
       invalidate();
       setDialogOpen(false);
       toast.success(editing ? "Task updated." : "Task created.");
+    },
+    onError,
+  });
+
+  const addProject = useMutation({
+    mutationFn: () =>
+      createProject({
+        name: newProjectName.trim(),
+        description: null,
+        status: "planning",
+        priority: "medium",
+        start_date: null,
+        due_date: null,
+      }),
+    onSuccess: (project) => {
+      if (!project) return;
+      queryClient.setQueryData(projectKeys.all, (current: typeof projects.data) => [
+        project,
+        ...(current ?? []).filter((item) => item.id !== project.id),
+      ]);
+      queryClient.invalidateQueries({ queryKey: projectKeys.all });
+      setForm((current) => ({ ...current, project_id: project.id }));
+      setNewProjectName("");
+      setShowNewProject(false);
+      toast.success("Project created and selected.");
+    },
+    onError,
+  });
+
+  const addCapability = useMutation({
+    mutationFn: () => createCapability({ name: newCapabilityName.trim(), description: null }),
+    onSuccess: (capability) => {
+      if (!capability) return;
+      queryClient.setQueryData(capabilityKeys.all, (current: typeof capabilities.data) => [
+        capability,
+        ...(current ?? []).filter((item) => item.id !== capability.id),
+      ]);
+      queryClient.invalidateQueries({ queryKey: capabilityKeys.all });
+      setForm((current) => ({ ...current, capability_id: capability.id }));
+      setNewCapabilityName("");
+      setShowNewCapability(false);
+      toast.success("Capability created and selected.");
     },
     onError,
   });
@@ -161,6 +211,8 @@ function TasksPage() {
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
+    setShowNewProject(false);
+    setShowNewCapability(false);
     setDialogOpen(true);
   }
 
@@ -176,8 +228,17 @@ function TasksPage() {
       capability_id: task.capability_id,
       goal_id: task.goal_id,
     });
+    setShowNewProject(false);
+    setShowNewCapability(false);
     setDialogOpen(true);
   }
+
+  useEffect(() => {
+    if (!taskHash || !tasks.data) return;
+    const selectedTask = tasks.data.find((task) => task.id === taskHash);
+    if (selectedTask) openEdit(selectedTask);
+    navigate({ hash: "", replace: true });
+  }, [navigate, taskHash, tasks.data]);
 
 
   const visible = filterTasks(tasks.data ?? [], filter);
@@ -331,14 +392,20 @@ function TasksPage() {
             <Label>Project</Label>
             <Select
               value={form.project_id ?? NO_PROJECT}
-              onValueChange={(v) =>
-                setForm({ ...form, project_id: v === NO_PROJECT ? null : v })
-              }
+              onValueChange={(v) => {
+                if (v === NEW_PROJECT) {
+                  setShowNewProject(true);
+                  return;
+                }
+                setShowNewProject(false);
+                setForm({ ...form, project_id: v === NO_PROJECT ? null : v });
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="No project" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={NEW_PROJECT}>+ New project</SelectItem>
                 <SelectItem value={NO_PROJECT}>No project</SelectItem>
                 {(projects.data ?? []).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
@@ -347,17 +414,49 @@ function TasksPage() {
                 ))}
               </SelectContent>
             </Select>
+            {showNewProject ? (
+              <div className="flex gap-2">
+                <Input
+                  aria-label="New project name"
+                  placeholder="Project name"
+                  value={newProjectName}
+                  onChange={(event) => setNewProjectName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      if (newProjectName.trim()) addProject.mutate();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!newProjectName.trim() || addProject.isPending}
+                  onClick={() => addProject.mutate()}
+                >
+                  Add
+                </Button>
+              </div>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label>Capability (optional)</Label>
             <Select
               value={form.capability_id ?? NONE}
-              onValueChange={(v) => setForm({ ...form, capability_id: v === NONE ? null : v })}
+              onValueChange={(v) => {
+                if (v === NEW_CAPABILITY) {
+                  setShowNewCapability(true);
+                  return;
+                }
+                setShowNewCapability(false);
+                setForm({ ...form, capability_id: v === NONE ? null : v });
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="No capability" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={NEW_CAPABILITY}>+ New capability</SelectItem>
                 <SelectItem value={NONE}>No capability</SelectItem>
                 {(capabilities.data ?? []).map((c) => (
                   <SelectItem key={c.id} value={c.id}>
@@ -366,6 +465,30 @@ function TasksPage() {
                 ))}
               </SelectContent>
             </Select>
+            {showNewCapability ? (
+              <div className="flex gap-2">
+                <Input
+                  aria-label="New capability name"
+                  placeholder="Capability name"
+                  value={newCapabilityName}
+                  onChange={(event) => setNewCapabilityName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      if (newCapabilityName.trim()) addCapability.mutate();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!newCapabilityName.trim() || addCapability.isPending}
+                  onClick={() => addCapability.mutate()}
+                >
+                  Add
+                </Button>
+              </div>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label>Goal (optional)</Label>

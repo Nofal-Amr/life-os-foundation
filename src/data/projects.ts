@@ -38,9 +38,9 @@ export const projectQuery = (id: string) =>
       unwrap(await supabase.from("projects").select("*").eq("id", id).maybeSingle()) as Project,
   });
 
-export async function createProject(input: ProjectInput) {
+export async function createProject(input: ProjectInput): Promise<Project> {
   const user_id = await currentUserId();
-  return unwrap(await supabase.from("projects").insert({ ...input, user_id }).select().single());
+  return unwrap(await supabase.from("projects").insert({ ...input, user_id }).select().single()) as Project;
 }
 
 export async function updateProject(id: string, input: Partial<ProjectInput>) {
