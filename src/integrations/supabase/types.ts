@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      capabilities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_reviews: {
         Row: {
           challenges: string | null
@@ -86,6 +113,68 @@ export type Database = {
         }
         Relationships: []
       }
+      evidence: {
+        Row: {
+          capability_id: string | null
+          created_at: string
+          goal_id: string | null
+          id: string
+          note: string | null
+          project_id: string | null
+          task_id: string | null
+          user_id: string
+        }
+        Insert: {
+          capability_id?: string | null
+          created_at?: string
+          goal_id?: string | null
+          id?: string
+          note?: string | null
+          project_id?: string | null
+          task_id?: string | null
+          user_id: string
+        }
+        Update: {
+          capability_id?: string | null
+          created_at?: string
+          goal_id?: string | null
+          id?: string
+          note?: string | null
+          project_id?: string | null
+          task_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_capability_id_fkey"
+            columns: ["capability_id"]
+            isOneToOne: false
+            referencedRelation: "capabilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goals: {
         Row: {
           category: string | null
@@ -94,6 +183,7 @@ export type Database = {
           id: string
           name: string
           progress: number
+          project_id: string | null
           status: Database["public"]["Enums"]["goal_status"]
           target_date: string | null
           updated_at: string
@@ -106,6 +196,7 @@ export type Database = {
           id?: string
           name: string
           progress?: number
+          project_id?: string | null
           status?: Database["public"]["Enums"]["goal_status"]
           target_date?: string | null
           updated_at?: string
@@ -118,12 +209,21 @@ export type Database = {
           id?: string
           name?: string
           progress?: number
+          project_id?: string | null
           status?: Database["public"]["Enums"]["goal_status"]
           target_date?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       habit_logs: {
         Row: {
@@ -288,10 +388,12 @@ export type Database = {
       }
       tasks: {
         Row: {
+          capability_id: string | null
           completed_at: string | null
           created_at: string
           description: string | null
           due_date: string | null
+          goal_id: string | null
           id: string
           priority: Database["public"]["Enums"]["priority_level"]
           project_id: string | null
@@ -301,10 +403,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          capability_id?: string | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          goal_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["priority_level"]
           project_id?: string | null
@@ -314,10 +418,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          capability_id?: string | null
           completed_at?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          goal_id?: string | null
           id?: string
           priority?: Database["public"]["Enums"]["priority_level"]
           project_id?: string | null
@@ -327,6 +433,20 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_capability_id_fkey"
+            columns: ["capability_id"]
+            isOneToOne: false
+            referencedRelation: "capabilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_project_id_fkey"
             columns: ["project_id"]

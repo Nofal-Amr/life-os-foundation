@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { capabilitiesQuery } from "@/data/capabilities";
 import { PRIORITIES, TASK_STATUSES, labelOf } from "@/data/enums";
+import { createEvidence, evidenceKeys } from "@/data/evidence";
+import { goalsQuery } from "@/data/goals";
 import { projectsQuery } from "@/data/projects";
 import {
   completeTask,
@@ -36,6 +39,7 @@ import {
   type TaskInput,
 } from "@/data/tasks";
 import { formatDate } from "@/lib/date";
+
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
@@ -65,19 +69,28 @@ const emptyForm: TaskInput = {
   priority: "medium",
   due_date: null,
   project_id: null,
+  capability_id: null,
+  goal_id: null,
 };
 
 const NO_PROJECT = "none";
+const NONE = "none";
 
 function TasksPage() {
   const queryClient = useQueryClient();
   const tasks = useQuery(tasksQuery());
   const projects = useQuery(projectsQuery());
+  const capabilities = useQuery(capabilitiesQuery());
+  const goals = useQuery(goalsQuery());
   const [filter, setFilter] = useState<TaskFilter>("today");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Task | null>(null);
+  const [evidenceTask, setEvidenceTask] = useState<Task | null>(null);
+  const [evidenceCapability, setEvidenceCapability] = useState<string | null>(null);
+  const [evidenceNote, setEvidenceNote] = useState("");
+  const loggedRef = useRef<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: taskKeys.all });
   const onError = (e: unknown) =>
@@ -93,12 +106,47 @@ function TasksPage() {
     onError,
   });
 
+  /** Append-only evidence row for a completed task. Never blocks completion. */
+  function logEvidence(task: Task, capability_id: string | null, note: string | null) {
+    if (loggedRef.current === task.id) return;
+    loggedRef.current = task.id;
+    createEvidence({
+      task_id: task.id,
+      capability_id,
+      project_id: task.project_id,
+      goal_id: task.goal_id,
+      note,
+    })
+      .then(() => queryClient.invalidateQueries({ queryKey: evidenceKeys.all }))
+      .catch(onError);
+  }
+
   const toggle = useMutation({
-    mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
-      completed ? reopenTask(id) : completeTask(id),
-    onSuccess: invalidate,
+    mutationFn: ({ task, completed }: { task: Task; completed: boolean }) =>
+      completed ? reopenTask(task.id) : completeTask(task.id),
+    onSuccess: (_data, variables) => {
+      invalidate();
+      if (!variables.completed) {
+        loggedRef.current = null;
+        setEvidenceCapability(variables.task.capability_id);
+        setEvidenceNote("");
+        setEvidenceTask(variables.task);
+      }
+    },
     onError,
   });
+
+  function closeEvidence(confirmed: boolean) {
+    const task = evidenceTask;
+    if (task) {
+      logEvidence(
+        task,
+        confirmed ? evidenceCapability : task.capability_id,
+        confirmed ? evidenceNote.trim() || null : null,
+      );
+    }
+    setEvidenceTask(null);
+  }
 
   const remove = useMutation({
     mutationFn: (id: string) => deleteTask(id),
@@ -125,9 +173,12 @@ function TasksPage() {
       priority: task.priority,
       due_date: task.due_date,
       project_id: task.project_id,
+      capability_id: task.capability_id,
+      goal_id: task.goal_id,
     });
     setDialogOpen(true);
   }
+
 
   const visible = filterTasks(tasks.data ?? [], filter);
   const projectName = (id: string | null) =>
@@ -188,7 +239,7 @@ function TasksPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => toggle.mutate({ id: task.id, completed })}
+                      onClick={() => toggle.mutate({ task, completed })}
                     >
                       {completed ? "Reopen" : "Complete"}
                     </Button>
@@ -297,6 +348,81 @@ function TasksPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Capability (optional)</Label>
+            <Select
+              value={form.capability_id ?? NONE}
+              onValueChange={(v) => setForm({ ...form, capability_id: v === NONE ? null : v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="No capability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>No capability</SelectItem>
+                {(capabilities.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Goal (optional)</Label>
+            <Select
+              value={form.goal_id ?? NONE}
+              onValueChange={(v) => setForm({ ...form, goal_id: v === NONE ? null : v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="No goal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>No goal</SelectItem>
+                {(goals.data ?? []).map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={!!evidenceTask}
+        onOpenChange={(open) => !open && closeEvidence(false)}
+        title="What did this build? (optional)"
+        description="Link this completed task to a capability. You can skip this."
+        submitLabel="Save evidence"
+        onSubmit={() => closeEvidence(true)}
+      >
+        <div className="space-y-2">
+          <Label>Capability</Label>
+          <Select
+            value={evidenceCapability ?? NONE}
+            onValueChange={(v) => setEvidenceCapability(v === NONE ? null : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="No capability" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>No capability</SelectItem>
+              {(capabilities.data ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="evidence-note">Note</Label>
+          <Textarea
+            id="evidence-note"
+            value={evidenceNote}
+            onChange={(e) => setEvidenceNote(e.target.value)}
+          />
         </div>
       </FormDialog>
 
@@ -306,6 +432,7 @@ function TasksPage() {
         title="Delete this task?"
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
+
     </>
   );
 }

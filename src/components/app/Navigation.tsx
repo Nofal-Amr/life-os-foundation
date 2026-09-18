@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   NotebookPen,
   Repeat,
+  Sparkles,
   Sunset,
   Target,
 } from "lucide-react";
@@ -16,10 +17,12 @@ export const NAV_ITEMS = [
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/habits", label: "Habits", icon: Repeat },
   { to: "/goals", label: "Goals", icon: Target },
+  { to: "/capabilities", label: "Capabilities", icon: Sparkles },
   { to: "/notes", label: "Notes", icon: NotebookPen },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/review", label: "Review", icon: Sunset },
 ] as const;
+
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
