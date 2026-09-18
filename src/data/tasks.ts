@@ -13,7 +13,10 @@ export type TaskInput = {
   priority: Task["priority"];
   due_date: string | null;
   project_id: string | null;
+  capability_id: string | null;
+  goal_id: string | null;
 };
+
 
 export type TaskFilter = "all" | "today" | "upcoming" | "overdue" | "inbox" | "completed";
 
