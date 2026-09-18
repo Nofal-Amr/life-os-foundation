@@ -239,7 +239,7 @@ function TasksPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => toggle.mutate({ id: task.id, completed })}
+                      onClick={() => toggle.mutate({ task, completed })}
                     >
                       {completed ? "Reopen" : "Complete"}
                     </Button>
