@@ -348,6 +348,81 @@ function TasksPage() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Capability (optional)</Label>
+            <Select
+              value={form.capability_id ?? NONE}
+              onValueChange={(v) => setForm({ ...form, capability_id: v === NONE ? null : v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="No capability" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>No capability</SelectItem>
+                {(capabilities.data ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Goal (optional)</Label>
+            <Select
+              value={form.goal_id ?? NONE}
+              onValueChange={(v) => setForm({ ...form, goal_id: v === NONE ? null : v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="No goal" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>No goal</SelectItem>
+                {(goals.data ?? []).map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={!!evidenceTask}
+        onOpenChange={(open) => !open && closeEvidence(false)}
+        title="What did this build? (optional)"
+        description="Link this completed task to a capability. You can skip this."
+        submitLabel="Save evidence"
+        onSubmit={() => closeEvidence(true)}
+      >
+        <div className="space-y-2">
+          <Label>Capability</Label>
+          <Select
+            value={evidenceCapability ?? NONE}
+            onValueChange={(v) => setEvidenceCapability(v === NONE ? null : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="No capability" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>No capability</SelectItem>
+              {(capabilities.data ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="evidence-note">Note</Label>
+          <Textarea
+            id="evidence-note"
+            value={evidenceNote}
+            onChange={(e) => setEvidenceNote(e.target.value)}
+          />
         </div>
       </FormDialog>
 
@@ -357,6 +432,7 @@ function TasksPage() {
         title="Delete this task?"
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
+
     </>
   );
 }
