@@ -7,6 +7,8 @@ import {
   formatDateTimePref,
   formatHeight,
   formatLongDatePref,
+  formatMoney,
+  formatSignedMoney,
   formatSlotPref,
   formatTimePref,
   formatWeight,
@@ -29,11 +31,13 @@ export function usePreferences() {
     unit_system: (row?.unit_system as UnitSystem) ?? DEFAULT_DISPLAY_PREFERENCES.unit_system,
     time_format: (row?.time_format as TimeFormat) ?? DEFAULT_DISPLAY_PREFERENCES.time_format,
     date_format: (row?.date_format as DateFormat) ?? DEFAULT_DISPLAY_PREFERENCES.date_format,
+    currency: row?.currency ?? DEFAULT_DISPLAY_PREFERENCES.currency,
   };
 
   return {
     prefs,
     isLoading: query.isLoading,
+    currency: prefs.currency,
     fmtDate: (value: string | null | undefined) => formatDatePref(value, prefs),
     fmtLongDate: (date: Date) => formatLongDatePref(date, prefs),
     fmtTime: (date: Date) => formatTimePref(date, prefs),
@@ -41,6 +45,8 @@ export function usePreferences() {
     fmtDateTime: (value: string | null | undefined) => formatDateTimePref(value, prefs),
     fmtWeight: (kg: number | null) => formatWeight(kg, prefs),
     fmtHeight: (cm: number | null) => formatHeight(cm, prefs),
+    fmtMoney: (value: number | null | undefined) => formatMoney(value, prefs),
+    fmtSignedMoney: (value: number | null | undefined) => formatSignedMoney(value, prefs),
     weightUnit: weightUnit(prefs),
   };
 }
