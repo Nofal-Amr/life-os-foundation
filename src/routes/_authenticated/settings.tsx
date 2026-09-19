@@ -223,6 +223,21 @@ function SettingsPage() {
     onError,
   });
 
+  const savePayday = useMutation({
+    mutationFn: () =>
+      savePaydayConfig({
+        schedule: "monthly",
+        pay_day: num(payDay),
+        expected_net_amount: num(expectedNet),
+        safety_buffer: num(safetyBuffer),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.payday });
+      toast.success("Money setup saved.");
+    },
+    onError,
+  });
+
   const savePrayer = useMutation({
     mutationFn: savePrayerSettings,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.settings }),
@@ -634,6 +649,7 @@ function SettingsPage() {
         <Card className="system-card">
           <CardHeader>
             <CardTitle className="text-base">Dimension priority</CardTitle>
+            {/* placeholder-anchor */}
             <CardDescription>
               The order your life dimensions matter to you right now. Saved as you move them.
             </CardDescription>
