@@ -147,17 +147,21 @@ function SectionHeading({ title, detail }: { title: string; detail?: string | un
   );
 }
 
-/** One line per area: a real figure and a way through to it. */
+/** One line per area: a real figure and a plainly labelled way through to it. */
 function StatusRow({
   label,
   value,
   to,
+  hash,
+  linkLabel,
   action,
   children,
 }: {
   label: string;
   value: string;
   to?: "/spirit" | "/finance" | "/health" | "/food" | "/resources";
+  hash?: string;
+  linkLabel?: string;
   action?: ReactNode;
   children?: ReactNode;
 }) {
@@ -171,9 +175,9 @@ function StatusRow({
         <div className="flex shrink-0 items-center gap-2">
           {action}
           {to ? (
-            <Button asChild variant="ghost" size="sm">
-              <Link to={to} aria-label={`Open ${label}`}>
-                <ChevronRight className="size-4" />
+            <Button asChild variant="ghost" size="sm" className="min-h-11">
+              <Link to={to} hash={hash}>
+                {linkLabel ?? `Open ${label}`}
               </Link>
             </Button>
           ) : null}
@@ -183,6 +187,7 @@ function StatusRow({
     </div>
   );
 }
+
 
 function DashboardPage() {
   const queryClient = useQueryClient();
