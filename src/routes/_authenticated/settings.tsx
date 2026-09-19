@@ -648,8 +648,96 @@ function SettingsPage() {
 
         <Card className="system-card">
           <CardHeader>
+            <CardTitle className="text-base">Money setup</CardTitle>
+            <CardDescription>
+              When you are paid and how much you want left untouched. Left empty until you fill it
+              in — Life OS never guesses these.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="pay-day">Pay day of the month</Label>
+                <Input
+                  id="pay-day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  inputMode="numeric"
+                  className="h-12 tabular-nums"
+                  value={payDay}
+                  placeholder="e.g. 28"
+                  onChange={(event) => setPayDay(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expected-net">Expected net pay</Label>
+                <Input
+                  id="expected-net"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="h-12 tabular-nums"
+                  value={expectedNet}
+                  onChange={(event) => setExpectedNet(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="safety-buffer">Safety buffer</Label>
+                <Input
+                  id="safety-buffer"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="h-12 tabular-nums"
+                  value={safetyBuffer}
+                  onChange={(event) => setSafetyBuffer(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <Select
+                value={prefs.currency ?? "none"}
+                onValueChange={(value) =>
+                  savePrefs.mutate({ currency: value === "none" ? null : value })
+                }
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Not set" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not set (plain numbers)</SelectItem>
+                  {CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.value} value={currency.value}>
+                      {currency.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                className="h-12"
+                disabled={savePayday.isPending}
+                onClick={() => savePayday.mutate()}
+              >
+                {savePayday.isPending ? "Saving…" : "Save money setup"}
+              </Button>
+              {!hasPaydaySetup(payday.data) ? (
+                <p className="text-sm text-muted-foreground">
+                  Until a pay day is saved, the Money page shows a setup prompt instead of a
+                  countdown.
+                </p>
+              ) : null}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="system-card">
+          <CardHeader>
             <CardTitle className="text-base">Dimension priority</CardTitle>
-            {/* placeholder-anchor */}
             <CardDescription>
               The order your life dimensions matter to you right now. Saved as you move them.
             </CardDescription>
