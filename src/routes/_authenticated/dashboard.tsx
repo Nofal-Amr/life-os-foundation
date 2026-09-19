@@ -7,10 +7,13 @@ import {
   CheckSquare,
   LayoutDashboard,
   Moon,
+  Plus,
   Sparkles,
   Sun,
 } from "lucide-react";
+import { useState } from "react";
 
+import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 
