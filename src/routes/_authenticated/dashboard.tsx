@@ -182,7 +182,7 @@ function StatusRow({
           {action}
           {to ? (
             <Button asChild variant="ghost" size="sm" className="min-h-11">
-              <Link to={to} hash={hash}>
+              <Link to={to} {...(hash ? { hash } : {})}>
                 {linkLabel ?? `Open ${label}`}
               </Link>
             </Button>
