@@ -914,6 +914,7 @@ export type Database = {
       user_preferences: {
         Row: {
           created_at: string
+          currency: string | null
           date_format: string
           dimension_order: string[] | null
           id: string
@@ -924,6 +925,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          currency?: string | null
           date_format?: string
           dimension_order?: string[] | null
           id?: string
@@ -934,6 +936,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          currency?: string | null
           date_format?: string
           dimension_order?: string[] | null
           id?: string
