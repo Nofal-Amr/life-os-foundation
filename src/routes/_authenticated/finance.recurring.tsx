@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { QuickAddTransactionButton } from "@/components/app/QuickAddTransaction";
@@ -75,6 +76,7 @@ const emptyForm: RecurringCostInput = {
 export function RecurringList({ compact = false }: { compact?: boolean }) {
   const queryClient = useQueryClient();
   const costs = useQuery(recurringCostsQuery());
+  const categories = useQuery(financeCategoriesQuery());
   const { fmtDate, fmtMoney } = usePreferences();
 
   const invalidate = () => {
@@ -129,7 +131,9 @@ export function RecurringList({ compact = false }: { compact?: boolean }) {
             key={cost.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
           >
-            <div className="min-w-0">
+             <div className="flex min-w-0 items-start gap-3">
+               {(() => { const category = (categories.data ?? []).find((item) => item.id === cost.category_id); return <EntityIcon icon={category?.icon} color={category?.color} />; })()}
+               <div className="min-w-0">
               <p className="font-medium">{cost.name}</p>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span className="tabular-nums">{fmtMoney(Number(cost.amount))}</span>
@@ -139,6 +143,7 @@ export function RecurringList({ compact = false }: { compact?: boolean }) {
                  <span>{(() => { const interval = recurringInterval(cost); return `Every ${interval.count} ${interval.unit}${interval.count === 1 ? "" : "s"}`; })()}</span>
                 {!cost.active ? <SemanticBadge tone="quiet">Paused</SemanticBadge> : null}
               </div>
+               </div>
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={() => log.mutate(cost)} disabled={log.isPending}>
@@ -315,7 +320,7 @@ function RecurringPage() {
                 <SelectItem value="none">No account yet</SelectItem>
                 {(accounts.data ?? []).map((account) => (
                   <SelectItem key={account.id} value={account.id}>
-                    {account.name}
+                     <span className="flex items-center gap-2"><EntityIcon icon={account.icon} color={account.color} containerClassName="size-5 rounded" className="size-3" />{account.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -334,7 +339,7 @@ function RecurringPage() {
                 <SelectItem value="none">No category</SelectItem>
                 {(categories.data ?? []).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
-                    {category.name}
+                     <span className="flex items-center gap-2"><EntityIcon icon={category.icon} color={category.color} containerClassName="size-5 rounded" className="size-3" />{category.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
