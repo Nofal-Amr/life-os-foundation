@@ -186,8 +186,14 @@ function DashboardPage() {
                     <Button asChild className="rounded-lg shadow-[0_0_20px_var(--color-accent)]">
                       <Link to="/tasks" hash={directive.id}>Initiate Directive <ArrowRight className="size-4" /></Link>
                     </Button>
-                    <Button asChild variant="outline" className="rounded-lg bg-card">
-                      <Link to="/tasks" hash={directive.id}>View Details</Link>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="rounded-lg bg-card"
+                      onClick={() => setQuickAdd(true)}
+                    >
+                      <Plus className="size-4" aria-hidden="true" />
+                      Quick add task
                     </Button>
                   </div>
                 </>
