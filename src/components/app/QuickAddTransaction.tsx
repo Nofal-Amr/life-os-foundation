@@ -57,6 +57,8 @@ export function QuickAddTransactionDialog({
   const [kind, setKind] = useState<CategoryKind>("expense");
   const [amount, setAmount] = useState("");
   const [accountId, setAccountId] = useState("");
+  const [pocketId, setPocketId] = useState("");
+
   const [categoryId, setCategoryId] = useState("");
   const [note, setNote] = useState("");
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -74,6 +76,8 @@ export function QuickAddTransactionDialog({
     if (!open) return;
     const fallback = activeAccounts[0]?.id ?? "";
     setAccountId(lastUsed?.account_id ?? fallback);
+    setPocketId(lastUsed?.pocket_id ?? "");
+
     setCategoryId(lastUsed?.category_id ?? "");
     setKind(lastUsed && Number(lastUsed.amount) > 0 ? "income" : "expense");
     setAmount("");
