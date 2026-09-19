@@ -17,6 +17,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { DateTimePicker } from "@/components/app/DatePicker";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
@@ -264,22 +265,11 @@ function CalendarPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="event-start">Starts</Label>
-            <Input
-              id="event-start"
-              type="datetime-local"
-              required
-              value={form.start}
-              onChange={(e) => setForm({ ...form, start: e.target.value })}
-            />
+             <DateTimePicker id="event-start" required value={form.start} onChange={(value) => setForm({ ...form, start: value })} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="event-end">Ends</Label>
-            <Input
-              id="event-end"
-              type="datetime-local"
-              value={form.end}
-              onChange={(e) => setForm({ ...form, end: e.target.value })}
-            />
+             <DateTimePicker id="event-end" value={form.end} onChange={(value) => setForm({ ...form, end: value })} />
           </div>
         </div>
       </FormDialog>

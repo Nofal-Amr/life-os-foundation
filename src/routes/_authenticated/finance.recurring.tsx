@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -288,14 +289,7 @@ function RecurringPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="cost-date">Next due</Label>
-            <Input
-              id="cost-date"
-              type="date"
-              required
-              className="h-12"
-              value={form.next_due_date}
-              onChange={(e) => setForm({ ...form, next_due_date: e.target.value, next_due_at: `${e.target.value}T00:00:00` })}
-            />
+            <DatePicker id="cost-date" value={form.next_due_date} onChange={(value) => setForm({ ...form, next_due_date: value, next_due_at: value ? `${value}T00:00:00` : null })} />
           </div>
           <div className="space-y-2">
              <Label htmlFor="interval-count">Repeat</Label>

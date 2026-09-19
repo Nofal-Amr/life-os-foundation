@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { CurrencyCombobox } from "@/components/app/CurrencyCombobox";
+import { DatePicker } from "@/components/app/DatePicker";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
@@ -527,13 +528,7 @@ function SettingsPage() {
                 )}
                 <div className="space-y-2">
                   <Label htmlFor="birthdate">Birthdate</Label>
-                  <Input
-                    id="birthdate"
-                    type="date"
-                    className="h-12"
-                    value={birthdate}
-                    onChange={(event) => setBirthdate(event.target.value)}
-                  />
+                  <DatePicker id="birthdate" value={birthdate} disableFuture onChange={setBirthdate} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="target-weight">Target weight ({weightUnit})</Label>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -229,12 +230,7 @@ function GoalsPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="goal-target">Target date</Label>
-            <Input
-              id="goal-target"
-              type="date"
-              value={form.target_date ?? ""}
-              onChange={(e) => setForm({ ...form, target_date: e.target.value || null })}
-            />
+            <DatePicker id="goal-target" value={form.target_date} onChange={(value) => setForm({ ...form, target_date: value || null })} />
           </div>
           <div className="space-y-2">
             <Label>Status</Label>
