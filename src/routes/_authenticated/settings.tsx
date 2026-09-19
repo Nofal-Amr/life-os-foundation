@@ -12,11 +12,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { bodyStatsQuery, healthKeys, saveBodyStats } from "@/data/health";
+import {
   DEFAULT_DIMENSION_ORDER,
   dimensionLabel,
   preferencesKeys,
   preferencesQuery,
-  saveDimensionOrder,
+  savePreferences,
 } from "@/data/preferences";
 import {
   ACCEPTED_AVATAR_TYPES,
@@ -26,7 +34,27 @@ import {
   updateProfile,
   uploadAvatar,
 } from "@/data/profile";
+import {
+  ASR_SCHOOLS,
+  CALC_METHODS,
+  geocodeCity,
+  prayerSettingsQuery,
+  reverseGeocode,
+  savePrayerSettings,
+  spiritKeys,
+} from "@/data/spirit";
+import { usePreferences } from "@/hooks/usePreferences";
 import { useTheme } from "@/hooks/useTheme";
+import { requestDeviceLocation } from "@/lib/geolocation";
+import {
+  DATE_FORMATS,
+  TIME_FORMATS,
+  UNIT_SYSTEMS,
+  cmToFtIn,
+  ftInToCm,
+  weightToDisplay,
+  weightToStored,
+} from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -34,12 +62,14 @@ export const Route = createFileRoute("/_authenticated/settings")({
       { title: "Profile & Settings — Life OS" },
       {
         name: "description",
-        content: "Set your display name, profile picture, dimension priorities and theme.",
+        content:
+          "Your name and picture, body and prayer setup, units, formats, priorities and theme.",
       },
       { property: "og:title", content: "Profile & Settings — Life OS" },
       {
         property: "og:description",
-        content: "Set your display name, profile picture, dimension priorities and theme.",
+        content:
+          "Your name and picture, body and prayer setup, units, formats, priorities and theme.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -48,25 +78,63 @@ export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
 });
 
+function num(value: string): number | null {
+  const parsed = Number(value);
+  return value.trim() === "" || Number.isNaN(parsed) ? null : parsed;
+}
+
 function SettingsPage() {
   const queryClient = useQueryClient();
   const profile = useQuery(profileQuery());
   const preferences = useQuery(preferencesQuery());
+  const body = useQuery(bodyStatsQuery());
+  const prayer = useQuery(prayerSettingsQuery());
   const { email } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
+  const { prefs, weightUnit } = usePreferences();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [order, setOrder] = useState<string[]>(DEFAULT_DIMENSION_ORDER);
+  const [heightCm, setHeightCm] = useState<number | null>(null);
+  const [heightFeet, setHeightFeet] = useState<number | null>(null);
+  const [heightInches, setHeightInches] = useState<number | null>(null);
+  const [birthdate, setBirthdate] = useState("");
+  const [targetWeight, setTargetWeight] = useState<number | null>(null);
+  const [city, setCity] = useState("");
+  const nameLoaded = useRef(false);
+  const orderLoaded = useRef(false);
+  const bodyLoaded = useRef(false);
 
   useEffect(() => {
-    if (profile.data) setName(profile.data.display_name ?? "");
+    if (nameLoaded.current || !profile.data) return;
+    nameLoaded.current = true;
+    setName(profile.data.display_name ?? "");
   }, [profile.data]);
 
   useEffect(() => {
+    if (orderLoaded.current) return;
     const saved = preferences.data?.dimension_order;
-    if (saved && saved.length > 0) setOrder(saved);
+    if (saved && saved.length > 0) {
+      orderLoaded.current = true;
+      setOrder(saved);
+    }
   }, [preferences.data]);
+
+  useEffect(() => {
+    if (bodyLoaded.current || !body.data) return;
+    bodyLoaded.current = true;
+    const cm = body.data.height_cm == null ? null : Number(body.data.height_cm);
+    setHeightCm(cm);
+    if (cm != null) {
+      const { feet, inches } = cmToFtIn(cm);
+      setHeightFeet(feet);
+      setHeightInches(inches);
+    }
+    setBirthdate(body.data.birthdate ?? "");
+    const target = body.data.target_weight_kg == null ? null : Number(body.data.target_weight_kg);
+    setTargetWeight(weightToDisplay(target, prefs));
+  }, [body.data, prefs]);
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
@@ -100,11 +168,68 @@ function SettingsPage() {
     onError,
   });
 
-  const saveOrder = useMutation({
-    mutationFn: (next: string[]) => saveDimensionOrder(next),
+  const savePrefs = useMutation({
+    mutationFn: savePreferences,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: preferencesKeys.current });
-      toast.success("Priority order saved.");
+      toast.success("Preferences saved.");
+    },
+    onError,
+  });
+
+  const saveBody = useMutation({
+    mutationFn: () => {
+      const cm =
+        prefs.unit_system === "imperial"
+          ? heightFeet == null && heightInches == null
+            ? null
+            : ftInToCm(heightFeet ?? 0, heightInches ?? 0)
+          : heightCm;
+      return saveBodyStats({
+        height_cm: cm,
+        birthdate: birthdate || null,
+        target_weight_kg: weightToStored(targetWeight, prefs),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: healthKeys.body });
+      toast.success("Body setup saved.");
+    },
+    onError,
+  });
+
+  const savePrayer = useMutation({
+    mutationFn: savePrayerSettings,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.settings }),
+    onError,
+  });
+
+  const lookupCity = useMutation({
+    mutationFn: async (value: string) => {
+      const place = await geocodeCity(value);
+      return savePrayerSettings({
+        latitude: place.latitude,
+        longitude: place.longitude,
+        city: place.label,
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: spiritKeys.settings });
+      setCity("");
+      toast.success(`Location set to ${data.city}.`);
+    },
+    onError,
+  });
+
+  const useDevice = useMutation({
+    mutationFn: async () => {
+      const coords = await requestDeviceLocation();
+      const label = await reverseGeocode(coords.latitude, coords.longitude);
+      return savePrayerSettings({ ...coords, city: label });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: spiritKeys.settings });
+      toast.success(`Location set to ${data.city ?? "your device position"}.`);
     },
     onError,
   });
@@ -117,37 +242,46 @@ function SettingsPage() {
     next[index] = next[target]!;
     next[target] = current;
     setOrder(next);
+    savePrefs.mutate({ dimension_order: next });
   }
 
-  if (profile.isLoading || preferences.isLoading) {
+  const loading =
+    profile.isLoading || preferences.isLoading || body.isLoading || prayer.isLoading;
+  const loadError = profile.error ?? preferences.error ?? body.error ?? prayer.error;
+
+  if (loading) {
     return (
       <>
-        <PageHeader title="Profile & Settings" description="How the system knows you." />
+        <PageHeader title="Profile & Settings" description="Set things up once here." />
         <LoadingState rows={4} />
       </>
     );
   }
 
-  if (profile.error || preferences.error) {
+  if (loadError) {
     return (
       <>
-        <PageHeader title="Profile & Settings" description="How the system knows you." />
+        <PageHeader title="Profile & Settings" description="Set things up once here." />
         <ErrorState
-          error={profile.error ?? preferences.error}
+          error={loadError}
           onRetry={() => {
             profile.refetch();
             preferences.refetch();
+            body.refetch();
+            prayer.refetch();
           }}
         />
       </>
     );
   }
 
+  const prayerConfig = prayer.data;
+
   return (
     <>
       <PageHeader
         title="Profile & Settings"
-        description="How the system knows you, and how it looks."
+        description="Everything you only set once: you, your body, your prayers, and how things look."
       />
 
       <div className="space-y-6">
@@ -213,6 +347,7 @@ function SettingsPage() {
                 <Label htmlFor="display-name">Display name</Label>
                 <Input
                   id="display-name"
+                  className="h-12"
                   value={name}
                   placeholder="Your name"
                   onChange={(event) => setName(event.target.value)}
@@ -223,7 +358,7 @@ function SettingsPage() {
                 <Input id="account-email" value={email} readOnly disabled />
               </div>
               <div>
-                <Button type="submit" disabled={saveName.isPending}>
+                <Button type="submit" className="h-12" disabled={saveName.isPending}>
                   {saveName.isPending ? "Saving…" : "Save name"}
                 </Button>
               </div>
@@ -233,12 +368,252 @@ function SettingsPage() {
 
         <Card className="system-card">
           <CardHeader>
-            <CardTitle className="text-base">Dimension priority</CardTitle>
+            <CardTitle className="text-base">Units & formats</CardTitle>
             <CardDescription>
-              The order your life dimensions matter to you right now.
+              These change how values are shown everywhere. Your data is always stored the same way.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Units</Label>
+              <Select
+                value={prefs.unit_system}
+                onValueChange={(value) => savePrefs.mutate({ unit_system: value })}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIT_SYSTEMS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Time</Label>
+              <Select
+                value={prefs.time_format}
+                onValueChange={(value) => savePrefs.mutate({ time_format: value })}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_FORMATS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Dates</Label>
+              <Select
+                value={prefs.date_format}
+                onValueChange={(value) => savePrefs.mutate({ date_format: value })}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DATE_FORMATS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="system-card">
+          <CardHeader>
+            <CardTitle className="text-base">Body setup</CardTitle>
+            <CardDescription>
+              Height, birthdate and target weight. Your current weight is logged on the Health page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveBody.mutate();
+              }}
+            >
+              <div className="grid gap-4 sm:grid-cols-3">
+                {prefs.unit_system === "imperial" ? (
+                  <div className="space-y-2 sm:col-span-1">
+                    <Label htmlFor="height-ft">Height (ft / in)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="height-ft"
+                        type="number"
+                        inputMode="numeric"
+                        className="h-12"
+                        aria-label="Height feet"
+                        value={heightFeet ?? ""}
+                        onChange={(event) => setHeightFeet(num(event.target.value))}
+                      />
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.5"
+                        className="h-12"
+                        aria-label="Height inches"
+                        value={heightInches ?? ""}
+                        onChange={(event) => setHeightInches(num(event.target.value))}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="height-cm">Height (cm)</Label>
+                    <Input
+                      id="height-cm"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.1"
+                      className="h-12"
+                      value={heightCm ?? ""}
+                      onChange={(event) => setHeightCm(num(event.target.value))}
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="birthdate">Birthdate</Label>
+                  <Input
+                    id="birthdate"
+                    type="date"
+                    className="h-12"
+                    value={birthdate}
+                    onChange={(event) => setBirthdate(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="target-weight">Target weight ({weightUnit})</Label>
+                  <Input
+                    id="target-weight"
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    className="h-12"
+                    value={targetWeight ?? ""}
+                    onChange={(event) => setTargetWeight(num(event.target.value))}
+                  />
+                </div>
+              </div>
+              <Button type="submit" className="h-12" disabled={saveBody.isPending}>
+                {saveBody.isPending ? "Saving…" : "Save body setup"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="system-card">
+          <CardHeader>
+            <CardTitle className="text-base">Prayer setup</CardTitle>
+            <CardDescription>
+              {prayerConfig?.city
+                ? `Prayer times are calculated for ${prayerConfig.city}.`
+                : prayerConfig?.latitude != null
+                  ? "Prayer times are calculated for your saved coordinates."
+                  : "Set a location so prayer times can be calculated."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  className="h-12"
+                  value={city}
+                  placeholder="e.g. Manchester"
+                  onChange={(event) => setCity(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && city.trim()) {
+                      event.preventDefault();
+                      lookupCity.mutate(city.trim());
+                    }
+                  }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  className="h-12"
+                  disabled={!city.trim() || lookupCity.isPending}
+                  onClick={() => lookupCity.mutate(city.trim())}
+                >
+                  {lookupCity.isPending ? "Looking up…" : "Use city"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12"
+                  disabled={useDevice.isPending}
+                  onClick={() => useDevice.mutate()}
+                >
+                  {useDevice.isPending ? "Locating…" : "Use my location"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Calculation method</Label>
+                <Select
+                  value={prayerConfig?.calc_method ?? "MuslimWorldLeague"}
+                  onValueChange={(value) => savePrayer.mutate({ calc_method: value })}
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CALC_METHODS.map((method) => (
+                      <SelectItem key={method.value} value={method.value}>
+                        {method.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Asr school</Label>
+                <Select
+                  value={prayerConfig?.asr_school ?? "shafi"}
+                  onValueChange={(value) => savePrayer.mutate({ asr_school: value })}
+                >
+                  <SelectTrigger className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ASR_SCHOOLS.map((school) => (
+                      <SelectItem key={school.value} value={school.value}>
+                        {school.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="system-card">
+          <CardHeader>
+            <CardTitle className="text-base">Dimension priority</CardTitle>
+            <CardDescription>
+              The order your life dimensions matter to you right now. Saved as you move them.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <ol className="space-y-2">
               {order.map((dimension, index) => (
                 <li
@@ -254,6 +629,7 @@ function SettingsPage() {
                       type="button"
                       size="icon"
                       variant="ghost"
+                      className="size-11"
                       aria-label={`Move ${dimensionLabel(dimension)} up`}
                       disabled={index === 0}
                       onClick={() => move(index, -1)}
@@ -264,6 +640,7 @@ function SettingsPage() {
                       type="button"
                       size="icon"
                       variant="ghost"
+                      className="size-11"
                       aria-label={`Move ${dimensionLabel(dimension)} down`}
                       disabled={index === order.length - 1}
                       onClick={() => move(index, 1)}
@@ -274,13 +651,6 @@ function SettingsPage() {
                 </li>
               ))}
             </ol>
-            <Button
-              type="button"
-              disabled={saveOrder.isPending}
-              onClick={() => saveOrder.mutate(order)}
-            >
-              {saveOrder.isPending ? "Saving…" : "Save order"}
-            </Button>
           </CardContent>
         </Card>
 
@@ -290,7 +660,7 @@ function SettingsPage() {
             <CardDescription>Your theme choice is remembered on this device.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button type="button" variant="outline" onClick={toggleTheme}>
+            <Button type="button" variant="outline" className="h-12" onClick={toggleTheme}>
               {theme === "dark" ? (
                 <Sun className="size-4" aria-hidden="true" />
               ) : (
