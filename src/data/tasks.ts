@@ -115,9 +115,9 @@ export function postponementPatch(previous: Task, nextDue: string | null | undef
 }
 
 export async function updateTask(id: string, input: Partial<TaskInput>, previous?: Task) {
-  const patch: Record<string, unknown> = { ...input };
+  const patch: Partial<Task> = { ...input } as Partial<Task>;
   if (input.status) {
-    patch.completed_at = input.status === "completed" ? new Date().toISOString() : null;
+    patch["completed_at"] = input.status === "completed" ? new Date().toISOString() : null;
   }
   if (previous) Object.assign(patch, postponementPatch(previous, input.due_date));
   return unwrap(await supabase.from("tasks").update(patch).eq("id", id).select().single());

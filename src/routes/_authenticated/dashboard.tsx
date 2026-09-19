@@ -138,7 +138,7 @@ type ComingUpItem = {
   to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources";
 };
 
-function SectionHeading({ title, detail }: { title: string; detail?: string }) {
+function SectionHeading({ title, detail }: { title: string; detail?: string | undefined }) {
   return (
     <div className="min-w-0">
       <h2 className="text-lg font-semibold text-foreground sm:text-xl">{title}</h2>

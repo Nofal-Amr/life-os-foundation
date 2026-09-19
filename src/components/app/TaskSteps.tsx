@@ -90,8 +90,11 @@ export function TaskStepsEditor({ parent }: { parent: Task }) {
     mutationFn: ({ index, delta }: { index: number; delta: number }) => {
       const next = [...steps];
       const target = index + delta;
-      if (target < 0 || target >= next.length) return Promise.resolve();
-      [next[index], next[target]] = [next[target], next[index]];
+      const a = next[index];
+      const b = next[target];
+      if (!a || !b) return Promise.resolve();
+      next[index] = b;
+      next[target] = a;
       return reorderSteps(next);
     },
     onSuccess: invalidate,
