@@ -21,6 +21,7 @@ import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSpiritRouteImport } from './routes/_authenticated/spirit'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 
@@ -84,6 +85,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSpiritRoute = AuthenticatedSpiritRouteImport.update({
+  id: '/spirit',
+  path: '/spirit',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/projects': typeof AuthenticatedProjectsRoute
   '/review': typeof AuthenticatedReviewRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spirit': typeof AuthenticatedSpiritRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/projects': typeof AuthenticatedProjectsRoute
   '/review': typeof AuthenticatedReviewRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/spirit': typeof AuthenticatedSpiritRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -139,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/spirit': typeof AuthenticatedSpiritRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/review'
     | '/settings'
+    | '/spirit'
     | '/tasks'
     | '/auth/update-password'
   fileRoutesByTo: FileRoutesByTo
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/review'
     | '/settings'
+    | '/spirit'
     | '/tasks'
     | '/auth/update-password'
   id:
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/_authenticated/projects'
     | '/_authenticated/review'
     | '/_authenticated/settings'
+    | '/_authenticated/spirit'
     | '/_authenticated/tasks'
     | '/auth/update-password'
   fileRoutesById: FileRoutesById
@@ -283,6 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/spirit': {
+      id: '/_authenticated/spirit'
+      path: '/spirit'
+      fullPath: '/spirit'
+      preLoaderRoute: typeof AuthenticatedSpiritRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tasks': {
       id: '/_authenticated/tasks'
       path: '/tasks'
@@ -310,6 +329,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSpiritRoute: typeof AuthenticatedSpiritRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
 }
 
@@ -323,6 +343,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSpiritRoute: AuthenticatedSpiritRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
 }
 
