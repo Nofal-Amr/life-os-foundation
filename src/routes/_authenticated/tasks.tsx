@@ -20,10 +20,12 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
+import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { capabilitiesQuery, capabilityKeys, createCapability } from "@/data/capabilities";
-import { PRIORITIES, TASK_STATUSES, labelOf } from "@/data/enums";
+import { PRIORITIES, TASK_STATUSES } from "@/data/enums";
 import { createEvidence, evidenceKeys } from "@/data/evidence";
-import { goalsQuery } from "@/data/goals";
+import { createGoal, goalKeys, goalsQuery } from "@/data/goals";
 import { createProject, projectKeys, projectsQuery } from "@/data/projects";
 import {
   completeTask,
@@ -38,7 +40,9 @@ import {
   type TaskFilter,
   type TaskInput,
 } from "@/data/tasks";
-import { formatDate } from "@/lib/date";
+import { usePreferences } from "@/hooks/usePreferences";
+import { todayISO } from "@/lib/date";
+import { priorityLabel, priorityTone, taskStatusLabel, taskStatusTone } from "@/lib/semantics";
 
 
 export const Route = createFileRoute("/_authenticated/tasks")({
@@ -57,7 +61,7 @@ const FILTERS: { value: TaskFilter; label: string }[] = [
   { value: "today", label: "Today" },
   { value: "upcoming", label: "Upcoming" },
   { value: "overdue", label: "Overdue" },
-  { value: "inbox", label: "Inbox" },
+  { value: "inbox", label: "Unsorted" },
   { value: "completed", label: "Completed" },
   { value: "all", label: "All" },
 ];
@@ -77,6 +81,7 @@ const NO_PROJECT = "none";
 const NONE = "none";
 const NEW_PROJECT = "new-project";
 const NEW_CAPABILITY = "new-capability";
+const NEW_GOAL = "new-goal";
 
 function TasksPage() {
   const taskHash = useLocation({ select: (location) => location.hash });
@@ -98,6 +103,9 @@ function TasksPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [showNewCapability, setShowNewCapability] = useState(false);
   const [newCapabilityName, setNewCapabilityName] = useState("");
+  const [showNewGoal, setShowNewGoal] = useState(false);
+  const [newGoalName, setNewGoalName] = useState("");
+  const { fmtDate } = usePreferences();
   const loggedRef = useRef<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: taskKeys.all });
@@ -152,6 +160,27 @@ function TasksPage() {
       setNewCapabilityName("");
       setShowNewCapability(false);
       toast.success("Capability created and selected.");
+    },
+    onError,
+  });
+
+  const addGoal = useMutation({
+    mutationFn: () =>
+      createGoal({
+        name: newGoalName.trim(),
+        description: null,
+        category: null,
+        target_date: null,
+        status: "not_started",
+        progress: 0,
+      }),
+    onSuccess: (goal) => {
+      if (!goal) return;
+      queryClient.invalidateQueries({ queryKey: goalKeys.all });
+      setForm((current) => ({ ...current, goal_id: (goal as { id: string }).id }));
+      setNewGoalName("");
+      setShowNewGoal(false);
+      toast.success("Goal created and selected.");
     },
     onError,
   });
@@ -290,9 +319,16 @@ function TasksPage() {
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="secondary">{labelOf(TASK_STATUSES, task.status)}</Badge>
-                      <Badge variant="outline">{labelOf(PRIORITIES, task.priority)}</Badge>
-                      <span>Due {formatDate(task.due_date)}</span>
+                      <SemanticBadge tone={taskStatusTone(task.status)}>
+                        {taskStatusLabel(task.status)}
+                      </SemanticBadge>
+                      <SemanticBadge tone={priorityTone(task.priority)}>
+                        {priorityLabel(task.priority)} priority
+                      </SemanticBadge>
+                      {!completed && task.due_date && task.due_date < todayISO() ? (
+                        <SemanticBadge tone="danger">Overdue</SemanticBadge>
+                      ) : null}
+                      {task.due_date ? <span>Due {fmtDate(task.due_date)}</span> : null}
                       {task.project_id ? <span>{projectName(task.project_id)}</span> : null}
                     </div>
                   </div>
@@ -494,12 +530,20 @@ function TasksPage() {
             <Label>Goal (optional)</Label>
             <Select
               value={form.goal_id ?? NONE}
-              onValueChange={(v) => setForm({ ...form, goal_id: v === NONE ? null : v })}
+              onValueChange={(v) => {
+                if (v === NEW_GOAL) {
+                  setShowNewGoal(true);
+                  return;
+                }
+                setShowNewGoal(false);
+                setForm({ ...form, goal_id: v === NONE ? null : v });
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="No goal" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value={NEW_GOAL}>+ New goal</SelectItem>
                 <SelectItem value={NONE}>No goal</SelectItem>
                 {(goals.data ?? []).map((g) => (
                   <SelectItem key={g.id} value={g.id}>
@@ -508,6 +552,30 @@ function TasksPage() {
                 ))}
               </SelectContent>
             </Select>
+            {showNewGoal ? (
+              <div className="flex gap-2">
+                <Input
+                  aria-label="New goal name"
+                  placeholder="Goal name"
+                  value={newGoalName}
+                  onChange={(event) => setNewGoalName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      if (newGoalName.trim()) addGoal.mutate();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!newGoalName.trim() || addGoal.isPending}
+                  onClick={() => addGoal.mutate()}
+                >
+                  Add
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
       </FormDialog>
@@ -548,6 +616,8 @@ function TasksPage() {
           />
         </div>
       </FormDialog>
+
+      <QuickAddTaskButton />
 
       <ConfirmDialog
         open={!!toDelete}

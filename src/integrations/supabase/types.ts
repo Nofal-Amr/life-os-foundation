@@ -692,22 +692,31 @@ export type Database = {
       user_preferences: {
         Row: {
           created_at: string
+          date_format: string
           dimension_order: string[] | null
           id: string
+          time_format: string
+          unit_system: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          date_format?: string
           dimension_order?: string[] | null
           id?: string
+          time_format?: string
+          unit_system?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          date_format?: string
           dimension_order?: string[] | null
           id?: string
+          time_format?: string
+          unit_system?: string
           updated_at?: string
           user_id?: string
         }

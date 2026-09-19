@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { PRIORITIES, PROJECT_STATUSES, labelOf } from "@/data/enums";
+import { PRIORITIES, PROJECT_STATUSES } from "@/data/enums";
 import {
   archiveProject,
   createProject,
@@ -30,7 +30,11 @@ import {
   type Project,
   type ProjectInput,
 } from "@/data/projects";
-import { formatDate } from "@/lib/date";
+import { tasksQuery } from "@/data/tasks";
+import { usePreferences } from "@/hooks/usePreferences";
+import { priorityLabel, priorityTone, projectStatusTone } from "@/lib/semantics";
+import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
+import { SemanticBadge } from "@/components/app/SemanticBadge";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({
@@ -56,6 +60,8 @@ const emptyForm: ProjectInput = {
 function ProjectsPage() {
   const queryClient = useQueryClient();
   const projects = useQuery(projectsQuery());
+  const tasks = useQuery(tasksQuery());
+  const { fmtDate } = usePreferences();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
   const [form, setForm] = useState<ProjectInput>(emptyForm);
@@ -139,7 +145,9 @@ function ProjectsPage() {
             if (group.length === 0) return null;
             return (
               <section key={value}>
-                <h2 className="mb-3 text-sm font-medium text-foreground">{label}</h2>
+                <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                  <SemanticBadge tone={projectStatusTone(value)}>{label}</SemanticBadge>
+                </h2>
                 <ul className="space-y-3">
                   {group.map((project) => (
                     <li
@@ -155,11 +163,11 @@ function ProjectsPage() {
                             </p>
                           ) : null}
                           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="secondary">
-                              {labelOf(PRIORITIES, project.priority)}
-                            </Badge>
-                            <span>Start {formatDate(project.start_date)}</span>
-                            <span>Due {formatDate(project.due_date)}</span>
+                            <SemanticBadge tone={priorityTone(project.priority)}>
+                              {priorityLabel(project.priority)} priority
+                            </SemanticBadge>
+                            <span>Start {fmtDate(project.start_date)}</span>
+                            <span>Due {fmtDate(project.due_date)}</span>
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -275,11 +283,20 @@ function ProjectsPage() {
         </div>
       </FormDialog>
 
+      <QuickAddTaskButton />
+
       <ConfirmDialog
         open={!!toDelete}
         onOpenChange={(open) => !open && setToDelete(null)}
         title="Delete this project?"
-        description="Its tasks will stay, but they'll no longer be linked to a project."
+        description={(() => {
+          const linked = (tasks.data ?? []).filter(
+            (task) => task.project_id === toDelete?.id,
+          ).length;
+          return linked > 0
+            ? `${linked} ${linked === 1 ? "task is" : "tasks are"} in this project. Those tasks stay, but they will no longer be linked to a project.`
+            : "Its tasks will stay, but they'll no longer be linked to a project.";
+        })()}
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
     </>

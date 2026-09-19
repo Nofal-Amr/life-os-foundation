@@ -1,39 +1,27 @@
-import { CalculationMethod, Coordinates, Madhab, PrayerTimes } from "adhan";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { DateNav } from "@/components/app/DateNav";
 import { PageHeader } from "@/components/app/PageHeader";
-import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
-import { Badge } from "@/components/ui/badge";
+import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ASR_SCHOOLS,
-  CALC_METHODS,
   PRAYER_LABELS,
   PRAYER_NAMES,
   clearPrayerLog,
-  geocodeCity,
   logPrayer,
   prayerLogsQuery,
   prayerSettingsQuery,
-  savePrayerSettings,
   spiritKeys,
   type PrayerName,
 } from "@/data/spirit";
+import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+import { prayerTimesFor } from "@/lib/prayer";
 
 export const Route = createFileRoute("/_authenticated/spirit")({
   head: () => ({
@@ -41,12 +29,12 @@ export const Route = createFileRoute("/_authenticated/spirit")({
       { title: "Spirit — Life OS" },
       {
         name: "description",
-        content: "Today's prayer times for your location, with a simple record of each prayer.",
+        content: "Prayer times for your location, with a simple record of each prayer.",
       },
       { property: "og:title", content: "Spirit — Life OS" },
       {
         property: "og:description",
-        content: "Today's prayer times for your location, with a simple record of each prayer.",
+        content: "Prayer times for your location, with a simple record of each prayer.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -55,104 +43,47 @@ export const Route = createFileRoute("/_authenticated/spirit")({
   component: SpiritPage,
 });
 
-type MethodKey = keyof typeof CalculationMethod;
-
-function buildTimes(
-  latitude: number,
-  longitude: number,
-  method: string | null,
-  asrSchool: string | null,
-) {
-  const key = (method && method in CalculationMethod ? method : "MuslimWorldLeague") as MethodKey;
-  const factory = CalculationMethod[key] as () => ReturnType<
-    typeof CalculationMethod.MuslimWorldLeague
-  >;
-  const params = factory();
-  params.madhab = asrSchool === "hanafi" ? Madhab.Hanafi : Madhab.Shafi;
-  return new PrayerTimes(new Coordinates(latitude, longitude), new Date(), params);
-}
-
-function lastSevenDates(): string[] {
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() - index);
-    return format(date, "yyyy-MM-dd");
-  });
+function lastSevenDates(from: string): Set<string> {
+  const dates = new Set<string>();
+  const base = new Date(`${from}T12:00:00`);
+  for (let index = 0; index < 7; index += 1) {
+    const date = new Date(base);
+    date.setDate(base.getDate() - index);
+    dates.add(date.toISOString().slice(0, 10));
+  }
+  return dates;
 }
 
 function SpiritPage() {
   const queryClient = useQueryClient();
   const settings = useQuery(prayerSettingsQuery());
   const logs = useQuery(prayerLogsQuery());
-  const today = todayISO();
-
-  const [city, setCity] = useState("");
+  const { fmtTime } = usePreferences();
+  const [date, setDate] = useState(todayISO());
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
-
-  const saveSettings = useMutation({
-    mutationFn: savePrayerSettings,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.settings }),
-    onError,
-  });
 
   const setLog = useMutation({
     mutationFn: (input: {
       prayer_name: PrayerName;
       completed: boolean;
       on_time: boolean | null;
-    }) => logPrayer({ prayer_date: today, ...input }),
+    }) => logPrayer({ prayer_date: date, ...input }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
     onError,
   });
 
   const unsetLog = useMutation({
-    mutationFn: (prayer_name: PrayerName) => clearPrayerLog(today, prayer_name),
+    mutationFn: (prayer_name: PrayerName) => clearPrayerLog(date, prayer_name),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
     onError,
   });
 
-  const lookupCity = useMutation({
-    mutationFn: async (value: string) => {
-      const place = await geocodeCity(value);
-      return savePrayerSettings({
-        latitude: place.latitude,
-        longitude: place.longitude,
-        city: place.label,
-      });
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: spiritKeys.settings });
-      setCity("");
-      toast.success(`Location set to ${data.city}.`);
-    },
-    onError,
-  });
-
-  function useDeviceLocation() {
-    if (!("geolocation" in navigator)) {
-      toast.error("This device cannot share its location. Enter a city instead.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        saveSettings.mutate(
-          {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          },
-          { onSuccess: () => toast.success("Location saved from your device.") },
-        );
-      },
-      () => toast.error("Location permission was declined. Enter a city instead."),
-    );
-  }
-
   if (settings.isLoading || logs.isLoading) {
     return (
       <>
-        <PageHeader title="Spirit" description="Today's prayer times and your own record." />
+        <PageHeader title="Spirit" description="Prayer times and your own record." />
         <LoadingState rows={4} />
       </>
     );
@@ -161,7 +92,7 @@ function SpiritPage() {
   if (settings.error || logs.error) {
     return (
       <>
-        <PageHeader title="Spirit" description="Today's prayer times and your own record." />
+        <PageHeader title="Spirit" description="Prayer times and your own record." />
         <ErrorState
           error={settings.error ?? logs.error}
           onRetry={() => {
@@ -176,189 +107,143 @@ function SpiritPage() {
   const config = settings.data;
   const hasLocation = config?.latitude != null && config?.longitude != null;
   const times = hasLocation
-    ? buildTimes(Number(config.latitude), Number(config.longitude), config.calc_method, config.asr_school)
+    ? prayerTimesFor(
+        Number(config.latitude),
+        Number(config.longitude),
+        config.calc_method,
+        config.asr_school,
+        date,
+      )
     : null;
-  const next = times?.nextPrayer();
-  const nextName = times && next ? String(next).toLowerCase() : null;
+  const nextPrayer = date === todayISO() && times ? String(times.nextPrayer()).toLowerCase() : null;
 
-  const todayLogs = (logs.data ?? []).filter((log) => log.prayer_date === today);
-  const weekDates = new Set(lastSevenDates());
+  const dayLogs = (logs.data ?? []).filter((log) => log.prayer_date === date);
+  const doneCount = dayLogs.filter((log) => log.completed).length;
+  const weekDates = lastSevenDates(date);
   const weekLogged = (logs.data ?? []).filter(
     (log) => weekDates.has(log.prayer_date) && log.completed,
   ).length;
 
-  const locationCard = (
-    <Card className="system-card">
-      <CardHeader>
-        <CardTitle className="text-base">Location & calculation</CardTitle>
-        <CardDescription>
-          {config?.city
-            ? `Times are calculated for ${config.city}.`
-            : hasLocation
-              ? "Times are calculated for your saved coordinates."
-              : "Set a location so prayer times can be calculated."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="city">City</Label>
-            <Input
-              id="city"
-              value={city}
-              placeholder="e.g. Manchester"
-              onChange={(event) => setCity(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && city.trim()) {
-                  event.preventDefault();
-                  lookupCity.mutate(city.trim());
-                }
-              }}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              disabled={!city.trim() || lookupCity.isPending}
-              onClick={() => lookupCity.mutate(city.trim())}
-            >
-              {lookupCity.isPending ? "Looking up…" : "Use city"}
-            </Button>
-            <Button type="button" variant="outline" onClick={useDeviceLocation}>
-              Use my location
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Calculation method</Label>
-            <Select
-              value={config?.calc_method ?? "MuslimWorldLeague"}
-              onValueChange={(value) => saveSettings.mutate({ calc_method: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CALC_METHODS.map((method) => (
-                  <SelectItem key={method.value} value={method.value}>
-                    {method.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Asr school</Label>
-            <Select
-              value={config?.asr_school ?? "shafi"}
-              onValueChange={(value) => saveSettings.mutate({ asr_school: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ASR_SCHOOLS.map((school) => (
-                  <SelectItem key={school.value} value={school.value}>
-                    {school.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <>
-      <PageHeader
-        title="Spirit"
-        description={`Today's prayer times and your own record — ${format(new Date(), "EEEE, d MMMM")}.`}
-      />
+      <PageHeader title="Spirit" description="A simple record of the five daily prayers." />
 
-      <div className="space-y-6">
+      <div className="space-y-5">
+        <DateNav value={date} onChange={setDate} />
+
         {!hasLocation ? (
-          <EmptyState
-            title="No location set yet"
-            description="Share your location or enter a city below to see today's prayer times."
-          />
+          <Card className="system-card">
+            <CardHeader>
+              <CardTitle className="text-base">No location set yet</CardTitle>
+              <CardDescription>
+                Prayer times are calculated from your location. Set it once in Settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link to="/settings">Open Settings</Link>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="system-card">
             <CardHeader>
-              <CardTitle className="text-base">Today</CardTitle>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <CardTitle className="text-base">
+                  {doneCount} of 5 recorded
+                </CardTitle>
+                <span className="text-xs text-muted-foreground">
+                  {weekLogged} of 35 over the last seven days
+                </span>
+              </div>
               <CardDescription>
-                {weekLogged} of 35 prayers logged over the last seven days.
+                {config?.city
+                  ? `Times calculated for ${config.city}.`
+                  : "Times calculated for your saved coordinates."}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               {PRAYER_NAMES.map((name) => {
                 const time = times ? (times[name] as Date) : null;
-                const log = todayLogs.find((item) => item.prayer_name === name);
-                const isNext = nextName === name;
+                const log = dayLogs.find((item) => item.prayer_name === name);
+                const marked = !!log?.completed;
+                const isNext = nextPrayer === name;
                 return (
-                  <div
-                    key={name}
-                    className="flex flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-20 text-sm font-medium">{PRAYER_LABELS[name]}</span>
-                      <span className="text-sm tabular-nums text-muted-foreground">
-                        {time ? format(time, "HH:mm") : "—"}
+                  <div key={name} className="rounded-xl border border-border bg-card">
+                    <button
+                      type="button"
+                      aria-pressed={marked}
+                      className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition-colors ${
+                        marked ? "tone-positive" : "hover:bg-accent/50"
+                      }`}
+                      onClick={() =>
+                        marked
+                          ? unsetLog.mutate(name)
+                          : setLog.mutate({ prayer_name: name, completed: true, on_time: null })
+                      }
+                    >
+                      <span className="flex items-baseline gap-3">
+                        <span className="w-20 text-sm font-medium">{PRAYER_LABELS[name]}</span>
+                        <span className="text-sm tabular-nums opacity-80">
+                          {time ? fmtTime(time) : "—"}
+                        </span>
+                        {isNext && !marked ? (
+                          <span className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+                            Next
+                          </span>
+                        ) : null}
                       </span>
-                      {isNext ? (
-                        <Badge variant="secondary" className="uppercase">
-                          Next
-                        </Badge>
-                      ) : null}
-                      {log?.completed ? (
-                        <Badge variant="outline">
-                          {log.on_time === true ? "On time" : log.on_time === false ? "Late" : "Logged"}
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={log?.on_time === true ? "default" : "outline"}
-                        onClick={() =>
-                          setLog.mutate({ prayer_name: name, completed: true, on_time: true })
-                        }
-                      >
-                        On time
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={log?.on_time === false ? "default" : "outline"}
-                        onClick={() =>
-                          setLog.mutate({ prayer_name: name, completed: true, on_time: false })
-                        }
-                      >
-                        Late
-                      </Button>
-                      {log ? (
+                      <span className="flex items-center gap-2 text-xs font-medium">
+                        {marked ? (
+                          <>
+                            <Check className="size-4" aria-hidden="true" />
+                            Prayed
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">Mark as prayed</span>
+                        )}
+                      </span>
+                    </button>
+                    {marked ? (
+                      <div className="flex items-center gap-2 px-4 pb-3 pt-1">
                         <Button
                           type="button"
                           size="sm"
-                          variant="ghost"
-                          onClick={() => unsetLog.mutate(name)}
+                          variant={log?.on_time === true ? "secondary" : "ghost"}
+                          aria-pressed={log?.on_time === true}
+                          onClick={() =>
+                            setLog.mutate({
+                              prayer_name: name,
+                              completed: true,
+                              on_time: log?.on_time === true ? null : true,
+                            })
+                          }
                         >
-                          Clear
+                          On time
                         </Button>
-                      ) : null}
-                    </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={log?.on_time === false ? "secondary" : "ghost"}
+                          aria-pressed={log?.on_time === false}
+                          onClick={() =>
+                            setLog.mutate({
+                              prayer_name: name,
+                              completed: true,
+                              on_time: log?.on_time === false ? null : false,
+                            })
+                          }
+                        >
+                          Later
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
             </CardContent>
           </Card>
         )}
-
-        {locationCard}
       </div>
     </>
   );

@@ -24,7 +24,9 @@ export const PRIORITIES: { value: Priority; label: string }[] = [
 ];
 
 export const TASK_STATUSES: { value: TaskStatus; label: string }[] = [
-  { value: "inbox", label: "Inbox" },
+  // Stored value stays "inbox"; only the label changed.
+  { value: "inbox", label: "Unsorted" },
+
   { value: "todo", label: "Todo" },
   { value: "in_progress", label: "In Progress" },
   { value: "waiting", label: "Waiting" },

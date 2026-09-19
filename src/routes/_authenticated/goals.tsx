@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { GOAL_STATUSES, labelOf } from "@/data/enums";
+import { GOAL_STATUSES } from "@/data/enums";
 import {
   createGoal,
   deleteGoal,
@@ -31,7 +31,11 @@ import {
   type Goal,
   type GoalInput,
 } from "@/data/goals";
-import { formatDate } from "@/lib/date";
+import { tasksQuery } from "@/data/tasks";
+import { usePreferences } from "@/hooks/usePreferences";
+import { goalStatusLabel, goalStatusTone } from "@/lib/semantics";
+import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
+import { SemanticBadge } from "@/components/app/SemanticBadge";
 
 export const Route = createFileRoute("/_authenticated/goals")({
   head: () => ({
@@ -57,6 +61,8 @@ const emptyForm: GoalInput = {
 function GoalsPage() {
   const queryClient = useQueryClient();
   const goals = useQuery(goalsQuery());
+  const tasks = useQuery(tasksQuery());
+  const { fmtDate } = usePreferences();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
   const [form, setForm] = useState<GoalInput>(emptyForm);
@@ -143,9 +149,11 @@ function GoalsPage() {
                     </p>
                   ) : null}
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="secondary">{labelOf(GOAL_STATUSES, goal.status)}</Badge>
-                    {goal.category ? <Badge variant="outline">{goal.category}</Badge> : null}
-                    <span>Target {formatDate(goal.target_date)}</span>
+                    <SemanticBadge tone={goalStatusTone(goal.status)}>
+                      {goalStatusLabel(goal.status)}
+                    </SemanticBadge>
+                    {goal.category ? <SemanticBadge tone="neutral">{goal.category}</SemanticBadge> : null}
+                    <span>Target {fmtDate(goal.target_date)}</span>
                   </div>
                   <div className="mt-4 max-w-md space-y-2">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -257,10 +265,18 @@ function GoalsPage() {
         </div>
       </FormDialog>
 
+      <QuickAddTaskButton />
+
       <ConfirmDialog
         open={!!toDelete}
         onOpenChange={(open) => !open && setToDelete(null)}
         title="Delete this goal?"
+        description={(() => {
+          const linked = (tasks.data ?? []).filter((task) => task.goal_id === toDelete?.id).length;
+          return linked > 0
+            ? `${linked} ${linked === 1 ? "task is" : "tasks are"} linked to this goal. Those tasks stay, but they will no longer be linked to a goal.`
+            : "This cannot be undone.";
+        })()}
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
     </>
