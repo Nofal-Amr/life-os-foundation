@@ -22,7 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  accountPocketsQuery,
   accountsQuery,
+
   createCategory,
   createTransaction,
   financeCategoriesQuery,
@@ -47,6 +49,8 @@ export function QuickAddTransactionDialog({
 }) {
   const queryClient = useQueryClient();
   const accounts = useQuery(accountsQuery());
+  const pockets = useQuery(accountPocketsQuery());
+
   const categories = useQuery(financeCategoriesQuery());
   const transactions = useQuery(transactionsQuery());
 

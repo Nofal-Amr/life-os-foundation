@@ -198,23 +198,27 @@ export function bmiContext(value: number): string {
 export function formatMoney(value: number | null | undefined, prefs: DisplayPreferences): string {
   if (value == null || Number.isNaN(Number(value))) return "—";
   const amount = Number(value);
+  // Decimals only appear when there is a fraction — and then always two.
+  const rounded = Math.round(amount * 100) / 100;
+  const digits = Number.isInteger(rounded) ? 0 : 2;
   if (prefs.currency) {
     try {
       return new Intl.NumberFormat(undefined, {
         style: "currency",
         currency: prefs.currency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
       }).format(amount);
     } catch {
       /* fall through to plain grouping */
     }
   }
   return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
   }).format(amount);
 }
+
 
 /** Signed amounts always carry a word, so meaning never rests on colour. */
 export function formatSignedMoney(

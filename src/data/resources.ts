@@ -1,0 +1,238 @@
+import { queryOptions } from "@tanstack/react-query";
+import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
+
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { currentUserId, unwrap } from "@/lib/supabase-helpers";
+
+export type Resource = Database["public"]["Tables"]["resources"]["Row"];
+export type ResourceReading = Database["public"]["Tables"]["resource_readings"]["Row"];
+export type ResourceKind = Database["public"]["Enums"]["resource_kind"];
+
+export const RESOURCE_KINDS: { value: ResourceKind; label: string; hint: string }[] = [
+  { value: "meter", label: "Meter", hint: "Readings go up, like an electricity meter." },
+  { value: "quota", label: "Quota", hint: "Readings are what is left, like internet data." },
+];
+
+export const resourceKeys = {
+  all: ["resources"] as const,
+  readings: ["resource_readings"] as const,
+};
+
+export const resourcesQuery = () =>
+  queryOptions({
+    queryKey: resourceKeys.all,
+    queryFn: async () =>
+      unwrap(
+        await supabase.from("resources").select("*").order("created_at", { ascending: true }),
+      ) as Resource[],
+  });
+
+export const resourceReadingsQuery = () =>
+  queryOptions({
+    queryKey: resourceKeys.readings,
+    queryFn: async () =>
+      unwrap(
+        await supabase
+          .from("resource_readings")
+          .select("*")
+          .order("reading_at", { ascending: true }),
+      ) as ResourceReading[],
+  });
+
+export type ResourceInput = {
+  name: string;
+  kind: ResourceKind;
+  unit: string;
+  unit_cost: number | null;
+  category_id: string | null;
+  account_id: string | null;
+  quota_amount: number | null;
+  cycle_start_date: string | null;
+  cycle_days: number | null;
+  icon: string | null;
+  color: string | null;
+  active: boolean;
+};
+
+export async function createResource(input: ResourceInput): Promise<Resource> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase.from("resources").insert({ ...input, user_id }).select().single(),
+  ) as Resource;
+}
+
+export async function updateResource(
+  id: string,
+  input: Partial<ResourceInput>,
+): Promise<Resource> {
+  return unwrap(
+    await supabase.from("resources").update(input).eq("id", id).select().single(),
+  ) as Resource;
+}
+
+export async function deleteResource(id: string): Promise<void> {
+  unwrap(await supabase.from("resources").delete().eq("id", id).select());
+}
+
+export type ReadingInput = {
+  resource_id: string;
+  reading: number;
+  reading_at: string;
+  note: string | null;
+};
+
+export async function addReading(input: ReadingInput): Promise<ResourceReading> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase.from("resource_readings").insert({ ...input, user_id }).select().single(),
+  ) as ResourceReading;
+}
+
+export async function deleteReading(id: string): Promise<void> {
+  unwrap(await supabase.from("resource_readings").delete().eq("id", id).select());
+}
+
+/* ----------------------------- derived facts ----------------------------- */
+
+export function readingsFor(resource: Resource, readings: ResourceReading[]): ResourceReading[] {
+  return readings
+    .filter((r) => r.resource_id === resource.id)
+    .sort((a, b) => a.reading_at.localeCompare(b.reading_at));
+}
+
+function daysBetween(a: string, b: string): number {
+  const diff = Math.abs(
+    (new Date(b).getTime() - new Date(a).getTime()) / (1000 * 60 * 60 * 24),
+  );
+  return diff;
+}
+
+export type MeterFacts = {
+  kind: "meter";
+  latest: ResourceReading;
+  previous: ResourceReading | null;
+  /** Consumption between the two most recent readings. */
+  lastConsumption: number | null;
+  lastCost: number | null;
+  perDay: number | null;
+  cycleConsumption: number | null;
+  cycleCost: number | null;
+  projectedCycleCost: number | null;
+  cycleStart: string | null;
+  cycleEnd: string | null;
+};
+
+export type QuotaFacts = {
+  kind: "quota";
+  latest: ResourceReading;
+  previous: ResourceReading | null;
+  remaining: number;
+  perDay: number | null;
+  daysLeft: number | null;
+  runsOutOn: string | null;
+  cycleEnd: string | null;
+  runsOutBeforeCycleEnd: boolean | null;
+};
+
+export function cycleWindow(resource: Resource, today = new Date()):
+  | { start: string; end: string }
+  | null {
+  if (!resource.cycle_start_date || !resource.cycle_days || resource.cycle_days <= 0) return null;
+  let start = parseISO(resource.cycle_start_date);
+  const length = Number(resource.cycle_days);
+  while (differenceInCalendarDays(today, start) >= length) start = addDays(start, length);
+  const end = addDays(start, length - 1);
+  return { start: format(start, "yyyy-MM-dd"), end: format(end, "yyyy-MM-dd") };
+}
+
+/** Never guesses: returns null whenever fewer than two readings exist. */
+export function meterFacts(
+  resource: Resource,
+  readings: ResourceReading[],
+  today = new Date(),
+): MeterFacts | null {
+  const list = readingsFor(resource, readings);
+  const latest = list[list.length - 1];
+  if (!latest) return null;
+  const previous = list.length > 1 ? (list[list.length - 2] as ResourceReading) : null;
+  const unitCost = resource.unit_cost == null ? null : Number(resource.unit_cost);
+
+  let lastConsumption: number | null = null;
+  let perDay: number | null = null;
+  if (previous) {
+    lastConsumption = Number(latest.reading) - Number(previous.reading);
+    const days = daysBetween(previous.reading_at, latest.reading_at);
+    perDay = days > 0 ? lastConsumption / days : null;
+  }
+
+  const window = cycleWindow(resource, today);
+  let cycleConsumption: number | null = null;
+  let projectedCycleCost: number | null = null;
+  if (window) {
+    const inCycle = list.filter((r) => r.reading_at.slice(0, 10) >= window.start);
+    const first = inCycle[0];
+    if (first && inCycle.length > 1) {
+      const last = inCycle[inCycle.length - 1] as ResourceReading;
+      cycleConsumption = Number(last.reading) - Number(first.reading);
+      const elapsed = daysBetween(first.reading_at, last.reading_at);
+      const rate = elapsed > 0 ? cycleConsumption / elapsed : null;
+      const cycleLength = Number(resource.cycle_days ?? 0);
+      if (rate != null && unitCost != null && cycleLength > 0) {
+        projectedCycleCost = rate * cycleLength * unitCost;
+      }
+    }
+  }
+
+  return {
+    kind: "meter",
+    latest,
+    previous,
+    lastConsumption,
+    lastCost: lastConsumption != null && unitCost != null ? lastConsumption * unitCost : null,
+    perDay,
+    cycleConsumption,
+    cycleCost:
+      cycleConsumption != null && unitCost != null ? cycleConsumption * unitCost : null,
+    projectedCycleCost,
+    cycleStart: window?.start ?? null,
+    cycleEnd: window?.end ?? null,
+  };
+}
+
+export function quotaFacts(
+  resource: Resource,
+  readings: ResourceReading[],
+  today = new Date(),
+): QuotaFacts | null {
+  const list = readingsFor(resource, readings);
+  const latest = list[list.length - 1];
+  if (!latest) return null;
+  const previous = list.length > 1 ? (list[list.length - 2] as ResourceReading) : null;
+
+  let perDay: number | null = null;
+  if (previous) {
+    const used = Number(previous.reading) - Number(latest.reading);
+    const days = daysBetween(previous.reading_at, latest.reading_at);
+    if (days > 0 && used > 0) perDay = used / days;
+  }
+
+  const remaining = Number(latest.reading);
+  const daysLeft = perDay && perDay > 0 ? remaining / perDay : null;
+  const runsOutOn =
+    daysLeft == null ? null : format(addDays(new Date(latest.reading_at), daysLeft), "yyyy-MM-dd");
+  const window = cycleWindow(resource, today);
+
+  return {
+    kind: "quota",
+    latest,
+    previous,
+    remaining,
+    perDay,
+    daysLeft,
+    runsOutOn,
+    cycleEnd: window?.end ?? null,
+    runsOutBeforeCycleEnd:
+      runsOutOn && window ? runsOutOn < window.end : null,
+  };
+}

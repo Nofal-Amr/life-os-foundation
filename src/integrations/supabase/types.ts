@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_pockets: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          opening_balance: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+          name: string
+          opening_balance?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          opening_balance?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_pockets_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       accounts: {
         Row: {
           active: boolean
@@ -296,6 +337,107 @@ export type Database = {
           kind?: Database["public"]["Enums"]["category_kind"]
           monthly_budget?: number | null
           name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      food_logs: {
+        Row: {
+          calories: number
+          carbs_g: number | null
+          created_at: string
+          fat_g: number | null
+          food_id: string | null
+          id: string
+          log_date: string
+          meal: string | null
+          name: string | null
+          protein_g: number | null
+          servings: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories: number
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          food_id?: string | null
+          id?: string
+          log_date?: string
+          meal?: string | null
+          name?: string | null
+          protein_g?: number | null
+          servings?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          food_id?: string | null
+          id?: string
+          log_date?: string
+          meal?: string | null
+          name?: string | null
+          protein_g?: number | null
+          servings?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "food_logs_food_id_fkey"
+            columns: ["food_id"]
+            isOneToOne: false
+            referencedRelation: "foods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foods: {
+        Row: {
+          calories: number
+          carbs_g: number | null
+          created_at: string
+          fat_g: number | null
+          icon: string | null
+          id: string
+          name: string
+          protein_g: number | null
+          serving_grams: number | null
+          serving_label: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calories: number
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          icon?: string | null
+          id?: string
+          name: string
+          protein_g?: number | null
+          serving_grams?: number | null
+          serving_label?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calories?: number
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          icon?: string | null
+          id?: string
+          name?: string
+          protein_g?: number | null
+          serving_grams?: number | null
+          serving_label?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -838,6 +980,116 @@ export type Database = {
           },
         ]
       }
+      resource_readings: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          reading: number
+          reading_at: string
+          resource_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reading: number
+          reading_at?: string
+          resource_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reading?: number
+          reading_at?: string
+          resource_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_readings_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          account_id: string | null
+          active: boolean
+          category_id: string | null
+          color: string | null
+          created_at: string
+          cycle_days: number | null
+          cycle_start_date: string | null
+          icon: string | null
+          id: string
+          kind: Database["public"]["Enums"]["resource_kind"]
+          name: string
+          quota_amount: number | null
+          unit: string
+          unit_cost: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          active?: boolean
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          cycle_days?: number | null
+          cycle_start_date?: string | null
+          icon?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["resource_kind"]
+          name: string
+          quota_amount?: number | null
+          unit: string
+          unit_cost?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          active?: boolean
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          cycle_days?: number | null
+          cycle_start_date?: string | null
+          icon?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["resource_kind"]
+          name?: string
+          quota_amount?: number | null
+          unit?: string
+          unit_cost?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resources_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resources_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           capability_id: string | null
@@ -918,6 +1170,7 @@ export type Database = {
           description: string | null
           id: string
           kind: Database["public"]["Enums"]["transaction_kind"]
+          pocket_id: string | null
           updated_at: string
           user_id: string
         }
@@ -930,6 +1183,7 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["transaction_kind"]
+          pocket_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -942,6 +1196,7 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["transaction_kind"]
+          pocket_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -958,6 +1213,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_pocket_id_fkey"
+            columns: ["pocket_id"]
+            isOneToOne: false
+            referencedRelation: "account_pockets"
             referencedColumns: ["id"]
           },
         ]
@@ -1026,6 +1288,7 @@ export type Database = {
         | "daily"
         | "hourly"
         | "custom"
+      resource_kind: "meter" | "quota"
       task_status:
         | "inbox"
         | "todo"
@@ -1183,6 +1446,7 @@ export const Constants = {
         "hourly",
         "custom",
       ],
+      resource_kind: ["meter", "quota"],
       task_status: [
         "inbox",
         "todo",

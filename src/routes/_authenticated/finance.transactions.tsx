@@ -21,17 +21,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  accountPocketsQuery,
   accountsQuery,
   createCategory,
   deleteTransaction,
   financeCategoriesQuery,
   financeKeys,
+  pocketKindLabel,
   signedAmount,
   transactionsQuery,
   updateTransaction,
   type Transaction,
   type TransactionInput,
 } from "@/data/finance";
+
 import { usePreferences } from "@/hooks/usePreferences";
 import { amountDirectionLabel, amountTone } from "@/lib/semantics";
 import { cn } from "@/lib/utils";
@@ -55,6 +58,8 @@ function TransactionsPage() {
   const transactions = useQuery(transactionsQuery());
   const accounts = useQuery(accountsQuery());
   const categories = useQuery(financeCategoriesQuery());
+  const pockets = useQuery(accountPocketsQuery());
+
   const { fmtDate, fmtSignedMoney } = usePreferences();
 
   const [accountFilter, setAccountFilter] = useState("all");
@@ -144,7 +149,9 @@ function TransactionsPage() {
       kind: transaction.kind,
       description: transaction.description,
       date: transaction.date,
+      pocket_id: transaction.pocket_id,
     });
+
     setEditAmount(Math.abs(Number(transaction.amount)).toFixed(2));
     setShowNewCategory(false);
     setNewCategoryName("");
@@ -328,7 +335,31 @@ function TransactionsPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {(pockets.data ?? []).some((pocket) => pocket.account_id === form.account_id) ? (
+                <div className="space-y-2">
+                  <Label>Pocket</Label>
+                  <Select
+                    value={form.pocket_id ?? "none"}
+                    onValueChange={(v) => setForm({ ...form, pocket_id: v === "none" ? null : v })}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No pocket</SelectItem>
+                      {(pockets.data ?? [])
+                        .filter((pocket) => pocket.account_id === form.account_id)
+                        .map((pocket) => (
+                          <SelectItem key={pocket.id} value={pocket.id}>
+                            {pocket.name} · {pocketKindLabel(pocket.kind)}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
               <div className="space-y-2">
+
                 <Label>Category</Label>
                 <Select
                   value={form.category_id ?? "none"}

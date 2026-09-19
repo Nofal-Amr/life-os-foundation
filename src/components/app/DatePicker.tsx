@@ -4,6 +4,7 @@ import { CalendarIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { usePreferences } from "@/hooks/usePreferences";
 import { cn } from "@/lib/utils";
 
 function parseDate(value?: string | null) {
@@ -15,7 +16,7 @@ function parseDate(value?: string | null) {
 export function DatePicker({
   value,
   onChange,
-  placeholder = "dd/mm/yyyy",
+  placeholder = "Choose a date",
   disabled,
   disableFuture = false,
   id,
@@ -29,6 +30,7 @@ export function DatePicker({
   id?: string;
   className?: string;
 }) {
+  const { fmtDate } = usePreferences();
   const selected = parseDate(value);
   const today = new Date();
   today.setHours(23, 59, 59, 999);
@@ -45,7 +47,9 @@ export function DatePicker({
             className={cn("h-12 min-w-0 flex-1 justify-start text-left font-normal", !selected && "text-muted-foreground")}
           >
             <CalendarIcon className="size-4 shrink-0" />
-            <span className="truncate">{selected ? format(selected, "dd/MM/yyyy") : placeholder}</span>
+            <span className="truncate">
+              {selected ? fmtDate(format(selected, "yyyy-MM-dd")) : placeholder}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
