@@ -144,6 +144,17 @@ function HealthPage() {
   const { prefs, fmtDate, fmtLongDate, fmtSlot, fmtHeight, weightUnit } = usePreferences();
 
   const [date, setDate] = useState(todayISO());
+
+  // Land on the named block when arriving from a link such as /health#medications.
+  useEffect(() => {
+    const id = window.location.hash.replace("#", "");
+    if (!id) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [medications.data, logs.data]);
+
   const [weightInput, setWeightInput] = useState<number | null>(null);
   const weightLoaded = useRef(false);
   const [logForm, setLogForm] = useState<HealthLogInput>(emptyLog(date));
@@ -367,7 +378,8 @@ function HealthPage() {
           </CardContent>
         </Card>
 
-        <Card className="system-card">
+        <Card id="daily-log" className="system-card scroll-mt-20">
+
           <CardHeader>
             <CardTitle className="text-base">
               Log for {date === todayISO() ? "today" : fmtLongDate(new Date(`${date}T12:00:00`))}
@@ -523,7 +535,8 @@ function HealthPage() {
           </CardContent>
         </Card>
 
-        <Card className="system-card">
+        <Card id="medications" className="system-card scroll-mt-20">
+
           <CardHeader className="gap-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>

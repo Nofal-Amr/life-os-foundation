@@ -77,6 +77,14 @@
 - [x] Coming up includes overdue and near-term tasks, projects, goals, recurring costs and quota projections
 - [x] Duplicate floating add controls removed; pages retain one primary add action
 
+## Today status strip
+
+- [x] Today's medication doses can be tapped taken or clear straight from Today, like prayers
+- [x] Each dose shows the medicine name, dose and its time, with a Taken / Not taken label
+- [x] Unlabelled arrows replaced with plain links that say where they go
+- [x] Status rows land on the exact thing: today's log, medications, Food, Money, Resources, Spirit
+
+
 ## Next actions and task steps
 
 - [x] Tasks can hold one level of steps: add by typing and pressing Enter, rename, reorder, complete, delete

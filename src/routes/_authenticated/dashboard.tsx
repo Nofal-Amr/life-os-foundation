@@ -3,7 +3,6 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { isToday, parseISO } from "date-fns";
 import {
   Check,
-  ChevronRight,
   CircleDollarSign,
   ClipboardPlus,
   HeartPulse,
@@ -35,7 +34,14 @@ import {
 } from "@/data/finance";
 import { dayTotals, foodLogsQuery } from "@/data/food";
 import { goalsQuery } from "@/data/goals";
-import { healthLogsQuery, medicationLogsQuery, medicationsQuery } from "@/data/health";
+import {
+  healthKeys,
+  healthLogsQuery,
+  medicationLogsQuery,
+  medicationsQuery,
+  setDoseTaken,
+} from "@/data/health";
+
 import { meterFacts, quotaFacts, resourceReadingsQuery, resourcesQuery } from "@/data/resources";
 
 import { DEFAULT_DIMENSION_ORDER, preferencesQuery } from "@/data/preferences";
@@ -147,17 +153,21 @@ function SectionHeading({ title, detail }: { title: string; detail?: string | un
   );
 }
 
-/** One line per area: a real figure and a way through to it. */
+/** One line per area: a real figure and a plainly labelled way through to it. */
 function StatusRow({
   label,
   value,
   to,
+  hash,
+  linkLabel,
   action,
   children,
 }: {
   label: string;
   value: string;
   to?: "/spirit" | "/finance" | "/health" | "/food" | "/resources";
+  hash?: string;
+  linkLabel?: string;
   action?: ReactNode;
   children?: ReactNode;
 }) {
@@ -171,9 +181,9 @@ function StatusRow({
         <div className="flex shrink-0 items-center gap-2">
           {action}
           {to ? (
-            <Button asChild variant="ghost" size="sm">
-              <Link to={to} aria-label={`Open ${label}`}>
-                <ChevronRight className="size-4" />
+            <Button asChild variant="ghost" size="sm" className="min-h-11">
+              <Link to={to} {...(hash ? { hash } : {})}>
+                {linkLabel ?? `Open ${label}`}
               </Link>
             </Button>
           ) : null}
@@ -184,9 +194,10 @@ function StatusRow({
   );
 }
 
+
 function DashboardPage() {
   const queryClient = useQueryClient();
-  const { fmtLongDate, fmtDate, fmtTime, fmtMoney } = usePreferences();
+  const { fmtLongDate, fmtDate, fmtTime, fmtSlot, fmtMoney } = usePreferences();
   const today = todayISO();
 
   const tasks = useQuery(tasksQuery());
@@ -226,6 +237,14 @@ function DashboardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
     onError,
   });
+
+  const setDose = useMutation({
+    mutationFn: (input: { medication_id: string; time_slot: string; taken: boolean }) =>
+      setDoseTaken({ log_date: today, ...input }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: healthKeys.medicationLogs }),
+    onError,
+  });
+
 
   /** Completing the shown action promotes the next one in place. */
   const finish = useMutation({
@@ -374,15 +393,19 @@ function DashboardPage() {
     });
   }
 
-  const todayDoseKeys = new Set(
+  const takenDoseKeys = new Set(
     (medicationLogs.data ?? [])
       .filter((log) => log.log_date === today && log.taken)
       .map((log) => `${log.medication_id}-${log.time_slot}`),
   );
   const scheduledDoses = (medications.data ?? [])
     .filter((medication) => medication.active)
-    .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })));
-  const dosesDue = scheduledDoses.filter(({ medication, slot }) => !todayDoseKeys.has(`${medication.id}-${slot}`));
+    .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })))
+    .sort((a, b) => a.slot.localeCompare(b.slot));
+  const dosesDue = scheduledDoses.filter(
+    ({ medication, slot }) => !takenDoseKeys.has(`${medication.id}-${slot}`),
+  );
+
 
   comingUp.sort((a, b) => {
     const byDimension = (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
@@ -420,6 +443,8 @@ function DashboardPage() {
           : "Add your location once to see today’s times."
       }
       to="/spirit"
+      linkLabel="Open Spirit"
+
     >
       {hasPrayerLocation ? (
         <div id="today-prayers" className="mt-3 grid min-w-0 grid-cols-5 gap-1.5 scroll-mt-5">
@@ -465,6 +490,8 @@ function DashboardPage() {
           : `${fmtMoney(balance)} now · payday not set up yet`
       }
       to="/finance"
+      linkLabel="Open Money"
+
       action={
         paydayReady && payday ? (
           <MoneyBreakdownDialog
@@ -490,11 +517,14 @@ function DashboardPage() {
         label="Health log"
         value={todayHealth ? "Logged today" : "Nothing logged yet today"}
         to="/health"
+        hash="daily-log"
+        linkLabel="Open today’s log"
       />
       <StatusRow
         label="Calories"
         value={todayFoodLogs.length ? `${todayCalories} kcal logged today` : "No food logged yet today"}
         to="/food"
+        linkLabel="Open Food"
       />
       <StatusRow
         label="Medication"
@@ -504,7 +534,49 @@ function DashboardPage() {
             : "No medication times scheduled"
         }
         to="/health"
-      />
+        hash="medications"
+        linkLabel="Open medications"
+      >
+        {scheduledDoses.length ? (
+          <div className="mt-3 grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3">
+            {scheduledDoses.map(({ medication, slot }) => {
+              const taken = takenDoseKeys.has(`${medication.id}-${slot}`);
+              return (
+                <Button
+                  key={`${medication.id}-${slot}`}
+                  type="button"
+                  variant="outline"
+                  aria-pressed={taken}
+                  aria-label={`${medication.name} at ${fmtSlot(slot)}${taken ? " taken" : " not taken"}`}
+                  className={`h-auto min-h-14 min-w-0 flex-col items-start gap-0.5 px-2 py-2 text-left ${taken ? "tone-positive" : ""}`}
+                  disabled={setDose.isPending}
+                  onClick={() =>
+                    setDose.mutate({
+                      medication_id: medication.id,
+                      time_slot: slot,
+                      taken: !taken,
+                    })
+                  }
+                >
+                  <span className="w-full truncate text-xs font-medium">
+                    {medication.name}
+                    {medication.dosage ? (
+                      <span className="ml-1 font-normal opacity-75">{medication.dosage}</span>
+                    ) : null}
+                  </span>
+                  <span className="w-full truncate text-[11px] tabular-nums opacity-75">
+                    {fmtSlot(slot)}
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px]">
+                    {taken ? <Check className="size-3" /> : null}
+                    {taken ? "Taken" : "Not taken"}
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+        ) : null}
+      </StatusRow>
     </div>
   );
 
@@ -517,6 +589,7 @@ function DashboardPage() {
             label={resource.name}
             value={`${Math.round(Number(facts!.remaining) * 10) / 10} ${resource.unit} left${facts!.runsOutOn ? ` · around ${fmtDate(facts!.runsOutOn)}` : ""}`}
             to="/resources"
+            linkLabel="Open Resources"
           />
         ))}
         {meterCosts.map(({ resource, facts }) => (
@@ -525,8 +598,10 @@ function DashboardPage() {
             label={resource.name}
             value={`This cycle so far ${fmtMoney(facts!.cycleCost)}${facts!.projectedCycleCost == null ? "" : ` · projected ${fmtMoney(facts!.projectedCycleCost)}`}`}
             to="/resources"
+            linkLabel="Open Resources"
           />
         ))}
+
       </div>
     ) : null;
 
@@ -673,14 +748,16 @@ function DashboardPage() {
                 {comingUp.length ? (
                   <div className="divide-y divide-border">
                     {comingUp.slice(0, 6).map((item) => (
-                      <Link key={item.id} to={item.to} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3 first:pt-0 last:pb-0">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                          <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
-                        </div>
-                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                      <Link
+                        key={item.id}
+                        to={item.to}
+                        className="flex min-h-11 min-w-0 flex-col justify-center py-3 first:pt-0 last:pb-0"
+                      >
+                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                        <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
                       </Link>
                     ))}
+
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Nothing due soon.</p>
