@@ -695,7 +695,8 @@ function DashboardPage() {
 
   const bodyRows = (
     <div key="health" className="min-w-0 divide-y divide-border/60">
-      {medicationRow}
+      {isEnabled("body") ? medicationRow : null}
+      {isEnabled("body") ? (
       <StatusRow
         icon={HeartPulse}
         label="Health log"
@@ -705,6 +706,7 @@ function DashboardPage() {
         linkLabel={todayHealth ? "Open today’s log" : "Log health"}
         compact={!todayHealth}
       />
+      ) : null}
       {isEnabled("food") ? (
       <StatusRow
         icon={Utensils}
@@ -873,6 +875,7 @@ function DashboardPage() {
         ) : (
           <main className="flex min-w-0 flex-col gap-10">
             {/* Zone 1 — the one thing to do. */}
+            {isEnabled("do") ? (
             <section className="min-w-0">
               <Card className="system-card min-w-0 border-primary/30">
                 <CardHeader>
@@ -906,11 +909,17 @@ function DashboardPage() {
                 </div>
               ) : null}
             </section>
+            ) : null}
 
             {/* Zone 2 — one block for everything today, each row acting on itself. */}
             <section className="min-w-0">
               <h2 className="text-base font-semibold text-foreground">Today</h2>
               <p className="mt-1 text-sm text-muted-foreground">Your own figures, and the logging beside them.</p>
+              {strips.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No modules are switched on yet. Choose what to track in Settings.
+                </p>
+              ) : null}
               <div className="mt-3 min-w-0 divide-y divide-border">
                 {strips.map((strip, index) => (
                   <div key={index} className="min-w-0 py-2 first:pt-0 last:pb-0">
@@ -965,12 +974,17 @@ function DashboardPage() {
               </div>
 
               <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">
+                {isEnabled("calendar") ? (
                 <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
                   <Link to="/calendar">Calendar</Link>
                 </Button>
+                ) : null}
+                {isEnabled("notes") ? (
                 <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
                   <Link to="/notes">Notes</Link>
                 </Button>
+                ) : null}
+                {isEnabled("money") ? (
                 <Button
                   type="button"
                   variant="link"
@@ -980,6 +994,8 @@ function DashboardPage() {
                 >
                   Log expense
                 </Button>
+                ) : null}
+                {isEnabled("do") ? (
                 <Button
                   type="button"
                   variant="link"
@@ -989,6 +1005,7 @@ function DashboardPage() {
                 >
                   Add task
                 </Button>
+                ) : null}
               </div>
             </section>
           </main>
