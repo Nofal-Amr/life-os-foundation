@@ -17,8 +17,10 @@ export type Database = {
       accounts: {
         Row: {
           active: boolean
+          color: string | null
           created_at: string
           currency: string | null
+          icon: string | null
           id: string
           name: string
           opening_balance: number
@@ -28,8 +30,10 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          color?: string | null
           created_at?: string
           currency?: string | null
+          icon?: string | null
           id?: string
           name: string
           opening_balance?: number
@@ -39,8 +43,10 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          color?: string | null
           created_at?: string
           currency?: string | null
+          icon?: string | null
           id?: string
           name?: string
           opening_balance?: number
@@ -88,24 +94,30 @@ export type Database = {
       }
       capabilities: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
+          icon: string | null
           id: string
           name: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
           name: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
           name?: string
           updated_at?: string
@@ -254,6 +266,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
+          icon: string | null
           id: string
           kind: Database["public"]["Enums"]["category_kind"]
           monthly_budget: number | null
@@ -264,6 +277,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["category_kind"]
           monthly_budget?: number | null
@@ -274,6 +288,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string
+          icon?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["category_kind"]
           monthly_budget?: number | null
@@ -286,8 +301,10 @@ export type Database = {
       goals: {
         Row: {
           category: string | null
+          color: string | null
           created_at: string
           description: string | null
+          icon: string | null
           id: string
           name: string
           progress: number
@@ -299,8 +316,10 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          color?: string | null
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
           name: string
           progress?: number
@@ -312,8 +331,10 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          color?: string | null
           created_at?: string
           description?: string | null
+          icon?: string | null
           id?: string
           name?: string
           progress?: number
@@ -368,9 +389,11 @@ export type Database = {
       habits: {
         Row: {
           active: boolean
+          color: string | null
           created_at: string
           description: string | null
           frequency: Database["public"]["Enums"]["habit_frequency"]
+          icon: string | null
           id: string
           name: string
           target: number
@@ -379,9 +402,11 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          color?: string | null
           created_at?: string
           description?: string | null
           frequency?: Database["public"]["Enums"]["habit_frequency"]
+          icon?: string | null
           id?: string
           name: string
           target?: number
@@ -390,9 +415,11 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          color?: string | null
           created_at?: string
           description?: string | null
           frequency?: Database["public"]["Enums"]["habit_frequency"]
+          icon?: string | null
           id?: string
           name?: string
           target?: number
@@ -693,9 +720,11 @@ export type Database = {
       }
       projects: {
         Row: {
+          color: string | null
           created_at: string
           description: string | null
           due_date: string | null
+          icon: string | null
           id: string
           name: string
           priority: Database["public"]["Enums"]["priority_level"]
@@ -705,9 +734,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          icon?: string | null
           id?: string
           name: string
           priority?: Database["public"]["Enums"]["priority_level"]
@@ -717,9 +748,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          icon?: string | null
           id?: string
           name?: string
           priority?: Database["public"]["Enums"]["priority_level"]
@@ -739,7 +772,10 @@ export type Database = {
           created_at: string
           frequency: Database["public"]["Enums"]["recurrence_frequency"]
           id: string
+          interval_count: number
+          interval_unit: Database["public"]["Enums"]["interval_unit"] | null
           name: string
+          next_due_at: string | null
           next_due_date: string
           updated_at: string
           user_id: string
@@ -752,7 +788,10 @@ export type Database = {
           created_at?: string
           frequency?: Database["public"]["Enums"]["recurrence_frequency"]
           id?: string
+          interval_count?: number
+          interval_unit?: Database["public"]["Enums"]["interval_unit"] | null
           name: string
+          next_due_at?: string | null
           next_due_date: string
           updated_at?: string
           user_id: string
@@ -765,7 +804,10 @@ export type Database = {
           created_at?: string
           frequency?: Database["public"]["Enums"]["recurrence_frequency"]
           id?: string
+          interval_count?: number
+          interval_unit?: Database["public"]["Enums"]["interval_unit"] | null
           name?: string
+          next_due_at?: string | null
           next_due_date?: string
           updated_at?: string
           user_id?: string
@@ -959,6 +1001,7 @@ export type Database = {
       category_kind: "expense" | "income"
       goal_status: "not_started" | "active" | "completed" | "archived"
       habit_frequency: "daily" | "weekly"
+      interval_unit: "hour" | "day" | "week" | "month" | "year"
       payday_schedule: "monthly" | "interval"
       priority_level: "low" | "medium" | "high" | "critical"
       project_status:
@@ -967,7 +1010,13 @@ export type Database = {
         | "on_hold"
         | "completed"
         | "archived"
-      recurrence_frequency: "weekly" | "monthly" | "yearly"
+      recurrence_frequency:
+        | "weekly"
+        | "monthly"
+        | "yearly"
+        | "daily"
+        | "hourly"
+        | "custom"
       task_status:
         | "inbox"
         | "todo"
@@ -1107,6 +1156,7 @@ export const Constants = {
       category_kind: ["expense", "income"],
       goal_status: ["not_started", "active", "completed", "archived"],
       habit_frequency: ["daily", "weekly"],
+      interval_unit: ["hour", "day", "week", "month", "year"],
       payday_schedule: ["monthly", "interval"],
       priority_level: ["low", "medium", "high", "critical"],
       project_status: [
@@ -1116,7 +1166,14 @@ export const Constants = {
         "completed",
         "archived",
       ],
-      recurrence_frequency: ["weekly", "monthly", "yearly"],
+      recurrence_frequency: [
+        "weekly",
+        "monthly",
+        "yearly",
+        "daily",
+        "hourly",
+        "custom",
+      ],
       task_status: [
         "inbox",
         "todo",
