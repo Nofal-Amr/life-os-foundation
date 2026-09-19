@@ -128,3 +128,24 @@ export async function geocodeCity(
     label: first.country ? `${first.name}, ${first.country}` : first.name,
   };
 }
+
+/** Best-effort reverse lookup so the saved location shows a place name. */
+export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
+  try {
+    const response = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+    );
+    if (!response.ok) throw new Error("lookup failed");
+    const payload = (await response.json()) as {
+      city?: string;
+      locality?: string;
+      principalSubdivision?: string;
+      countryName?: string;
+    };
+    const place = payload.city || payload.locality || payload.principalSubdivision;
+    if (place) return payload.countryName ? `${place}, ${payload.countryName}` : place;
+  } catch {
+    /* fall through to coordinates */
+  }
+  return `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+}
