@@ -300,7 +300,7 @@ function StatusRow({
 
   return (
     <div className="min-w-0 py-4 first:pt-0 last:pb-0">
-      <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-2">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -782,9 +782,8 @@ function DashboardPage() {
       </div>
     ) : null;
 
-  /* Prayers stay the anchor; the rest follows the user's saved dimension order. */
+  /* Prayers are the daily anchor and stay first; the rest follows the saved order. */
   const strips: { dimension: string; node: ReactNode }[] = [
-    { dimension: "spirit", node: prayerRow },
     { dimension: "health", node: bodyRows },
     { dimension: "professional", node: moneyRow },
     { dimension: "professional", node: resourceRows },
@@ -793,6 +792,7 @@ function DashboardPage() {
   strips.sort(
     (a, b) => (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99),
   );
+  strips.unshift({ dimension: "spirit", node: prayerRow });
 
 
   function ActionBlock({ action, large }: { action: NextAction; large?: boolean }) {
