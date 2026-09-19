@@ -78,6 +78,7 @@ export function QuickAddTransactionDialog({
     setAccountId(lastUsed?.account_id ?? fallback);
     setPocketId(lastUsed?.pocket_id ?? "");
 
+
     setCategoryId(lastUsed?.category_id ?? "");
     setKind(lastUsed && Number(lastUsed.amount) > 0 ? "income" : "expense");
     setAmount("");
@@ -110,7 +111,9 @@ export function QuickAddTransactionDialog({
         kind: kind === "income" ? "income" : "expense",
         description: note.trim() || null,
         date: todayISO(),
+        pocket_id: pocketId || null,
       });
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
