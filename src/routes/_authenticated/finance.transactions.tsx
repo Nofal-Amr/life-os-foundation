@@ -70,6 +70,7 @@ function TransactionsPage() {
   const [form, setForm] = useState<TransactionInput | null>(null);
   const [editAmount, setEditAmount] = useState("");
   const [toDelete, setToDelete] = useState<Transaction | null>(null);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
@@ -158,7 +159,11 @@ function TransactionsPage() {
 
   return (
     <>
-      <PageHeader title="Transactions" description="Grouped by the day you logged them for." />
+      <PageHeader
+        title="Transactions"
+        description="Grouped by the day you logged them for."
+        actions={<Button onClick={() => setQuickAddOpen(true)}>New transaction</Button>}
+      />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
@@ -400,6 +405,7 @@ function TransactionsPage() {
         description="Your account balance will be worked out again without it."
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
+      <QuickAddTransactionDialog open={quickAddOpen} onOpenChange={setQuickAddOpen} />
 
     </>
   );

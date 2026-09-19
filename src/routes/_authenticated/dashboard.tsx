@@ -291,7 +291,7 @@ function DashboardPage() {
   }
 
   for (const { resource, facts } of quotaAlerts) {
-    if (!facts) continue;
+    if (!facts?.runsOutOn) continue;
     comingUp.push({
       id: `quota-${resource.id}`,
       dimension: "professional",
@@ -307,12 +307,6 @@ function DashboardPage() {
       .filter((log) => log.log_date === today && log.taken)
       .map((log) => `${log.medication_id}-${log.time_slot}`),
   );
-  for (const medication of medications.data ?? []) {
-    if (!medication.active) continue;
-    for (const slot of medication.schedule_times ?? []) {
-      if (todayDoseKeys.has(`${medication.id}-${slot}`)) continue;
-    }
-  }
   const scheduledDoses = (medications.data ?? []).filter((medication) => medication.active)
     .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })));
   const dosesDue = scheduledDoses.filter(({ medication, slot }) => !todayDoseKeys.has(`${medication.id}-${slot}`));
@@ -347,12 +341,18 @@ function DashboardPage() {
     <div className="min-w-0">
       <div className="w-full min-w-0">
         <header>
-          <div className="pb-8 sm:pb-10">
-            <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
-            <h1 className="mt-2 text-3xl font-semibold text-foreground sm:text-4xl">
-              {greeting()}{firstName ? `, ${firstName}` : ""}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">Here is what is true today.</p>
+          <div className="flex flex-wrap items-end justify-between gap-4 pb-8 sm:pb-10">
+            <div>
+              <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
+              <h1 className="mt-2 text-3xl font-semibold text-foreground sm:text-4xl">
+                {greeting()}{firstName ? `, ${firstName}` : ""}
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">Here is what is true today.</p>
+            </div>
+            <div className="flex gap-2">
+              <Button asChild size="sm" variant="outline"><Link to="/calendar">Calendar</Link></Button>
+              <Button asChild size="sm" variant="outline"><Link to="/notes">Notes</Link></Button>
+            </div>
           </div>
         </header>
 
@@ -596,7 +596,7 @@ function DashboardPage() {
             ) : null}
 
 
-            <Card className="system-card min-w-0">
+            <Card className="system-card order-6 min-w-0">
               <CardHeader>
                 <SectionHeading title="Quick logs" detail="Common actions for today." />
               </CardHeader>
@@ -621,7 +621,7 @@ function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="system-card min-w-0">
+            <Card className="system-card order-7 min-w-0">
               <CardHeader>
                 <SectionHeading title="Today so far" />
               </CardHeader>

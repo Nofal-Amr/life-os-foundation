@@ -12,6 +12,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard },
@@ -76,7 +77,8 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               to={to}
               onClick={onNavigate}
               activeOptions={{ exact: true }}
-              className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[status=active]:bg-accent data-[status=active]:font-medium data-[status=active]:text-foreground"
+              aria-current={pathname === to || activeSection === to ? "page" : undefined}
+              className={`flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-foreground ${pathname === to || activeSection === to ? "bg-accent font-medium text-foreground" : "text-muted-foreground"}`}
             >
               <Icon className="size-4 shrink-0" aria-hidden="true" />
               <span className="truncate">{label}</span>
@@ -143,6 +145,8 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function BottomNav() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const activeSection = sectionFor(pathname);
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       <ul className="grid grid-cols-5">
@@ -150,7 +154,8 @@ export function BottomNav() {
           <li key={to}>
             <Link
               to={to}
-              className="flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] text-muted-foreground transition-colors data-[status=active]:text-primary"
+              aria-current={pathname === to || activeSection === to ? "page" : undefined}
+              className={`flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] transition-colors ${pathname === to || activeSection === to ? "font-medium text-primary" : "text-muted-foreground"}`}
             >
               <Icon className="size-5" aria-hidden="true" />
               {label}
