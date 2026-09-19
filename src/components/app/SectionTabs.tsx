@@ -1,5 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 
+import type { ModuleKey } from "@/data/modules";
+import { useModules } from "@/hooks/useModules";
+
 type SectionTab = {
   to:
     | "/tasks"
@@ -16,13 +19,14 @@ type SectionTab = {
     | "/food";
   label: string;
   exact?: boolean;
+  module?: ModuleKey;
 };
 
 const DO_TABS: SectionTab[] = [
   { to: "/tasks", label: "Tasks" },
   { to: "/projects", label: "Projects" },
   { to: "/goals", label: "Goals" },
-  { to: "/habits", label: "Habits" },
+  { to: "/habits", label: "Habits", module: "habits" },
   { to: "/capabilities", label: "Capabilities" },
 ];
 
@@ -31,12 +35,12 @@ const MONEY_TABS: SectionTab[] = [
   { to: "/finance/transactions", label: "Transactions" },
   { to: "/finance/recurring", label: "Recurring" },
   { to: "/finance/categories", label: "Categories" },
-  { to: "/resources", label: "Resources" },
+  { to: "/resources", label: "Resources", module: "resources" },
 ];
 
 const BODY_TABS: SectionTab[] = [
   { to: "/health", label: "Health" },
-  { to: "/food", label: "Food" },
+  { to: "/food", label: "Food", module: "food" },
 ];
 
 function tabsFor(pathname: string) {
@@ -50,8 +54,14 @@ function tabsFor(pathname: string) {
 
 export function SectionTabs() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const section = tabsFor(pathname);
-  if (!section) return null;
+  const { enabled } = useModules();
+  const found = tabsFor(pathname);
+  if (!found) return null;
+  const section = {
+    label: found.label,
+    tabs: found.tabs.filter((tab) => !tab.module || enabled.includes(tab.module)),
+  };
+  if (section.tabs.length < 2) return null;
 
   return (
     <nav
