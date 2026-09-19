@@ -1255,7 +1255,9 @@ export type Database = {
           currency: string | null
           date_format: string
           dimension_order: string[] | null
+          enabled_modules: string[]
           id: string
+          onboarding_completed_at: string | null
           time_format: string
           unit_system: string
           updated_at: string
@@ -1266,7 +1268,9 @@ export type Database = {
           currency?: string | null
           date_format?: string
           dimension_order?: string[] | null
+          enabled_modules?: string[]
           id?: string
+          onboarding_completed_at?: string | null
           time_format?: string
           unit_system?: string
           updated_at?: string
@@ -1277,7 +1281,9 @@ export type Database = {
           currency?: string | null
           date_format?: string
           dimension_order?: string[] | null
+          enabled_modules?: string[]
           id?: string
+          onboarding_completed_at?: string | null
           time_format?: string
           unit_system?: string
           updated_at?: string

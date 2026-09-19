@@ -41,9 +41,16 @@ import {
   updateResource,
   type Resource,
   type ResourceInput,
+  type ResourceKind,
 } from "@/data/resources";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+
+const STARTER_RESOURCES: { name: string; kind: ResourceKind; unit: string }[] = [
+  { name: "Electricity", kind: "meter", unit: "kWh" },
+  { name: "Water", kind: "meter", unit: "m3" },
+  { name: "Internet", kind: "quota", unit: "GB" },
+];
 
 export const Route = createFileRoute("/_authenticated/resources")({
   head: () => ({
@@ -111,6 +118,30 @@ function ResourcesPage() {
       toast.success(editing ? "Resource updated." : "Resource added.");
     },
     onError,
+  });
+
+  /* Empty starting points only — no readings, no costs, no quota figures. */
+  const addStarter = useMutation({
+    mutationFn: (starter: { name: string; kind: ResourceKind; unit: string }) =>
+      createResource({
+        name: starter.name,
+        kind: starter.kind,
+        unit: starter.unit,
+        unit_cost: null,
+        category_id: null,
+        account_id: null,
+        quota_amount: null,
+        cycle_start_date: null,
+        cycle_days: null,
+        icon: null,
+        color: null,
+        active: true,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: resourceKeys.all });
+      toast.success("Added. Fill in its readings and cost when you have them.");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 
   const remove = useMutation({
@@ -222,8 +253,30 @@ function ResourcesPage() {
       ) : list.length === 0 ? (
         <EmptyState
           title="Nothing tracked yet"
-          description="Add a meter (like electricity) or a quota (like internet data), then add readings."
-          action={<Button onClick={openCreate}>Add a resource</Button>}
+          description="Track a meter like electricity or a quota like internet data, and Life OS works out usage and cost from your own readings."
+          action={
+            <div className="space-y-3">
+              <Button onClick={openCreate}>Add a resource</Button>
+              <div className="flex flex-wrap justify-center gap-2">
+                {STARTER_RESOURCES.map((starter) => (
+                  <Button
+                    key={starter.name}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11"
+                    disabled={addStarter.isPending}
+                    onClick={() => addStarter.mutate(starter)}
+                  >
+                    Add {starter.name}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                These are empty starting points with no figures — edit or delete them freely.
+              </p>
+            </div>
+          }
         />
       ) : (
         <ul className="space-y-4">

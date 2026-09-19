@@ -334,7 +334,7 @@ function FinanceOverview() {
             {!hasAccounts ? (
               <EmptyState
                 title="Nothing logged yet"
-                description="Add your accounts and their opening balances. Balances are always worked out from what you log."
+                description="An account holds your money. Add it with its opening balance, and every balance after that is worked out from what you log."
                 action={<Button onClick={openCreate}>Add an account</Button>}
               />
             ) : (

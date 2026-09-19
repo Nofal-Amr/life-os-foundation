@@ -128,7 +128,7 @@ function CapabilitiesPage() {
       ) : (capabilities.data ?? []).length === 0 ? (
         <EmptyState
           title="No capabilities yet"
-          description="Name a capability you want to build, then let completed work become its evidence."
+          description="A capability is something you are getting better at. Finished work becomes its evidence over time."
           action={<Button onClick={openCreate}>Add capability</Button>}
         />
       ) : (

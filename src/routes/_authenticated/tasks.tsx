@@ -313,7 +313,7 @@ function TasksPage() {
       ) : visible.length === 0 ? (
         <EmptyState
           title="Nothing here"
-          description="No tasks match this filter yet."
+          description="Tasks are the single next things you owe yourself. Write one down so it is not held in your head."
           action={<Button onClick={openCreate}>New task</Button>}
         />
       ) : (

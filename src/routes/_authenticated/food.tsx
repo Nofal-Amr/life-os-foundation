@@ -289,7 +289,7 @@ function FoodPage() {
                 Entries
               </h2>
               {dayLogs.length === 0 ? (
-                <EmptyState title="Nothing logged yet today" />
+                <EmptyState title="Nothing logged yet today" description="Log what you ate and Life OS adds up the calories from your own entries." />
               ) : (
                 <div className="space-y-5">
                   {MEALS.filter((option) => dayLogs.some((log) => log.meal === option.value)).map(

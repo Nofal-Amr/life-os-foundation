@@ -171,7 +171,7 @@ function ReviewPage() {
         ) : history.error ? (
           <ErrorState error={history.error} onRetry={() => history.refetch()} />
         ) : (history.data ?? []).length === 0 ? (
-          <EmptyState title="No reviews yet" description="Your saved reflections appear here." />
+          <EmptyState title="No reviews yet" description="A short end-of-day note on how the day went. Your saved reflections stay here." />
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
             {(history.data ?? []).map((r) => (

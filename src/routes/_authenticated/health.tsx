@@ -496,7 +496,7 @@ function HealthPage() {
             {recent.length === 0 ? (
               <EmptyState
                 title="No other entries yet"
-                description="Log a day to begin building a record."
+                description="A daily log keeps a record of how you felt and slept, in your own words and numbers."
               />
             ) : (
               <ul className="divide-y divide-border">
@@ -555,7 +555,7 @@ function HealthPage() {
             {(medications.data ?? []).length === 0 ? (
               <EmptyState
                 title="No medications yet"
-                description="Add the schedule you already follow to keep track of it here."
+                description="Add the medication schedule you already follow, and today's doses appear on Today for one-tap logging."
                 action={
                   <Button type="button" onClick={openMedCreate}>
                     Add medication

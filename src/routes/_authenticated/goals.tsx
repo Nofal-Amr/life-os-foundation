@@ -137,7 +137,7 @@ function GoalsPage() {
       ) : (goals.data ?? []).length === 0 ? (
         <EmptyState
           title="No goals yet"
-          description="Name what you're working towards."
+          description="A goal names what you are working towards, so the tasks under it have a point."
           action={<Button onClick={openCreate}>New goal</Button>}
         />
       ) : (

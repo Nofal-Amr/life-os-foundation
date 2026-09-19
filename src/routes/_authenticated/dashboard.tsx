@@ -72,6 +72,7 @@ import {
   topLevelTasks,
   type Task,
 } from "@/data/tasks";
+import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
@@ -440,6 +441,7 @@ function DashboardPage() {
   const lastPayday = previousPayday(paydayConfig.data);
   const paydayReady = hasPaydaySetup(paydayConfig.data);
   const money = useAvailableBeforePayday();
+  const { isEnabled } = useModules();
   const todayHealth = (healthLogs.data ?? []).find((log) => log.log_date === today);
 
 
@@ -555,6 +557,13 @@ function DashboardPage() {
   comingUp.sort((a, b) => {
     const byDimension = (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
     return byDimension || a.sortValue.localeCompare(b.sortValue);
+  });
+
+  /* Only modules the user kept appear here. */
+  const visibleComingUp = comingUp.filter((item) => {
+    if (item.id.startsWith("cost-")) return isEnabled("money");
+    if (item.id.startsWith("quota-")) return isEnabled("resources");
+    return isEnabled("do");
   });
 
   const completedTasksToday = allTasks.filter(
@@ -686,7 +695,8 @@ function DashboardPage() {
 
   const bodyRows = (
     <div key="health" className="min-w-0 divide-y divide-border/60">
-      {medicationRow}
+      {isEnabled("body") ? medicationRow : null}
+      {isEnabled("body") ? (
       <StatusRow
         icon={HeartPulse}
         label="Health log"
@@ -696,6 +706,8 @@ function DashboardPage() {
         linkLabel={todayHealth ? "Open today’s log" : "Log health"}
         compact={!todayHealth}
       />
+      ) : null}
+      {isEnabled("food") ? (
       <StatusRow
         icon={Utensils}
         label="Calories"
@@ -708,6 +720,7 @@ function DashboardPage() {
         linkLabel={todayFoodLogs.length ? "Open Food" : "Log food"}
         compact={!todayFoodLogs.length}
       />
+      ) : null}
     </div>
   );
 
@@ -784,15 +797,17 @@ function DashboardPage() {
 
   /* Prayers are the daily anchor and stay first; the rest follows the saved order. */
   const strips: { dimension: string; node: ReactNode }[] = [
-    { dimension: "health", node: bodyRows },
-    { dimension: "professional", node: moneyRow },
-    { dimension: "professional", node: resourceRows },
+    ...(isEnabled("body") || isEnabled("food")
+      ? [{ dimension: "health", node: bodyRows }]
+      : []),
+    ...(isEnabled("money") ? [{ dimension: "professional", node: moneyRow }] : []),
+    ...(isEnabled("resources") ? [{ dimension: "professional", node: resourceRows }] : []),
   ].filter((strip) => strip.node != null);
 
   strips.sort(
     (a, b) => (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99),
   );
-  strips.unshift({ dimension: "spirit", node: prayerRow });
+  if (isEnabled("spirit")) strips.unshift({ dimension: "spirit", node: prayerRow });
 
 
   function ActionBlock({ action, large }: { action: NextAction; large?: boolean }) {
@@ -860,6 +875,7 @@ function DashboardPage() {
         ) : (
           <main className="flex min-w-0 flex-col gap-10">
             {/* Zone 1 — the one thing to do. */}
+            {isEnabled("do") ? (
             <section className="min-w-0">
               <Card className="system-card min-w-0 border-primary/30">
                 <CardHeader>
@@ -893,11 +909,17 @@ function DashboardPage() {
                 </div>
               ) : null}
             </section>
+            ) : null}
 
             {/* Zone 2 — one block for everything today, each row acting on itself. */}
             <section className="min-w-0">
               <h2 className="text-base font-semibold text-foreground">Today</h2>
               <p className="mt-1 text-sm text-muted-foreground">Your own figures, and the logging beside them.</p>
+              {strips.length === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No modules are switched on yet. Choose what to track in Settings.
+                </p>
+              ) : null}
               <div className="mt-3 min-w-0 divide-y divide-border">
                 {strips.map((strip, index) => (
                   <div key={index} className="min-w-0 py-2 first:pt-0 last:pb-0">
@@ -912,9 +934,9 @@ function DashboardPage() {
               <div className="grid min-w-0 gap-6 sm:grid-cols-2">
                 <div className="min-w-0">
                   <h2 className="text-xs font-medium uppercase tracking-wide">Coming up</h2>
-                  {comingUp.length ? (
+                  {visibleComingUp.length ? (
                     <div className="mt-1 divide-y divide-border/50">
-                      {comingUp.slice(0, 6).map((item) => (
+                      {visibleComingUp.slice(0, 6).map((item) => (
                         <Link
                           key={item.id}
                           to={item.to}
@@ -952,12 +974,17 @@ function DashboardPage() {
               </div>
 
               <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">
+                {isEnabled("calendar") ? (
                 <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
                   <Link to="/calendar">Calendar</Link>
                 </Button>
+                ) : null}
+                {isEnabled("notes") ? (
                 <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
                   <Link to="/notes">Notes</Link>
                 </Button>
+                ) : null}
+                {isEnabled("money") ? (
                 <Button
                   type="button"
                   variant="link"
@@ -967,6 +994,8 @@ function DashboardPage() {
                 >
                   Log expense
                 </Button>
+                ) : null}
+                {isEnabled("do") ? (
                 <Button
                   type="button"
                   variant="link"
@@ -976,6 +1005,7 @@ function DashboardPage() {
                 >
                   Add task
                 </Button>
+                ) : null}
               </div>
             </section>
           </main>

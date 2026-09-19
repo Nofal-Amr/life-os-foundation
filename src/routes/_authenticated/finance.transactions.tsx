@@ -217,7 +217,7 @@ function TransactionsPage() {
       ) : groups.length === 0 ? (
         <EmptyState
           title="Nothing logged yet"
-          description="Use the button in the corner to log money in or out."
+          description="Every balance in Life OS is worked out from the money you log here, in or out."
         />
       ) : (
         <div className="space-y-6">
