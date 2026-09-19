@@ -76,3 +76,14 @@
 - [x] Today covers Spirit, Do, Money, Body and Coming up from real rows, following the saved dimension order
 - [x] Coming up includes overdue and near-term tasks, projects, goals, recurring costs and quota projections
 - [x] Duplicate floating add controls removed; pages retain one primary add action
+
+## Next actions and task steps
+
+- [x] Tasks can hold one level of steps: add by typing and pressing Enter, rename, reorder, complete, delete
+- [x] Task list shows parent tasks with a quiet "2 of 5 steps done" line you can expand
+- [x] Completing the last step asks whether to close the task; it never decides for you
+- [x] Optional minute estimates shown as "· 5 min" on tasks and steps
+- [x] "This feels hard" on every task: one question, starter suggestions, saves one small first step
+- [x] Moving a due date later is recorded quietly; after three moves one calm factual line appears
+- [x] Today leads with a single next action (the first open step when a task has steps) plus at most two more
+- [x] Module cards replaced by a one-line status strip: prayers with inline logging, money left before payday, calories, health, medication, resources

@@ -33,13 +33,18 @@ import {
   deleteTask,
   filterTasks,
   reopenTask,
+  stepProgress,
+  stepsOf,
   taskKeys,
   tasksQuery,
+  topLevelTasks,
   updateTask,
   type Task,
   type TaskFilter,
   type TaskInput,
 } from "@/data/tasks";
+import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
+import { TaskStepsEditor, minutesLabel, stepsLine } from "@/components/app/TaskSteps";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { priorityLabel, priorityTone, taskStatusLabel, taskStatusTone } from "@/lib/semantics";
@@ -75,6 +80,7 @@ const emptyForm: TaskInput = {
   project_id: null,
   capability_id: null,
   goal_id: null,
+  estimated_minutes: null,
 };
 
 const NO_PROJECT = "none";
@@ -96,6 +102,8 @@ function TasksPage() {
   const [editing, setEditing] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Task | null>(null);
+  const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [evidenceTask, setEvidenceTask] = useState<Task | null>(null);
   const [evidenceCapability, setEvidenceCapability] = useState<string | null>(null);
   const [evidenceNote, setEvidenceNote] = useState("");
@@ -113,7 +121,7 @@ function TasksPage() {
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
 
   const save = useMutation({
-    mutationFn: async () => (editing ? updateTask(editing.id, form) : createTask(form)),
+    mutationFn: async () => (editing ? updateTask(editing.id, form, editing) : createTask(form)),
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
@@ -260,6 +268,7 @@ function TasksPage() {
       project_id: task.project_id,
       capability_id: task.capability_id,
       goal_id: task.goal_id,
+      estimated_minutes: task.estimated_minutes,
     });
     setShowNewProject(false);
     setShowNewCapability(false);
@@ -274,7 +283,8 @@ function TasksPage() {
   }, [navigate, taskHash, tasks.data]);
 
 
-  const visible = filterTasks(tasks.data ?? [], filter);
+  const allTasks = tasks.data ?? [];
+  const visible = filterTasks(topLevelTasks(allTasks), filter);
   const projectName = (id: string | null) =>
     (projects.data ?? []).find((p) => p.id === id)?.name;
 
@@ -310,13 +320,27 @@ function TasksPage() {
         <ul className="space-y-3">
           {visible.map((task) => {
             const completed = task.status === "completed";
+            const steps = stepsOf(allTasks, task.id);
+            const progress = stepProgress(steps);
+            const isExpanded = Boolean(expanded[task.id]);
             return (
               <li key={task.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className={`font-medium ${completed ? "text-muted-foreground line-through" : ""}`}>
-                      {task.title}
-                    </p>
+                  <div className="min-w-0">
+                    <button
+                      type="button"
+                      className="text-left"
+                      onClick={() => openEdit(task)}
+                    >
+                      <p className={`font-medium ${completed ? "text-muted-foreground line-through" : ""}`}>
+                        {task.title}
+                        {task.estimated_minutes ? (
+                          <span className="ml-1 text-sm font-normal text-muted-foreground">
+                            {minutesLabel(task.estimated_minutes)}
+                          </span>
+                        ) : null}
+                      </p>
+                    </button>
                     {task.description ? (
                       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                         {task.description}
@@ -338,8 +362,28 @@ function TasksPage() {
                          return project ? <span className="inline-flex items-center gap-1.5"><EntityIcon icon={project.icon} color={project.color} containerClassName="size-5 rounded" className="size-3" />{project.name}</span> : null;
                        })() : null}
                     </div>
+                    {steps.length ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="mt-2 h-8 px-0 text-xs text-muted-foreground"
+                        aria-expanded={isExpanded}
+                        onClick={() =>
+                          setExpanded((current) => ({ ...current, [task.id]: !current[task.id] }))
+                        }
+                      >
+                        {stepsLine(progress.done, progress.total)} · {isExpanded ? "Hide steps" : "Show steps"}
+                      </Button>
+                    ) : null}
+                    {(task.postponed_count ?? 0) >= 3 ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Moved {task.postponed_count} times
+                        {task.original_due_date ? ` since ${fmtDate(task.original_due_date)}` : ""}.
+                      </p>
+                    ) : null}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="ghost"
@@ -347,6 +391,9 @@ function TasksPage() {
                     >
                       {completed ? "Reopen" : "Complete"}
                     </Button>
+                    {completed ? null : (
+                      <ShrinkItButton onClick={() => setShrinkTask(task)} />
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => openEdit(task)}>
                       Edit
                     </Button>
@@ -355,6 +402,33 @@ function TasksPage() {
                     </Button>
                   </div>
                 </div>
+                {isExpanded && steps.length ? (
+                  <ul className="mt-3 divide-y divide-border border-t border-border pt-1">
+                    {steps.map((step) => {
+                      const stepDone = step.status === "completed";
+                      return (
+                        <li key={step.id} className="flex min-w-0 items-center justify-between gap-3 py-2">
+                          <span className={`min-w-0 truncate text-sm ${stepDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                            {step.title}
+                            {step.estimated_minutes ? (
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                {minutesLabel(step.estimated_minutes)}
+                              </span>
+                            ) : null}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="shrink-0"
+                            onClick={() => toggle.mutate({ task: step, completed: stepDone })}
+                          >
+                            {stepDone ? "Reopen" : "Done"}
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
               </li>
             );
           })}
@@ -425,6 +499,22 @@ function TasksPage() {
           <div className="space-y-2">
             <Label htmlFor="task-due">Due date</Label>
             <DatePicker id="task-due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="task-minutes">Estimate in minutes (optional)</Label>
+            <Input
+              id="task-minutes"
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={form.estimated_minutes ?? ""}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  estimated_minutes: event.target.value ? Number(event.target.value) : null,
+                })
+              }
+            />
           </div>
           <div className="space-y-2">
             <Label>Project</Label>
@@ -580,6 +670,15 @@ function TasksPage() {
             ) : null}
           </div>
         </div>
+        {editing && editing.parent_task_id ? null : editing ? (
+          <div className="border-t border-border pt-4">
+            <TaskStepsEditor parent={editing} />
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Save the task first, then add steps to it.
+          </p>
+        )}
       </FormDialog>
 
       <FormDialog
@@ -627,6 +726,13 @@ function TasksPage() {
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
 
+      <ShrinkItDialog
+        task={shrinkTask}
+        existingSteps={shrinkTask ? stepsOf(allTasks, shrinkTask.id).length : 0}
+        open={!!shrinkTask}
+        onOpenChange={(open) => !open && setShrinkTask(null)}
+      />
     </>
+
   );
 }
