@@ -12,6 +12,8 @@ export function ProjectCover({ path, name, icon, color, className }: { path?: st
   const [failed, setFailed] = useState(false);
   const showImage = Boolean(path && url.data && !failed);
 
+  if (!path) return null;
+
   return (
     <div className={cn("relative aspect-[16/6] w-full overflow-hidden bg-muted", className)}>
       {showImage ? (
