@@ -103,11 +103,7 @@ function DashboardPage() {
   const capabilityShare = linkedEvidenceTotal ? (topEvidenceCount / linkedEvidenceTotal) * 100 : 0;
   const displayName = profile.data?.display_name?.trim() || user?.email?.split("@")[0] || "there";
   const firstName = displayName.split(/\s+/)[0];
-  const initials = displayName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+
   const loading = tasks.isLoading || projects.isLoading || goals.isLoading || capabilities.isLoading || evidence.isLoading;
   const error = tasks.error ?? projects.error ?? goals.error ?? capabilities.error ?? evidence.error;
 

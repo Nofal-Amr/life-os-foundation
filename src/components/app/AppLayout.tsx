@@ -22,6 +22,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const signOut = useSignOut();
   const { user } = useAuth();
+  const { displayName } = useDisplayName();
+
   const isDashboard = useLocation({ select: (location) => location.pathname === "/dashboard" });
 
   if (isDashboard) {
