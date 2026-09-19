@@ -109,3 +109,14 @@
 - [x] Moving a due date later is recorded quietly; after three moves one calm factual line appears
 - [x] Today leads with a single next action (the first open step when a task has steps) plus at most two more
 - [x] Module cards replaced by a one-line status strip: prayers with inline logging, money left before payday, calories, health, medication, resources
+
+## First-run setup and choosing what to track
+
+- [x] New accounts get a short setup: your name, what you want to track, optional money basics, optional prayer location, one optional first thing to do
+- [x] Setup saves as you go, can be left and resumed, and has a visible Skip setup
+- [x] Nothing is guessed or invented — no example tasks, money or logs are ever created
+- [x] Settings has switches for each section, plus "Run setup again"
+- [x] Switching a section off hides it from the menus, tabs and Today; nothing is deleted
+- [x] Opening a switched-off page shows a calm page with a switch-back-on button
+- [x] Resources offers one-tap empty starting points (Electricity, Water, Internet) with no figures attached
+- [x] Empty pages now explain in one plain sentence what the section is for, with one action
