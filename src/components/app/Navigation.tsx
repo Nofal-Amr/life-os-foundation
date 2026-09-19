@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Today", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/habits", label: "Habits", icon: Repeat },
@@ -31,21 +31,39 @@ export const NAV_ITEMS = [
   { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
+const MONEY_ITEMS = [
+  { to: "/finance" as const, label: "Overview" },
+  { to: "/finance/transactions" as const, label: "Transactions" },
+  { to: "/finance/recurring" as const, label: "Recurring costs" },
+  { to: "/finance/categories" as const, label: "Categories" },
+];
+
 
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col gap-1">
       {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-        <Link
-          key={to}
-          to={to}
-          onClick={onNavigate}
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[status=active]:bg-accent data-[status=active]:font-medium data-[status=active]:text-foreground"
-        >
-          <Icon className="size-4" aria-hidden="true" />
-          {label}
-        </Link>
+        <div key={to} className="min-w-0">
+          <Link
+            to={to}
+            onClick={onNavigate}
+            activeOptions={{ exact: to === "/finance" }}
+            className="flex min-w-0 items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[status=active]:bg-accent data-[status=active]:font-medium data-[status=active]:text-foreground"
+          >
+            <Icon className="size-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{label}</span>
+          </Link>
+          {to === "/finance" ? (
+            <div className="ml-7 mt-1 space-y-0.5 border-l border-border pl-2">
+              {MONEY_ITEMS.map((item) => (
+                <Link key={item.to} to={item.to} activeOptions={{ exact: item.to === "/finance" }} onClick={onNavigate} className="block truncate rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground">
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </div>
       ))}
     </nav>
   );
