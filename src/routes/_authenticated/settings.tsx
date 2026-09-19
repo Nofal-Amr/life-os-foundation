@@ -96,6 +96,7 @@ function SettingsPage() {
   const preferences = useQuery(preferencesQuery());
   const body = useQuery(bodyStatsQuery());
   const prayer = useQuery(prayerSettingsQuery());
+  const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
   const { prefs, weightUnit } = usePreferences();
@@ -146,6 +147,19 @@ function SettingsPage() {
     const target = body.data.target_weight_kg == null ? null : Number(body.data.target_weight_kg);
     setTargetWeight(weightToDisplay(target, prefs));
   }, [body.data, prefs]);
+
+  // Load the saved pay-day figures once, so typing is never overwritten.
+  useEffect(() => {
+    if (paydayLoaded.current || !payday.data) return;
+    paydayLoaded.current = true;
+    setPayDay(payday.data.pay_day == null ? "" : String(payday.data.pay_day));
+    setExpectedNet(
+      payday.data.expected_net_amount == null ? "" : String(payday.data.expected_net_amount),
+    );
+    setSafetyBuffer(
+      payday.data.safety_buffer == null ? "" : String(payday.data.safety_buffer),
+    );
+  }, [payday.data]);
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
