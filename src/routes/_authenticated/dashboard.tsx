@@ -289,6 +289,18 @@ function DashboardPage() {
           ))}
         </div>
       </nav>
+
+      <Button
+        type="button"
+        aria-label="Quick add task"
+        title="Quick add task"
+        className="fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lg sm:bottom-6 sm:right-6"
+        onClick={() => setQuickAdd(true)}
+      >
+        <Plus className="size-6" />
+      </Button>
+
+      <QuickAddTaskDialog open={quickAdd} onOpenChange={setQuickAdd} />
     </div>
   );
 }
