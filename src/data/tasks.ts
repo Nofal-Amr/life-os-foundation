@@ -15,6 +15,9 @@ export type TaskInput = {
   project_id: string | null;
   capability_id: string | null;
   goal_id: string | null;
+  estimated_minutes?: number | null;
+  parent_task_id?: string | null;
+  position?: number;
 };
 
 
@@ -37,6 +40,32 @@ const OPEN_STATUSES: Task["status"][] = ["inbox", "todo", "in_progress", "waitin
 
 export function isOpen(task: Task) {
   return OPEN_STATUSES.includes(task.status);
+}
+
+/** Steps are real tasks with a parent; they never appear as top-level rows. */
+export function isStep(task: Task) {
+  return task.parent_task_id != null;
+}
+
+export function topLevelTasks(tasks: Task[]): Task[] {
+  return tasks.filter((task) => !isStep(task));
+}
+
+/** Child steps of a task, in stored position order. */
+export function stepsOf(tasks: Task[], parentId: string): Task[] {
+  return tasks
+    .filter((task) => task.parent_task_id === parentId)
+    .sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at));
+}
+
+/** Derived only — never stored. */
+export function stepProgress(steps: Task[]) {
+  const done = steps.filter((step) => step.status === "completed").length;
+  return { done, total: steps.length };
+}
+
+export function firstOpenStep(tasks: Task[], parentId: string): Task | undefined {
+  return stepsOf(tasks, parentId).find(isOpen);
 }
 
 export function filterTasks(tasks: Task[], filter: TaskFilter): Task[] {
@@ -72,12 +101,58 @@ export async function createTask(input: TaskInput) {
   );
 }
 
-export async function updateTask(id: string, input: Partial<TaskInput>) {
-  const patch: Partial<TaskInput> & { completed_at?: string | null } = { ...input };
+/**
+ * Moving a due date later is recorded as information only: a count, when it
+ * last moved, and the date it was first meant for.
+ */
+export function postponementPatch(previous: Task, nextDue: string | null | undefined) {
+  if (!nextDue || !previous.due_date || nextDue <= previous.due_date) return {};
+  return {
+    postponed_count: (previous.postponed_count ?? 0) + 1,
+    last_postponed_at: new Date().toISOString(),
+    original_due_date: previous.original_due_date ?? previous.due_date,
+  };
+}
+
+export async function updateTask(id: string, input: Partial<TaskInput>, previous?: Task) {
+  const patch: Record<string, unknown> = { ...input };
   if (input.status) {
     patch.completed_at = input.status === "completed" ? new Date().toISOString() : null;
   }
+  if (previous) Object.assign(patch, postponementPatch(previous, input.due_date));
   return unwrap(await supabase.from("tasks").update(patch).eq("id", id).select().single());
+}
+
+/** One step, one level deep. Position defaults to the front of the list. */
+export async function createStep(input: {
+  parent_task_id: string;
+  title: string;
+  estimated_minutes?: number | null;
+  position?: number;
+  project_id?: string | null;
+  due_date?: string | null;
+}) {
+  return createTask({
+    title: input.title,
+    description: null,
+    status: "todo",
+    priority: "medium",
+    due_date: input.due_date ?? null,
+    project_id: input.project_id ?? null,
+    capability_id: null,
+    goal_id: null,
+    parent_task_id: input.parent_task_id,
+    position: input.position ?? 0,
+    estimated_minutes: input.estimated_minutes ?? null,
+  });
+}
+
+export async function reorderSteps(steps: Task[]) {
+  await Promise.all(
+    steps.map((step, index) =>
+      supabase.from("tasks").update({ position: index }).eq("id", step.id),
+    ),
+  );
 }
 
 export async function completeTask(id: string) {
