@@ -8,6 +8,7 @@ import {
   CircleDollarSign,
   ClipboardPlus,
   HeartPulse,
+  Info,
   ListTodo,
   Plus,
 } from "lucide-react";
@@ -16,7 +17,9 @@ import { toast } from "sonner";
 
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
+import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
 import { EntityIcon } from "@/components/app/EntityIdentity";
+
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -31,11 +34,19 @@ import {
   recurringCostsQuery,
   transactionsQuery,
 } from "@/data/finance";
+import { dayTotals, foodLogsQuery } from "@/data/food";
 import {
   healthLogsQuery,
   medicationLogsQuery,
   medicationsQuery,
 } from "@/data/health";
+import {
+  meterFacts,
+  quotaFacts,
+  resourceReadingsQuery,
+  resourcesQuery,
+} from "@/data/resources";
+
 import { DEFAULT_DIMENSION_ORDER, preferencesQuery } from "@/data/preferences";
 import { profileQuery } from "@/data/profile";
 import { projectsQuery } from "@/data/projects";
@@ -128,6 +139,10 @@ function DashboardPage() {
   const preferences = useQuery(preferencesQuery());
   const profile = useQuery(profileQuery());
   const projects = useQuery(projectsQuery());
+  const foodLogs = useQuery(foodLogsQuery());
+  const resources = useQuery(resourcesQuery());
+  const resourceReadings = useQuery(resourceReadingsQuery());
+
 
   const [quickTask, setQuickTask] = useState(false);
   const [quickMoney, setQuickMoney] = useState(false);
@@ -162,7 +177,11 @@ function DashboardPage() {
     preferences,
     profile,
     projects,
+    foodLogs,
+    resources,
+    resourceReadings,
   ];
+
   const loading = queries.some((query) => query.isLoading);
   const error = queries.find((query) => query.error)?.error;
 
@@ -187,6 +206,21 @@ function DashboardPage() {
   const payday = nextPayday(paydayConfig.data);
   const paydayReady = hasPaydaySetup(paydayConfig.data);
   const todayHealth = (healthLogs.data ?? []).find((log) => log.log_date === today);
+
+  /* Food and resources: derived only from rows the user logged. */
+  const todayFoodLogs = (foodLogs.data ?? []).filter((log) => log.log_date === today);
+  const todayCalories = Math.round(dayTotals(todayFoodLogs).calories);
+
+  const quotaAlerts = (resources.data ?? [])
+    .filter((resource) => resource.active && resource.kind === "quota")
+    .map((resource) => ({ resource, facts: quotaFacts(resource, resourceReadings.data ?? []) }))
+    .filter((item) => item.facts?.runsOutBeforeCycleEnd === true);
+
+  const meterCosts = (resources.data ?? [])
+    .filter((resource) => resource.active && resource.kind === "meter")
+    .map((resource) => ({ resource, facts: meterFacts(resource, resourceReadings.data ?? []) }))
+    .filter((item) => item.facts?.cycleCost != null);
+
 
   const dimensionOrder = preferences.data?.dimension_order?.length
     ? preferences.data.dimension_order
@@ -255,7 +289,9 @@ function DashboardPage() {
     { label: "prayers logged", value: todayPrayerLogs.length },
     { label: "expenses logged", value: expensesToday },
     { label: "health entries", value: todayHealth ? 1 : 0 },
+    { label: "food entries", value: todayFoodLogs.length },
   ].filter((item) => item.value > 0);
+
 
   const displayName = profile.data?.display_name?.trim();
   const firstName = displayName?.split(/\s+/)[0];
@@ -398,9 +434,19 @@ function DashboardPage() {
                 <CardContent>
                   <p className="break-words text-3xl font-semibold tabular-nums text-foreground">{fmtMoney(balance)}</p>
                   {paydayReady && payday ? (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Payday in {daysUntil(payday)} {daysUntil(payday) === 1 ? "day" : "days"} · {fmtDate(payday.toISOString().slice(0, 10))}
-                    </p>
+                    <>
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        Payday in {daysUntil(payday)} {daysUntil(payday) === 1 ? "day" : "days"} · {fmtDate(payday.toISOString().slice(0, 10))}
+                      </p>
+                      <MoneyBreakdownDialog
+                        trigger={
+                          <Button type="button" variant="outline" className="mt-4 w-full">
+                            <Info className="size-4" />
+                            Money left before payday
+                          </Button>
+                        }
+                      />
+                    </>
                   ) : (
                     <Button asChild variant="outline" className="mt-4">
                       <Link to="/settings">Set up payday</Link>
@@ -410,6 +456,7 @@ function DashboardPage() {
                     <Link to="/finance">Open Money <ChevronRight className="size-4" /></Link>
                   </Button>
                 </CardContent>
+
               </Card>
             </div>
 
@@ -451,12 +498,61 @@ function DashboardPage() {
                       <p className="mt-1 text-xs text-muted-foreground">Anything you skip stays empty.</p>
                     </div>
                   </div>
-                  <Button asChild className="mt-5 w-full">
-                    <Link to="/health">{todayHealth ? "Update today’s log" : "Log health"}</Link>
-                  </Button>
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    {todayFoodLogs.length
+                      ? `Food logged today: ${todayCalories} kcal`
+                      : "No food logged yet today."}
+                  </p>
+                  <div className="mt-4 grid gap-2">
+                    <Button asChild className="w-full">
+                      <Link to="/health">{todayHealth ? "Update today’s log" : "Log health"}</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to="/food">Log food</Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
+
+            {quotaAlerts.length || meterCosts.length ? (
+              <Card className="system-card min-w-0">
+                <CardHeader>
+                  <SectionHeading title="Resources" detail="Worked out from your own readings." />
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    {quotaAlerts.map(({ resource, facts }) => (
+                      <li key={resource.id} className="min-w-0">
+                        <span className="font-medium text-foreground">{resource.name}</span>{" "}
+                        <span className="text-muted-foreground">
+                          {Math.round(Number(facts!.remaining) * 10) / 10} {resource.unit} left · at
+                          this rate it reaches zero around {fmtDate(facts!.runsOutOn)}, before the
+                          cycle ends on {fmtDate(facts!.cycleEnd)}.
+                        </span>
+                      </li>
+                    ))}
+                    {meterCosts.map(({ resource, facts }) => (
+                      <li key={resource.id} className="min-w-0">
+                        <span className="font-medium text-foreground">{resource.name}</span>{" "}
+                        <span className="text-muted-foreground">
+                          this cycle so far: {fmtMoney(facts!.cycleCost)}
+                          {facts!.projectedCycleCost == null
+                            ? ""
+                            : ` · projected for the full cycle ${fmtMoney(facts!.projectedCycleCost)}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild variant="ghost" className="mt-3 px-0 text-primary">
+                    <Link to="/resources">
+                      Open Resources <ChevronRight className="size-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
+
 
             <Card className="system-card min-w-0">
               <CardHeader>

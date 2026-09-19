@@ -51,3 +51,17 @@
 - [x] Fast transaction capture and editing can create and auto-select a category inline
 - [x] Flexible recurring schedules from daily upward, with legacy fields kept in sync
 - [x] Money displays omit trailing zero decimals while amount entry remains precise to two decimals
+
+## Latest pass
+
+- [x] Sign out and account details available from the mobile navigation
+- [x] Money menu collapsed until you open it
+- [x] Whole money amounts show no decimals, fractional ones always two
+- [x] Date fields follow your own date format everywhere
+- [x] Estimated money left before payday, with a tap-through breakdown from Money and Today
+- [x] Calendar shows events, task due dates, projects, goals, projected recurring costs and health logs, with filters
+- [x] Account pockets: cash and bank inside one account, with nested balances
+- [x] Resources: meter and quota readings with real usage, cost and projections
+- [x] Food: personal food library, fast logging and plain daily totals
+- [x] Today shows calories logged, quota warnings and this cycle's meter cost
+- [x] Icon picker rebuilt as a scrollable grid with about 190 grouped icons
