@@ -144,6 +144,17 @@ function HealthPage() {
   const { prefs, fmtDate, fmtLongDate, fmtSlot, fmtHeight, weightUnit } = usePreferences();
 
   const [date, setDate] = useState(todayISO());
+
+  // Land on the named block when arriving from a link such as /health#medications.
+  useEffect(() => {
+    const id = window.location.hash.replace("#", "");
+    if (!id) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [medications.data, logs.data]);
+
   const [weightInput, setWeightInput] = useState<number | null>(null);
   const weightLoaded = useRef(false);
   const [logForm, setLogForm] = useState<HealthLogInput>(emptyLog(date));
