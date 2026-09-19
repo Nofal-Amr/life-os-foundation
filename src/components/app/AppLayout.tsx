@@ -3,6 +3,7 @@ import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
+import { SectionTabs } from "@/components/app/SectionTabs";
 import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -34,13 +35,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <SidebarNav />
         </div>
         <div className="space-y-2 px-1">
-          <div className="flex items-center gap-2 px-1">
+          <Link to="/settings" className="flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-accent">
             <UserAvatar size="sm" />
             <div className="min-w-0">
               <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
               <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
             </div>
-          </div>
+          </Link>
            <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleTheme}>
              {theme === "dark" ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
              {theme === "dark" ? "Light theme" : "Dark theme"}
@@ -67,13 +68,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <SidebarNav onNavigate={() => setOpen(false)} />
             </div>
             <div className="mt-6 space-y-2 px-1">
-              <div className="flex items-center gap-2 px-1">
+              <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-accent">
                 <UserAvatar size="sm" />
                 <div className="min-w-0">
                   <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
                   <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
                 </div>
-              </div>
+              </Link>
               <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleTheme}>
                 {theme === "dark" ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
                 {theme === "dark" ? "Light theme" : "Dark theme"}
@@ -101,7 +102,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </header>
 
        <main className="min-w-0 overflow-x-clip px-4 pb-28 pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
-         <div className="mx-auto w-full min-w-0 max-w-6xl">{children}</div>
+          <div className="mx-auto w-full min-w-0 max-w-6xl">
+            <SectionTabs />
+            {children}
+          </div>
       </main>
 
       <BottomNav />
