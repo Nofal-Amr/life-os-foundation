@@ -435,8 +435,11 @@ function DashboardPage() {
 
   const balance = liquidBalance(accounts.data ?? [], transactions.data ?? []);
   const payday = nextPayday(paydayConfig.data);
+  const lastPayday = previousPayday(paydayConfig.data);
   const paydayReady = hasPaydaySetup(paydayConfig.data);
+  const money = useAvailableBeforePayday();
   const todayHealth = (healthLogs.data ?? []).find((log) => log.log_date === today);
+
 
   /* Food and resources: derived only from rows the user logged. */
   const todayFoodLogs = (foodLogs.data ?? []).filter((log) => log.log_date === today);
@@ -469,8 +472,10 @@ function DashboardPage() {
       title: task.title,
       detail:
         task.due_date === today ? "Task · Due today" : `Task · Due ${fmtDate(task.due_date)}`,
+      kind: "commitment",
       to: "/tasks",
     });
+
   }
 
   for (const project of projects.data ?? []) {
@@ -481,7 +486,9 @@ function DashboardPage() {
       sortValue: project.due_date,
       title: project.name,
       detail: `Project · Due ${fmtDate(project.due_date)}`,
+      kind: "commitment",
       to: "/projects",
+
     });
   }
 
@@ -493,7 +500,9 @@ function DashboardPage() {
       sortValue: goal.target_date,
       title: goal.name,
       detail: `Goal · Target ${fmtDate(goal.target_date)}`,
+      kind: "commitment",
       to: "/goals",
+
     });
   }
 
@@ -506,7 +515,9 @@ function DashboardPage() {
         sortValue: cost.next_due_date,
         title: cost.name,
         detail: `Recurring cost · ${fmtMoney(Number(cost.amount))} · ${fmtDate(cost.next_due_date)}`,
+        kind: "projection",
         to: "/finance/recurring",
+
       });
     }
   }
@@ -519,7 +530,9 @@ function DashboardPage() {
       sortValue: facts.runsOutOn,
       title: resource.name,
       detail: `Resource · ${Math.round(Number(facts.remaining) * 10) / 10} ${resource.unit} left · around ${fmtDate(facts.runsOutOn)}`,
+      kind: "projection",
       to: "/resources",
+
     });
   }
 
