@@ -367,7 +367,8 @@ function HealthPage() {
           </CardContent>
         </Card>
 
-        <Card className="system-card">
+        <Card id="daily-log" className="system-card scroll-mt-20">
+
           <CardHeader>
             <CardTitle className="text-base">
               Log for {date === todayISO() ? "today" : fmtLongDate(new Date(`${date}T12:00:00`))}
@@ -523,7 +524,8 @@ function HealthPage() {
           </CardContent>
         </Card>
 
-        <Card className="system-card">
+        <Card id="medications" className="system-card scroll-mt-20">
+
           <CardHeader className="gap-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
