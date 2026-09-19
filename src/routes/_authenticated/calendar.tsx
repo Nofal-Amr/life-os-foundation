@@ -54,6 +54,7 @@ const emptyForm: FormState = { title: "", description: null, start: "", end: "" 
 
 function CalendarPage() {
   const queryClient = useQueryClient();
+  const { fmtDateTime } = usePreferences();
   const events = useQuery(eventsQuery());
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selected, setSelected] = useState<Date>(new Date());

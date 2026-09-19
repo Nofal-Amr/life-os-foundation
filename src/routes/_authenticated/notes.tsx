@@ -41,6 +41,7 @@ const emptyForm: NoteInput = { title: "", body: null, tags: [] };
 
 function NotesPage() {
   const queryClient = useQueryClient();
+  const { fmtDateTime } = usePreferences();
   const notes = useQuery(notesQuery());
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);

@@ -63,6 +63,7 @@ const emptyForm: HabitInput = {
 
 function HabitsPage() {
   const queryClient = useQueryClient();
+  const { fmtDate } = usePreferences();
   const habits = useQuery(habitsQuery());
   const logs = useQuery(habitLogsQuery());
   const today = todayISO();

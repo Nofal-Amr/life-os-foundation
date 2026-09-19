@@ -42,6 +42,7 @@ const MOODS = [1, 2, 3, 4, 5];
 
 function ReviewPage() {
   const queryClient = useQueryClient();
+  const { fmtDate } = usePreferences();
   const [date, setDate] = useState(todayISO());
   const review = useQuery(reviewByDateQuery(date));
   const history = useQuery(reviewsQuery());
