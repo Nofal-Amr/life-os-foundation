@@ -394,15 +394,19 @@ function DashboardPage() {
     });
   }
 
-  const todayDoseKeys = new Set(
+  const takenDoseKeys = new Set(
     (medicationLogs.data ?? [])
       .filter((log) => log.log_date === today && log.taken)
       .map((log) => `${log.medication_id}-${log.time_slot}`),
   );
   const scheduledDoses = (medications.data ?? [])
     .filter((medication) => medication.active)
-    .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })));
-  const dosesDue = scheduledDoses.filter(({ medication, slot }) => !todayDoseKeys.has(`${medication.id}-${slot}`));
+    .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })))
+    .sort((a, b) => a.slot.localeCompare(b.slot));
+  const dosesDue = scheduledDoses.filter(
+    ({ medication, slot }) => !takenDoseKeys.has(`${medication.id}-${slot}`),
+  );
+
 
   comingUp.sort((a, b) => {
     const byDimension = (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
