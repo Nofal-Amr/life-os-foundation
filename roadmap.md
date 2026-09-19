@@ -6,6 +6,10 @@
 - [x] Email/password auth + password reset + profile trigger
 - [x] Protected layout, sidebar + mobile navigation
 - [x] Dashboard, Projects, Tasks, Habits, Goals, Notes, Calendar, Daily Review
+- [x] Unified shared layout: Today now uses the standard sidebar, mobile header and bottom navigation
+- [x] Theme switch available from every page in the desktop and mobile shared layout
+- [x] Shared searchable icon and colour identity for projects, goals, capabilities, habits, accounts and money categories
+- [x] Gain-framed habit history with no streaks or loss-framed language
 - [x] Calm warm-neutral visual direction
 - [x] Executive dashboard restyle with persisted light/dark theme
 - [x] Daily Today screen: prayers, next tasks, money, upcoming commitments, health, quick logs, and gain-framed activity from real rows
@@ -40,3 +44,8 @@
 - [x] Categories you own, with optional monthly budgets and an accept-or-edit starter set of empty labels
 - [x] Recurring costs as projections only, with one-tap Log (creates a real transaction and rolls the date) and Skip
 - [x] Money setup in Settings: pay day of the month, expected net pay, safety buffer, currency
+- [x] Expected net pay and safety buffer editable directly from the Money overview
+- [x] Searchable ISO currency choice with Egypt and regional currencies prioritised
+- [x] Fast transaction capture and editing can create and auto-select a category inline
+- [x] Flexible recurring schedules from daily upward, with legacy fields kept in sync
+- [x] Money displays omit trailing zero decimals while amount entry remains precise to two decimals
