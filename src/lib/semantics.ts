@@ -108,3 +108,22 @@ export function projectStatusLabel(status: ProjectStatus): string {
 export function goalStatusLabel(status: GoalStatus): string {
   return labelOf(GOAL_STATUSES, status);
 }
+
+/* ---------- finance ---------- */
+
+/** Money direction: a word always accompanies the tone. */
+export function amountTone(amount: number): Tone {
+  return amount < 0 ? "warning" : "positive";
+}
+
+export function amountDirectionLabel(amount: number): string {
+  return amount < 0 ? "Money out" : "Money in";
+}
+
+/**
+ * Before-payday status. Deliberately never "danger" — the reading is factual,
+ * not alarming.
+ */
+export function availabilityTone(available: number): Tone {
+  return available < 0 ? "warning" : "positive";
+}

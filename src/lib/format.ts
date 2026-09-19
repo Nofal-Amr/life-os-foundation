@@ -8,13 +8,33 @@ export type DisplayPreferences = {
   unit_system: UnitSystem;
   time_format: TimeFormat;
   date_format: DateFormat;
+  /** Null until the user chooses one — we never guess a currency. */
+  currency: string | null;
 };
 
 export const DEFAULT_DISPLAY_PREFERENCES: DisplayPreferences = {
   unit_system: "metric",
   time_format: "24h",
   date_format: "dmy",
+  currency: null,
 };
+
+export const CURRENCIES: { value: string; label: string }[] = [
+  { value: "GBP", label: "British pound (£)" },
+  { value: "EUR", label: "Euro (€)" },
+  { value: "USD", label: "US dollar ($)" },
+  { value: "CAD", label: "Canadian dollar (C$)" },
+  { value: "AUD", label: "Australian dollar (A$)" },
+  { value: "AED", label: "UAE dirham (د.إ)" },
+  { value: "SAR", label: "Saudi riyal (﷼)" },
+  { value: "PKR", label: "Pakistani rupee (₨)" },
+  { value: "INR", label: "Indian rupee (₹)" },
+  { value: "TRY", label: "Turkish lira (₺)" },
+  { value: "CHF", label: "Swiss franc (CHF)" },
+  { value: "SEK", label: "Swedish krona (kr)" },
+  { value: "NOK", label: "Norwegian krone (kr)" },
+  { value: "ZAR", label: "South African rand (R)" },
+];
 
 export const UNIT_SYSTEMS: { value: UnitSystem; label: string }[] = [
   { value: "metric", label: "Metric (cm, kg)" },
