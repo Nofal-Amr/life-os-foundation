@@ -8,13 +8,33 @@ export type DisplayPreferences = {
   unit_system: UnitSystem;
   time_format: TimeFormat;
   date_format: DateFormat;
+  /** Null until the user chooses one — we never guess a currency. */
+  currency: string | null;
 };
 
 export const DEFAULT_DISPLAY_PREFERENCES: DisplayPreferences = {
   unit_system: "metric",
   time_format: "24h",
   date_format: "dmy",
+  currency: null,
 };
+
+export const CURRENCIES: { value: string; label: string }[] = [
+  { value: "GBP", label: "British pound (£)" },
+  { value: "EUR", label: "Euro (€)" },
+  { value: "USD", label: "US dollar ($)" },
+  { value: "CAD", label: "Canadian dollar (C$)" },
+  { value: "AUD", label: "Australian dollar (A$)" },
+  { value: "AED", label: "UAE dirham (د.إ)" },
+  { value: "SAR", label: "Saudi riyal (﷼)" },
+  { value: "PKR", label: "Pakistani rupee (₨)" },
+  { value: "INR", label: "Indian rupee (₹)" },
+  { value: "TRY", label: "Turkish lira (₺)" },
+  { value: "CHF", label: "Swiss franc (CHF)" },
+  { value: "SEK", label: "Swedish krona (kr)" },
+  { value: "NOK", label: "Norwegian krone (kr)" },
+  { value: "ZAR", label: "South African rand (R)" },
+];
 
 export const UNIT_SYSTEMS: { value: UnitSystem; label: string }[] = [
   { value: "metric", label: "Metric (cm, kg)" },
@@ -150,4 +170,40 @@ export function bmiContext(value: number): string {
   if (value < 25) return "That sits in the range usually described as a healthy weight.";
   if (value < 30) return "That sits in the range usually described as overweight.";
   return "That sits in the range usually described as obese.";
+}
+
+/* ---------- money: grouped figures, currency only once the user picks one ---------- */
+
+/** Absolute money figure. No symbol until a currency is chosen in Settings. */
+export function formatMoney(value: number | null | undefined, prefs: DisplayPreferences): string {
+  if (value == null || Number.isNaN(Number(value))) return "—";
+  const amount = Number(value);
+  if (prefs.currency) {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: prefs.currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    } catch {
+      /* fall through to plain grouping */
+    }
+  }
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/** Signed amounts always carry a word, so meaning never rests on colour. */
+export function formatSignedMoney(
+  value: number | null | undefined,
+  prefs: DisplayPreferences,
+): { amount: string; label: string } {
+  const amount = Number(value ?? 0);
+  return {
+    amount: `${amount < 0 ? "−" : "+"}${formatMoney(Math.abs(amount), prefs)}`,
+    label: amount < 0 ? "out" : "in",
+  };
 }

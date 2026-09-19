@@ -10,10 +10,12 @@ import {
   Plus,
   Sparkles,
   Sun,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
+import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 
@@ -89,6 +91,7 @@ function DashboardPage() {
   const evidence = useQuery(evidenceQuery());
   const profile = useQuery(profileQuery());
   const [quickAdd, setQuickAdd] = useState(false);
+  const [quickMoney, setQuickMoney] = useState(false);
 
   const openTasks = (tasks.data ?? []).filter(isOpen).sort(sortDirectives);
   const directive = openTasks[0];
@@ -290,15 +293,30 @@ function DashboardPage() {
         </div>
       </nav>
 
-      <Button
-        type="button"
-        aria-label="Quick add task"
-        title="Quick add task"
-        className="fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lg sm:bottom-6 sm:right-6"
-        onClick={() => setQuickAdd(true)}
-      >
-        <Plus className="size-6" />
-      </Button>
+      <div className="fixed bottom-24 right-5 z-40 flex flex-col gap-3 sm:bottom-6 sm:right-6">
+        <Button
+          type="button"
+          variant="outline"
+          aria-label="Log money"
+          title="Log money"
+          className="size-12 rounded-full shadow-lg"
+          onClick={() => setQuickMoney(true)}
+        >
+          <Wallet className="size-5" />
+        </Button>
+        <Button
+          type="button"
+          aria-label="Quick add task"
+          title="Quick add task"
+          className="size-14 rounded-full shadow-lg"
+          onClick={() => setQuickAdd(true)}
+        >
+          <Plus className="size-6" />
+        </Button>
+      </div>
+
+      <QuickAddTransactionDialog open={quickMoney} onOpenChange={setQuickMoney} />
+
 
       <QuickAddTaskDialog open={quickAdd} onOpenChange={setQuickAdd} />
     </div>

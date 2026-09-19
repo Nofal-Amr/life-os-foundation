@@ -1,0 +1,398 @@
+import { queryOptions } from "@tanstack/react-query";
+import { addDays, addMonths, addWeeks, addYears, differenceInCalendarDays, format, parseISO } from "date-fns";
+
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+import { currentUserId, unwrap } from "@/lib/supabase-helpers";
+
+type Enums = Database["public"]["Enums"];
+
+export type Account = Database["public"]["Tables"]["accounts"]["Row"];
+export type FinanceCategory = Database["public"]["Tables"]["finance_categories"]["Row"];
+export type Transaction = Database["public"]["Tables"]["transactions"]["Row"];
+export type RecurringCost = Database["public"]["Tables"]["recurring_costs"]["Row"];
+export type PaydayConfig = Database["public"]["Tables"]["payday_config"]["Row"];
+
+export type AccountType = Enums["account_type"];
+export type CategoryKind = Enums["category_kind"];
+export type TransactionKind = Enums["transaction_kind"];
+export type RecurrenceFrequency = Enums["recurrence_frequency"];
+export type PaydaySchedule = Enums["payday_schedule"];
+
+export const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
+  { value: "checking", label: "Current account" },
+  { value: "savings", label: "Savings" },
+  { value: "cash", label: "Cash" },
+  { value: "credit", label: "Credit" },
+];
+
+export const CATEGORY_KINDS: { value: CategoryKind; label: string }[] = [
+  { value: "expense", label: "Expense" },
+  { value: "income", label: "Income" },
+];
+
+export const TRANSACTION_KINDS: { value: TransactionKind; label: string }[] = [
+  { value: "expense", label: "Money out" },
+  { value: "income", label: "Money in" },
+  { value: "adjustment", label: "Adjustment" },
+];
+
+export const RECURRENCE_FREQUENCIES: { value: RecurrenceFrequency; label: string }[] = [
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+];
+
+/** Empty labels only — never any invented amounts or transactions. */
+export const STARTER_CATEGORIES: { name: string; kind: CategoryKind }[] = [
+  { name: "Groceries", kind: "expense" },
+  { name: "Rent", kind: "expense" },
+  { name: "Transport", kind: "expense" },
+  { name: "Eating out", kind: "expense" },
+  { name: "Utilities", kind: "expense" },
+  { name: "Subscriptions", kind: "expense" },
+  { name: "Health", kind: "expense" },
+  { name: "Salary", kind: "income" },
+];
+
+export const financeKeys = {
+  accounts: ["accounts"] as const,
+  categories: ["finance_categories"] as const,
+  transactions: ["transactions"] as const,
+  recurring: ["recurring_costs"] as const,
+  payday: ["payday_config"] as const,
+};
+
+/* ------------------------------- queries ------------------------------- */
+
+export const accountsQuery = () =>
+  queryOptions({
+    queryKey: financeKeys.accounts,
+    queryFn: async () =>
+      unwrap(
+        await supabase.from("accounts").select("*").order("created_at", { ascending: true }),
+      ) as Account[],
+  });
+
+export const financeCategoriesQuery = () =>
+  queryOptions({
+    queryKey: financeKeys.categories,
+    queryFn: async () =>
+      unwrap(
+        await supabase.from("finance_categories").select("*").order("name", { ascending: true }),
+      ) as FinanceCategory[],
+  });
+
+export const transactionsQuery = () =>
+  queryOptions({
+    queryKey: financeKeys.transactions,
+    queryFn: async () =>
+      unwrap(
+        await supabase
+          .from("transactions")
+          .select("*")
+          .order("date", { ascending: false })
+          .order("created_at", { ascending: false }),
+      ) as Transaction[],
+  });
+
+export const recurringCostsQuery = () =>
+  queryOptions({
+    queryKey: financeKeys.recurring,
+    queryFn: async () =>
+      unwrap(
+        await supabase
+          .from("recurring_costs")
+          .select("*")
+          .order("next_due_date", { ascending: true }),
+      ) as RecurringCost[],
+  });
+
+export const paydayConfigQuery = () =>
+  queryOptions({
+    queryKey: financeKeys.payday,
+    queryFn: async () =>
+      unwrap(await supabase.from("payday_config").select("*").maybeSingle()) as PaydayConfig | null,
+  });
+
+/* ------------------------------ accounts ------------------------------- */
+
+export type AccountInput = {
+  name: string;
+  type: AccountType;
+  opening_balance: number;
+  currency: string | null;
+  active: boolean;
+};
+
+export async function createAccount(input: AccountInput): Promise<Account> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase.from("accounts").insert({ ...input, user_id }).select().single(),
+  ) as Account;
+}
+
+export async function updateAccount(id: string, input: Partial<AccountInput>): Promise<Account> {
+  return unwrap(
+    await supabase.from("accounts").update(input).eq("id", id).select().single(),
+  ) as Account;
+}
+
+export async function deleteAccount(id: string): Promise<void> {
+  unwrap(await supabase.from("accounts").delete().eq("id", id).select());
+}
+
+/* ----------------------------- categories ------------------------------ */
+
+export type CategoryInput = {
+  name: string;
+  kind: CategoryKind;
+  color: string | null;
+  monthly_budget: number | null;
+};
+
+export async function createCategory(input: CategoryInput): Promise<FinanceCategory> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase.from("finance_categories").insert({ ...input, user_id }).select().single(),
+  ) as FinanceCategory;
+}
+
+export async function updateCategory(
+  id: string,
+  input: Partial<CategoryInput>,
+): Promise<FinanceCategory> {
+  return unwrap(
+    await supabase.from("finance_categories").update(input).eq("id", id).select().single(),
+  ) as FinanceCategory;
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  unwrap(await supabase.from("finance_categories").delete().eq("id", id).select());
+}
+
+/** Creates the starter category labels only. No amounts, no transactions. */
+export async function addStarterCategories(): Promise<FinanceCategory[]> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase
+      .from("finance_categories")
+      .insert(STARTER_CATEGORIES.map((c) => ({ ...c, user_id })))
+      .select(),
+  ) as FinanceCategory[];
+}
+
+/* ---------------------------- transactions ----------------------------- */
+
+export type TransactionInput = {
+  account_id: string;
+  category_id: string | null;
+  /** Signed: positive = money in, negative = money out. */
+  amount: number;
+  kind: TransactionKind;
+  description: string | null;
+  date: string;
+};
+
+export async function createTransaction(input: TransactionInput): Promise<Transaction> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase.from("transactions").insert({ ...input, user_id }).select().single(),
+  ) as Transaction;
+}
+
+export async function updateTransaction(
+  id: string,
+  input: Partial<TransactionInput>,
+): Promise<Transaction> {
+  return unwrap(
+    await supabase.from("transactions").update(input).eq("id", id).select().single(),
+  ) as Transaction;
+}
+
+export async function deleteTransaction(id: string): Promise<void> {
+  unwrap(await supabase.from("transactions").delete().eq("id", id).select());
+}
+
+/** Turn an entered magnitude plus a kind into the signed amount we store. */
+export function signedAmount(magnitude: number, kind: TransactionKind): number {
+  const value = Math.abs(magnitude);
+  return kind === "expense" ? -value : value;
+}
+
+/* --------------------------- recurring costs --------------------------- */
+
+export type RecurringCostInput = {
+  name: string;
+  /** Positive magnitude. */
+  amount: number;
+  category_id: string | null;
+  account_id: string | null;
+  frequency: RecurrenceFrequency;
+  next_due_date: string;
+  active: boolean;
+};
+
+export async function createRecurringCost(input: RecurringCostInput): Promise<RecurringCost> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase.from("recurring_costs").insert({ ...input, user_id }).select().single(),
+  ) as RecurringCost;
+}
+
+export async function updateRecurringCost(
+  id: string,
+  input: Partial<RecurringCostInput>,
+): Promise<RecurringCost> {
+  return unwrap(
+    await supabase.from("recurring_costs").update(input).eq("id", id).select().single(),
+  ) as RecurringCost;
+}
+
+export async function deleteRecurringCost(id: string): Promise<void> {
+  unwrap(await supabase.from("recurring_costs").delete().eq("id", id).select());
+}
+
+export function advanceDate(date: string, frequency: RecurrenceFrequency): string {
+  const current = parseISO(date);
+  const next =
+    frequency === "weekly"
+      ? addWeeks(current, 1)
+      : frequency === "yearly"
+        ? addYears(current, 1)
+        : addMonths(current, 1);
+  return format(next, "yyyy-MM-dd");
+}
+
+/**
+ * Logging a recurring cost is the only thing that touches a balance: it writes
+ * a real signed transaction and rolls the due date forward.
+ */
+export async function logRecurringCost(cost: RecurringCost): Promise<void> {
+  if (!cost.account_id) {
+    throw new Error("Choose an account for this cost before logging it.");
+  }
+  await createTransaction({
+    account_id: cost.account_id,
+    category_id: cost.category_id,
+    amount: -Math.abs(Number(cost.amount)),
+    kind: "expense",
+    description: cost.name,
+    date: cost.next_due_date,
+  });
+  await updateRecurringCost(cost.id, {
+    next_due_date: advanceDate(cost.next_due_date, cost.frequency),
+  });
+}
+
+/** Skipping only moves the date — no transaction, no balance change. */
+export async function skipRecurringCost(cost: RecurringCost): Promise<void> {
+  await updateRecurringCost(cost.id, {
+    next_due_date: advanceDate(cost.next_due_date, cost.frequency),
+  });
+}
+
+/* ------------------------------- payday -------------------------------- */
+
+export type PaydayInput = {
+  schedule: PaydaySchedule;
+  pay_day: number | null;
+  interval_weeks: number | null;
+  anchor_date: string | null;
+  expected_net_amount: number | null;
+  safety_buffer: number | null;
+};
+
+export async function savePaydayConfig(input: Partial<PaydayInput>): Promise<PaydayConfig> {
+  const user_id = await currentUserId();
+  const existing = unwrap(
+    await supabase.from("payday_config").select("id").eq("user_id", user_id).maybeSingle(),
+  ) as { id: string } | null;
+
+  if (existing) {
+    return unwrap(
+      await supabase.from("payday_config").update(input).eq("id", existing.id).select().single(),
+    ) as PaydayConfig;
+  }
+  return unwrap(
+    await supabase
+      .from("payday_config")
+      .insert({ schedule: "monthly", ...input, user_id })
+      .select()
+      .single(),
+  ) as PaydayConfig;
+}
+
+/** True only when the user has actually told us when they are paid. */
+export function hasPaydaySetup(config: PaydayConfig | null | undefined): boolean {
+  if (!config) return false;
+  return config.schedule === "monthly"
+    ? config.pay_day != null
+    : config.anchor_date != null && config.interval_weeks != null;
+}
+
+/** The next payday on or after `from`, or null when nothing is configured. */
+export function nextPayday(
+  config: PaydayConfig | null | undefined,
+  from: Date = new Date(),
+): Date | null {
+  if (!hasPaydaySetup(config) || !config) return null;
+  const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+
+  if (config.schedule === "monthly") {
+    const day = config.pay_day as number;
+    const inMonth = (base: Date) => {
+      const lastDay = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+      return new Date(base.getFullYear(), base.getMonth(), Math.min(day, lastDay));
+    };
+    const thisMonth = inMonth(start);
+    return thisMonth >= start ? thisMonth : inMonth(addMonths(start, 1));
+  }
+
+  const weeks = config.interval_weeks as number;
+  let date = parseISO(config.anchor_date as string);
+  if (weeks <= 0) return date >= start ? date : null;
+  while (date < start) date = addDays(date, weeks * 7);
+  return date;
+}
+
+export function daysUntil(date: Date, from: Date = new Date()): number {
+  return differenceInCalendarDays(date, from);
+}
+
+/* ------------------------------ balances ------------------------------- */
+
+export function accountBalance(account: Account, transactions: Transaction[]): number {
+  const moved = transactions
+    .filter((t) => t.account_id === account.id)
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+  return Number(account.opening_balance) + moved;
+}
+
+/** Spendable money: active accounts that are not credit. */
+export function liquidBalance(accounts: Account[], transactions: Transaction[]): number {
+  return accounts
+    .filter((a) => a.active && a.type !== "credit")
+    .reduce((sum, a) => sum + accountBalance(a, transactions), 0);
+}
+
+/** Active recurring costs falling due on or before the given date. */
+export function committedBefore(costs: RecurringCost[], before: Date | null): number {
+  if (!before) return 0;
+  return costs
+    .filter((c) => c.active && parseISO(c.next_due_date) <= before)
+    .reduce((sum, c) => sum + Math.abs(Number(c.amount)), 0);
+}
+
+export function availableBeforePayday(args: {
+  accounts: Account[];
+  transactions: Transaction[];
+  costs: RecurringCost[];
+  payday: Date | null;
+  safetyBuffer: number | null;
+}): { liquid: number; committed: number; buffer: number; available: number } {
+  const liquid = liquidBalance(args.accounts, args.transactions);
+  const committed = committedBefore(args.costs, args.payday);
+  const buffer = Number(args.safetyBuffer ?? 0);
+  return { liquid, committed, buffer, available: liquid - committed - buffer };
+}

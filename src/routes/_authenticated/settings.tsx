@@ -47,6 +47,13 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { useTheme } from "@/hooks/useTheme";
 import { requestDeviceLocation } from "@/lib/geolocation";
 import {
+  financeKeys,
+  hasPaydaySetup,
+  paydayConfigQuery,
+  savePaydayConfig,
+} from "@/data/finance";
+import {
+  CURRENCIES,
   DATE_FORMATS,
   TIME_FORMATS,
   UNIT_SYSTEMS,
@@ -89,6 +96,7 @@ function SettingsPage() {
   const preferences = useQuery(preferencesQuery());
   const body = useQuery(bodyStatsQuery());
   const prayer = useQuery(prayerSettingsQuery());
+  const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
   const { prefs, weightUnit } = usePreferences();
@@ -102,9 +110,13 @@ function SettingsPage() {
   const [birthdate, setBirthdate] = useState("");
   const [targetWeight, setTargetWeight] = useState<number | null>(null);
   const [city, setCity] = useState("");
+  const [payDay, setPayDay] = useState("");
+  const [expectedNet, setExpectedNet] = useState("");
+  const [safetyBuffer, setSafetyBuffer] = useState("");
   const nameLoaded = useRef(false);
   const orderLoaded = useRef(false);
   const bodyLoaded = useRef(false);
+  const paydayLoaded = useRef(false);
 
   useEffect(() => {
     if (nameLoaded.current || !profile.data) return;
@@ -135,6 +147,19 @@ function SettingsPage() {
     const target = body.data.target_weight_kg == null ? null : Number(body.data.target_weight_kg);
     setTargetWeight(weightToDisplay(target, prefs));
   }, [body.data, prefs]);
+
+  // Load the saved pay-day figures once, so typing is never overwritten.
+  useEffect(() => {
+    if (paydayLoaded.current || !payday.data) return;
+    paydayLoaded.current = true;
+    setPayDay(payday.data.pay_day == null ? "" : String(payday.data.pay_day));
+    setExpectedNet(
+      payday.data.expected_net_amount == null ? "" : String(payday.data.expected_net_amount),
+    );
+    setSafetyBuffer(
+      payday.data.safety_buffer == null ? "" : String(payday.data.safety_buffer),
+    );
+  }, [payday.data]);
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
@@ -194,6 +219,21 @@ function SettingsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: healthKeys.body });
       toast.success("Body setup saved.");
+    },
+    onError,
+  });
+
+  const savePayday = useMutation({
+    mutationFn: () =>
+      savePaydayConfig({
+        schedule: "monthly",
+        pay_day: num(payDay),
+        expected_net_amount: num(expectedNet),
+        safety_buffer: num(safetyBuffer),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.payday });
+      toast.success("Money setup saved.");
     },
     onError,
   });
@@ -602,6 +642,95 @@ function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="system-card">
+          <CardHeader>
+            <CardTitle className="text-base">Money setup</CardTitle>
+            <CardDescription>
+              When you are paid and how much you want left untouched. Left empty until you fill it
+              in — Life OS never guesses these.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="pay-day">Pay day of the month</Label>
+                <Input
+                  id="pay-day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  inputMode="numeric"
+                  className="h-12 tabular-nums"
+                  value={payDay}
+                  placeholder="e.g. 28"
+                  onChange={(event) => setPayDay(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expected-net">Expected net pay</Label>
+                <Input
+                  id="expected-net"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="h-12 tabular-nums"
+                  value={expectedNet}
+                  onChange={(event) => setExpectedNet(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="safety-buffer">Safety buffer</Label>
+                <Input
+                  id="safety-buffer"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="h-12 tabular-nums"
+                  value={safetyBuffer}
+                  onChange={(event) => setSafetyBuffer(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Currency</Label>
+              <Select
+                value={prefs.currency ?? "none"}
+                onValueChange={(value) =>
+                  savePrefs.mutate({ currency: value === "none" ? null : value })
+                }
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Not set" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not set (plain numbers)</SelectItem>
+                  {CURRENCIES.map((currency) => (
+                    <SelectItem key={currency.value} value={currency.value}>
+                      {currency.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                className="h-12"
+                disabled={savePayday.isPending}
+                onClick={() => savePayday.mutate()}
+              >
+                {savePayday.isPending ? "Saving…" : "Save money setup"}
+              </Button>
+              {!hasPaydaySetup(payday.data) ? (
+                <p className="text-sm text-muted-foreground">
+                  Until a pay day is saved, the Money page shows a setup prompt instead of a
+                  countdown.
+                </p>
+              ) : null}
             </div>
           </CardContent>
         </Card>
