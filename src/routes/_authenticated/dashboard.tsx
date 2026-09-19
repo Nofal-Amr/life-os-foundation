@@ -206,6 +206,21 @@ function DashboardPage() {
   const paydayReady = hasPaydaySetup(paydayConfig.data);
   const todayHealth = (healthLogs.data ?? []).find((log) => log.log_date === today);
 
+  /* Food and resources: derived only from rows the user logged. */
+  const todayFoodLogs = (foodLogs.data ?? []).filter((log) => log.log_date === today);
+  const todayCalories = Math.round(dayTotals(todayFoodLogs).calories);
+
+  const quotaAlerts = (resources.data ?? [])
+    .filter((resource) => resource.active && resource.kind === "quota")
+    .map((resource) => ({ resource, facts: quotaFacts(resource, resourceReadings.data ?? []) }))
+    .filter((item) => item.facts?.runsOutBeforeCycleEnd === true);
+
+  const meterCosts = (resources.data ?? [])
+    .filter((resource) => resource.active && resource.kind === "meter")
+    .map((resource) => ({ resource, facts: meterFacts(resource, resourceReadings.data ?? []) }))
+    .filter((item) => item.facts?.cycleCost != null);
+
+
   const dimensionOrder = preferences.data?.dimension_order?.length
     ? preferences.data.dimension_order
     : DEFAULT_DIMENSION_ORDER;
@@ -273,7 +288,9 @@ function DashboardPage() {
     { label: "prayers logged", value: todayPrayerLogs.length },
     { label: "expenses logged", value: expensesToday },
     { label: "health entries", value: todayHealth ? 1 : 0 },
+    { label: "food entries", value: todayFoodLogs.length },
   ].filter((item) => item.value > 0);
+
 
   const displayName = profile.data?.display_name?.trim();
   const firstName = displayName?.split(/\s+/)[0];
