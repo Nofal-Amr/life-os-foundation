@@ -147,6 +147,7 @@ type ComingUpItem = {
   sortValue: string;
   title: string;
   detail: string;
+  kind: "commitment" | "projection";
   to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources";
 };
 
@@ -159,32 +160,154 @@ function SectionHeading({ title, detail }: { title: string; detail?: string | un
   );
 }
 
-/** One line per area: a real figure and a plainly labelled way through to it. */
+/**
+ * Small filled / hollow segments. Purely a second reading of the count that is
+ * already written in words next to it — never the only way to read the row.
+ */
+function Dots({ filled, total }: { filled: number; total: number }) {
+  if (total <= 0) return null;
+  return (
+    <span aria-hidden="true" className="flex shrink-0 items-center gap-1">
+      {Array.from({ length: total }, (_, index) => (
+        <span
+          key={index}
+          className={`size-2 rounded-full ${index < filled ? "bg-foreground/70" : "border border-border"}`}
+        />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * The liquid balance split into the parts the user themselves defined: costs
+ * already set up and falling due before payday, their chosen buffer, and what
+ * is left. Every segment is also written out in text.
+ */
+function MoneySplitBar({
+  committed,
+  buffer,
+  available,
+  fmtMoney,
+}: {
+  committed: number;
+  buffer: number;
+  available: number;
+  fmtMoney: (value: number) => string;
+}) {
+  const spendable = Math.max(available, 0);
+  const total = committed + buffer + spendable;
+  if (total <= 0) return null;
+  const pct = (value: number) => `${(value / total) * 100}%`;
+  return (
+    <div className="mt-3 min-w-0">
+      <div
+        aria-hidden="true"
+        className="flex h-2 w-full min-w-0 overflow-hidden rounded-full border border-border"
+      >
+        <span style={{ width: pct(committed) }} className="bg-foreground/55" />
+        <span style={{ width: pct(buffer) }} className="bg-foreground/25" />
+        <span style={{ width: pct(spendable) }} className="bg-primary/70" />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Committed {fmtMoney(committed)} · Buffer {fmtMoney(buffer)} ·{" "}
+        {available >= 0
+          ? `Left to spend ${fmtMoney(available)}`
+          : `Short by ${fmtMoney(Math.abs(available))}`}
+      </p>
+    </div>
+  );
+}
+
+/** Elapsed time between the user's own two paydays. No score, just the dates. */
+function PaydayLine({
+  from,
+  to,
+  fmtDate,
+}: {
+  from: Date;
+  to: Date;
+  fmtDate: (value: string | Date) => string;
+}) {
+  const span = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
+  const elapsed = Math.min(
+    span,
+    Math.max(0, Math.round((Date.now() - from.getTime()) / 86_400_000)),
+  );
+  return (
+    <div className="mt-3 min-w-0">
+      <div aria-hidden="true" className="h-1 w-full overflow-hidden rounded-full bg-border">
+        <span
+          className="block h-full bg-foreground/40"
+          style={{ width: `${(elapsed / span) * 100}%` }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Day {elapsed} of {span} since {fmtDate(from)} · next {fmtDate(to)}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * One line per area. Rows with something to show carry their controls inline;
+ * rows with nothing logged collapse to a shorter, quieter single line.
+ */
 function StatusRow({
+  icon: Icon,
   label,
   value,
   to,
   hash,
   linkLabel,
   action,
+  aside,
+  compact,
   children,
 }: {
+  icon: LucideIcon;
   label: string;
   value: string;
   to?: "/spirit" | "/finance" | "/health" | "/food" | "/resources";
   hash?: string;
   linkLabel?: string;
   action?: ReactNode;
+  aside?: ReactNode;
+  compact?: boolean;
   children?: ReactNode;
 }) {
+  if (compact) {
+    return (
+      <div className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 py-1.5">
+        <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <p className="min-w-0 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground/80">{label}</span> — {value}
+        </p>
+        {to ? (
+          <Button
+            asChild
+            variant="link"
+            size="sm"
+            className="ml-auto h-auto min-h-11 px-1 text-xs text-muted-foreground"
+          >
+            <Link to={to} {...(hash ? { hash } : {})}>{linkLabel ?? `Open ${label}`}</Link>
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <div className="min-w-0 py-3 first:pt-0 last:pb-0">
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">{label}</p>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">{value}</p>
+    <div className="min-w-0 py-4 first:pt-0 last:pb-0">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-3 gap-y-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <p className="min-w-0 truncate text-sm font-medium text-foreground">{label}</p>
+            {aside}
+          </div>
+          <p className="mt-1 break-words text-sm text-muted-foreground">{value}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {action}
           {to ? (
             <Button asChild variant="ghost" size="sm" className="min-h-11">
@@ -199,6 +322,7 @@ function StatusRow({
     </div>
   );
 }
+
 
 
 function DashboardPage() {
