@@ -10,3 +10,8 @@
 - [x] Executive dashboard restyle with persisted light/dark theme
 - [x] Inline project and capability creation in the task form
 - [x] Confirm email/password sign-in is switched on in the connected backend's Auth settings
+- [x] Life-hub data foundation: body stats, health logs, medications, prayer logs/settings, preferences, avatar storage
+- [x] Profile & Settings page (display name, avatar, dimension priority, theme)
+- [x] Spirit page (prayer times, logging, weekly count)
+- [x] Health page (body stats + BMI, daily log, medications)
+
