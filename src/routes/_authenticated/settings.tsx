@@ -47,6 +47,13 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { useTheme } from "@/hooks/useTheme";
 import { requestDeviceLocation } from "@/lib/geolocation";
 import {
+  financeKeys,
+  hasPaydaySetup,
+  paydayConfigQuery,
+  savePaydayConfig,
+} from "@/data/finance";
+import {
+  CURRENCIES,
   DATE_FORMATS,
   TIME_FORMATS,
   UNIT_SYSTEMS,
@@ -102,9 +109,13 @@ function SettingsPage() {
   const [birthdate, setBirthdate] = useState("");
   const [targetWeight, setTargetWeight] = useState<number | null>(null);
   const [city, setCity] = useState("");
+  const [payDay, setPayDay] = useState("");
+  const [expectedNet, setExpectedNet] = useState("");
+  const [safetyBuffer, setSafetyBuffer] = useState("");
   const nameLoaded = useRef(false);
   const orderLoaded = useRef(false);
   const bodyLoaded = useRef(false);
+  const paydayLoaded = useRef(false);
 
   useEffect(() => {
     if (nameLoaded.current || !profile.data) return;
