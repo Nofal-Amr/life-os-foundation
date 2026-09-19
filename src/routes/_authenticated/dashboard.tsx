@@ -131,13 +131,8 @@ function DashboardPage() {
               >
                 {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </Button>
-              <div
-                className="flex size-9 items-center justify-center rounded-full border border-border bg-card text-xs font-semibold text-foreground"
-                aria-label={`Signed in as ${displayName}`}
-                title={displayName}
-              >
-                {initials || "LO"}
-              </div>
+              <UserAvatar size="md" />
+
             </div>
           </div>
           <div className="py-9 sm:py-12">
