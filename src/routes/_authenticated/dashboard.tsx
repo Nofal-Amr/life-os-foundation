@@ -198,7 +198,7 @@ function StatusRow({
 
 function DashboardPage() {
   const queryClient = useQueryClient();
-  const { fmtLongDate, fmtDate, fmtTime, fmtMoney } = usePreferences();
+  const { fmtLongDate, fmtDate, fmtTime, fmtSlot, fmtMoney } = usePreferences();
   const today = todayISO();
 
   const tasks = useQuery(tasksQuery());
@@ -444,6 +444,8 @@ function DashboardPage() {
           : "Add your location once to see today’s times."
       }
       to="/spirit"
+      linkLabel="Open Spirit"
+
     >
       {hasPrayerLocation ? (
         <div id="today-prayers" className="mt-3 grid min-w-0 grid-cols-5 gap-1.5 scroll-mt-5">
@@ -489,6 +491,8 @@ function DashboardPage() {
           : `${fmtMoney(balance)} now · payday not set up yet`
       }
       to="/finance"
+      linkLabel="Open Money"
+
       action={
         paydayReady && payday ? (
           <MoneyBreakdownDialog
