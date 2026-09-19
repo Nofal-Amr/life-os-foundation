@@ -164,7 +164,7 @@ function TransactionsPage() {
               <SelectItem value="all">All accounts</SelectItem>
               {(accounts.data ?? []).map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  {a.name}
+                     <span className="flex items-center gap-2"><EntityIcon icon={a.icon} color={a.color} containerClassName="size-5 rounded" className="size-3" />{a.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -181,7 +181,7 @@ function TransactionsPage() {
               <SelectItem value="none">No category</SelectItem>
               {(categories.data ?? []).map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                   <span className="flex items-center gap-2"><EntityIcon icon={c.icon} color={c.color} containerClassName="size-5 rounded" className="size-3" />{c.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -339,7 +339,7 @@ function TransactionsPage() {
                   <SelectContent>
                     {(accounts.data ?? []).map((a) => (
                       <SelectItem key={a.id} value={a.id}>
-                        {a.name}
+                         <span className="flex items-center gap-2"><EntityIcon icon={a.icon} color={a.color} containerClassName="size-5 rounded" className="size-3" />{a.name}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
