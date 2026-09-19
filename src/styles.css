@@ -177,3 +177,85 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * Semantic tones — one colour language across the app.
+ * Always paired with a text label so meaning never depends on colour alone.
+ */
+:root {
+  --tone-neutral-fg: oklch(0.36 0.03 260);
+  --tone-neutral-bg: oklch(0.955 0.005 265);
+  --tone-neutral-border: oklch(0.36 0.03 260 / 14%);
+  --tone-info-fg: oklch(0.45 0.13 238);
+  --tone-info-bg: oklch(0.95 0.03 238);
+  --tone-info-border: oklch(0.45 0.13 238 / 18%);
+  --tone-positive-fg: oklch(0.44 0.11 158);
+  --tone-positive-bg: oklch(0.95 0.04 158);
+  --tone-positive-border: oklch(0.44 0.11 158 / 18%);
+  --tone-warning-fg: oklch(0.48 0.12 65);
+  --tone-warning-bg: oklch(0.96 0.05 82);
+  --tone-warning-border: oklch(0.48 0.12 65 / 20%);
+  --tone-danger-fg: oklch(0.47 0.16 25);
+  --tone-danger-bg: oklch(0.955 0.03 25);
+  --tone-danger-border: oklch(0.47 0.16 25 / 20%);
+  --tone-quiet-fg: oklch(0.52 0.02 260);
+  --tone-quiet-bg: oklch(0.97 0.003 265);
+  --tone-quiet-border: oklch(0.52 0.02 260 / 12%);
+}
+
+.dark {
+  --tone-neutral-fg: oklch(0.86 0.02 255);
+  --tone-neutral-bg: oklch(0.86 0.02 255 / 12%);
+  --tone-neutral-border: oklch(0.86 0.02 255 / 22%);
+  --tone-info-fg: oklch(0.82 0.1 230);
+  --tone-info-bg: oklch(0.82 0.1 230 / 14%);
+  --tone-info-border: oklch(0.82 0.1 230 / 26%);
+  --tone-positive-fg: oklch(0.84 0.11 155);
+  --tone-positive-bg: oklch(0.84 0.11 155 / 14%);
+  --tone-positive-border: oklch(0.84 0.11 155 / 26%);
+  --tone-warning-fg: oklch(0.85 0.11 85);
+  --tone-warning-bg: oklch(0.85 0.11 85 / 14%);
+  --tone-warning-border: oklch(0.85 0.11 85 / 26%);
+  --tone-danger-fg: oklch(0.78 0.13 25);
+  --tone-danger-bg: oklch(0.78 0.13 25 / 16%);
+  --tone-danger-border: oklch(0.78 0.13 25 / 28%);
+  --tone-quiet-fg: oklch(0.72 0.02 258);
+  --tone-quiet-bg: oklch(0.72 0.02 258 / 10%);
+  --tone-quiet-border: oklch(0.72 0.02 258 / 20%);
+}
+
+@utility tone-neutral {
+  color: var(--tone-neutral-fg);
+  background-color: var(--tone-neutral-bg);
+  border-color: var(--tone-neutral-border);
+}
+
+@utility tone-info {
+  color: var(--tone-info-fg);
+  background-color: var(--tone-info-bg);
+  border-color: var(--tone-info-border);
+}
+
+@utility tone-positive {
+  color: var(--tone-positive-fg);
+  background-color: var(--tone-positive-bg);
+  border-color: var(--tone-positive-border);
+}
+
+@utility tone-warning {
+  color: var(--tone-warning-fg);
+  background-color: var(--tone-warning-bg);
+  border-color: var(--tone-warning-border);
+}
+
+@utility tone-danger {
+  color: var(--tone-danger-fg);
+  background-color: var(--tone-danger-bg);
+  border-color: var(--tone-danger-border);
+}
+
+@utility tone-quiet {
+  color: var(--tone-quiet-fg);
+  background-color: var(--tone-quiet-bg);
+  border-color: var(--tone-quiet-border);
+}

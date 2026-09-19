@@ -31,13 +31,24 @@ export const preferencesQuery = () =>
       ) as UserPreferences | null,
   });
 
-export async function saveDimensionOrder(dimension_order: string[]): Promise<UserPreferences> {
+export type PreferencesInput = {
+  dimension_order?: string[];
+  unit_system?: string;
+  time_format?: string;
+  date_format?: string;
+};
+
+export async function savePreferences(input: PreferencesInput): Promise<UserPreferences> {
   const user_id = await currentUserId();
   return unwrap(
     await supabase
       .from("user_preferences")
-      .upsert({ user_id, dimension_order }, { onConflict: "user_id" })
+      .upsert({ user_id, ...input }, { onConflict: "user_id" })
       .select()
       .single(),
   ) as UserPreferences;
+}
+
+export async function saveDimensionOrder(dimension_order: string[]): Promise<UserPreferences> {
+  return savePreferences({ dimension_order });
 }
