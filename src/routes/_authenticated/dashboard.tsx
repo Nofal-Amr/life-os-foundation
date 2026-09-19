@@ -8,6 +8,7 @@ import {
   CircleDollarSign,
   ClipboardPlus,
   HeartPulse,
+  Info,
   ListTodo,
   Plus,
 } from "lucide-react";
@@ -526,7 +527,7 @@ function DashboardPage() {
                         <span className="font-medium text-foreground">{resource.name}</span>{" "}
                         <span className="text-muted-foreground">
                           {Math.round(Number(facts!.remaining) * 10) / 10} {resource.unit} left · at
-                          this rate it reaches zero around {fmtDate(facts!.runsOutOn)} , before the
+                          this rate it reaches zero around {fmtDate(facts!.runsOutOn)}, before the
                           cycle ends on {fmtDate(facts!.cycleEnd)}.
                         </span>
                       </li>
