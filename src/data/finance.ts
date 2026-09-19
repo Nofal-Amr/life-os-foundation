@@ -394,9 +394,36 @@ export function nextPayday(
   return date;
 }
 
+/** The most recent payday on or before `from`, or null when nothing is set up. */
+export function previousPayday(
+  config: PaydayConfig | null | undefined,
+  from: Date = new Date(),
+): Date | null {
+  if (!hasPaydaySetup(config) || !config) return null;
+  const start = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+
+  if (config.schedule === "monthly") {
+    const day = config.pay_day as number;
+    const inMonth = (base: Date) => {
+      const lastDay = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+      return new Date(base.getFullYear(), base.getMonth(), Math.min(day, lastDay));
+    };
+    const thisMonth = inMonth(start);
+    return thisMonth <= start ? thisMonth : inMonth(addMonths(start, -1));
+  }
+
+  const weeks = config.interval_weeks as number;
+  if (weeks <= 0) return null;
+  const next = nextPayday(config, from);
+  if (!next) return null;
+  const prev = addDays(next, -weeks * 7);
+  return prev <= start ? prev : null;
+}
+
 export function daysUntil(date: Date, from: Date = new Date()): number {
   return differenceInCalendarDays(date, from);
 }
+
 
 /* ------------------------------ balances ------------------------------- */
 

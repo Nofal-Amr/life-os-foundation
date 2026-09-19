@@ -84,6 +84,20 @@
 - [x] Unlabelled arrows replaced with plain links that say where they go
 - [x] Status rows land on the exact thing: today's log, medications, Food, Money, Resources, Spirit
 
+## Today layout in three zones
+
+- [x] One small greeting line; Calendar and Notes moved to the quiet bottom of the page
+- [x] Next action stays the anchor, with a smaller, quieter "Also today" beneath it
+- [x] Status and Quick logs merged into one "Today" block; every row acts on itself
+- [x] Rows with nothing logged shrink to one short muted line with a single action
+- [x] Prayers first, then the rest in your saved order of priorities
+- [x] Coming up and Today so far combined into one small footer section
+- [x] Coming up separates things you do from things that just happen
+- [x] Small dots beside prayers and medication, matching the count written in words
+- [x] Money shows a labelled split of committed, buffer and left to spend, plus the payday line
+- [x] Money figure and countdown no longer cut off
+
+
 
 ## Next actions and task steps
 

@@ -3,16 +3,20 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { isToday, parseISO } from "date-fns";
 import {
   Check,
-  CircleDollarSign,
-  ClipboardPlus,
+  Gauge,
   HeartPulse,
   Info,
-  ListTodo,
+  Moon,
+  Pill,
+  Utensils,
+  Wallet,
+  type LucideIcon,
 } from "lucide-react";
+
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
+import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
@@ -29,9 +33,11 @@ import {
   liquidBalance,
   nextPayday,
   paydayConfigQuery,
+  previousPayday,
   recurringCostsQuery,
   transactionsQuery,
 } from "@/data/finance";
+
 import { dayTotals, foodLogsQuery } from "@/data/food";
 import { goalsQuery } from "@/data/goals";
 import {
@@ -141,6 +147,7 @@ type ComingUpItem = {
   sortValue: string;
   title: string;
   detail: string;
+  kind: "commitment" | "projection";
   to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources";
 };
 
@@ -153,32 +160,156 @@ function SectionHeading({ title, detail }: { title: string; detail?: string | un
   );
 }
 
-/** One line per area: a real figure and a plainly labelled way through to it. */
+/**
+ * Small filled / hollow segments. Purely a second reading of the count that is
+ * already written in words next to it — never the only way to read the row.
+ */
+function Dots({ filled, total }: { filled: number; total: number }) {
+  if (total <= 0) return null;
+  return (
+    <span aria-hidden="true" className="flex shrink-0 items-center gap-1">
+      {Array.from({ length: total }, (_, index) => (
+        <span
+          key={index}
+          className={`size-2 rounded-full ${index < filled ? "bg-foreground/70" : "border border-border"}`}
+        />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * The liquid balance split into the parts the user themselves defined: costs
+ * already set up and falling due before payday, their chosen buffer, and what
+ * is left. Every segment is also written out in text.
+ */
+function MoneySplitBar({
+  committed,
+  buffer,
+  available,
+  fmtMoney,
+}: {
+  committed: number;
+  buffer: number;
+  available: number;
+  fmtMoney: (value: number) => string;
+}) {
+  const spendable = Math.max(available, 0);
+  const total = committed + buffer + spendable;
+  if (total <= 0) return null;
+  const pct = (value: number) => `${(value / total) * 100}%`;
+  return (
+    <div className="mt-3 min-w-0">
+      <div
+        aria-hidden="true"
+        className="flex h-2 w-full min-w-0 overflow-hidden rounded-full border border-border"
+      >
+        <span style={{ width: pct(committed) }} className="bg-foreground/55" />
+        <span style={{ width: pct(buffer) }} className="bg-foreground/25" />
+        <span style={{ width: pct(spendable) }} className="bg-primary/70" />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Committed {fmtMoney(committed)} · Buffer {fmtMoney(buffer)} ·{" "}
+        {available >= 0
+          ? `Left to spend ${fmtMoney(available)}`
+          : `Short by ${fmtMoney(Math.abs(available))}`}
+      </p>
+    </div>
+  );
+}
+
+const iso = (date: Date) => date.toISOString().slice(0, 10);
+
+/** Elapsed time between the user's own two paydays. No score, just the dates. */
+function PaydayLine({
+  from,
+  to,
+  fmtDate,
+}: {
+  from: Date;
+  to: Date;
+  fmtDate: (value: string) => string;
+}) {
+  const span = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
+  const elapsed = Math.min(
+    span,
+    Math.max(0, Math.round((Date.now() - from.getTime()) / 86_400_000)),
+  );
+  return (
+    <div className="mt-3 min-w-0">
+      <div aria-hidden="true" className="h-1 w-full overflow-hidden rounded-full bg-border">
+        <span
+          className="block h-full bg-foreground/40"
+          style={{ width: `${(elapsed / span) * 100}%` }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Day {elapsed} of {span} since {fmtDate(iso(from))} · next {fmtDate(iso(to))}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * One line per area. Rows with something to show carry their controls inline;
+ * rows with nothing logged collapse to a shorter, quieter single line.
+ */
 function StatusRow({
+  icon: Icon,
   label,
   value,
   to,
   hash,
   linkLabel,
   action,
+  aside,
+  compact,
   children,
 }: {
+  icon: LucideIcon;
   label: string;
   value: string;
   to?: "/spirit" | "/finance" | "/health" | "/food" | "/resources";
   hash?: string;
   linkLabel?: string;
   action?: ReactNode;
+  aside?: ReactNode;
+  compact?: boolean;
   children?: ReactNode;
 }) {
+  if (compact) {
+    return (
+      <div className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 py-1.5">
+        <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <p className="min-w-0 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground/80">{label}</span> — {value}
+        </p>
+        {to ? (
+          <Button
+            asChild
+            variant="link"
+            size="sm"
+            className="ml-auto h-auto min-h-11 px-1 text-xs text-muted-foreground"
+          >
+            <Link to={to} {...(hash ? { hash } : {})}>{linkLabel ?? `Open ${label}`}</Link>
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
-    <div className="min-w-0 py-3 first:pt-0 last:pb-0">
-      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">{label}</p>
-          <p className="mt-0.5 truncate text-sm text-muted-foreground">{value}</p>
+    <div className="min-w-0 py-4 first:pt-0 last:pb-0">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <p className="min-w-0 truncate text-sm font-medium text-foreground">{label}</p>
+            {aside}
+          </div>
+          <p className="mt-1 break-words text-sm text-muted-foreground">{value}</p>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:justify-start">
           {action}
           {to ? (
             <Button asChild variant="ghost" size="sm" className="min-h-11">
@@ -193,6 +324,7 @@ function StatusRow({
     </div>
   );
 }
+
 
 
 function DashboardPage() {
@@ -305,8 +437,11 @@ function DashboardPage() {
 
   const balance = liquidBalance(accounts.data ?? [], transactions.data ?? []);
   const payday = nextPayday(paydayConfig.data);
+  const lastPayday = previousPayday(paydayConfig.data);
   const paydayReady = hasPaydaySetup(paydayConfig.data);
+  const money = useAvailableBeforePayday();
   const todayHealth = (healthLogs.data ?? []).find((log) => log.log_date === today);
+
 
   /* Food and resources: derived only from rows the user logged. */
   const todayFoodLogs = (foodLogs.data ?? []).filter((log) => log.log_date === today);
@@ -339,8 +474,10 @@ function DashboardPage() {
       title: task.title,
       detail:
         task.due_date === today ? "Task · Due today" : `Task · Due ${fmtDate(task.due_date)}`,
+      kind: "commitment",
       to: "/tasks",
     });
+
   }
 
   for (const project of projects.data ?? []) {
@@ -351,7 +488,9 @@ function DashboardPage() {
       sortValue: project.due_date,
       title: project.name,
       detail: `Project · Due ${fmtDate(project.due_date)}`,
+      kind: "commitment",
       to: "/projects",
+
     });
   }
 
@@ -363,7 +502,9 @@ function DashboardPage() {
       sortValue: goal.target_date,
       title: goal.name,
       detail: `Goal · Target ${fmtDate(goal.target_date)}`,
+      kind: "commitment",
       to: "/goals",
+
     });
   }
 
@@ -376,7 +517,9 @@ function DashboardPage() {
         sortValue: cost.next_due_date,
         title: cost.name,
         detail: `Recurring cost · ${fmtMoney(Number(cost.amount))} · ${fmtDate(cost.next_due_date)}`,
+        kind: "projection",
         to: "/finance/recurring",
+
       });
     }
   }
@@ -389,7 +532,9 @@ function DashboardPage() {
       sortValue: facts.runsOutOn,
       title: resource.name,
       detail: `Resource · ${Math.round(Number(facts.remaining) * 10) / 10} ${resource.unit} left · around ${fmtDate(facts.runsOutOn)}`,
+      kind: "projection",
       to: "/resources",
+
     });
   }
 
@@ -429,22 +574,20 @@ function DashboardPage() {
   const displayName = profile.data?.display_name?.trim();
   const firstName = displayName?.split(/\s+/)[0];
 
-  function scrollToPrayers() {
-    document.getElementById("today-prayers")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   const prayerRow = (
     <StatusRow
       key="spirit"
+      icon={Moon}
       label="Prayers"
       value={
         hasPrayerLocation
           ? `${todayPrayerLogs.length} of 5 logged today${prayerConfig?.city ? ` · ${prayerConfig.city}` : ""}`
           : "Add your location once to see today’s times."
       }
+      aside={hasPrayerLocation ? <Dots filled={todayPrayerLogs.length} total={5} /> : undefined}
       to="/spirit"
       linkLabel="Open Spirit"
-
+      compact={!hasPrayerLocation}
     >
       {hasPrayerLocation ? (
         <div id="today-prayers" className="mt-3 grid min-w-0 grid-cols-5 gap-1.5 scroll-mt-5">
@@ -480,9 +623,98 @@ function DashboardPage() {
     </StatusRow>
   );
 
+  const medicationRow = (
+    <StatusRow
+      icon={Pill}
+      label="Medication"
+      value={
+        scheduledDoses.length
+          ? `${dosesDue.length} of ${scheduledDoses.length} scheduled ${scheduledDoses.length === 1 ? "entry remains" : "entries remain"} today`
+          : "No medication times scheduled"
+      }
+      aside={
+        scheduledDoses.length ? (
+          <Dots filled={scheduledDoses.length - dosesDue.length} total={scheduledDoses.length} />
+        ) : undefined
+      }
+      to="/health"
+      hash="medications"
+      linkLabel="Open medications"
+      compact={!scheduledDoses.length}
+    >
+      {scheduledDoses.length ? (
+        <div className="mt-3 grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3">
+          {scheduledDoses.map(({ medication, slot }) => {
+            const taken = takenDoseKeys.has(`${medication.id}-${slot}`);
+            return (
+              <Button
+                key={`${medication.id}-${slot}`}
+                type="button"
+                variant="outline"
+                aria-pressed={taken}
+                aria-label={`${medication.name} at ${fmtSlot(slot)}${taken ? " taken" : " not taken"}`}
+                className={`h-auto min-h-14 min-w-0 flex-col items-start gap-0.5 px-2 py-2 text-left ${taken ? "tone-positive" : ""}`}
+                disabled={setDose.isPending}
+                onClick={() =>
+                  setDose.mutate({
+                    medication_id: medication.id,
+                    time_slot: slot,
+                    taken: !taken,
+                  })
+                }
+              >
+                <span className="w-full truncate text-xs font-medium">
+                  {medication.name}
+                  {medication.dosage ? (
+                    <span className="ml-1 font-normal opacity-75">{medication.dosage}</span>
+                  ) : null}
+                </span>
+                <span className="w-full truncate text-[11px] tabular-nums opacity-75">
+                  {fmtSlot(slot)}
+                </span>
+                <span className="flex items-center gap-1 text-[11px]">
+                  {taken ? <Check className="size-3" /> : null}
+                  {taken ? "Taken" : "Not taken"}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+      ) : null}
+    </StatusRow>
+  );
+
+  const bodyRows = (
+    <div key="health" className="min-w-0 divide-y divide-border/60">
+      {medicationRow}
+      <StatusRow
+        icon={HeartPulse}
+        label="Health log"
+        value={todayHealth ? "Logged today" : "Nothing logged yet today"}
+        to="/health"
+        hash="daily-log"
+        linkLabel={todayHealth ? "Open today’s log" : "Log health"}
+        compact={!todayHealth}
+      />
+      <StatusRow
+        icon={Utensils}
+        label="Calories"
+        value={
+          todayFoodLogs.length
+            ? `${todayCalories} kcal logged today`
+            : "No food logged yet today"
+        }
+        to="/food"
+        linkLabel={todayFoodLogs.length ? "Open Food" : "Log food"}
+        compact={!todayFoodLogs.length}
+      />
+    </div>
+  );
+
   const moneyRow = (
     <StatusRow
-      key="professional"
+      key="money"
+      icon={Wallet}
       label="Money"
       value={
         paydayReady && payday
@@ -491,101 +723,46 @@ function DashboardPage() {
       }
       to="/finance"
       linkLabel="Open Money"
-
       action={
         paydayReady && payday ? (
           <MoneyBreakdownDialog
             trigger={
-              <Button type="button" variant="outline" size="sm">
+              <Button type="button" variant="outline" size="sm" className="min-h-11">
                 <Info className="size-4" />
-                <span className="hidden sm:inline">Left before payday</span>
+                <span>Left before payday</span>
               </Button>
             }
           />
         ) : (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="min-h-11">
             <Link to="/settings">Set up payday</Link>
           </Button>
         )
       }
-    />
-  );
-
-  const bodyRows = (
-    <div key="health" className="divide-y divide-border">
-      <StatusRow
-        label="Health log"
-        value={todayHealth ? "Logged today" : "Nothing logged yet today"}
-        to="/health"
-        hash="daily-log"
-        linkLabel="Open today’s log"
-      />
-      <StatusRow
-        label="Calories"
-        value={todayFoodLogs.length ? `${todayCalories} kcal logged today` : "No food logged yet today"}
-        to="/food"
-        linkLabel="Open Food"
-      />
-      <StatusRow
-        label="Medication"
-        value={
-          scheduledDoses.length
-            ? `${dosesDue.length} of ${scheduledDoses.length} scheduled ${scheduledDoses.length === 1 ? "entry remains" : "entries remain"} today`
-            : "No medication times scheduled"
-        }
-        to="/health"
-        hash="medications"
-        linkLabel="Open medications"
-      >
-        {scheduledDoses.length ? (
-          <div className="mt-3 grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3">
-            {scheduledDoses.map(({ medication, slot }) => {
-              const taken = takenDoseKeys.has(`${medication.id}-${slot}`);
-              return (
-                <Button
-                  key={`${medication.id}-${slot}`}
-                  type="button"
-                  variant="outline"
-                  aria-pressed={taken}
-                  aria-label={`${medication.name} at ${fmtSlot(slot)}${taken ? " taken" : " not taken"}`}
-                  className={`h-auto min-h-14 min-w-0 flex-col items-start gap-0.5 px-2 py-2 text-left ${taken ? "tone-positive" : ""}`}
-                  disabled={setDose.isPending}
-                  onClick={() =>
-                    setDose.mutate({
-                      medication_id: medication.id,
-                      time_slot: slot,
-                      taken: !taken,
-                    })
-                  }
-                >
-                  <span className="w-full truncate text-xs font-medium">
-                    {medication.name}
-                    {medication.dosage ? (
-                      <span className="ml-1 font-normal opacity-75">{medication.dosage}</span>
-                    ) : null}
-                  </span>
-                  <span className="w-full truncate text-[11px] tabular-nums opacity-75">
-                    {fmtSlot(slot)}
-                  </span>
-                  <span className="flex items-center gap-1 text-[11px]">
-                    {taken ? <Check className="size-3" /> : null}
-                    {taken ? "Taken" : "Not taken"}
-                  </span>
-                </Button>
-              );
-            })}
-          </div>
-        ) : null}
-      </StatusRow>
-    </div>
+    >
+      {paydayReady && payday ? (
+        <>
+          <MoneySplitBar
+            committed={money.committed}
+            buffer={money.buffer}
+            available={money.available}
+            fmtMoney={fmtMoney}
+          />
+          {lastPayday ? (
+            <PaydayLine from={lastPayday} to={payday} fmtDate={fmtDate} />
+          ) : null}
+        </>
+      ) : null}
+    </StatusRow>
   );
 
   const resourceRows =
     quotaAlerts.length || meterCosts.length ? (
-      <div key="resources" className="divide-y divide-border">
+      <div key="resources" className="min-w-0 divide-y divide-border/60">
         {quotaAlerts.map(({ resource, facts }) => (
           <StatusRow
             key={resource.id}
+            icon={Gauge}
             label={resource.name}
             value={`${Math.round(Number(facts!.remaining) * 10) / 10} ${resource.unit} left${facts!.runsOutOn ? ` · around ${fmtDate(facts!.runsOutOn)}` : ""}`}
             to="/resources"
@@ -595,26 +772,28 @@ function DashboardPage() {
         {meterCosts.map(({ resource, facts }) => (
           <StatusRow
             key={resource.id}
+            icon={Gauge}
             label={resource.name}
             value={`This cycle so far ${fmtMoney(facts!.cycleCost)}${facts!.projectedCycleCost == null ? "" : ` · projected ${fmtMoney(facts!.projectedCycleCost)}`}`}
             to="/resources"
             linkLabel="Open Resources"
           />
         ))}
-
       </div>
     ) : null;
 
+  /* Prayers are the daily anchor and stay first; the rest follows the saved order. */
   const strips: { dimension: string; node: ReactNode }[] = [
-    { dimension: "spirit", node: prayerRow },
-    { dimension: "professional", node: moneyRow },
     { dimension: "health", node: bodyRows },
+    { dimension: "professional", node: moneyRow },
     { dimension: "professional", node: resourceRows },
   ].filter((strip) => strip.node != null);
 
   strips.sort(
     (a, b) => (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99),
   );
+  strips.unshift({ dimension: "spirit", node: prayerRow });
+
 
   function ActionBlock({ action, large }: { action: NextAction; large?: boolean }) {
     const isStep = action.item.id !== action.parent.id;
@@ -667,20 +846,11 @@ function DashboardPage() {
   return (
     <div className="min-w-0">
       <div className="w-full min-w-0">
-        <header>
-          <div className="flex flex-wrap items-end justify-between gap-4 pb-8 sm:pb-10">
-            <div>
-              <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
-              <h1 className="mt-2 text-3xl font-semibold text-foreground sm:text-4xl">
-                {greeting()}{firstName ? `, ${firstName}` : ""}
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">One thing first, then a quick look at the rest.</p>
-            </div>
-            <div className="flex gap-2">
-              <Button asChild size="sm" variant="outline"><Link to="/calendar">Calendar</Link></Button>
-              <Button asChild size="sm" variant="outline"><Link to="/notes">Notes</Link></Button>
-            </div>
-          </div>
+        <header className="pb-5">
+          <p className="text-sm text-muted-foreground">
+            {fmtLongDate(new Date())} · {greeting()}
+            {firstName ? `, ${firstName}` : ""}
+          </p>
         </header>
 
         {loading ? (
@@ -688,129 +858,130 @@ function DashboardPage() {
         ) : error ? (
           <ErrorState error={error} onRetry={() => queries.forEach((query) => query.refetch())} />
         ) : (
-          <main className="flex min-w-0 flex-col gap-5">
-            <Card className="system-card min-w-0 border-primary/30">
-              <CardHeader>
-                <SectionHeading
-                  title="Next action"
-                  detail={overdueTasks ? `${overdueTasks} open ${overdueTasks === 1 ? "task is" : "tasks are"} past their date.` : undefined}
-                />
-              </CardHeader>
-              <CardContent>
-                {primary ? (
-                  <ActionBlock action={primary} large />
-                ) : (
-                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
-                    <p className="min-w-0 text-sm text-muted-foreground">No open tasks right now.</p>
-                    <Button type="button" onClick={() => setQuickTask(true)}>Add a task</Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {alsoToday.length ? (
-              <Card className="system-card min-w-0">
+          <main className="flex min-w-0 flex-col gap-10">
+            {/* Zone 1 — the one thing to do. */}
+            <section className="min-w-0">
+              <Card className="system-card min-w-0 border-primary/30">
                 <CardHeader>
-                  <SectionHeading title="Also today" />
+                  <SectionHeading
+                    title="Next action"
+                    detail={overdueTasks ? `${overdueTasks} open ${overdueTasks === 1 ? "task is" : "tasks are"} past their date.` : undefined}
+                  />
                 </CardHeader>
                 <CardContent>
-                  <div className="divide-y divide-border">
+                  {primary ? (
+                    <ActionBlock action={primary} large />
+                  ) : (
+                    <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
+                      <p className="min-w-0 text-sm text-muted-foreground">No open tasks right now.</p>
+                      <Button type="button" onClick={() => setQuickTask(true)}>Add a task</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {alsoToday.length ? (
+                <div className="mt-4 min-w-0 rounded-lg border border-border/60 px-4 py-3">
+                  <h2 className="text-sm font-medium text-muted-foreground">Also today</h2>
+                  <div className="mt-1 divide-y divide-border/60">
                     {alsoToday.map((action) => (
-                      <div key={action.item.id} className="py-4 first:pt-0 last:pb-0">
+                      <div key={action.item.id} className="py-3 first:pt-1 last:pb-1">
                         <ActionBlock action={action} />
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : null}
+                </div>
+              ) : null}
+            </section>
 
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Status" detail="Your own figures for today." />
-              </CardHeader>
-              <CardContent>
-                <div className="divide-y divide-border">
-                  {strips.map((strip, index) => (
-                    <div key={index} className="min-w-0 py-1 first:pt-0 last:pb-0">
-                      {strip.node}
+            {/* Zone 2 — one block for everything today, each row acting on itself. */}
+            <section className="min-w-0">
+              <h2 className="text-base font-semibold text-foreground">Today</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Your own figures, and the logging beside them.</p>
+              <div className="mt-3 min-w-0 divide-y divide-border">
+                {strips.map((strip, index) => (
+                  <div key={index} className="min-w-0 py-2 first:pt-0 last:pb-0">
+                    {strip.node}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Zone 3 — quiet footer: what is ahead, what is done, small tools. */}
+            <section className="min-w-0 border-t border-border/60 pt-5 text-xs text-muted-foreground">
+              <div className="grid min-w-0 gap-6 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <h2 className="text-xs font-medium uppercase tracking-wide">Coming up</h2>
+                  {comingUp.length ? (
+                    <div className="mt-1 divide-y divide-border/50">
+                      {comingUp.slice(0, 6).map((item) => (
+                        <Link
+                          key={item.id}
+                          to={item.to}
+                          className="flex min-h-11 min-w-0 flex-col justify-center py-2"
+                        >
+                          <p className="truncate text-xs font-medium text-foreground/90">
+                            <span className="mr-1 font-normal text-muted-foreground">
+                              {item.kind === "commitment" ? "You do ·" : "Happens ·"}
+                            </span>
+                            {item.title}
+                          </p>
+                          <p className="mt-0.5 truncate">{item.detail}</p>
+                        </Link>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <p className="mt-1">Nothing due soon.</p>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Coming up" detail="Due soon across your saved priorities." />
-              </CardHeader>
-              <CardContent>
-                {comingUp.length ? (
-                  <div className="divide-y divide-border">
-                    {comingUp.slice(0, 6).map((item) => (
-                      <Link
-                        key={item.id}
-                        to={item.to}
-                        className="flex min-h-11 min-w-0 flex-col justify-center py-3 first:pt-0 last:pb-0"
-                      >
-                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                        <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
-                      </Link>
-                    ))}
-
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nothing due soon.</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Quick logs" detail="Common actions for today." />
-              </CardHeader>
-              <CardContent>
-                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
-                  <Button type="button" variant="outline" className="h-14 min-w-0 justify-start" onClick={scrollToPrayers}>
-                    <ClipboardPlus className="size-4 shrink-0" />
-                    <span className="truncate">Log prayer</span>
-                  </Button>
-                  <Button type="button" variant="outline" className="h-14 min-w-0 justify-start" onClick={() => setQuickMoney(true)}>
-                    <CircleDollarSign className="size-4 shrink-0" />
-                    <span className="truncate">Log expense</span>
-                  </Button>
-                  <Button asChild variant="outline" className="h-14 min-w-0 justify-start">
-                    <Link to="/health"><HeartPulse className="size-4 shrink-0" /><span className="truncate">Log health</span></Link>
-                  </Button>
-                  <Button type="button" variant="outline" className="h-14 min-w-0 justify-start" onClick={() => setQuickTask(true)}>
-                    <ListTodo className="size-4 shrink-0" />
-                    <span className="truncate">Add task</span>
-                  </Button>
+                <div className="min-w-0">
+                  <h2 className="text-xs font-medium uppercase tracking-wide">Today so far</h2>
+                  {todayCounts.length ? (
+                    <div className="mt-2 flex min-w-0 flex-wrap gap-2">
+                      {todayCounts.map((item) => (
+                        <SemanticBadge key={item.label} tone="positive" className="text-xs">
+                          {item.value} {item.label}
+                        </SemanticBadge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1">Nothing logged yet today.</p>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Today so far" />
-              </CardHeader>
-              <CardContent>
-                {todayCounts.length ? (
-                  <div className="flex min-w-0 flex-wrap gap-2">
-                    {todayCounts.map((item) => (
-                      <SemanticBadge key={item.label} tone="positive" className="text-sm">
-                        {item.value} {item.label}
-                      </SemanticBadge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nothing logged yet today.</p>
-                )}
-              </CardContent>
-            </Card>
+              <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">
+                <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
+                  <Link to="/calendar">Calendar</Link>
+                </Button>
+                <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
+                  <Link to="/notes">Notes</Link>
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                  onClick={() => setQuickMoney(true)}
+                >
+                  Log expense
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                  onClick={() => setQuickTask(true)}
+                >
+                  Add task
+                </Button>
+              </div>
+            </section>
           </main>
         )}
       </div>
+
 
       <QuickAddTransactionDialog open={quickMoney} onOpenChange={setQuickMoney} />
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
