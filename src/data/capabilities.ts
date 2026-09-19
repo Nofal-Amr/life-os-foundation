@@ -8,6 +8,8 @@ export type Capability = Database["public"]["Tables"]["capabilities"]["Row"];
 export type CapabilityInput = {
   name: string;
   description: string | null;
+  icon: string | null;
+  color: string | null;
 };
 
 export const capabilityKeys = { all: ["capabilities"] as const };

@@ -17,6 +17,7 @@ export type AccountType = Enums["account_type"];
 export type CategoryKind = Enums["category_kind"];
 export type TransactionKind = Enums["transaction_kind"];
 export type RecurrenceFrequency = Enums["recurrence_frequency"];
+export type IntervalUnit = Exclude<Enums["interval_unit"], "hour">;
 export type PaydaySchedule = Enums["payday_schedule"];
 
 export const ACCOUNT_TYPES: { value: AccountType; label: string }[] = [
@@ -123,6 +124,8 @@ export type AccountInput = {
   opening_balance: number;
   currency: string | null;
   active: boolean;
+  icon: string | null;
+  color: string | null;
 };
 
 export async function createAccount(input: AccountInput): Promise<Account> {
@@ -149,6 +152,7 @@ export type CategoryInput = {
   kind: CategoryKind;
   color: string | null;
   monthly_budget: number | null;
+  icon: string | null;
 };
 
 export async function createCategory(input: CategoryInput): Promise<FinanceCategory> {
@@ -231,6 +235,9 @@ export type RecurringCostInput = {
   frequency: RecurrenceFrequency;
   next_due_date: string;
   active: boolean;
+  interval_count: number;
+  interval_unit: IntervalUnit;
+  next_due_at: string | null;
 };
 
 export async function createRecurringCost(input: RecurringCostInput): Promise<RecurringCost> {
@@ -253,14 +260,33 @@ export async function deleteRecurringCost(id: string): Promise<void> {
   unwrap(await supabase.from("recurring_costs").delete().eq("id", id).select());
 }
 
-export function advanceDate(date: string, frequency: RecurrenceFrequency): string {
+export function legacyFrequency(unit: IntervalUnit, count: number): RecurrenceFrequency {
+  if (count === 1 && unit === "day") return "daily";
+  if (count === 1 && unit === "week") return "weekly";
+  if (count === 1 && unit === "month") return "monthly";
+  if (count === 1 && unit === "year") return "yearly";
+  return "custom";
+}
+
+export function recurringInterval(cost: RecurringCost): { count: number; unit: IntervalUnit } {
+  const count = Math.max(1, Number(cost.interval_count || 1));
+  if (cost.interval_unit && cost.interval_unit !== "hour") return { count, unit: cost.interval_unit };
+  if (cost.frequency === "daily") return { count: 1, unit: "day" };
+  if (cost.frequency === "weekly") return { count: 1, unit: "week" };
+  if (cost.frequency === "yearly") return { count: 1, unit: "year" };
+  return { count: 1, unit: "month" };
+}
+
+export function advanceDate(date: string, count: number, unit: IntervalUnit): string {
   const current = parseISO(date);
   const next =
-    frequency === "weekly"
-      ? addWeeks(current, 1)
-      : frequency === "yearly"
-        ? addYears(current, 1)
-        : addMonths(current, 1);
+    unit === "day"
+      ? addDays(current, count)
+      : unit === "week"
+        ? addWeeks(current, count)
+        : unit === "year"
+          ? addYears(current, count)
+          : addMonths(current, count);
   return format(next, "yyyy-MM-dd");
 }
 
@@ -280,15 +306,23 @@ export async function logRecurringCost(cost: RecurringCost): Promise<void> {
     description: cost.name,
     date: cost.next_due_date,
   });
+  const interval = recurringInterval(cost);
+  const next = advanceDate(cost.next_due_date, interval.count, interval.unit);
   await updateRecurringCost(cost.id, {
-    next_due_date: advanceDate(cost.next_due_date, cost.frequency),
+    next_due_date: next,
+    next_due_at: `${next}T00:00:00`,
+    frequency: legacyFrequency(interval.unit, interval.count),
   });
 }
 
 /** Skipping only moves the date — no transaction, no balance change. */
 export async function skipRecurringCost(cost: RecurringCost): Promise<void> {
+  const interval = recurringInterval(cost);
+  const next = advanceDate(cost.next_due_date, interval.count, interval.unit);
   await updateRecurringCost(cost.id, {
-    next_due_date: advanceDate(cost.next_due_date, cost.frequency),
+    next_due_date: next,
+    next_due_at: `${next}T00:00:00`,
+    frequency: legacyFrequency(interval.unit, interval.count),
   });
 }
 
