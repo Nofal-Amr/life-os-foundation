@@ -33,13 +33,18 @@ import {
   deleteTask,
   filterTasks,
   reopenTask,
+  stepProgress,
+  stepsOf,
   taskKeys,
   tasksQuery,
+  topLevelTasks,
   updateTask,
   type Task,
   type TaskFilter,
   type TaskInput,
 } from "@/data/tasks";
+import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
+import { TaskStepsEditor, minutesLabel, stepsLine } from "@/components/app/TaskSteps";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { priorityLabel, priorityTone, taskStatusLabel, taskStatusTone } from "@/lib/semantics";
@@ -75,6 +80,7 @@ const emptyForm: TaskInput = {
   project_id: null,
   capability_id: null,
   goal_id: null,
+  estimated_minutes: null,
 };
 
 const NO_PROJECT = "none";
@@ -96,6 +102,8 @@ function TasksPage() {
   const [editing, setEditing] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Task | null>(null);
+  const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [evidenceTask, setEvidenceTask] = useState<Task | null>(null);
   const [evidenceCapability, setEvidenceCapability] = useState<string | null>(null);
   const [evidenceNote, setEvidenceNote] = useState("");
@@ -113,7 +121,7 @@ function TasksPage() {
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
 
   const save = useMutation({
-    mutationFn: async () => (editing ? updateTask(editing.id, form) : createTask(form)),
+    mutationFn: async () => (editing ? updateTask(editing.id, form, editing) : createTask(form)),
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
@@ -260,6 +268,7 @@ function TasksPage() {
       project_id: task.project_id,
       capability_id: task.capability_id,
       goal_id: task.goal_id,
+      estimated_minutes: task.estimated_minutes,
     });
     setShowNewProject(false);
     setShowNewCapability(false);
@@ -274,7 +283,8 @@ function TasksPage() {
   }, [navigate, taskHash, tasks.data]);
 
 
-  const visible = filterTasks(tasks.data ?? [], filter);
+  const allTasks = tasks.data ?? [];
+  const visible = filterTasks(topLevelTasks(allTasks), filter);
   const projectName = (id: string | null) =>
     (projects.data ?? []).find((p) => p.id === id)?.name;
 
