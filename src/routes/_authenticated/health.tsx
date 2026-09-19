@@ -8,7 +8,6 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DateNav } from "@/components/app/DateNav";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
-import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -638,7 +637,6 @@ function HealthPage() {
         </Card>
       </div>
 
-      <QuickAddTaskButton />
 
       <FormDialog
         open={medDialog}

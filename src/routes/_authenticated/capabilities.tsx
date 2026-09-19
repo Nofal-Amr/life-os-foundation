@@ -7,7 +7,6 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
-import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -175,7 +174,6 @@ function CapabilitiesPage() {
         </ul>
       )}
 
-      <QuickAddTaskButton />
 
       <FormDialog
         open={dialogOpen}
