@@ -3,9 +3,11 @@ import { LogOut, Menu } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
+import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth, useSignOut } from "@/hooks/useAuth";
+
 
 function Brand() {
   return (
