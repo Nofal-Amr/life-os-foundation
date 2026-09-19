@@ -16,7 +16,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
+import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
@@ -33,9 +33,11 @@ import {
   liquidBalance,
   nextPayday,
   paydayConfigQuery,
+  previousPayday,
   recurringCostsQuery,
   transactionsQuery,
 } from "@/data/finance";
+
 import { dayTotals, foodLogsQuery } from "@/data/food";
 import { goalsQuery } from "@/data/goals";
 import {
