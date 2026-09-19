@@ -181,7 +181,7 @@ export async function addStarterCategories(): Promise<FinanceCategory[]> {
   return unwrap(
     await supabase
       .from("finance_categories")
-      .insert(STARTER_CATEGORIES.map((c) => ({ ...c, user_id })))
+      .insert(STARTER_CATEGORIES.map((c) => ({ ...c, icon: null, color: null, monthly_budget: null, user_id })))
       .select(),
   ) as FinanceCategory[];
 }
