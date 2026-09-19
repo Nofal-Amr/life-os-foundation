@@ -433,9 +433,19 @@ function DashboardPage() {
                 <CardContent>
                   <p className="break-words text-3xl font-semibold tabular-nums text-foreground">{fmtMoney(balance)}</p>
                   {paydayReady && payday ? (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Payday in {daysUntil(payday)} {daysUntil(payday) === 1 ? "day" : "days"} · {fmtDate(payday.toISOString().slice(0, 10))}
-                    </p>
+                    <>
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        Payday in {daysUntil(payday)} {daysUntil(payday) === 1 ? "day" : "days"} · {fmtDate(payday.toISOString().slice(0, 10))}
+                      </p>
+                      <MoneyBreakdownDialog
+                        trigger={
+                          <Button type="button" variant="outline" className="mt-4 w-full">
+                            <Info className="size-4" />
+                            Money left before payday
+                          </Button>
+                        }
+                      />
+                    </>
                   ) : (
                     <Button asChild variant="outline" className="mt-4">
                       <Link to="/settings">Set up payday</Link>
@@ -445,6 +455,7 @@ function DashboardPage() {
                     <Link to="/finance">Open Money <ChevronRight className="size-4" /></Link>
                   </Button>
                 </CardContent>
+
               </Card>
             </div>
 
