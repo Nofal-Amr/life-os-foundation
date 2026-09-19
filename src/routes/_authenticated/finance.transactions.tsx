@@ -47,10 +47,6 @@ export const Route = createFileRoute("/_authenticated/finance/transactions")({
   component: TransactionsPage,
 });
 
-const TONE_TEXT = {
-  positive: "text-[color:var(--tone-positive-fg,currentColor)]",
-} as const;
-
 function TransactionsPage() {
   const queryClient = useQueryClient();
   const transactions = useQuery(transactionsQuery());

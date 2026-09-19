@@ -12,6 +12,7 @@ import {
   Sparkles,
   Sunset,
   Target,
+  Wallet,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -19,6 +20,7 @@ export const NAV_ITEMS = [
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/habits", label: "Habits", icon: Repeat },
+  { to: "/finance", label: "Money", icon: Wallet },
   { to: "/goals", label: "Goals", icon: Target },
   { to: "/health", label: "Health", icon: HeartPulse },
   { to: "/spirit", label: "Spirit", icon: Moon },
