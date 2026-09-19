@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { capabilitiesQuery, capabilityKeys, createCapability } from "@/data/capabilities";
 import { PRIORITIES, TASK_STATUSES } from "@/data/enums";
@@ -620,7 +619,6 @@ function TasksPage() {
         </div>
       </FormDialog>
 
-      <QuickAddTaskButton />
 
       <ConfirmDialog
         open={!!toDelete}

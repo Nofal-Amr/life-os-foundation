@@ -9,7 +9,6 @@ import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentit
 import { FormDialog } from "@/components/app/FormDialog";
 import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
 import { PageHeader } from "@/components/app/PageHeader";
-import { QuickAddTransactionButton } from "@/components/app/QuickAddTransaction";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -576,7 +575,6 @@ function FinanceOverview() {
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
 
-      <QuickAddTransactionButton />
     </>
   );
 }

@@ -35,7 +35,6 @@ import {
 import { tasksQuery } from "@/data/tasks";
 import { usePreferences } from "@/hooks/usePreferences";
 import { goalStatusLabel, goalStatusTone } from "@/lib/semantics";
-import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 
 export const Route = createFileRoute("/_authenticated/goals")({
@@ -269,7 +268,6 @@ function GoalsPage() {
         </div>
       </FormDialog>
 
-      <QuickAddTaskButton />
 
       <ConfirmDialog
         open={!!toDelete}
