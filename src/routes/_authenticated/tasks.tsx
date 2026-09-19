@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
@@ -130,6 +131,8 @@ function TasksPage() {
         priority: "medium",
         start_date: null,
         due_date: null,
+        icon: null,
+        color: null,
       }),
     onSuccess: (project) => {
       if (!project) return;
@@ -147,7 +150,7 @@ function TasksPage() {
   });
 
   const addCapability = useMutation({
-    mutationFn: () => createCapability({ name: newCapabilityName.trim(), description: null }),
+    mutationFn: () => createCapability({ name: newCapabilityName.trim(), description: null, icon: null, color: null }),
     onSuccess: (capability) => {
       if (!capability) return;
       queryClient.setQueryData(capabilityKeys.all, (current: typeof capabilities.data) => [
@@ -172,6 +175,8 @@ function TasksPage() {
         target_date: null,
         status: "not_started",
         progress: 0,
+        icon: null,
+        color: null,
       }),
     onSuccess: (goal) => {
       if (!goal) return;
@@ -328,7 +333,10 @@ function TasksPage() {
                         <SemanticBadge tone="danger">Overdue</SemanticBadge>
                       ) : null}
                       {task.due_date ? <span>Due {fmtDate(task.due_date)}</span> : null}
-                      {task.project_id ? <span>{projectName(task.project_id)}</span> : null}
+                       {task.project_id ? (() => {
+                         const project = (projects.data ?? []).find((item) => item.id === task.project_id);
+                         return project ? <span className="inline-flex items-center gap-1.5"><EntityIcon icon={project.icon} color={project.color} containerClassName="size-5 rounded" className="size-3" />{project.name}</span> : null;
+                       })() : null}
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -444,7 +452,7 @@ function TasksPage() {
                 <SelectItem value={NO_PROJECT}>No project</SelectItem>
                 {(projects.data ?? []).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.name}
+                     <span className="flex items-center gap-2"><EntityIcon icon={p.icon} color={p.color} containerClassName="size-5 rounded" className="size-3" />{p.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -495,7 +503,7 @@ function TasksPage() {
                 <SelectItem value={NONE}>No capability</SelectItem>
                 {(capabilities.data ?? []).map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.name}
+                     <span className="flex items-center gap-2"><EntityIcon icon={c.icon} color={c.color} containerClassName="size-5 rounded" className="size-3" />{c.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -546,7 +554,7 @@ function TasksPage() {
                 <SelectItem value={NONE}>No goal</SelectItem>
                 {(goals.data ?? []).map((g) => (
                   <SelectItem key={g.id} value={g.id}>
-                    {g.name}
+                     <span className="flex items-center gap-2"><EntityIcon icon={g.icon} color={g.color} containerClassName="size-5 rounded" className="size-3" />{g.name}</span>
                   </SelectItem>
                 ))}
               </SelectContent>

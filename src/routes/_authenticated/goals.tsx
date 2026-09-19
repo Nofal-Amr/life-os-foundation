@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
@@ -55,6 +56,8 @@ const emptyForm: GoalInput = {
   target_date: null,
   status: "not_started",
   progress: 0,
+  icon: null,
+  color: null,
 };
 
 function GoalsPage() {
@@ -113,6 +116,8 @@ function GoalsPage() {
       target_date: goal.target_date,
       status: goal.status,
       progress: goal.progress,
+      icon: goal.icon,
+      color: goal.color,
     });
     setDialogOpen(true);
   }
@@ -140,8 +145,10 @@ function GoalsPage() {
           {(goals.data ?? []).map((goal) => (
             <li key={goal.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{goal.name}</p>
+                 <div className="flex min-w-0 flex-1 gap-3">
+                   <EntityIcon icon={goal.icon} color={goal.color} />
+                   <div className="min-w-0 flex-1">
+                   <p className="truncate font-medium">{goal.name}</p>
                   {goal.description ? (
                     <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                       {goal.description}
@@ -170,6 +177,7 @@ function GoalsPage() {
                       }
                     />
                   </div>
+                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="ghost" onClick={() => openEdit(goal)}>
@@ -201,6 +209,7 @@ function GoalsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="space-y-2">
           <Label htmlFor="goal-description">Description</Label>
           <Textarea
