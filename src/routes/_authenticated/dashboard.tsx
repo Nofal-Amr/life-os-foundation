@@ -91,6 +91,7 @@ function DashboardPage() {
   const evidence = useQuery(evidenceQuery());
   const profile = useQuery(profileQuery());
   const [quickAdd, setQuickAdd] = useState(false);
+  const [quickMoney, setQuickMoney] = useState(false);
 
   const openTasks = (tasks.data ?? []).filter(isOpen).sort(sortDirectives);
   const directive = openTasks[0];
