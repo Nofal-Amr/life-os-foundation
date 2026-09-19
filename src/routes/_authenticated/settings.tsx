@@ -763,6 +763,62 @@ function SettingsPage() {
 
         <Card className="system-card">
           <CardHeader>
+            <CardTitle className="text-base">Modules</CardTitle>
+            <CardDescription>
+              Choose which parts of Life OS you see. Switching one off hides it everywhere and never
+              deletes anything you saved.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {MODULES.map((module) => {
+              const on = enabledModuleKeys.includes(module.key);
+              return (
+                <div
+                  key={module.key}
+                  className="flex min-h-14 items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{module.label}</p>
+                    <p className="text-xs text-muted-foreground">{module.description}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{on ? "On" : "Off"}</span>
+                    <Switch
+                      checked={on}
+                      aria-label={`${module.label} module`}
+                      disabled={isSaving}
+                      onCheckedChange={(next) => toggleModule(module.key, next)}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card className="system-card">
+          <CardHeader>
+            <CardTitle className="text-base">Setup</CardTitle>
+            <CardDescription>
+              Walk through the first-run questions again. Nothing is cleared — you just confirm or
+              change your answers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12"
+              disabled={savePrefs.isPending}
+              onClick={() => savePrefs.mutate({ onboarding_completed_at: null })}
+            >
+              Run setup again
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="system-card">
+          <CardHeader>
             <CardTitle className="text-base">Appearance</CardTitle>
             <CardDescription>Your theme choice is remembered on this device.</CardDescription>
           </CardHeader>
