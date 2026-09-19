@@ -138,6 +138,10 @@ function DashboardPage() {
   const preferences = useQuery(preferencesQuery());
   const profile = useQuery(profileQuery());
   const projects = useQuery(projectsQuery());
+  const foodLogs = useQuery(foodLogsQuery());
+  const resources = useQuery(resourcesQuery());
+  const resourceReadings = useQuery(resourceReadingsQuery());
+
 
   const [quickTask, setQuickTask] = useState(false);
   const [quickMoney, setQuickMoney] = useState(false);
@@ -172,7 +176,11 @@ function DashboardPage() {
     preferences,
     profile,
     projects,
+    foodLogs,
+    resources,
+    resourceReadings,
   ];
+
   const loading = queries.some((query) => query.isLoading);
   const error = queries.find((query) => query.error)?.error;
 
