@@ -844,20 +844,11 @@ function DashboardPage() {
   return (
     <div className="min-w-0">
       <div className="w-full min-w-0">
-        <header>
-          <div className="flex flex-wrap items-end justify-between gap-4 pb-8 sm:pb-10">
-            <div>
-              <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
-              <h1 className="mt-2 text-3xl font-semibold text-foreground sm:text-4xl">
-                {greeting()}{firstName ? `, ${firstName}` : ""}
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">One thing first, then a quick look at the rest.</p>
-            </div>
-            <div className="flex gap-2">
-              <Button asChild size="sm" variant="outline"><Link to="/calendar">Calendar</Link></Button>
-              <Button asChild size="sm" variant="outline"><Link to="/notes">Notes</Link></Button>
-            </div>
-          </div>
+        <header className="pb-5">
+          <p className="text-sm text-muted-foreground">
+            {fmtLongDate(new Date())} · {greeting()}
+            {firstName ? `, ${firstName}` : ""}
+          </p>
         </header>
 
         {loading ? (
@@ -865,129 +856,130 @@ function DashboardPage() {
         ) : error ? (
           <ErrorState error={error} onRetry={() => queries.forEach((query) => query.refetch())} />
         ) : (
-          <main className="flex min-w-0 flex-col gap-5">
-            <Card className="system-card min-w-0 border-primary/30">
-              <CardHeader>
-                <SectionHeading
-                  title="Next action"
-                  detail={overdueTasks ? `${overdueTasks} open ${overdueTasks === 1 ? "task is" : "tasks are"} past their date.` : undefined}
-                />
-              </CardHeader>
-              <CardContent>
-                {primary ? (
-                  <ActionBlock action={primary} large />
-                ) : (
-                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
-                    <p className="min-w-0 text-sm text-muted-foreground">No open tasks right now.</p>
-                    <Button type="button" onClick={() => setQuickTask(true)}>Add a task</Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {alsoToday.length ? (
-              <Card className="system-card min-w-0">
+          <main className="flex min-w-0 flex-col gap-10">
+            {/* Zone 1 — the one thing to do. */}
+            <section className="min-w-0">
+              <Card className="system-card min-w-0 border-primary/30">
                 <CardHeader>
-                  <SectionHeading title="Also today" />
+                  <SectionHeading
+                    title="Next action"
+                    detail={overdueTasks ? `${overdueTasks} open ${overdueTasks === 1 ? "task is" : "tasks are"} past their date.` : undefined}
+                  />
                 </CardHeader>
                 <CardContent>
-                  <div className="divide-y divide-border">
+                  {primary ? (
+                    <ActionBlock action={primary} large />
+                  ) : (
+                    <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
+                      <p className="min-w-0 text-sm text-muted-foreground">No open tasks right now.</p>
+                      <Button type="button" onClick={() => setQuickTask(true)}>Add a task</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {alsoToday.length ? (
+                <div className="mt-4 min-w-0 rounded-lg border border-border/60 px-4 py-3">
+                  <h2 className="text-sm font-medium text-muted-foreground">Also today</h2>
+                  <div className="mt-1 divide-y divide-border/60">
                     {alsoToday.map((action) => (
-                      <div key={action.item.id} className="py-4 first:pt-0 last:pb-0">
+                      <div key={action.item.id} className="py-3 first:pt-1 last:pb-1">
                         <ActionBlock action={action} />
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ) : null}
+                </div>
+              ) : null}
+            </section>
 
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Status" detail="Your own figures for today." />
-              </CardHeader>
-              <CardContent>
-                <div className="divide-y divide-border">
-                  {strips.map((strip, index) => (
-                    <div key={index} className="min-w-0 py-1 first:pt-0 last:pb-0">
-                      {strip.node}
+            {/* Zone 2 — one block for everything today, each row acting on itself. */}
+            <section className="min-w-0">
+              <h2 className="text-base font-semibold text-foreground">Today</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Your own figures, and the logging beside them.</p>
+              <div className="mt-3 min-w-0 divide-y divide-border">
+                {strips.map((strip, index) => (
+                  <div key={index} className="min-w-0 py-2 first:pt-0 last:pb-0">
+                    {strip.node}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Zone 3 — quiet footer: what is ahead, what is done, small tools. */}
+            <section className="min-w-0 border-t border-border/60 pt-5 text-xs text-muted-foreground">
+              <div className="grid min-w-0 gap-6 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <h2 className="text-xs font-medium uppercase tracking-wide">Coming up</h2>
+                  {comingUp.length ? (
+                    <div className="mt-1 divide-y divide-border/50">
+                      {comingUp.slice(0, 6).map((item) => (
+                        <Link
+                          key={item.id}
+                          to={item.to}
+                          className="flex min-h-11 min-w-0 flex-col justify-center py-2"
+                        >
+                          <p className="truncate text-xs font-medium text-foreground/90">
+                            <span className="mr-1 font-normal text-muted-foreground">
+                              {item.kind === "commitment" ? "You do ·" : "Happens ·"}
+                            </span>
+                            {item.title}
+                          </p>
+                          <p className="mt-0.5 truncate">{item.detail}</p>
+                        </Link>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <p className="mt-1">Nothing due soon.</p>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
 
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Coming up" detail="Due soon across your saved priorities." />
-              </CardHeader>
-              <CardContent>
-                {comingUp.length ? (
-                  <div className="divide-y divide-border">
-                    {comingUp.slice(0, 6).map((item) => (
-                      <Link
-                        key={item.id}
-                        to={item.to}
-                        className="flex min-h-11 min-w-0 flex-col justify-center py-3 first:pt-0 last:pb-0"
-                      >
-                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                        <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
-                      </Link>
-                    ))}
-
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nothing due soon.</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Quick logs" detail="Common actions for today." />
-              </CardHeader>
-              <CardContent>
-                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
-                  <Button type="button" variant="outline" className="h-14 min-w-0 justify-start" onClick={scrollToPrayers}>
-                    <ClipboardPlus className="size-4 shrink-0" />
-                    <span className="truncate">Log prayer</span>
-                  </Button>
-                  <Button type="button" variant="outline" className="h-14 min-w-0 justify-start" onClick={() => setQuickMoney(true)}>
-                    <CircleDollarSign className="size-4 shrink-0" />
-                    <span className="truncate">Log expense</span>
-                  </Button>
-                  <Button asChild variant="outline" className="h-14 min-w-0 justify-start">
-                    <Link to="/health"><HeartPulse className="size-4 shrink-0" /><span className="truncate">Log health</span></Link>
-                  </Button>
-                  <Button type="button" variant="outline" className="h-14 min-w-0 justify-start" onClick={() => setQuickTask(true)}>
-                    <ListTodo className="size-4 shrink-0" />
-                    <span className="truncate">Add task</span>
-                  </Button>
+                <div className="min-w-0">
+                  <h2 className="text-xs font-medium uppercase tracking-wide">Today so far</h2>
+                  {todayCounts.length ? (
+                    <div className="mt-2 flex min-w-0 flex-wrap gap-2">
+                      {todayCounts.map((item) => (
+                        <SemanticBadge key={item.label} tone="positive" className="text-xs">
+                          {item.value} {item.label}
+                        </SemanticBadge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-1">Nothing logged yet today.</p>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="system-card min-w-0">
-              <CardHeader>
-                <SectionHeading title="Today so far" />
-              </CardHeader>
-              <CardContent>
-                {todayCounts.length ? (
-                  <div className="flex min-w-0 flex-wrap gap-2">
-                    {todayCounts.map((item) => (
-                      <SemanticBadge key={item.label} tone="positive" className="text-sm">
-                        {item.value} {item.label}
-                      </SemanticBadge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Nothing logged yet today.</p>
-                )}
-              </CardContent>
-            </Card>
+              <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">
+                <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
+                  <Link to="/calendar">Calendar</Link>
+                </Button>
+                <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
+                  <Link to="/notes">Notes</Link>
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                  onClick={() => setQuickMoney(true)}
+                >
+                  Log expense
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                  onClick={() => setQuickTask(true)}
+                >
+                  Add task
+                </Button>
+              </div>
+            </section>
           </main>
         )}
       </div>
+
 
       <QuickAddTransactionDialog open={quickMoney} onOpenChange={setQuickMoney} />
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
