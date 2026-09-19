@@ -16,7 +16,9 @@ import { toast } from "sonner";
 
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
+import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
 import { EntityIcon } from "@/components/app/EntityIdentity";
+
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -31,11 +33,19 @@ import {
   recurringCostsQuery,
   transactionsQuery,
 } from "@/data/finance";
+import { dayTotals, foodLogsQuery } from "@/data/food";
 import {
   healthLogsQuery,
   medicationLogsQuery,
   medicationsQuery,
 } from "@/data/health";
+import {
+  meterFacts,
+  quotaFacts,
+  resourceReadingsQuery,
+  resourcesQuery,
+} from "@/data/resources";
+
 import { DEFAULT_DIMENSION_ORDER, preferencesQuery } from "@/data/preferences";
 import { profileQuery } from "@/data/profile";
 import { projectsQuery } from "@/data/projects";
