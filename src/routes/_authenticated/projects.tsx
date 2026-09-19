@@ -4,8 +4,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
+import { ProjectCover, ProjectCoverPicker } from "@/components/app/ProjectCover";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -26,7 +28,9 @@ import {
   deleteProject,
   projectKeys,
   projectsQuery,
+  removeProjectCover,
   updateProject,
+  uploadProjectCover,
   type Project,
   type ProjectInput,
 } from "@/data/projects";
@@ -57,6 +61,7 @@ const emptyForm: ProjectInput = {
   due_date: null,
   icon: null,
   color: null,
+  image_url: null,
 };
 
 function ProjectsPage() {
@@ -68,17 +73,25 @@ function ProjectsPage() {
   const [editing, setEditing] = useState<Project | null>(null);
   const [form, setForm] = useState<ProjectInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Project | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [removeCover, setRemoveCover] = useState(false);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: projectKeys.all });
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
 
   const save = useMutation({
-    mutationFn: async () =>
-      editing ? updateProject(editing.id, form) : createProject(form),
+    mutationFn: async () => {
+      const project = editing ? await updateProject(editing.id, form) : await createProject(form);
+      if (coverFile) await uploadProjectCover(project.id, coverFile, editing?.image_url);
+      else if (removeCover && editing?.image_url) await removeProjectCover(project.id, editing.image_url);
+      return project;
+    },
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
+      setCoverFile(null);
+      setRemoveCover(false);
       toast.success(editing ? "Project updated." : "Project created.");
     },
     onError,
@@ -106,6 +119,8 @@ function ProjectsPage() {
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
+    setCoverFile(null);
+    setRemoveCover(false);
     setDialogOpen(true);
   }
 
@@ -120,7 +135,10 @@ function ProjectsPage() {
       due_date: project.due_date,
       icon: project.icon,
       color: project.color,
+      image_url: project.image_url,
     });
+    setCoverFile(null);
+    setRemoveCover(false);
     setDialogOpen(true);
   }
 
@@ -156,9 +174,10 @@ function ProjectsPage() {
                   {group.map((project) => (
                     <li
                       key={project.id}
-                      className="rounded-xl border border-border bg-card p-4"
+                      className="overflow-hidden rounded-xl border border-border bg-card"
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
+                      <ProjectCover path={project.image_url} name={project.name} icon={project.icon} color={project.color} />
+                      <div className="flex flex-wrap items-start justify-between gap-3 p-4">
                        <div className="flex min-w-0 gap-3">
                          <EntityIcon icon={project.icon} color={project.color} />
                          <div className="min-w-0">
@@ -224,6 +243,7 @@ function ProjectsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+        <ProjectCoverPicker file={coverFile} currentPath={editing?.image_url ?? null} removeCurrent={removeCover} onFileChange={(file) => { setCoverFile(file); if (file) setRemoveCover(false); }} onRemoveCurrent={() => setRemoveCover(true)} />
         <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
@@ -272,21 +292,11 @@ function ProjectsPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="start">Start date</Label>
-            <Input
-              id="start"
-              type="date"
-              value={form.start_date ?? ""}
-              onChange={(e) => setForm({ ...form, start_date: e.target.value || null })}
-            />
+            <DatePicker id="start" value={form.start_date} onChange={(value) => setForm({ ...form, start_date: value || null })} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="due">Due date</Label>
-            <Input
-              id="due"
-              type="date"
-              value={form.due_date ?? ""}
-              onChange={(e) => setForm({ ...form, due_date: e.target.value || null })}
-            />
+            <DatePicker id="due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
           </div>
         </div>
       </FormDialog>

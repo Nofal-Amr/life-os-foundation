@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { DatePicker } from "@/components/app/DatePicker";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,12 +88,7 @@ function ReviewPage() {
 
       <div className="mb-6 max-w-xs space-y-2">
         <Label htmlFor="review-date">Date</Label>
-        <Input
-          id="review-date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value || todayISO())}
-        />
+        <DatePicker id="review-date" value={date} disableFuture onChange={(value) => setDate(value || todayISO())} />
       </div>
 
       {review.isLoading ? (

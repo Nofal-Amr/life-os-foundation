@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -424,12 +425,7 @@ function TasksPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="task-due">Due date</Label>
-            <Input
-              id="task-due"
-              type="date"
-              value={form.due_date ?? ""}
-              onChange={(e) => setForm({ ...form, due_date: e.target.value || null })}
-            />
+            <DatePicker id="task-due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
           </div>
           <div className="space-y-2">
             <Label>Project</Label>

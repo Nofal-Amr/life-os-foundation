@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -189,23 +190,11 @@ function TransactionsPage() {
         </div>
         <div className="space-y-1">
           <Label htmlFor="filter-from">From</Label>
-          <Input
-            id="filter-from"
-            type="date"
-            className="h-11"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-          />
+          <DatePicker id="filter-from" value={from} onChange={setFrom} className="[&_button]:h-11" />
         </div>
         <div className="space-y-1">
           <Label htmlFor="filter-to">To</Label>
-          <Input
-            id="filter-to"
-            type="date"
-            className="h-11"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-          />
+          <DatePicker id="filter-to" value={to} onChange={setTo} className="[&_button]:h-11" />
         </div>
       </div>
 
@@ -319,13 +308,7 @@ function TransactionsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-date">Date</Label>
-                <Input
-                  id="edit-date"
-                  type="date"
-                  className="h-12"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
-                />
+                <DatePicker id="edit-date" value={form.date} onChange={(value) => setForm({ ...form, date: value })} />
               </div>
               <div className="space-y-2">
                 <Label>Account</Label>
