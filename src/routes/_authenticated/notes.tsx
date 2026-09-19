@@ -120,7 +120,7 @@ function NotesPage() {
       ) : visible.length === 0 ? (
         <EmptyState
           title={search ? "No matching notes" : "No notes yet"}
-          description={search ? "Try a different search term." : "Capture your first thought."}
+          description={search ? "Try a different search term." : "Notes hold thoughts you do not want to lose track of. Write one now, sort it later."}
           action={search ? undefined : <Button onClick={openCreate}>New note</Button>}
         />
       ) : (

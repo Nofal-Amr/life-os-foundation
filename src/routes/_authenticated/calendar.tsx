@@ -362,7 +362,7 @@ function CalendarPage() {
             {selectedItems.length === 0 ? (
               <EmptyState
                 title="Nothing on this day"
-                description="Anything with a date shows up here once you add it."
+                description="Everything with a date — tasks, projects, goals, costs and events — shows up here so nothing stays out of sight."
                 action={<Button onClick={() => openCreate(selected)}>New event</Button>}
               />
             ) : (

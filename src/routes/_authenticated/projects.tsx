@@ -156,7 +156,7 @@ function ProjectsPage() {
       ) : (projects.data ?? []).length === 0 ? (
         <EmptyState
           title="No projects yet"
-          description="Create your first project to start organising your work."
+          description="A project holds the tasks that belong together, so related work stays in one place."
           action={<Button onClick={openCreate}>New project</Button>}
         />
       ) : (

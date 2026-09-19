@@ -158,7 +158,7 @@ function HabitsPage() {
       ) : (habits.data ?? []).length === 0 ? (
         <EmptyState
           title="No habits yet"
-          description="Add a habit to begin tracking your consistency."
+          description="A habit is a small thing you want to keep doing. Life OS records the days you did it, nothing more."
           action={<Button onClick={openCreate}>New habit</Button>}
         />
       ) : (

@@ -114,7 +114,7 @@ export function RecurringList({ compact = false }: { compact?: boolean }) {
     return (
       <EmptyState
         title="Nothing logged yet"
-        description="Add the costs you know are coming so they stay in sight."
+        description="Recurring costs are the bills you know are coming. They stay projections until you log one, so they never move a balance on their own."
       />
     );
   }
