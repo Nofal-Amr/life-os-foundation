@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { QuickAddTransactionButton } from "@/components/app/QuickAddTransaction";
@@ -34,6 +35,7 @@ import {
   recurringCostsQuery,
   transactionsQuery,
   updateAccount,
+  savePaydayConfig,
   type Account,
   type AccountInput,
 } from "@/data/finance";
@@ -67,6 +69,8 @@ const emptyAccount: AccountInput = {
   opening_balance: 0,
   currency: null,
   active: true,
+  icon: null,
+  color: null,
 };
 
 function FinanceOverview() {
@@ -81,6 +85,9 @@ function FinanceOverview() {
   const [editing, setEditing] = useState<Account | null>(null);
   const [form, setForm] = useState<AccountInput>(emptyAccount);
   const [toDelete, setToDelete] = useState<Account | null>(null);
+  const [editingPayday, setEditingPayday] = useState(false);
+  const [expectedNet, setExpectedNet] = useState("");
+  const [safetyBuffer, setSafetyBuffer] = useState("");
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
@@ -102,6 +109,19 @@ function FinanceOverview() {
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
       setToDelete(null);
       toast.success("Account deleted.");
+    },
+    onError,
+  });
+
+  const saveMoneySetup = useMutation({
+    mutationFn: () => savePaydayConfig({
+      expected_net_amount: expectedNet === "" ? null : Number(expectedNet),
+      safety_buffer: safetyBuffer === "" ? null : Number(safetyBuffer),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.payday });
+      setEditingPayday(false);
+      toast.success("Money setup updated.");
     },
     onError,
   });
@@ -140,6 +160,8 @@ function FinanceOverview() {
       opening_balance: Number(account.opening_balance),
       currency: account.currency,
       active: account.active,
+      icon: account.icon,
+      color: account.color,
     });
     setDialogOpen(true);
   }
@@ -192,7 +214,7 @@ function FinanceOverview() {
                     ? `Committed costs exceed available funds before payday by ${fmtMoney(Math.abs(totals.available))}`
                     : `You have ${fmtMoney(totals.available)} to spend before payday`}
                 </SemanticBadge>
-                <dl className="grid gap-3 text-sm sm:grid-cols-3">
+                <dl className="grid min-w-0 gap-3 text-sm sm:grid-cols-3">
                   <div>
                     <dt className="text-muted-foreground">Committed before payday</dt>
                     <dd className="tabular-nums">{fmtMoney(totals.committed)}</dd>
@@ -212,6 +234,15 @@ function FinanceOverview() {
                     </dd>
                   </div>
                 </dl>
+                {editingPayday ? (
+                  <form className="grid min-w-0 gap-3 rounded-lg border border-border p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" onSubmit={(event) => { event.preventDefault(); saveMoneySetup.mutate(); }}>
+                    <div className="min-w-0 space-y-2"><Label htmlFor="overview-expected">Expected net pay</Label><Input id="overview-expected" type="number" min="0" step="0.01" value={expectedNet} onChange={(event) => setExpectedNet(event.target.value)} /></div>
+                    <div className="min-w-0 space-y-2"><Label htmlFor="overview-buffer">Safety buffer</Label><Input id="overview-buffer" type="number" min="0" step="0.01" value={safetyBuffer} onChange={(event) => setSafetyBuffer(event.target.value)} /></div>
+                    <div className="flex gap-2"><Button type="submit" disabled={saveMoneySetup.isPending}>Save</Button><Button type="button" variant="ghost" onClick={() => setEditingPayday(false)}>Cancel</Button></div>
+                  </form>
+                ) : (
+                  <Button type="button" size="sm" variant="outline" onClick={() => { setExpectedNet(config?.expected_net_amount == null ? "" : String(config.expected_net_amount)); setSafetyBuffer(config?.safety_buffer == null ? "" : String(config.safety_buffer)); setEditingPayday(true); }}>Edit pay and buffer</Button>
+                )}
               </div>
             )}
           </section>
@@ -234,14 +265,16 @@ function FinanceOverview() {
                     key={account.id}
                     className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
                   >
-                    <div className="min-w-0">
-                      <p className="font-medium">{account.name}</p>
+                     <div className="flex min-w-0 items-center gap-3">
+                       <EntityIcon icon={account.icon} color={account.color} />
+                       <div className="min-w-0"><p className="truncate font-medium">{account.name}</p>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <SemanticBadge tone={account.type === "credit" ? "info" : "neutral"}>
                           {ACCOUNT_TYPES.find((t) => t.value === account.type)?.label}
                         </SemanticBadge>
                         {!account.active ? <SemanticBadge tone="quiet">Inactive</SemanticBadge> : null}
                       </div>
+                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-medium tabular-nums">
@@ -292,6 +325,7 @@ function FinanceOverview() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Type</Label>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { QuickAddTransactionButton } from "@/components/app/QuickAddTransaction";
@@ -56,6 +57,7 @@ const emptyForm: CategoryInput = {
   kind: "expense",
   color: null,
   monthly_budget: null,
+  icon: null,
 };
 
 function CategoriesPage() {
@@ -116,6 +118,7 @@ function CategoriesPage() {
       kind: category.kind,
       color: category.color,
       monthly_budget: category.monthly_budget == null ? null : Number(category.monthly_budget),
+      icon: category.icon,
     });
     setDialogOpen(true);
   }
@@ -161,16 +164,7 @@ function CategoriesPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
               >
                 <div className="min-w-0">
-                  <p className="flex items-center gap-2 font-medium">
-                    {category.color ? (
-                      <span
-                        aria-hidden="true"
-                        className="size-3 rounded-full border border-border"
-                        style={{ backgroundColor: category.color }}
-                      />
-                    ) : null}
-                    {category.name}
-                  </p>
+                   <div className="flex min-w-0 items-center gap-3"><EntityIcon icon={category.icon} color={category.color} /><p className="truncate font-medium">{category.name}</p></div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <SemanticBadge tone={category.kind === "income" ? "positive" : "neutral"}>
                       {category.kind === "income" ? "Income" : "Expense"}
@@ -218,6 +212,7 @@ function CategoriesPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Kind</Label>
@@ -236,16 +231,6 @@ function CategoriesPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="category-colour">Colour</Label>
-            <Input
-              id="category-colour"
-              type="color"
-              className="h-12 w-20 p-1"
-              value={form.color ?? "#64748b"}
-              onChange={(e) => setForm({ ...form, color: e.target.value })}
-            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="category-budget">Monthly budget (optional)</Label>
