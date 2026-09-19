@@ -171,3 +171,39 @@ export function bmiContext(value: number): string {
   if (value < 30) return "That sits in the range usually described as overweight.";
   return "That sits in the range usually described as obese.";
 }
+
+/* ---------- money: grouped figures, currency only once the user picks one ---------- */
+
+/** Absolute money figure. No symbol until a currency is chosen in Settings. */
+export function formatMoney(value: number | null | undefined, prefs: DisplayPreferences): string {
+  if (value == null || Number.isNaN(Number(value))) return "—";
+  const amount = Number(value);
+  if (prefs.currency) {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: prefs.currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount);
+    } catch {
+      /* fall through to plain grouping */
+    }
+  }
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/** Signed amounts always carry a word, so meaning never rests on colour. */
+export function formatSignedMoney(
+  value: number | null | undefined,
+  prefs: DisplayPreferences,
+): { amount: string; label: string } {
+  const amount = Number(value ?? 0);
+  return {
+    amount: `${amount < 0 ? "−" : "+"}${formatMoney(Math.abs(amount), prefs)}`,
+    label: amount < 0 ? "out" : "in",
+  };
+}
