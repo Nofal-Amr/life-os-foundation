@@ -572,22 +572,20 @@ function DashboardPage() {
   const displayName = profile.data?.display_name?.trim();
   const firstName = displayName?.split(/\s+/)[0];
 
-  function scrollToPrayers() {
-    document.getElementById("today-prayers")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   const prayerRow = (
     <StatusRow
       key="spirit"
+      icon={Moon}
       label="Prayers"
       value={
         hasPrayerLocation
           ? `${todayPrayerLogs.length} of 5 logged today${prayerConfig?.city ? ` · ${prayerConfig.city}` : ""}`
           : "Add your location once to see today’s times."
       }
+      aside={hasPrayerLocation ? <Dots filled={todayPrayerLogs.length} total={5} /> : undefined}
       to="/spirit"
       linkLabel="Open Spirit"
-
+      compact={!hasPrayerLocation}
     >
       {hasPrayerLocation ? (
         <div id="today-prayers" className="mt-3 grid min-w-0 grid-cols-5 gap-1.5 scroll-mt-5">
@@ -623,9 +621,98 @@ function DashboardPage() {
     </StatusRow>
   );
 
+  const medicationRow = (
+    <StatusRow
+      icon={Pill}
+      label="Medication"
+      value={
+        scheduledDoses.length
+          ? `${dosesDue.length} of ${scheduledDoses.length} scheduled ${scheduledDoses.length === 1 ? "entry remains" : "entries remain"} today`
+          : "No medication times scheduled"
+      }
+      aside={
+        scheduledDoses.length ? (
+          <Dots filled={scheduledDoses.length - dosesDue.length} total={scheduledDoses.length} />
+        ) : undefined
+      }
+      to="/health"
+      hash="medications"
+      linkLabel="Open medications"
+      compact={!scheduledDoses.length}
+    >
+      {scheduledDoses.length ? (
+        <div className="mt-3 grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3">
+          {scheduledDoses.map(({ medication, slot }) => {
+            const taken = takenDoseKeys.has(`${medication.id}-${slot}`);
+            return (
+              <Button
+                key={`${medication.id}-${slot}`}
+                type="button"
+                variant="outline"
+                aria-pressed={taken}
+                aria-label={`${medication.name} at ${fmtSlot(slot)}${taken ? " taken" : " not taken"}`}
+                className={`h-auto min-h-14 min-w-0 flex-col items-start gap-0.5 px-2 py-2 text-left ${taken ? "tone-positive" : ""}`}
+                disabled={setDose.isPending}
+                onClick={() =>
+                  setDose.mutate({
+                    medication_id: medication.id,
+                    time_slot: slot,
+                    taken: !taken,
+                  })
+                }
+              >
+                <span className="w-full truncate text-xs font-medium">
+                  {medication.name}
+                  {medication.dosage ? (
+                    <span className="ml-1 font-normal opacity-75">{medication.dosage}</span>
+                  ) : null}
+                </span>
+                <span className="w-full truncate text-[11px] tabular-nums opacity-75">
+                  {fmtSlot(slot)}
+                </span>
+                <span className="flex items-center gap-1 text-[11px]">
+                  {taken ? <Check className="size-3" /> : null}
+                  {taken ? "Taken" : "Not taken"}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+      ) : null}
+    </StatusRow>
+  );
+
+  const bodyRows = (
+    <div key="health" className="min-w-0 divide-y divide-border/60">
+      {medicationRow}
+      <StatusRow
+        icon={HeartPulse}
+        label="Health log"
+        value={todayHealth ? "Logged today" : "Nothing logged yet today"}
+        to="/health"
+        hash="daily-log"
+        linkLabel={todayHealth ? "Open today’s log" : "Log health"}
+        compact={!todayHealth}
+      />
+      <StatusRow
+        icon={Utensils}
+        label="Calories"
+        value={
+          todayFoodLogs.length
+            ? `${todayCalories} kcal logged today`
+            : "No food logged yet today"
+        }
+        to="/food"
+        linkLabel={todayFoodLogs.length ? "Open Food" : "Log food"}
+        compact={!todayFoodLogs.length}
+      />
+    </div>
+  );
+
   const moneyRow = (
     <StatusRow
-      key="professional"
+      key="money"
+      icon={Wallet}
       label="Money"
       value={
         paydayReady && payday
@@ -634,101 +721,46 @@ function DashboardPage() {
       }
       to="/finance"
       linkLabel="Open Money"
-
       action={
         paydayReady && payday ? (
           <MoneyBreakdownDialog
             trigger={
-              <Button type="button" variant="outline" size="sm">
+              <Button type="button" variant="outline" size="sm" className="min-h-11">
                 <Info className="size-4" />
-                <span className="hidden sm:inline">Left before payday</span>
+                <span>Left before payday</span>
               </Button>
             }
           />
         ) : (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="min-h-11">
             <Link to="/settings">Set up payday</Link>
           </Button>
         )
       }
-    />
-  );
-
-  const bodyRows = (
-    <div key="health" className="divide-y divide-border">
-      <StatusRow
-        label="Health log"
-        value={todayHealth ? "Logged today" : "Nothing logged yet today"}
-        to="/health"
-        hash="daily-log"
-        linkLabel="Open today’s log"
-      />
-      <StatusRow
-        label="Calories"
-        value={todayFoodLogs.length ? `${todayCalories} kcal logged today` : "No food logged yet today"}
-        to="/food"
-        linkLabel="Open Food"
-      />
-      <StatusRow
-        label="Medication"
-        value={
-          scheduledDoses.length
-            ? `${dosesDue.length} of ${scheduledDoses.length} scheduled ${scheduledDoses.length === 1 ? "entry remains" : "entries remain"} today`
-            : "No medication times scheduled"
-        }
-        to="/health"
-        hash="medications"
-        linkLabel="Open medications"
-      >
-        {scheduledDoses.length ? (
-          <div className="mt-3 grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3">
-            {scheduledDoses.map(({ medication, slot }) => {
-              const taken = takenDoseKeys.has(`${medication.id}-${slot}`);
-              return (
-                <Button
-                  key={`${medication.id}-${slot}`}
-                  type="button"
-                  variant="outline"
-                  aria-pressed={taken}
-                  aria-label={`${medication.name} at ${fmtSlot(slot)}${taken ? " taken" : " not taken"}`}
-                  className={`h-auto min-h-14 min-w-0 flex-col items-start gap-0.5 px-2 py-2 text-left ${taken ? "tone-positive" : ""}`}
-                  disabled={setDose.isPending}
-                  onClick={() =>
-                    setDose.mutate({
-                      medication_id: medication.id,
-                      time_slot: slot,
-                      taken: !taken,
-                    })
-                  }
-                >
-                  <span className="w-full truncate text-xs font-medium">
-                    {medication.name}
-                    {medication.dosage ? (
-                      <span className="ml-1 font-normal opacity-75">{medication.dosage}</span>
-                    ) : null}
-                  </span>
-                  <span className="w-full truncate text-[11px] tabular-nums opacity-75">
-                    {fmtSlot(slot)}
-                  </span>
-                  <span className="flex items-center gap-1 text-[11px]">
-                    {taken ? <Check className="size-3" /> : null}
-                    {taken ? "Taken" : "Not taken"}
-                  </span>
-                </Button>
-              );
-            })}
-          </div>
-        ) : null}
-      </StatusRow>
-    </div>
+    >
+      {paydayReady && payday ? (
+        <>
+          <MoneySplitBar
+            committed={money.committed}
+            buffer={money.buffer}
+            available={money.available}
+            fmtMoney={fmtMoney}
+          />
+          {lastPayday ? (
+            <PaydayLine from={lastPayday} to={payday} fmtDate={fmtDate} />
+          ) : null}
+        </>
+      ) : null}
+    </StatusRow>
   );
 
   const resourceRows =
     quotaAlerts.length || meterCosts.length ? (
-      <div key="resources" className="divide-y divide-border">
+      <div key="resources" className="min-w-0 divide-y divide-border/60">
         {quotaAlerts.map(({ resource, facts }) => (
           <StatusRow
             key={resource.id}
+            icon={Gauge}
             label={resource.name}
             value={`${Math.round(Number(facts!.remaining) * 10) / 10} ${resource.unit} left${facts!.runsOutOn ? ` · around ${fmtDate(facts!.runsOutOn)}` : ""}`}
             to="/resources"
@@ -738,26 +770,28 @@ function DashboardPage() {
         {meterCosts.map(({ resource, facts }) => (
           <StatusRow
             key={resource.id}
+            icon={Gauge}
             label={resource.name}
             value={`This cycle so far ${fmtMoney(facts!.cycleCost)}${facts!.projectedCycleCost == null ? "" : ` · projected ${fmtMoney(facts!.projectedCycleCost)}`}`}
             to="/resources"
             linkLabel="Open Resources"
           />
         ))}
-
       </div>
     ) : null;
 
+  /* Prayers stay the anchor; the rest follows the user's saved dimension order. */
   const strips: { dimension: string; node: ReactNode }[] = [
     { dimension: "spirit", node: prayerRow },
-    { dimension: "professional", node: moneyRow },
     { dimension: "health", node: bodyRows },
+    { dimension: "professional", node: moneyRow },
     { dimension: "professional", node: resourceRows },
   ].filter((strip) => strip.node != null);
 
   strips.sort(
     (a, b) => (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99),
   );
+
 
   function ActionBlock({ action, large }: { action: NextAction; large?: boolean }) {
     const isStep = action.item.id !== action.parent.id;
