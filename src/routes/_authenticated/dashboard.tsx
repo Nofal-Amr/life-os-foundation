@@ -237,17 +237,16 @@ function DashboardPage() {
   const sectionOrder = (dimension: string) =>
     SECTION_ORDER_CLASSES[Math.min(dimensionRank.get(dimension) ?? 4, 4)];
   const comingUp: ComingUpItem[] = [];
-  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
   const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
   for (const task of tasks.data ?? []) {
-    if (!isOpen(task) || !task.due_date || task.due_date > tomorrow) continue;
+    if (!isOpen(task) || !task.due_date || task.due_date > nextWeek) continue;
     comingUp.push({
       id: `task-${task.id}`,
       dimension: "discipline",
       sortValue: task.due_date,
       title: task.title,
-      detail: task.due_date < today ? `Task · Due ${fmtDate(task.due_date)}` : task.due_date === today ? "Task · Due today" : "Task · Due tomorrow",
+      detail: task.due_date < today ? `Task · Due ${fmtDate(task.due_date)}` : task.due_date === today ? "Task · Due today" : `Task · Due ${fmtDate(task.due_date)}`,
       to: "/tasks",
     });
   }
@@ -552,7 +551,7 @@ function DashboardPage() {
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
                     {scheduledDoses.length
-                      ? `${dosesDue.length} of ${scheduledDoses.length} scheduled medication ${scheduledDoses.length === 1 ? "entry" : "entries"} still due today.`
+                      ? `${dosesDue.length} of ${scheduledDoses.length} scheduled medication ${scheduledDoses.length === 1 ? "entry remains" : "entries remain"} today.`
                       : "No medication times scheduled today."}
                   </p>
                   <div className="mt-4 grid gap-2">
