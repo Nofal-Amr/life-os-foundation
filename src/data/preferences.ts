@@ -37,6 +37,8 @@ export type PreferencesInput = {
   time_format?: string;
   date_format?: string;
   currency?: string | null;
+  enabled_modules?: string[];
+  onboarding_completed_at?: string | null;
 };
 
 export async function savePreferences(input: PreferencesInput): Promise<UserPreferences> {
