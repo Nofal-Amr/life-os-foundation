@@ -501,6 +501,22 @@ function TasksPage() {
             <DatePicker id="task-due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
           </div>
           <div className="space-y-2">
+            <Label htmlFor="task-minutes">Estimate in minutes (optional)</Label>
+            <Input
+              id="task-minutes"
+              type="number"
+              min={1}
+              inputMode="numeric"
+              value={form.estimated_minutes ?? ""}
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  estimated_minutes: event.target.value ? Number(event.target.value) : null,
+                })
+              }
+            />
+          </div>
+          <div className="space-y-2">
             <Label>Project</Label>
             <Select
               value={form.project_id ?? NO_PROJECT}
@@ -654,6 +670,15 @@ function TasksPage() {
             ) : null}
           </div>
         </div>
+        {editing && editing.parent_task_id ? null : editing ? (
+          <div className="border-t border-border pt-4">
+            <TaskStepsEditor parent={editing} />
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Save the task first, then add steps to it.
+          </p>
+        )}
       </FormDialog>
 
       <FormDialog
