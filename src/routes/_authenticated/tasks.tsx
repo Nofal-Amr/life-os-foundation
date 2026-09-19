@@ -726,6 +726,13 @@ function TasksPage() {
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
 
+      <ShrinkItDialog
+        task={shrinkTask}
+        existingSteps={shrinkTask ? stepsOf(allTasks, shrinkTask.id).length : 0}
+        open={!!shrinkTask}
+        onOpenChange={(open) => !open && setShrinkTask(null)}
+      />
     </>
+
   );
 }
