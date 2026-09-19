@@ -11,7 +11,9 @@ import {
   Sun,
 } from "lucide-react";
 
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
+
 import { capabilitiesQuery } from "@/data/capabilities";
 import { evidenceQuery } from "@/data/evidence";
 import { goalsQuery } from "@/data/goals";
@@ -103,11 +105,7 @@ function DashboardPage() {
   const capabilityShare = linkedEvidenceTotal ? (topEvidenceCount / linkedEvidenceTotal) * 100 : 0;
   const displayName = profile.data?.display_name?.trim() || user?.email?.split("@")[0] || "there";
   const firstName = displayName.split(/\s+/)[0];
-  const initials = displayName
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+
   const loading = tasks.isLoading || projects.isLoading || goals.isLoading || capabilities.isLoading || evidence.isLoading;
   const error = tasks.error ?? projects.error ?? goals.error ?? capabilities.error ?? evidence.error;
 
@@ -131,13 +129,8 @@ function DashboardPage() {
               >
                 {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
               </Button>
-              <div
-                className="flex size-9 items-center justify-center rounded-full border border-border bg-card text-xs font-semibold text-foreground"
-                aria-label={`Signed in as ${displayName}`}
-                title={displayName}
-              >
-                {initials || "LO"}
-              </div>
+              <UserAvatar size="md" />
+
             </div>
           </div>
           <div className="py-9 sm:py-12">

@@ -17,9 +17,12 @@ import { Route as AuthenticatedCapabilitiesRouteImport } from './routes/_authent
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
 import { Route as AuthenticatedHabitsRouteImport } from './routes/_authenticated/habits'
+import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSpiritRouteImport } from './routes/_authenticated/spirit'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 
@@ -63,6 +66,11 @@ const AuthenticatedHabitsRoute = AuthenticatedHabitsRouteImport.update({
   path: '/habits',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHealthRoute = AuthenticatedHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedNotesRoute = AuthenticatedNotesRouteImport.update({
   id: '/notes',
   path: '/notes',
@@ -76,6 +84,16 @@ const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
 const AuthenticatedReviewRoute = AuthenticatedReviewRouteImport.update({
   id: '/review',
   path: '/review',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSpiritRoute = AuthenticatedSpiritRouteImport.update({
+  id: '/spirit',
+  path: '/spirit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
@@ -97,9 +115,12 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
+  '/health': typeof AuthenticatedHealthRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/review': typeof AuthenticatedReviewRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/spirit': typeof AuthenticatedSpiritRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -111,9 +132,12 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
+  '/health': typeof AuthenticatedHealthRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/review': typeof AuthenticatedReviewRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/spirit': typeof AuthenticatedSpiritRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -127,9 +151,12 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
   '/_authenticated/habits': typeof AuthenticatedHabitsRoute
+  '/_authenticated/health': typeof AuthenticatedHealthRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/spirit': typeof AuthenticatedSpiritRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
 }
@@ -143,9 +170,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/goals'
     | '/habits'
+    | '/health'
     | '/notes'
     | '/projects'
     | '/review'
+    | '/settings'
+    | '/spirit'
     | '/tasks'
     | '/auth/update-password'
   fileRoutesByTo: FileRoutesByTo
@@ -157,9 +187,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/goals'
     | '/habits'
+    | '/health'
     | '/notes'
     | '/projects'
     | '/review'
+    | '/settings'
+    | '/spirit'
     | '/tasks'
     | '/auth/update-password'
   id:
@@ -172,9 +205,12 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/goals'
     | '/_authenticated/habits'
+    | '/_authenticated/health'
     | '/_authenticated/notes'
     | '/_authenticated/projects'
     | '/_authenticated/review'
+    | '/_authenticated/settings'
+    | '/_authenticated/spirit'
     | '/_authenticated/tasks'
     | '/auth/update-password'
   fileRoutesById: FileRoutesById
@@ -243,6 +279,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHabitsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/health': {
+      id: '/_authenticated/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof AuthenticatedHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/notes': {
       id: '/_authenticated/notes'
       path: '/notes'
@@ -262,6 +305,20 @@ declare module '@tanstack/react-router' {
       path: '/review'
       fullPath: '/review'
       preLoaderRoute: typeof AuthenticatedReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/spirit': {
+      id: '/_authenticated/spirit'
+      path: '/spirit'
+      fullPath: '/spirit'
+      preLoaderRoute: typeof AuthenticatedSpiritRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tasks': {
@@ -287,9 +344,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
   AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRoute
+  AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSpiritRoute: typeof AuthenticatedSpiritRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
 }
 
@@ -299,9 +359,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
   AuthenticatedHabitsRoute: AuthenticatedHabitsRoute,
+  AuthenticatedHealthRoute: AuthenticatedHealthRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSpiritRoute: AuthenticatedSpiritRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
 }
 

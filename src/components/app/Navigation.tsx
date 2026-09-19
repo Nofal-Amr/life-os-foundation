@@ -3,9 +3,12 @@ import {
   CalendarDays,
   CheckSquare,
   FolderKanban,
+  HeartPulse,
   LayoutDashboard,
+  Moon,
   NotebookPen,
   Repeat,
+  Settings,
   Sparkles,
   Sunset,
   Target,
@@ -17,11 +20,15 @@ export const NAV_ITEMS = [
   { to: "/tasks", label: "Tasks", icon: CheckSquare },
   { to: "/habits", label: "Habits", icon: Repeat },
   { to: "/goals", label: "Goals", icon: Target },
+  { to: "/health", label: "Health", icon: HeartPulse },
+  { to: "/spirit", label: "Spirit", icon: Moon },
   { to: "/capabilities", label: "Capabilities", icon: Sparkles },
   { to: "/notes", label: "Notes", icon: NotebookPen },
   { to: "/calendar", label: "Calendar", icon: CalendarDays },
   { to: "/review", label: "Review", icon: Sunset },
+  { to: "/settings", label: "Settings", icon: Settings },
 ] as const;
+
 
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {

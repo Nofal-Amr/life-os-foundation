@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_stats: {
+        Row: {
+          birthdate: string | null
+          created_at: string
+          height_cm: number | null
+          id: string
+          notes: string | null
+          target_weight_kg: number | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+        }
+        Insert: {
+          birthdate?: string | null
+          created_at?: string
+          height_cm?: number | null
+          id?: string
+          notes?: string | null
+          target_weight_kg?: number | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+        }
+        Update: {
+          birthdate?: string | null
+          created_at?: string
+          height_cm?: number | null
+          id?: string
+          notes?: string | null
+          target_weight_kg?: number | null
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+        }
+        Relationships: []
+      }
       capabilities: {
         Row: {
           created_at: string
@@ -293,6 +329,131 @@ export type Database = {
         }
         Relationships: []
       }
+      health_logs: {
+        Row: {
+          created_at: string
+          food_categories: string[] | null
+          food_quality: number | null
+          id: string
+          log_date: string
+          mood: number | null
+          note: string | null
+          sleep_hours: number | null
+          stress_level: number | null
+          trained: boolean | null
+          updated_at: string
+          user_id: string
+          water_ok: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          food_categories?: string[] | null
+          food_quality?: number | null
+          id?: string
+          log_date?: string
+          mood?: number | null
+          note?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          trained?: boolean | null
+          updated_at?: string
+          user_id: string
+          water_ok?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          food_categories?: string[] | null
+          food_quality?: number | null
+          id?: string
+          log_date?: string
+          mood?: number | null
+          note?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          trained?: boolean | null
+          updated_at?: string
+          user_id?: string
+          water_ok?: boolean | null
+        }
+        Relationships: []
+      }
+      medication_logs: {
+        Row: {
+          created_at: string
+          id: string
+          log_date: string
+          medication_id: string
+          taken: boolean
+          time_slot: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          log_date?: string
+          medication_id: string
+          taken?: boolean
+          time_slot: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          log_date?: string
+          medication_id?: string
+          taken?: boolean
+          time_slot?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_logs_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          active: boolean
+          created_at: string
+          dosage: string | null
+          id: string
+          name: string
+          notes: string | null
+          schedule_times: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          dosage?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          schedule_times?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          dosage?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          schedule_times?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           body: string | null
@@ -323,8 +484,78 @@ export type Database = {
         }
         Relationships: []
       }
+      prayer_logs: {
+        Row: {
+          completed: boolean
+          created_at: string
+          id: string
+          on_time: boolean | null
+          prayer_date: string
+          prayer_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          on_time?: boolean | null
+          prayer_date?: string
+          prayer_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          id?: string
+          on_time?: boolean | null
+          prayer_date?: string
+          prayer_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prayer_settings: {
+        Row: {
+          asr_school: string | null
+          calc_method: string | null
+          city: string | null
+          created_at: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asr_school?: string | null
+          calc_method?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asr_school?: string | null
+          calc_method?: string | null
+          city?: string | null
+          created_at?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -332,6 +563,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -339,6 +571,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -455,6 +688,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          dimension_order: string[] | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dimension_order?: string[] | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dimension_order?: string[] | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

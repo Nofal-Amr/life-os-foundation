@@ -3,9 +3,11 @@ import { LogOut, Menu } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
+import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth, useSignOut } from "@/hooks/useAuth";
+
 
 function Brand() {
   return (
@@ -20,6 +22,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const signOut = useSignOut();
   const { user } = useAuth();
+  const { displayName } = useDisplayName();
+
   const isDashboard = useLocation({ select: (location) => location.pathname === "/dashboard" });
 
   if (isDashboard) {
@@ -34,12 +38,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <SidebarNav />
         </div>
         <div className="space-y-2 px-1">
-          <p className="truncate px-2 text-xs text-muted-foreground">{user?.email}</p>
+          <div className="flex items-center gap-2 px-1">
+            <UserAvatar size="sm" />
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+            </div>
+          </div>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" aria-hidden="true" />
             Sign out
           </Button>
         </div>
+
       </aside>
 
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
