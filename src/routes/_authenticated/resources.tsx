@@ -41,6 +41,7 @@ import {
   updateResource,
   type Resource,
   type ResourceInput,
+  type ResourceKind,
 } from "@/data/resources";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
