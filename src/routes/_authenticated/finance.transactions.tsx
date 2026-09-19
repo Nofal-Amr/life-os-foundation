@@ -63,6 +63,7 @@ function TransactionsPage() {
 
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [form, setForm] = useState<TransactionInput | null>(null);
+  const [editAmount, setEditAmount] = useState("");
   const [toDelete, setToDelete] = useState<Transaction | null>(null);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -143,6 +144,7 @@ function TransactionsPage() {
       description: transaction.description,
       date: transaction.date,
     });
+    setEditAmount(Math.abs(Number(transaction.amount)).toFixed(2));
     setShowNewCategory(false);
     setNewCategoryName("");
   }
@@ -162,7 +164,7 @@ function TransactionsPage() {
               <SelectItem value="all">All accounts</SelectItem>
               {(accounts.data ?? []).map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                  {a.name}
+                     <span className="flex items-center gap-2"><EntityIcon icon={a.icon} color={a.color} containerClassName="size-5 rounded" className="size-3" />{a.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -179,7 +181,7 @@ function TransactionsPage() {
               <SelectItem value="none">No category</SelectItem>
               {(categories.data ?? []).map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                   <span className="flex items-center gap-2"><EntityIcon icon={c.icon} color={c.color} containerClassName="size-5 rounded" className="size-3" />{c.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -286,13 +288,12 @@ function TransactionsPage() {
                   step="0.01"
                   min="0"
                   className="h-12 tabular-nums"
-                  value={Math.abs(form.amount) || ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      amount: signedAmount(Number(e.target.value), form.kind),
-                    })
-                  }
+                   value={editAmount}
+                   onChange={(e) => {
+                     setEditAmount(e.target.value);
+                     setForm({ ...form, amount: signedAmount(Number(e.target.value), form.kind) });
+                   }}
+                   onBlur={() => { const value = Number(editAmount); if (!Number.isNaN(value)) setEditAmount(value.toFixed(2)); }}
                 />
               </div>
               <div className="space-y-2">
@@ -338,7 +339,7 @@ function TransactionsPage() {
                   <SelectContent>
                     {(accounts.data ?? []).map((a) => (
                       <SelectItem key={a.id} value={a.id}>
-                        {a.name}
+                         <span className="flex items-center gap-2"><EntityIcon icon={a.icon} color={a.color} containerClassName="size-5 rounded" className="size-3" />{a.name}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>

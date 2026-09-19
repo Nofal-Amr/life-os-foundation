@@ -104,8 +104,8 @@ export function RecurringList({ compact = false }: { compact?: boolean }) {
     onError,
   });
 
-  if (costs.isLoading) return <LoadingState rows={2} />;
-  if (costs.error) return <ErrorState error={costs.error} onRetry={() => costs.refetch()} />;
+  if (costs.isLoading || categories.isLoading) return <LoadingState rows={2} />;
+  if (costs.error || categories.error) return <ErrorState error={costs.error ?? categories.error} onRetry={() => { costs.refetch(); categories.refetch(); }} />;
 
   const active = (costs.data ?? []).filter((c) => c.active);
   const list = compact ? active.slice(0, 5) : (costs.data ?? []);
