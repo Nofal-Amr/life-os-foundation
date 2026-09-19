@@ -309,7 +309,7 @@ function StatusRow({
           </div>
           <p className="mt-1 break-words text-sm text-muted-foreground">{value}</p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:justify-start">
           {action}
           {to ? (
             <Button asChild variant="ghost" size="sm" className="min-h-11">
