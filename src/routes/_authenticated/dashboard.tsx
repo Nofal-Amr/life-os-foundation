@@ -3,7 +3,6 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { isToday, parseISO } from "date-fns";
 import {
   Check,
-  ChevronRight,
   CircleDollarSign,
   ClipboardPlus,
   HeartPulse,
