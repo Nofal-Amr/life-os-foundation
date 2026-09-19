@@ -107,6 +107,12 @@ export async function archiveProject(id: string) {
 }
 
 export async function deleteProject(id: string) {
+  const project = unwrap(
+    await supabase.from("projects").select("image_url").eq("id", id).maybeSingle(),
+  ) as Pick<Project, "image_url"> | null;
   const { error } = await supabase.from("projects").delete().eq("id", id);
   if (error) throw error;
+  if (project?.image_url) {
+    await supabase.storage.from(PROJECT_IMAGES_BUCKET).remove([project.image_url]);
+  }
 }
