@@ -77,7 +77,7 @@ export type BodyStatsInput = {
   notes: string | null;
 };
 
-export async function saveBodyStats(input: BodyStatsInput): Promise<BodyStats> {
+export async function saveBodyStats(input: Partial<BodyStatsInput>): Promise<BodyStats> {
   const user_id = await currentUserId();
   return unwrap(
     await supabase
