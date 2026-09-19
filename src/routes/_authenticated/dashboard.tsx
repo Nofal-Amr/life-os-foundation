@@ -3,12 +3,16 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { isToday, parseISO } from "date-fns";
 import {
   Check,
-  CircleDollarSign,
-  ClipboardPlus,
+  Gauge,
   HeartPulse,
   Info,
-  ListTodo,
+  Moon,
+  Pill,
+  Utensils,
+  Wallet,
+  type LucideIcon,
 } from "lucide-react";
+
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
