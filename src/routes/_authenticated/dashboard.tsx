@@ -35,7 +35,14 @@ import {
 } from "@/data/finance";
 import { dayTotals, foodLogsQuery } from "@/data/food";
 import { goalsQuery } from "@/data/goals";
-import { healthLogsQuery, medicationLogsQuery, medicationsQuery } from "@/data/health";
+import {
+  healthKeys,
+  healthLogsQuery,
+  medicationLogsQuery,
+  medicationsQuery,
+  setDoseTaken,
+} from "@/data/health";
+
 import { meterFacts, quotaFacts, resourceReadingsQuery, resourcesQuery } from "@/data/resources";
 
 import { DEFAULT_DIMENSION_ORDER, preferencesQuery } from "@/data/preferences";
@@ -231,6 +238,14 @@ function DashboardPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
     onError,
   });
+
+  const setDose = useMutation({
+    mutationFn: (input: { medication_id: string; time_slot: string; taken: boolean }) =>
+      setDoseTaken({ log_date: today, ...input }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: healthKeys.medicationLogs }),
+    onError,
+  });
+
 
   /** Completing the shown action promotes the next one in place. */
   const finish = useMutation({
