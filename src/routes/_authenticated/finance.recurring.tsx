@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  RECURRENCE_FREQUENCIES,
   accountsQuery,
   createRecurringCost,
   deleteRecurringCost,
@@ -30,9 +29,12 @@ import {
   logRecurringCost,
   recurringCostsQuery,
   skipRecurringCost,
+  legacyFrequency,
+  recurringInterval,
   updateRecurringCost,
   type RecurringCost,
   type RecurringCostInput,
+  type IntervalUnit,
 } from "@/data/finance";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
@@ -65,6 +67,9 @@ const emptyForm: RecurringCostInput = {
   frequency: "monthly",
   next_due_date: todayISO(),
   active: true,
+  interval_count: 1,
+  interval_unit: "month",
+  next_due_at: `${todayISO()}T00:00:00`,
 };
 
 export function RecurringList({ compact = false }: { compact?: boolean }) {
@@ -131,9 +136,7 @@ export function RecurringList({ compact = false }: { compact?: boolean }) {
                 <SemanticBadge tone={overdue ? "warning" : "neutral"}>
                   {overdue ? "Past its date" : "Due"} {fmtDate(cost.next_due_date)}
                 </SemanticBadge>
-                <span>
-                  {RECURRENCE_FREQUENCIES.find((f) => f.value === cost.frequency)?.label}
-                </span>
+                 <span>{(() => { const interval = recurringInterval(cost); return `Every ${interval.count} ${interval.unit}${interval.count === 1 ? "" : "s"}`; })()}</span>
                 {!cost.active ? <SemanticBadge tone="quiet">Paused</SemanticBadge> : null}
               </div>
             </div>
@@ -209,6 +212,9 @@ function RecurringPage() {
       frequency: cost.frequency,
       next_due_date: cost.next_due_date,
       active: cost.active,
+      interval_count: recurringInterval(cost).count,
+      interval_unit: recurringInterval(cost).unit,
+      next_due_at: cost.next_due_at,
     });
     setDialogOpen(true);
   }
@@ -283,28 +289,18 @@ function RecurringPage() {
               required
               className="h-12"
               value={form.next_due_date}
-              onChange={(e) => setForm({ ...form, next_due_date: e.target.value })}
+              onChange={(e) => setForm({ ...form, next_due_date: e.target.value, next_due_at: `${e.target.value}T00:00:00` })}
             />
           </div>
           <div className="space-y-2">
-            <Label>Frequency</Label>
-            <Select
-              value={form.frequency}
-              onValueChange={(v) =>
-                setForm({ ...form, frequency: v as RecurringCostInput["frequency"] })
-              }
-            >
-              <SelectTrigger className="h-12">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RECURRENCE_FREQUENCIES.map((f) => (
-                  <SelectItem key={f.value} value={f.value}>
-                    {f.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+             <Label htmlFor="interval-count">Repeat</Label>
+             <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+               <Input id="interval-count" type="number" min="1" inputMode="numeric" className="h-12 w-20" value={form.interval_count} onChange={(event) => { const count = Math.max(1, Number(event.target.value) || 1); setForm({ ...form, interval_count: count, frequency: legacyFrequency(form.interval_unit, count) }); }} />
+               <Select value={form.interval_unit} onValueChange={(value) => { const unit = value as IntervalUnit; setForm({ ...form, interval_unit: unit, frequency: legacyFrequency(unit, form.interval_count) }); }}>
+                 <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                 <SelectContent>{(["day", "week", "month", "year"] as IntervalUnit[]).map((unit) => <SelectItem key={unit} value={unit}>{unit}{form.interval_count === 1 ? "" : "s"}</SelectItem>)}</SelectContent>
+               </Select>
+             </div>
           </div>
           <div className="space-y-2">
             <Label>Account</Label>
