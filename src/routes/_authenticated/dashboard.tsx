@@ -11,7 +11,9 @@ import {
   Sun,
 } from "lucide-react";
 
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
+
 import { capabilitiesQuery } from "@/data/capabilities";
 import { evidenceQuery } from "@/data/evidence";
 import { goalsQuery } from "@/data/goals";
