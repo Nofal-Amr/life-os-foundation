@@ -514,11 +514,14 @@ function DashboardPage() {
         label="Health log"
         value={todayHealth ? "Logged today" : "Nothing logged yet today"}
         to="/health"
+        hash="daily-log"
+        linkLabel="Open today’s log"
       />
       <StatusRow
         label="Calories"
         value={todayFoodLogs.length ? `${todayCalories} kcal logged today` : "No food logged yet today"}
         to="/food"
+        linkLabel="Open Food"
       />
       <StatusRow
         label="Medication"
@@ -528,7 +531,49 @@ function DashboardPage() {
             : "No medication times scheduled"
         }
         to="/health"
-      />
+        hash="medications"
+        linkLabel="Open medications"
+      >
+        {scheduledDoses.length ? (
+          <div className="mt-3 grid min-w-0 grid-cols-2 gap-1.5 sm:grid-cols-3">
+            {scheduledDoses.map(({ medication, slot }) => {
+              const taken = takenDoseKeys.has(`${medication.id}-${slot}`);
+              return (
+                <Button
+                  key={`${medication.id}-${slot}`}
+                  type="button"
+                  variant="outline"
+                  aria-pressed={taken}
+                  aria-label={`${medication.name} at ${fmtSlot(slot)}${taken ? " taken" : " not taken"}`}
+                  className={`h-auto min-h-14 min-w-0 flex-col items-start gap-0.5 px-2 py-2 text-left ${taken ? "tone-positive" : ""}`}
+                  disabled={setDose.isPending}
+                  onClick={() =>
+                    setDose.mutate({
+                      medication_id: medication.id,
+                      time_slot: slot,
+                      taken: !taken,
+                    })
+                  }
+                >
+                  <span className="w-full truncate text-xs font-medium">
+                    {medication.name}
+                    {medication.dosage ? (
+                      <span className="ml-1 font-normal opacity-75">{medication.dosage}</span>
+                    ) : null}
+                  </span>
+                  <span className="w-full truncate text-[11px] tabular-nums opacity-75">
+                    {fmtSlot(slot)}
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px]">
+                    {taken ? <Check className="size-3" /> : null}
+                    {taken ? "Taken" : "Not taken"}
+                  </span>
+                </Button>
+              );
+            })}
+          </div>
+        ) : null}
+      </StatusRow>
     </div>
   );
 
@@ -541,6 +586,7 @@ function DashboardPage() {
             label={resource.name}
             value={`${Math.round(Number(facts!.remaining) * 10) / 10} ${resource.unit} left${facts!.runsOutOn ? ` · around ${fmtDate(facts!.runsOutOn)}` : ""}`}
             to="/resources"
+            linkLabel="Open Resources"
           />
         ))}
         {meterCosts.map(({ resource, facts }) => (
@@ -549,8 +595,10 @@ function DashboardPage() {
             label={resource.name}
             value={`This cycle so far ${fmtMoney(facts!.cycleCost)}${facts!.projectedCycleCost == null ? "" : ` · projected ${fmtMoney(facts!.projectedCycleCost)}`}`}
             to="/resources"
+            linkLabel="Open Resources"
           />
         ))}
+
       </div>
     ) : null;
 
