@@ -222,7 +222,39 @@ export function QuickAddTransactionDialog({
             ) : null}
           </div>
 
+          {(pockets.data ?? []).some((pocket) => pocket.account_id === accountId) ? (
+            <div className="space-y-2">
+              <Label>Pocket</Label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-pressed={pocketId === ""}
+                  className={cn("min-h-11 rounded-full px-4 text-sm", pocketId === "" ? "border-primary bg-primary text-primary-foreground" : "")}
+                  onClick={() => setPocketId("")}
+                >
+                  No pocket
+                </Button>
+                {(pockets.data ?? [])
+                  .filter((pocket) => pocket.account_id === accountId)
+                  .map((pocket) => (
+                    <Button
+                      key={pocket.id}
+                      type="button"
+                      variant="outline"
+                      aria-pressed={pocketId === pocket.id}
+                      className={cn("min-h-11 rounded-full px-4 text-sm", pocketId === pocket.id ? "border-primary bg-primary text-primary-foreground" : "")}
+                      onClick={() => setPocketId(pocket.id)}
+                    >
+                      {pocket.name}
+                    </Button>
+                  ))}
+              </div>
+            </div>
+          ) : null}
+
           {activeAccounts.length > 1 ? (
+
             <div className="space-y-2">
               <Label>Account</Label>
               <Select value={accountId} onValueChange={setAccountId}>
