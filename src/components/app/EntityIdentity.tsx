@@ -101,8 +101,8 @@ export function EntityIcon({
   className,
   containerClassName,
 }: {
-  icon?: string | null;
-  color?: string | null;
+  icon?: string | null | undefined;
+  color?: string | null | undefined;
   className?: string;
   containerClassName?: string;
 }) {
