@@ -65,3 +65,14 @@
 - [x] Food: personal food library, fast logging and plain daily totals
 - [x] Today shows calories logged, quota warnings and this cycle's meter cost
 - [x] Icon picker rebuilt as a scrollable grid with about 190 grouped icons
+
+## Consolidated navigation
+
+- [x] Five primary destinations everywhere: Today, Do, Money, Body and Spirit
+- [x] Do groups Tasks, Projects, Goals, Habits and Capabilities with consistent tabs
+- [x] Money groups Overview, Transactions, Recurring, Categories and Resources with consistent tabs
+- [x] Body groups Health, medications and Food with consistent tabs
+- [x] Calendar, Notes and Daily Review remain available from a collapsed Tools menu; Settings is available from the profile block
+- [x] Today covers Spirit, Do, Money, Body and Coming up from real rows, following the saved dimension order
+- [x] Coming up includes overdue and near-term tasks, projects, goals, recurring costs and quota projections
+- [x] Duplicate floating add controls removed; pages retain one primary add action

@@ -8,6 +8,7 @@ import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
+import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
