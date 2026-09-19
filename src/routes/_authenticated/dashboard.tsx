@@ -3,27 +3,26 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { isToday, parseISO } from "date-fns";
 import {
   Check,
-  CheckCircle2,
   ChevronRight,
   CircleDollarSign,
   ClipboardPlus,
   HeartPulse,
   Info,
   ListTodo,
-  Plus,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
+import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
-import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
-import { EntityIcon } from "@/components/app/EntityIdentity";
+import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
+import { minutesLabel } from "@/components/app/TaskSteps";
 
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   accountsQuery,
   daysUntil,
@@ -36,17 +35,8 @@ import {
 } from "@/data/finance";
 import { dayTotals, foodLogsQuery } from "@/data/food";
 import { goalsQuery } from "@/data/goals";
-import {
-  healthLogsQuery,
-  medicationLogsQuery,
-  medicationsQuery,
-} from "@/data/health";
-import {
-  meterFacts,
-  quotaFacts,
-  resourceReadingsQuery,
-  resourcesQuery,
-} from "@/data/resources";
+import { healthLogsQuery, medicationLogsQuery, medicationsQuery } from "@/data/health";
+import { meterFacts, quotaFacts, resourceReadingsQuery, resourcesQuery } from "@/data/resources";
 
 import { DEFAULT_DIMENSION_ORDER, preferencesQuery } from "@/data/preferences";
 import { profileQuery } from "@/data/profile";
@@ -61,19 +51,26 @@ import {
   spiritKeys,
   type PrayerName,
 } from "@/data/spirit";
-import { isOpen, tasksQuery, type Task } from "@/data/tasks";
+import {
+  completeTask,
+  isOpen,
+  stepsOf,
+  taskKeys,
+  tasksQuery,
+  topLevelTasks,
+  type Task,
+} from "@/data/tasks";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
-import { priorityLabel, priorityTone } from "@/lib/semantics";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Today — Life OS" },
-      { name: "description", content: "Today’s tasks, prayers, money, health, and upcoming commitments." },
+      { name: "description", content: "Your next action, plus a one-line look at prayers, money, body and what is coming up." },
       { property: "og:title", content: "Today — Life OS" },
-      { property: "og:description", content: "Today’s tasks, prayers, money, health, and upcoming commitments." },
+      { property: "og:description", content: "Your next action, plus a one-line look at prayers, money, body and what is coming up." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -88,13 +85,41 @@ const PRIORITY_WEIGHT: Record<Task["priority"], number> = {
   low: 1,
 };
 
-function sortNextUp(a: Task, b: Task) {
-  const byPriority = PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority];
-  if (byPriority !== 0) return byPriority;
-  if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
-  if (a.due_date) return -1;
-  if (b.due_date) return 1;
-  return a.created_at.localeCompare(b.created_at);
+type NextAction = {
+  item: Task;
+  parent: Task;
+  minutes: number | null;
+};
+
+function urgencyRank(task: Task, today: string) {
+  if (task.due_date && task.due_date < today) return 0;
+  if (task.due_date === today) return 1;
+  return 2;
+}
+
+/**
+ * Next actions come from open tasks. A task with open steps is represented by
+ * its first open step, so the thing shown is always small enough to start.
+ */
+function nextActions(tasks: Task[], today: string): NextAction[] {
+  const parents = topLevelTasks(tasks).filter(isOpen);
+  const candidates = parents.map((parent) => {
+    const step = stepsOf(tasks, parent.id).find(isOpen);
+    const item = step ?? parent;
+    return { item, parent, minutes: item.estimated_minutes ?? null };
+  });
+
+  return candidates.sort((a, b) => {
+    const byUrgency = urgencyRank(a.parent, today) - urgencyRank(b.parent, today);
+    if (byUrgency !== 0) return byUrgency;
+    const byPriority = PRIORITY_WEIGHT[b.parent.priority] - PRIORITY_WEIGHT[a.parent.priority];
+    if (byPriority !== 0) return byPriority;
+    /* Unknown estimates are unknown, never treated as zero. */
+    const aMin = a.minutes ?? Number.POSITIVE_INFINITY;
+    const bMin = b.minutes ?? Number.POSITIVE_INFINITY;
+    if (aMin !== bMin) return aMin - bMin;
+    return a.parent.created_at.localeCompare(b.parent.created_at);
+  });
 }
 
 function greeting() {
@@ -113,8 +138,6 @@ type ComingUpItem = {
   to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources";
 };
 
-const SECTION_ORDER_CLASSES = ["order-1", "order-2", "order-3", "order-4", "order-5"] as const;
-
 function SectionHeading({ title, detail }: { title: string; detail?: string }) {
   return (
     <div className="min-w-0">
@@ -124,9 +147,46 @@ function SectionHeading({ title, detail }: { title: string; detail?: string }) {
   );
 }
 
+/** One line per area: a real figure and a way through to it. */
+function StatusRow({
+  label,
+  value,
+  to,
+  action,
+  children,
+}: {
+  label: string;
+  value: string;
+  to?: "/spirit" | "/finance" | "/health" | "/food" | "/resources";
+  action?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 py-3 first:pt-0 last:pb-0">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-foreground">{label}</p>
+          <p className="mt-0.5 truncate text-sm text-muted-foreground">{value}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {action}
+          {to ? (
+            <Button asChild variant="ghost" size="sm">
+              <Link to={to} aria-label={`Open ${label}`}>
+                <ChevronRight className="size-4" />
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function DashboardPage() {
   const queryClient = useQueryClient();
-  const { fmtLongDate, fmtDate, fmtTime, fmtSlot, fmtMoney } = usePreferences();
+  const { fmtLongDate, fmtDate, fmtTime, fmtMoney } = usePreferences();
   const today = todayISO();
 
   const tasks = useQuery(tasksQuery());
@@ -147,9 +207,9 @@ function DashboardPage() {
   const resources = useQuery(resourcesQuery());
   const resourceReadings = useQuery(resourceReadingsQuery());
 
-
   const [quickTask, setQuickTask] = useState(false);
   const [quickMoney, setQuickMoney] = useState(false);
+  const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
 
   const onError = (error: unknown) =>
     toast.error(error instanceof Error ? error.message : "Something went wrong.");
@@ -164,6 +224,16 @@ function DashboardPage() {
   const unsetPrayer = useMutation({
     mutationFn: (prayer_name: PrayerName) => clearPrayerLog(today, prayer_name),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
+    onError,
+  });
+
+  /** Completing the shown action promotes the next one in place. */
+  const finish = useMutation({
+    mutationFn: (id: string) => completeTask(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      toast.success("Done.");
+    },
     onError,
   });
 
@@ -190,10 +260,14 @@ function DashboardPage() {
   const loading = queries.some((query) => query.isLoading);
   const error = queries.find((query) => query.error)?.error;
 
-  const openTasks = [...(tasks.data ?? [])].filter(isOpen).sort(sortNextUp).slice(0, 3);
-  const overdueTasks = (tasks.data ?? []).filter(
+  const allTasks = tasks.data ?? [];
+  const actions = nextActions(allTasks, today);
+  const primary = actions[0];
+  const alsoToday = actions.slice(1, 3);
+  const overdueTasks = topLevelTasks(allTasks).filter(
     (task) => isOpen(task) && Boolean(task.due_date) && String(task.due_date) < today,
   ).length;
+
   const todayPrayerLogs = (prayerLogs.data ?? []).filter(
     (log) => log.prayer_date === today && log.completed,
   );
@@ -229,24 +303,23 @@ function DashboardPage() {
     .map((resource) => ({ resource, facts: meterFacts(resource, resourceReadings.data ?? []) }))
     .filter((item) => item.facts?.cycleCost != null);
 
-
   const dimensionOrder = preferences.data?.dimension_order?.length
     ? preferences.data.dimension_order
     : DEFAULT_DIMENSION_ORDER;
   const dimensionRank = new Map(dimensionOrder.map((dimension, index) => [dimension, index]));
-  const sectionOrder = (dimension: string) =>
-    SECTION_ORDER_CLASSES[Math.min(dimensionRank.get(dimension) ?? 4, 4)];
+
   const comingUp: ComingUpItem[] = [];
   const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
-  for (const task of tasks.data ?? []) {
+  for (const task of topLevelTasks(allTasks)) {
     if (!isOpen(task) || !task.due_date || task.due_date > nextWeek) continue;
     comingUp.push({
       id: `task-${task.id}`,
       dimension: "discipline",
       sortValue: task.due_date,
       title: task.title,
-      detail: task.due_date < today ? `Task · Due ${fmtDate(task.due_date)}` : task.due_date === today ? "Task · Due today" : `Task · Due ${fmtDate(task.due_date)}`,
+      detail:
+        task.due_date === today ? "Task · Due today" : `Task · Due ${fmtDate(task.due_date)}`,
       to: "/tasks",
     });
   }
@@ -306,34 +379,214 @@ function DashboardPage() {
       .filter((log) => log.log_date === today && log.taken)
       .map((log) => `${log.medication_id}-${log.time_slot}`),
   );
-  const scheduledDoses = (medications.data ?? []).filter((medication) => medication.active)
+  const scheduledDoses = (medications.data ?? [])
+    .filter((medication) => medication.active)
     .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })));
   const dosesDue = scheduledDoses.filter(({ medication, slot }) => !todayDoseKeys.has(`${medication.id}-${slot}`));
+
   comingUp.sort((a, b) => {
     const byDimension = (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
     return byDimension || a.sortValue.localeCompare(b.sortValue);
   });
 
-  const completedTasksToday = (tasks.data ?? []).filter(
+  const completedTasksToday = allTasks.filter(
     (task) => task.completed_at && isToday(new Date(task.completed_at)),
   ).length;
   const expensesToday = (transactions.data ?? []).filter(
     (transaction) => transaction.date === today && transaction.kind === "expense",
   ).length;
   const todayCounts = [
-    { label: "tasks completed", value: completedTasksToday },
+    { label: "tasks and steps completed", value: completedTasksToday },
     { label: "prayers logged", value: todayPrayerLogs.length },
     { label: "expenses logged", value: expensesToday },
     { label: "health entries", value: todayHealth ? 1 : 0 },
     { label: "food entries", value: todayFoodLogs.length },
   ].filter((item) => item.value > 0);
 
-
   const displayName = profile.data?.display_name?.trim();
   const firstName = displayName?.split(/\s+/)[0];
 
   function scrollToPrayers() {
     document.getElementById("today-prayers")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const prayerRow = (
+    <StatusRow
+      key="spirit"
+      label="Prayers"
+      value={
+        hasPrayerLocation
+          ? `${todayPrayerLogs.length} of 5 logged today${prayerConfig?.city ? ` · ${prayerConfig.city}` : ""}`
+          : "Add your location once to see today’s times."
+      }
+      to="/spirit"
+    >
+      {hasPrayerLocation ? (
+        <div id="today-prayers" className="mt-3 grid min-w-0 grid-cols-5 gap-1.5 scroll-mt-5">
+          {PRAYER_NAMES.map((name) => {
+            const log = todayPrayerLogs.find((item) => item.prayer_name === name);
+            const marked = Boolean(log);
+            const time = prayerTimes ? (prayerTimes[name] as Date) : null;
+            return (
+              <Button
+                key={name}
+                type="button"
+                variant="outline"
+                aria-pressed={marked}
+                aria-label={`${PRAYER_LABELS[name]}${marked ? " logged" : ""}`}
+                className={`h-auto min-h-14 min-w-0 flex-col gap-0.5 px-1 py-2 ${marked ? "tone-positive" : ""}`}
+                onClick={() =>
+                  marked ? unsetPrayer.mutate(name) : setPrayer.mutate({ prayer_name: name, on_time: null })
+                }
+              >
+                <span className="w-full truncate text-xs font-medium">{PRAYER_LABELS[name]}</span>
+                <span className="w-full truncate text-[11px] tabular-nums opacity-75">
+                  {time ? fmtTime(time) : "—"}
+                </span>
+                <span className="flex items-center gap-1 text-[11px]">
+                  {marked ? <Check className="size-3" /> : null}
+                  {marked ? "Prayed" : nextPrayer === name ? "Next" : "Log"}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+      ) : null}
+    </StatusRow>
+  );
+
+  const moneyRow = (
+    <StatusRow
+      key="professional"
+      label="Money"
+      value={
+        paydayReady && payday
+          ? `${fmtMoney(balance)} now · payday in ${daysUntil(payday)} ${daysUntil(payday) === 1 ? "day" : "days"}`
+          : `${fmtMoney(balance)} now · payday not set up yet`
+      }
+      to="/finance"
+      action={
+        paydayReady && payday ? (
+          <MoneyBreakdownDialog
+            trigger={
+              <Button type="button" variant="outline" size="sm">
+                <Info className="size-4" />
+                <span className="hidden sm:inline">Left before payday</span>
+              </Button>
+            }
+          />
+        ) : (
+          <Button asChild variant="outline" size="sm">
+            <Link to="/settings">Set up payday</Link>
+          </Button>
+        )
+      }
+    />
+  );
+
+  const bodyRows = (
+    <div key="health" className="divide-y divide-border">
+      <StatusRow
+        label="Health log"
+        value={todayHealth ? "Logged today" : "Nothing logged yet today"}
+        to="/health"
+      />
+      <StatusRow
+        label="Calories"
+        value={todayFoodLogs.length ? `${todayCalories} kcal logged today` : "No food logged yet today"}
+        to="/food"
+      />
+      <StatusRow
+        label="Medication"
+        value={
+          scheduledDoses.length
+            ? `${dosesDue.length} of ${scheduledDoses.length} scheduled ${scheduledDoses.length === 1 ? "entry remains" : "entries remain"} today`
+            : "No medication times scheduled"
+        }
+        to="/health"
+      />
+    </div>
+  );
+
+  const resourceRows =
+    quotaAlerts.length || meterCosts.length ? (
+      <div key="resources" className="divide-y divide-border">
+        {quotaAlerts.map(({ resource, facts }) => (
+          <StatusRow
+            key={resource.id}
+            label={resource.name}
+            value={`${Math.round(Number(facts!.remaining) * 10) / 10} ${resource.unit} left${facts!.runsOutOn ? ` · around ${fmtDate(facts!.runsOutOn)}` : ""}`}
+            to="/resources"
+          />
+        ))}
+        {meterCosts.map(({ resource, facts }) => (
+          <StatusRow
+            key={resource.id}
+            label={resource.name}
+            value={`This cycle so far ${fmtMoney(facts!.cycleCost)}${facts!.projectedCycleCost == null ? "" : ` · projected ${fmtMoney(facts!.projectedCycleCost)}`}`}
+            to="/resources"
+          />
+        ))}
+      </div>
+    ) : null;
+
+  const strips: { dimension: string; node: ReactNode }[] = [
+    { dimension: "spirit", node: prayerRow },
+    { dimension: "professional", node: moneyRow },
+    { dimension: "health", node: bodyRows },
+    { dimension: "professional", node: resourceRows },
+  ].filter((strip) => strip.node != null);
+
+  strips.sort(
+    (a, b) => (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99),
+  );
+
+  function ActionBlock({ action, large }: { action: NextAction; large?: boolean }) {
+    const isStep = action.item.id !== action.parent.id;
+    return (
+      <div className="min-w-0">
+        {isStep ? (
+          <p className="truncate text-xs text-muted-foreground">{action.parent.title}</p>
+        ) : null}
+        <p
+          className={`mt-1 break-words font-semibold text-foreground ${large ? "text-2xl sm:text-3xl" : "text-base"}`}
+        >
+          {action.item.title}
+          {action.minutes ? (
+            <span className="ml-2 text-base font-normal text-muted-foreground">
+              {minutesLabel(action.minutes)}
+            </span>
+          ) : null}
+        </p>
+        {(action.parent.postponed_count ?? 0) >= 3 ? (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Moved {action.parent.postponed_count} times
+            {action.parent.original_due_date ? ` since ${fmtDate(action.parent.original_due_date)}` : ""}.
+          </p>
+        ) : null}
+        <div className={`mt-4 flex flex-wrap gap-2 ${large ? "" : "gap-2"}`}>
+          <Button
+            type="button"
+            size={large ? "lg" : "default"}
+            className={large ? "min-w-40" : ""}
+            disabled={finish.isPending}
+            onClick={() => finish.mutate(action.item.id)}
+          >
+            <Check className="size-4" />
+            Done
+          </Button>
+          <ShrinkItButton
+            size={large ? "default" : "sm"}
+            onClick={() => setShrinkTask(action.parent)}
+          />
+          <Button asChild variant="ghost" size={large ? "default" : "sm"}>
+            <Link to="/tasks" hash={action.parent.id}>
+              Open task
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -346,7 +599,7 @@ function DashboardPage() {
               <h1 className="mt-2 text-3xl font-semibold text-foreground sm:text-4xl">
                 {greeting()}{firstName ? `, ${firstName}` : ""}
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground">Here is what is true today.</p>
+              <p className="mt-2 text-sm text-muted-foreground">One thing first, then a quick look at the rest.</p>
             </div>
             <div className="flex gap-2">
               <Button asChild size="sm" variant="outline"><Link to="/calendar">Calendar</Link></Button>
@@ -361,241 +614,81 @@ function DashboardPage() {
           <ErrorState error={error} onRetry={() => queries.forEach((query) => query.refetch())} />
         ) : (
           <main className="flex min-w-0 flex-col gap-5">
-            <Card id="today-prayers" className={`system-card scroll-mt-5 ${sectionOrder("spirit")}`}>
-              <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 space-y-0">
+            <Card className="system-card min-w-0 border-primary/30">
+              <CardHeader>
                 <SectionHeading
-                  title="Today’s prayers"
-                  detail={hasPrayerLocation ? `${todayPrayerLogs.length} of 5 recorded${prayerConfig?.city ? ` · ${prayerConfig.city}` : ""}` : "Add your location once to calculate today’s times."}
+                  title="Next action"
+                  detail={overdueTasks ? `${overdueTasks} open ${overdueTasks === 1 ? "task is" : "tasks are"} past their date.` : undefined}
                 />
-                <Button asChild variant="ghost" size="sm" className="shrink-0">
-                  <Link to={hasPrayerLocation ? "/spirit" : "/settings"}>
-                    {hasPrayerLocation ? "Open Spirit" : "Set up"}
-                    <ChevronRight className="size-4" />
-                  </Link>
-                </Button>
               </CardHeader>
-              {hasPrayerLocation ? (
-                <CardContent>
-                  <div className="grid min-w-0 gap-2 sm:grid-cols-5">
-                    {PRAYER_NAMES.map((name) => {
-                      const log = todayPrayerLogs.find((item) => item.prayer_name === name);
-                      const marked = Boolean(log);
-                      const time = prayerTimes ? (prayerTimes[name] as Date) : null;
-                      return (
-                        <div key={name} className="min-w-0 rounded-lg border border-border bg-card">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            aria-pressed={marked}
-                            className={`h-auto min-h-16 w-full min-w-0 justify-between gap-2 rounded-lg px-3 py-3 sm:flex-col sm:items-start ${marked ? "tone-positive" : ""}`}
-                            onClick={() => marked ? unsetPrayer.mutate(name) : setPrayer.mutate({ prayer_name: name, on_time: null })}
-                          >
-                            <span className="min-w-0 text-left">
-                              <span className="block truncate text-sm font-medium">{PRAYER_LABELS[name]}</span>
-                              <span className="mt-0.5 block text-xs tabular-nums opacity-75">{time ? fmtTime(time) : "—"}</span>
-                            </span>
-                            <span className="flex shrink-0 items-center gap-1 text-xs">
-                              {marked ? <Check className="size-3.5" /> : null}
-                              {marked ? "Prayed" : nextPrayer === name ? "Next" : "Log"}
-                            </span>
-                          </Button>
-                          {marked ? (
-                            <div className="grid grid-cols-2 gap-1 border-t border-border p-1">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant={log?.on_time === true ? "secondary" : "ghost"}
-                                aria-pressed={log?.on_time === true}
-                                className="h-9 px-2 text-xs"
-                                onClick={() => setPrayer.mutate({ prayer_name: name, on_time: log?.on_time === true ? null : true })}
-                              >
-                                On time
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant={log?.on_time === false ? "secondary" : "ghost"}
-                                aria-pressed={log?.on_time === false}
-                                className="h-9 px-2 text-xs"
-                                onClick={() => setPrayer.mutate({ prayer_name: name, on_time: log?.on_time === false ? null : false })}
-                              >
-                                Later
-                              </Button>
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })}
+              <CardContent>
+                {primary ? (
+                  <ActionBlock action={primary} large />
+                ) : (
+                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
+                    <p className="min-w-0 text-sm text-muted-foreground">No open tasks right now.</p>
+                    <Button type="button" onClick={() => setQuickTask(true)}>Add a task</Button>
                   </div>
-                </CardContent>
-              ) : null}
+                )}
+              </CardContent>
             </Card>
 
-            <div className={`min-w-0 ${sectionOrder("discipline")}`}>
-              <Card className="system-card min-w-0">
-                <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 space-y-0">
-                  <SectionHeading title="Do" detail={overdueTasks ? `${overdueTasks} overdue · up to three open tasks` : "Up to three open tasks, highest priority first."} />
-                  <Button type="button" size="sm" className="shrink-0" onClick={() => setQuickTask(true)}>
-                    <Plus className="size-4" />
-                    <span className="hidden sm:inline">Add task</span>
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {openTasks.length ? (
-                    <div className="divide-y divide-border">
-                      {openTasks.map((task) => (
-                        <Link
-                          key={task.id}
-                          to="/tasks"
-                          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4 first:pt-0 last:pb-0"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                            {task.project_id ? (() => { const project = (projects.data ?? []).find((item) => item.id === task.project_id); return project ? <span className="mt-1 inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"><EntityIcon icon={project.icon} color={project.color} containerClassName="size-5 rounded" className="size-3" /><span className="truncate">{project.name}</span></span> : null; })() : null}
-                            {task.due_date ? <p className="mt-1 text-xs text-muted-foreground">Due {fmtDate(task.due_date)}</p> : null}
-                          </div>
-                          <SemanticBadge tone={priorityTone(task.priority)} className="shrink-0">
-                            {priorityLabel(task.priority)}
-                          </SemanticBadge>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex min-w-0 items-center justify-between gap-4 rounded-lg border border-dashed border-border p-4">
-                      <p className="min-w-0 text-sm text-muted-foreground">No open tasks right now.</p>
-                      <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setQuickTask(true)}>Add one</Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className={`min-w-0 ${sectionOrder("professional")}`}>
+            {alsoToday.length ? (
               <Card className="system-card min-w-0">
                 <CardHeader>
-                  <SectionHeading title="Money" detail="Across active non-credit accounts." />
+                  <SectionHeading title="Also today" />
                 </CardHeader>
                 <CardContent>
-                  <p className="break-words text-3xl font-semibold tabular-nums text-foreground">{fmtMoney(balance)}</p>
-                  {paydayReady && payday ? (
-                    <>
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        Payday in {daysUntil(payday)} {daysUntil(payday) === 1 ? "day" : "days"} · {fmtDate(payday.toISOString().slice(0, 10))}
-                      </p>
-                      <MoneyBreakdownDialog
-                        trigger={
-                          <Button type="button" variant="outline" className="mt-4 w-full">
-                            <Info className="size-4" />
-                            Money left before payday
-                          </Button>
-                        }
-                      />
-                    </>
-                  ) : (
-                    <Button asChild variant="outline" className="mt-4">
-                      <Link to="/settings">Set up payday</Link>
-                    </Button>
-                  )}
-                  <Button asChild variant="ghost" className="mt-3 px-0 text-primary">
-                    <Link to="/finance">Open Money <ChevronRight className="size-4" /></Link>
-                  </Button>
-                </CardContent>
-
-              </Card>
-            </div>
-
-            <div className={`min-w-0 ${sectionOrder("knowledge")}`}>
-              <Card className="system-card min-w-0">
-                <CardHeader>
-                  <SectionHeading title="Coming up" detail="Due soon across your saved priorities." />
-                </CardHeader>
-                <CardContent>
-                  {comingUp.length ? (
-                    <div className="divide-y divide-border">
-                      {comingUp.slice(0, 6).map((item) => (
-                        <Link key={item.id} to={item.to} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3 first:pt-0 last:pb-0">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                            <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
-                          </div>
-                          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Nothing due soon.</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className={`min-w-0 ${sectionOrder("health")}`}>
-              <Card className="system-card min-w-0">
-                <CardHeader>
-                  <SectionHeading title="Health" detail="Today’s personal log." />
-                </CardHeader>
-                <CardContent>
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className={`grid size-10 shrink-0 place-items-center rounded-full ${todayHealth ? "tone-positive" : "tone-neutral"}`}>
-                      {todayHealth ? <CheckCircle2 className="size-5" /> : <HeartPulse className="size-5" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground">{todayHealth ? "Logged today" : "Nothing logged yet today"}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">Anything you skip stays empty.</p>
-                    </div>
-                  </div>
-                  <p className="mt-4 text-sm text-muted-foreground">
-                    {todayFoodLogs.length
-                      ? `Food logged today: ${todayCalories} kcal`
-                      : "No food logged yet today."}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {scheduledDoses.length
-                      ? `${dosesDue.length} of ${scheduledDoses.length} scheduled medication ${scheduledDoses.length === 1 ? "entry remains" : "entries remain"} today.`
-                      : "No medication times scheduled today."}
-                  </p>
-                  <div className="mt-4 grid gap-2">
-                    <Button asChild className="w-full">
-                      <Link to="/health">{todayHealth ? "Update today’s log" : "Log health"}</Link>
-                    </Button>
-                    <Button asChild variant="outline" className="w-full">
-                      <Link to="/food">Log food</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {meterCosts.length ? (
-              <Card className={`system-card min-w-0 ${sectionOrder("professional")}`}>
-                <CardHeader>
-                  <SectionHeading title="Resources" detail="Worked out from your own readings." />
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2 text-sm">
-                    {meterCosts.map(({ resource, facts }) => (
-                      <li key={resource.id} className="min-w-0">
-                        <span className="font-medium text-foreground">{resource.name}</span>{" "}
-                        <span className="text-muted-foreground">
-                          this cycle so far: {fmtMoney(facts!.cycleCost)}
-                          {facts!.projectedCycleCost == null
-                            ? ""
-                            : ` · projected for the full cycle ${fmtMoney(facts!.projectedCycleCost)}`}
-                        </span>
-                      </li>
+                  <div className="divide-y divide-border">
+                    {alsoToday.map((action) => (
+                      <div key={action.item.id} className="py-4 first:pt-0 last:pb-0">
+                        <ActionBlock action={action} />
+                      </div>
                     ))}
-                  </ul>
-                  <Button asChild variant="ghost" className="mt-3 px-0 text-primary">
-                    <Link to="/resources">
-                      Open Resources <ChevronRight className="size-4" />
-                    </Link>
-                  </Button>
+                  </div>
                 </CardContent>
               </Card>
             ) : null}
 
+            <Card className="system-card min-w-0">
+              <CardHeader>
+                <SectionHeading title="Status" detail="Your own figures for today." />
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y divide-border">
+                  {strips.map((strip, index) => (
+                    <div key={index} className="min-w-0 py-1 first:pt-0 last:pb-0">
+                      {strip.node}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-            <Card className="system-card order-6 min-w-0">
+            <Card className="system-card min-w-0">
+              <CardHeader>
+                <SectionHeading title="Coming up" detail="Due soon across your saved priorities." />
+              </CardHeader>
+              <CardContent>
+                {comingUp.length ? (
+                  <div className="divide-y divide-border">
+                    {comingUp.slice(0, 6).map((item) => (
+                      <Link key={item.id} to={item.to} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3 first:pt-0 last:pb-0">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                          <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
+                        </div>
+                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nothing due soon.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="system-card min-w-0">
               <CardHeader>
                 <SectionHeading title="Quick logs" detail="Common actions for today." />
               </CardHeader>
@@ -620,7 +713,7 @@ function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="system-card order-7 min-w-0">
+            <Card className="system-card min-w-0">
               <CardHeader>
                 <SectionHeading title="Today so far" />
               </CardHeader>
@@ -644,6 +737,12 @@ function DashboardPage() {
 
       <QuickAddTransactionDialog open={quickMoney} onOpenChange={setQuickMoney} />
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
+      <ShrinkItDialog
+        task={shrinkTask}
+        existingSteps={shrinkTask ? stepsOf(allTasks, shrinkTask.id).length : 0}
+        open={!!shrinkTask}
+        onOpenChange={(open) => !open && setShrinkTask(null)}
+      />
     </div>
   );
 }
