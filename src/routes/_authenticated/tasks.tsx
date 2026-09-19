@@ -320,13 +320,27 @@ function TasksPage() {
         <ul className="space-y-3">
           {visible.map((task) => {
             const completed = task.status === "completed";
+            const steps = stepsOf(allTasks, task.id);
+            const progress = stepProgress(steps);
+            const isExpanded = Boolean(expanded[task.id]);
             return (
               <li key={task.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className={`font-medium ${completed ? "text-muted-foreground line-through" : ""}`}>
-                      {task.title}
-                    </p>
+                  <div className="min-w-0">
+                    <button
+                      type="button"
+                      className="text-left"
+                      onClick={() => openEdit(task)}
+                    >
+                      <p className={`font-medium ${completed ? "text-muted-foreground line-through" : ""}`}>
+                        {task.title}
+                        {task.estimated_minutes ? (
+                          <span className="ml-1 text-sm font-normal text-muted-foreground">
+                            {minutesLabel(task.estimated_minutes)}
+                          </span>
+                        ) : null}
+                      </p>
+                    </button>
                     {task.description ? (
                       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                         {task.description}
@@ -348,8 +362,28 @@ function TasksPage() {
                          return project ? <span className="inline-flex items-center gap-1.5"><EntityIcon icon={project.icon} color={project.color} containerClassName="size-5 rounded" className="size-3" />{project.name}</span> : null;
                        })() : null}
                     </div>
+                    {steps.length ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="mt-2 h-8 px-0 text-xs text-muted-foreground"
+                        aria-expanded={isExpanded}
+                        onClick={() =>
+                          setExpanded((current) => ({ ...current, [task.id]: !current[task.id] }))
+                        }
+                      >
+                        {stepsLine(progress.done, progress.total)} · {isExpanded ? "Hide steps" : "Show steps"}
+                      </Button>
+                    ) : null}
+                    {(task.postponed_count ?? 0) >= 3 ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Moved {task.postponed_count} times
+                        {task.original_due_date ? ` since ${fmtDate(task.original_due_date)}` : ""}.
+                      </p>
+                    ) : null}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="ghost"
@@ -357,6 +391,9 @@ function TasksPage() {
                     >
                       {completed ? "Reopen" : "Complete"}
                     </Button>
+                    {completed ? null : (
+                      <ShrinkItButton onClick={() => setShrinkTask(task)} />
+                    )}
                     <Button size="sm" variant="ghost" onClick={() => openEdit(task)}>
                       Edit
                     </Button>
@@ -365,6 +402,33 @@ function TasksPage() {
                     </Button>
                   </div>
                 </div>
+                {isExpanded && steps.length ? (
+                  <ul className="mt-3 divide-y divide-border border-t border-border pt-1">
+                    {steps.map((step) => {
+                      const stepDone = step.status === "completed";
+                      return (
+                        <li key={step.id} className="flex min-w-0 items-center justify-between gap-3 py-2">
+                          <span className={`min-w-0 truncate text-sm ${stepDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                            {step.title}
+                            {step.estimated_minutes ? (
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                {minutesLabel(step.estimated_minutes)}
+                              </span>
+                            ) : null}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="shrink-0"
+                            onClick={() => toggle.mutate({ task: step, completed: stepDone })}
+                          >
+                            {stepDone ? "Reopen" : "Done"}
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
               </li>
             );
           })}
