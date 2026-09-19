@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -45,6 +46,8 @@ import {
   savePrayerSettings,
   spiritKeys,
 } from "@/data/spirit";
+import { MODULES } from "@/data/modules";
+import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useTheme } from "@/hooks/useTheme";
 import { requestDeviceLocation } from "@/lib/geolocation";
@@ -101,6 +104,7 @@ function SettingsPage() {
   const { email } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
   const { prefs, weightUnit } = usePreferences();
+  const { enabled: enabledModuleKeys, toggleModule, isSaving } = useModules();
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
