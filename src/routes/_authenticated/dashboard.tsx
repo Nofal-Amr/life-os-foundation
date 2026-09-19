@@ -497,12 +497,61 @@ function DashboardPage() {
                       <p className="mt-1 text-xs text-muted-foreground">Anything you skip stays empty.</p>
                     </div>
                   </div>
-                  <Button asChild className="mt-5 w-full">
-                    <Link to="/health">{todayHealth ? "Update today’s log" : "Log health"}</Link>
-                  </Button>
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    {todayFoodLogs.length
+                      ? `Food logged today: ${todayCalories} kcal`
+                      : "No food logged yet today."}
+                  </p>
+                  <div className="mt-4 grid gap-2">
+                    <Button asChild className="w-full">
+                      <Link to="/health">{todayHealth ? "Update today’s log" : "Log health"}</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="w-full">
+                      <Link to="/food">Log food</Link>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
+
+            {quotaAlerts.length || meterCosts.length ? (
+              <Card className="system-card min-w-0">
+                <CardHeader>
+                  <SectionHeading title="Resources" detail="Worked out from your own readings." />
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    {quotaAlerts.map(({ resource, facts }) => (
+                      <li key={resource.id} className="min-w-0">
+                        <span className="font-medium text-foreground">{resource.name}</span>{" "}
+                        <span className="text-muted-foreground">
+                          {Math.round(Number(facts!.remaining) * 10) / 10} {resource.unit} left · at
+                          this rate it reaches zero around {fmtDate(facts!.runsOutOn)} , before the
+                          cycle ends on {fmtDate(facts!.cycleEnd)}.
+                        </span>
+                      </li>
+                    ))}
+                    {meterCosts.map(({ resource, facts }) => (
+                      <li key={resource.id} className="min-w-0">
+                        <span className="font-medium text-foreground">{resource.name}</span>{" "}
+                        <span className="text-muted-foreground">
+                          this cycle so far: {fmtMoney(facts!.cycleCost)}
+                          {facts!.projectedCycleCost == null
+                            ? ""
+                            : ` · projected for the full cycle ${fmtMoney(facts!.projectedCycleCost)}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button asChild variant="ghost" className="mt-3 px-0 text-primary">
+                    <Link to="/resources">
+                      Open Resources <ChevronRight className="size-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
+
 
             <Card className="system-card min-w-0">
               <CardHeader>
