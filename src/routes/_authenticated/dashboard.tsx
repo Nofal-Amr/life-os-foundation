@@ -749,14 +749,16 @@ function DashboardPage() {
                 {comingUp.length ? (
                   <div className="divide-y divide-border">
                     {comingUp.slice(0, 6).map((item) => (
-                      <Link key={item.id} to={item.to} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3 first:pt-0 last:pb-0">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                          <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
-                        </div>
-                        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                      <Link
+                        key={item.id}
+                        to={item.to}
+                        className="flex min-h-11 min-w-0 flex-col justify-center py-3 first:pt-0 last:pb-0"
+                      >
+                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                        <p className="mt-1 truncate text-xs text-muted-foreground">{item.detail}</p>
                       </Link>
                     ))}
+
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">Nothing due soon.</p>
