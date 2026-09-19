@@ -72,6 +72,7 @@ import {
   topLevelTasks,
   type Task,
 } from "@/data/tasks";
+import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
@@ -440,6 +441,7 @@ function DashboardPage() {
   const lastPayday = previousPayday(paydayConfig.data);
   const paydayReady = hasPaydaySetup(paydayConfig.data);
   const money = useAvailableBeforePayday();
+  const { isEnabled } = useModules();
   const todayHealth = (healthLogs.data ?? []).find((log) => log.log_date === today);
 
 
@@ -555,6 +557,13 @@ function DashboardPage() {
   comingUp.sort((a, b) => {
     const byDimension = (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
     return byDimension || a.sortValue.localeCompare(b.sortValue);
+  });
+
+  /* Only modules the user kept appear here. */
+  const visibleComingUp = comingUp.filter((item) => {
+    if (item.id.startsWith("cost-")) return isEnabled("money");
+    if (item.id.startsWith("quota-")) return isEnabled("resources");
+    return isEnabled("do");
   });
 
   const completedTasksToday = allTasks.filter(
@@ -696,6 +705,7 @@ function DashboardPage() {
         linkLabel={todayHealth ? "Open today’s log" : "Log health"}
         compact={!todayHealth}
       />
+      {isEnabled("food") ? (
       <StatusRow
         icon={Utensils}
         label="Calories"
@@ -708,6 +718,7 @@ function DashboardPage() {
         linkLabel={todayFoodLogs.length ? "Open Food" : "Log food"}
         compact={!todayFoodLogs.length}
       />
+      ) : null}
     </div>
   );
 
@@ -784,15 +795,17 @@ function DashboardPage() {
 
   /* Prayers are the daily anchor and stay first; the rest follows the saved order. */
   const strips: { dimension: string; node: ReactNode }[] = [
-    { dimension: "health", node: bodyRows },
-    { dimension: "professional", node: moneyRow },
-    { dimension: "professional", node: resourceRows },
+    ...(isEnabled("body") || isEnabled("food")
+      ? [{ dimension: "health", node: bodyRows }]
+      : []),
+    ...(isEnabled("money") ? [{ dimension: "professional", node: moneyRow }] : []),
+    ...(isEnabled("resources") ? [{ dimension: "professional", node: resourceRows }] : []),
   ].filter((strip) => strip.node != null);
 
   strips.sort(
     (a, b) => (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99),
   );
-  strips.unshift({ dimension: "spirit", node: prayerRow });
+  if (isEnabled("spirit")) strips.unshift({ dimension: "spirit", node: prayerRow });
 
 
   function ActionBlock({ action, large }: { action: NextAction; large?: boolean }) {
@@ -912,9 +925,9 @@ function DashboardPage() {
               <div className="grid min-w-0 gap-6 sm:grid-cols-2">
                 <div className="min-w-0">
                   <h2 className="text-xs font-medium uppercase tracking-wide">Coming up</h2>
-                  {comingUp.length ? (
+                  {visibleComingUp.length ? (
                     <div className="mt-1 divide-y divide-border/50">
-                      {comingUp.slice(0, 6).map((item) => (
+                      {visibleComingUp.slice(0, 6).map((item) => (
                         <Link
                           key={item.id}
                           to={item.to}
