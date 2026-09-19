@@ -12,6 +12,8 @@ export type ProjectInput = {
   priority: Project["priority"];
   start_date: string | null;
   due_date: string | null;
+  icon: string | null;
+  color: string | null;
 };
 
 export const projectKeys = {

@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Wallet } from "lucide-react";
+import { Check, Plus, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { EntityIcon } from "@/components/app/EntityIdentity";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import {
   accountsQuery,
+  createCategory,
   createTransaction,
   financeCategoriesQuery,
   financeKeys,
@@ -53,6 +55,8 @@ export function QuickAddTransactionDialog({
   const [accountId, setAccountId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [note, setNote] = useState("");
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const activeAccounts = useMemo(
     () => (accounts.data ?? []).filter((a) => a.active),
@@ -70,6 +74,8 @@ export function QuickAddTransactionDialog({
     setKind(lastUsed && Number(lastUsed.amount) > 0 ? "income" : "expense");
     setAmount("");
     setNote("");
+    setShowNewCategory(false);
+    setNewCategoryName("");
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Most-used categories first, so the common taps are always on top. */
@@ -102,6 +108,18 @@ export function QuickAddTransactionDialog({
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
       onOpenChange(false);
       toast.success("Logged.");
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Something went wrong."),
+  });
+
+  const addCategory = useMutation({
+    mutationFn: () => createCategory({ name: newCategoryName.trim(), kind, color: null, icon: null, monthly_budget: null }),
+    onSuccess: (category) => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.categories });
+      setCategoryId(category.id);
+      setNewCategoryName("");
+      setShowNewCategory(false);
+      toast.success("Category created and selected.");
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Something went wrong."),
   });
@@ -159,24 +177,39 @@ export function QuickAddTransactionDialog({
               <Label>Category</Label>
               <div className="flex flex-wrap gap-2">
                 {chips.map((category) => (
-                  <button
+                  <Button
                     key={category.id}
                     type="button"
+                    variant="outline"
                     aria-pressed={categoryId === category.id}
                     onClick={() => setCategoryId(categoryId === category.id ? "" : category.id)}
                     className={cn(
-                      "min-h-11 rounded-full border border-border px-4 text-sm transition-colors",
+                      "min-h-11 rounded-full px-4 text-sm",
                       categoryId === category.id
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "bg-card text-foreground hover:bg-accent",
+                        : "",
                     )}
                   >
+                    <EntityIcon icon={category.icon} color={categoryId === category.id ? null : category.color} containerClassName="size-5 rounded border-0 bg-transparent" className="size-3" />
                     {category.name}
-                  </button>
+                    {categoryId === category.id ? <Check className="size-3" /> : null}
+                  </Button>
                 ))}
               </div>
             </div>
           ) : null}
+
+          <div className="space-y-2">
+            <Button type="button" variant="ghost" size="sm" className="px-0" onClick={() => setShowNewCategory((current) => !current)}>
+              <Plus className="size-4" /> New category
+            </Button>
+            {showNewCategory ? (
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <Input aria-label="New category name" value={newCategoryName} placeholder="Category name" onChange={(event) => setNewCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); if (newCategoryName.trim()) addCategory.mutate(); } }} />
+                <Button type="button" disabled={!newCategoryName.trim() || addCategory.isPending} onClick={() => addCategory.mutate()}>Add</Button>
+              </div>
+            ) : null}
+          </div>
 
           {activeAccounts.length > 1 ? (
             <div className="space-y-2">
@@ -237,7 +270,7 @@ export function QuickAddTransactionButton({ className }: { className?: string })
         title="Log money"
         className={
           className ??
-          "fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lg md:bottom-8 md:right-8"
+          "fixed bottom-24 right-[max(1.25rem,env(safe-area-inset-right))] z-40 size-14 rounded-full shadow-lg md:bottom-8 md:right-8"
         }
         onClick={() => setOpen(true)}
       >

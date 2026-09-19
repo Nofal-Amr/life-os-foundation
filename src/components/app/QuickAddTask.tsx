@@ -92,7 +92,7 @@ export function QuickAddTaskButton({ className }: { className?: string }) {
         title="Quick add task"
         className={
           className ??
-          "fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lg md:bottom-8 md:right-8"
+          "fixed bottom-24 right-[max(1.25rem,env(safe-area-inset-right))] z-40 size-14 rounded-full shadow-lg md:bottom-8 md:right-8"
         }
         onClick={() => setOpen(true)}
       >

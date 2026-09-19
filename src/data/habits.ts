@@ -13,6 +13,8 @@ export type HabitInput = {
   frequency: Habit["frequency"];
   target: number;
   active: boolean;
+  icon: string | null;
+  color: string | null;
 };
 
 export const habitKeys = {
@@ -76,16 +78,3 @@ export async function unlogHabit(habit_id: string, log_date = todayISO()) {
   if (error) throw error;
 }
 
-/** Consecutive days up to today with a log entry. */
-export function currentStreak(logs: HabitLog[], habitId: string): number {
-  const dates = new Set(logs.filter((l) => l.habit_id === habitId).map((l) => l.log_date));
-  let streak = 0;
-  const cursor = new Date();
-  for (;;) {
-    const iso = cursor.toISOString().slice(0, 10);
-    if (!dates.has(iso)) break;
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}

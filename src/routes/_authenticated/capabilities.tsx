@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { QuickAddTaskButton } from "@/components/app/QuickAddTask";
@@ -51,7 +52,7 @@ export const Route = createFileRoute("/_authenticated/capabilities")({
   component: CapabilitiesPage,
 });
 
-const emptyForm: CapabilityInput = { name: "", description: null };
+const emptyForm: CapabilityInput = { name: "", description: null, icon: null, color: null };
 
 function CapabilitiesPage() {
   const queryClient = useQueryClient();
@@ -98,7 +99,7 @@ function CapabilitiesPage() {
 
   function openEdit(capability: Capability) {
     setEditing(capability);
-    setForm({ name: capability.name, description: capability.description });
+    setForm({ name: capability.name, description: capability.description, icon: capability.icon, color: capability.color });
     setDialogOpen(true);
   }
 
@@ -138,8 +139,10 @@ function CapabilitiesPage() {
             return (
               <li key={capability.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium">{capability.name}</p>
+                   <div className="flex min-w-0 gap-3">
+                     <EntityIcon icon={capability.icon} color={capability.color} />
+                     <div className="min-w-0">
+                     <p className="truncate font-medium">{capability.name}</p>
                     {capability.description ? (
                       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                         {capability.description}
@@ -155,6 +158,7 @@ function CapabilitiesPage() {
                         </Button>
                       ) : null}
                     </div>
+                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" onClick={() => openEdit(capability)}>
@@ -190,6 +194,7 @@ function CapabilitiesPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="space-y-2">
           <Label htmlFor="capability-description">Description (optional)</Label>
           <Textarea

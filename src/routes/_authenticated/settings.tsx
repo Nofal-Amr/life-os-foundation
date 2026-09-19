@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { CurrencyCombobox } from "@/components/app/CurrencyCombobox";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,6 @@ import {
   savePaydayConfig,
 } from "@/data/finance";
 import {
-  CURRENCIES,
   DATE_FORMATS,
   TIME_FORMATS,
   UNIT_SYSTEMS,
@@ -697,24 +697,7 @@ function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>Currency</Label>
-              <Select
-                value={prefs.currency ?? "none"}
-                onValueChange={(value) =>
-                  savePrefs.mutate({ currency: value === "none" ? null : value })
-                }
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Not set" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Not set (plain numbers)</SelectItem>
-                  {CURRENCIES.map((currency) => (
-                    <SelectItem key={currency.value} value={currency.value}>
-                      {currency.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CurrencyCombobox value={prefs.currency} onChange={(currency) => savePrefs.mutate({ currency })} />
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button

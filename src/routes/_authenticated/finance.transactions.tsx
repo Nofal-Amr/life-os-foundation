@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { QuickAddTransactionButton } from "@/components/app/QuickAddTransaction";
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import {
   accountsQuery,
+  createCategory,
   deleteTransaction,
   financeCategoriesQuery,
   financeKeys,
@@ -62,6 +64,8 @@ function TransactionsPage() {
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [form, setForm] = useState<TransactionInput | null>(null);
   const [toDelete, setToDelete] = useState<Transaction | null>(null);
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
@@ -85,6 +89,24 @@ function TransactionsPage() {
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
       setToDelete(null);
       toast.success("Transaction deleted.");
+    },
+    onError,
+  });
+
+  const addCategory = useMutation({
+    mutationFn: () => createCategory({
+      name: newCategoryName.trim(),
+      kind: form?.amount && form.amount > 0 ? "income" : "expense",
+      color: null,
+      icon: null,
+      monthly_budget: null,
+    }),
+    onSuccess: (category) => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.categories });
+      setForm((current) => current ? { ...current, category_id: category.id } : current);
+      setNewCategoryName("");
+      setShowNewCategory(false);
+      toast.success("Category created and selected.");
     },
     onError,
   });
@@ -121,6 +143,8 @@ function TransactionsPage() {
       description: transaction.description,
       date: transaction.date,
     });
+    setShowNewCategory(false);
+    setNewCategoryName("");
   }
 
   return (
@@ -207,9 +231,10 @@ function TransactionsPage() {
                       className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-medium">
-                          {t.description || categoryName(t.category_id)}
-                        </p>
+                         <p className="flex min-w-0 items-center gap-2 font-medium">
+                           {(() => { const category = (categories.data ?? []).find((item) => item.id === t.category_id); return category ? <EntityIcon icon={category.icon} color={category.color} containerClassName="size-6 rounded" className="size-3" /> : null; })()}
+                           <span className="truncate">{t.description || categoryName(t.category_id)}</span>
+                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {categoryName(t.category_id)} · {accountName(t.account_id)}
                         </p>
@@ -332,11 +357,13 @@ function TransactionsPage() {
                     <SelectItem value="none">No category</SelectItem>
                     {(categories.data ?? []).map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.name}
+                         <span className="flex items-center gap-2"><EntityIcon icon={c.icon} color={c.color} containerClassName="size-5 rounded" className="size-3" />{c.name}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <Button type="button" size="sm" variant="ghost" className="px-0" onClick={() => setShowNewCategory((current) => !current)}>+ New category</Button>
+                {showNewCategory ? <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><Input aria-label="New category name" value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} /><Button type="button" disabled={!newCategoryName.trim() || addCategory.isPending} onClick={() => addCategory.mutate()}>Add</Button></div> : null}
               </div>
             </div>
             <div className="space-y-2">

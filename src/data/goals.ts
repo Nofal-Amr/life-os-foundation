@@ -12,6 +12,8 @@ export type GoalInput = {
   target_date: string | null;
   status: Goal["status"];
   progress: number;
+  icon: string | null;
+  color: string | null;
 };
 
 export const goalKeys = { all: ["goals"] as const };

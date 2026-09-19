@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
@@ -24,7 +25,6 @@ import { HABIT_FREQUENCIES, labelOf } from "@/data/enums";
 import {
   archiveHabit,
   createHabit,
-  currentStreak,
   deleteHabit,
   habitKeys,
   habitLogsQuery,
@@ -42,11 +42,11 @@ export const Route = createFileRoute("/_authenticated/habits")({
   head: () => ({
     meta: [
       { title: "Habits — Life OS" },
-      { name: "description", content: "Track daily and weekly habits and keep your streaks." },
+      { name: "description", content: "Track daily and weekly habits at your own pace." },
       { property: "og:title", content: "Habits — Life OS" },
       {
         property: "og:description",
-        content: "Track daily and weekly habits and keep your streaks.",
+        content: "Track daily and weekly habits at your own pace.",
       },
     ],
   }),
@@ -59,6 +59,8 @@ const emptyForm: HabitInput = {
   frequency: "daily",
   target: 1,
   active: true,
+  icon: null,
+  color: null,
 };
 
 function HabitsPage() {
@@ -127,6 +129,8 @@ function HabitsPage() {
       frequency: habit.frequency,
       target: habit.target,
       active: habit.active,
+      icon: habit.icon,
+      color: habit.color,
     });
     setDialogOpen(true);
   }
@@ -165,7 +169,9 @@ function HabitsPage() {
             return (
               <li key={habit.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                   <div className="flex min-w-0 gap-3">
+                     <EntityIcon icon={habit.icon} color={habit.color} />
+                     <div className="min-w-0">
                     <p className="font-medium">
                       {habit.name}
                       {!habit.active ? (
@@ -182,8 +188,9 @@ function HabitsPage() {
                         {labelOf(HABIT_FREQUENCIES, habit.frequency)}
                       </Badge>
                       <span>Target {habit.target}×</span>
-                      <span>Streak {currentStreak(allLogs, habit.id)} days</span>
-                    </div>
+                       <span>{habitLogs.length} {habitLogs.length === 1 ? "entry" : "entries"} logged</span>
+                     </div>
+                   </div>
                     {habitLogs.length > 0 ? (
                       <p className="mt-2 text-xs text-muted-foreground">
                         Recent: {habitLogs.slice(0, 5).map((l) => fmtDate(l.log_date)).join(" · ")}
@@ -233,6 +240,7 @@ function HabitsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="space-y-2">
           <Label htmlFor="habit-description">Description</Label>
           <Textarea

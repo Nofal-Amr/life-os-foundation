@@ -1,5 +1,5 @@
-import { Link, useLocation } from "@tanstack/react-router";
-import { LogOut, Menu } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
@@ -7,6 +7,7 @@ import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth, useSignOut } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 
 
 function Brand() {
@@ -23,16 +24,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const signOut = useSignOut();
   const { user } = useAuth();
   const { displayName } = useDisplayName();
-
-  const isDashboard = useLocation({ select: (location) => location.pathname === "/dashboard" });
-
-  if (isDashboard) {
-    return <main className="min-h-screen bg-background">{children}</main>;
-  }
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col justify-between border-r border-border bg-sidebar px-3 py-6 md:flex">
+       <aside className="fixed inset-y-0 left-0 hidden w-60 min-w-0 flex-col justify-between overflow-y-auto border-r border-border bg-sidebar px-3 py-6 md:flex">
         <div className="space-y-6">
           <Brand />
           <SidebarNav />
@@ -45,6 +41,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
             </div>
           </div>
+           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleTheme}>
+             {theme === "dark" ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
+             {theme === "dark" ? "Light theme" : "Dark theme"}
+           </Button>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" aria-hidden="true" />
             Sign out
@@ -53,7 +53,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       </aside>
 
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
+       <header className="sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Open navigation">
@@ -68,14 +68,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
           </SheetContent>
         </Sheet>
-        <span className="text-sm font-semibold">Life OS</span>
-        <Button variant="ghost" size="icon" aria-label="Sign out" onClick={signOut}>
-          <LogOut className="size-5" />
-        </Button>
+         <span className="truncate text-center text-sm font-semibold">Life OS</span>
+         <Button variant="ghost" size="icon" aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>
+           {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+         </Button>
       </header>
 
-      <main className="px-4 pb-24 pt-6 md:ml-60 md:px-10 md:pb-12 md:pt-10">
-        <div className="mx-auto w-full max-w-5xl">{children}</div>
+       <main className="min-w-0 overflow-x-clip px-4 pb-28 pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
+         <div className="mx-auto w-full min-w-0 max-w-6xl">{children}</div>
       </main>
 
       <BottomNav />

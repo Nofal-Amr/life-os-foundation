@@ -20,6 +20,15 @@ export const DEFAULT_DISPLAY_PREFERENCES: DisplayPreferences = {
 };
 
 export const CURRENCIES: { value: string; label: string }[] = [
+  { value: "EGP", label: "Egyptian pound (E£)" },
+  { value: "KWD", label: "Kuwaiti dinar (د.ك)" },
+  { value: "QAR", label: "Qatari riyal (ر.ق)" },
+  { value: "BHD", label: "Bahraini dinar (د.ب)" },
+  { value: "OMR", label: "Omani rial (ر.ع.)" },
+  { value: "JOD", label: "Jordanian dinar (د.ا)" },
+  { value: "MAD", label: "Moroccan dirham (د.م.)" },
+  { value: "TND", label: "Tunisian dinar (د.ت)" },
+  { value: "DZD", label: "Algerian dinar (دج)" },
   { value: "GBP", label: "British pound (£)" },
   { value: "EUR", label: "Euro (€)" },
   { value: "USD", label: "US dollar ($)" },
@@ -35,6 +44,17 @@ export const CURRENCIES: { value: string; label: string }[] = [
   { value: "NOK", label: "Norwegian krone (kr)" },
   { value: "ZAR", label: "South African rand (R)" },
 ];
+
+export function isValidCurrencyCode(value: string): boolean {
+  const code = value.trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(code)) return false;
+  try {
+    new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(0);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export const UNIT_SYSTEMS: { value: UnitSystem; label: string }[] = [
   { value: "metric", label: "Metric (cm, kg)" },
@@ -183,7 +203,7 @@ export function formatMoney(value: number | null | undefined, prefs: DisplayPref
       return new Intl.NumberFormat(undefined, {
         style: "currency",
         currency: prefs.currency,
-        minimumFractionDigits: 2,
+        minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       }).format(amount);
     } catch {
@@ -191,7 +211,7 @@ export function formatMoney(value: number | null | undefined, prefs: DisplayPref
     }
   }
   return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(amount);
 }

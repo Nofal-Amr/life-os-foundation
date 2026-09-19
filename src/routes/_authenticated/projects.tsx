@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
@@ -54,6 +55,8 @@ const emptyForm: ProjectInput = {
   priority: "medium",
   start_date: null,
   due_date: null,
+  icon: null,
+  color: null,
 };
 
 function ProjectsPage() {
@@ -115,6 +118,8 @@ function ProjectsPage() {
       priority: project.priority,
       start_date: project.start_date,
       due_date: project.due_date,
+      icon: project.icon,
+      color: project.color,
     });
     setDialogOpen(true);
   }
@@ -154,8 +159,10 @@ function ProjectsPage() {
                       className="rounded-xl border border-border bg-card p-4"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium">{project.name}</p>
+                       <div className="flex min-w-0 gap-3">
+                         <EntityIcon icon={project.icon} color={project.color} />
+                         <div className="min-w-0">
+                           <p className="truncate font-medium">{project.name}</p>
                           {project.description ? (
                             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                               {project.description}
@@ -168,6 +175,7 @@ function ProjectsPage() {
                             <span>Start {fmtDate(project.start_date)}</span>
                             <span>Due {fmtDate(project.due_date)}</span>
                           </div>
+                         </div>
                         </div>
                         <div className="flex gap-2">
                           <Button size="sm" variant="ghost" onClick={() => openEdit(project)}>
@@ -216,6 +224,7 @@ function ProjectsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
+        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea

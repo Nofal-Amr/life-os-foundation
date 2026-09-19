@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { isToday, parseISO } from "date-fns";
 import {
-  CalendarClock,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -10,19 +9,16 @@ import {
   ClipboardPlus,
   HeartPulse,
   ListTodo,
-  Moon,
   Plus,
-  Sun,
-  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
+import { EntityIcon } from "@/components/app/EntityIdentity";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { ErrorState, LoadingState } from "@/components/app/States";
-import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -42,6 +38,7 @@ import {
 } from "@/data/health";
 import { DEFAULT_DIMENSION_ORDER, preferencesQuery } from "@/data/preferences";
 import { profileQuery } from "@/data/profile";
+import { projectsQuery } from "@/data/projects";
 import {
   PRAYER_LABELS,
   PRAYER_NAMES,
@@ -54,7 +51,6 @@ import {
 } from "@/data/spirit";
 import { isOpen, tasksQuery, type Task } from "@/data/tasks";
 import { usePreferences } from "@/hooks/usePreferences";
-import { useTheme } from "@/hooks/useTheme";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
 import { priorityLabel, priorityTone } from "@/lib/semantics";
@@ -116,7 +112,6 @@ function SectionHeading({ title, detail }: { title: string; detail?: string }) {
 
 function DashboardPage() {
   const queryClient = useQueryClient();
-  const { theme, toggleTheme } = useTheme();
   const { fmtLongDate, fmtDate, fmtTime, fmtSlot, fmtMoney } = usePreferences();
   const today = todayISO();
 
@@ -132,6 +127,7 @@ function DashboardPage() {
   const medicationLogs = useQuery(medicationLogsQuery());
   const preferences = useQuery(preferencesQuery());
   const profile = useQuery(profileQuery());
+  const projects = useQuery(projectsQuery());
 
   const [quickTask, setQuickTask] = useState(false);
   const [quickMoney, setQuickMoney] = useState(false);
@@ -165,6 +161,7 @@ function DashboardPage() {
     medicationLogs,
     preferences,
     profile,
+    projects,
   ];
   const loading = queries.some((query) => query.isLoading);
   const error = queries.find((query) => query.error)?.error;
@@ -268,29 +265,10 @@ function DashboardPage() {
   }
 
   return (
-    <div className="system-canvas min-h-screen overflow-x-clip px-4 pb-28 pt-5 sm:px-6 lg:px-8 lg:pt-7">
-      <div className="mx-auto w-full min-w-0 max-w-6xl">
+    <div className="min-w-0">
+      <div className="w-full min-w-0">
         <header>
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 border-b border-border pb-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="size-2 shrink-0 rounded-full bg-primary" />
-              <span className="truncate text-sm font-bold uppercase tracking-[0.16em] text-foreground">Life OS</span>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="rounded-full bg-card"
-                aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-                onClick={toggleTheme}
-              >
-                {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-              </Button>
-              <UserAvatar size="md" />
-            </div>
-          </div>
-          <div className="py-8 sm:py-10">
+          <div className="pb-8 sm:pb-10">
             <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
             <h1 className="mt-2 text-3xl font-semibold text-foreground sm:text-4xl">
               {greeting()}{firstName ? `, ${firstName}` : ""}
@@ -395,6 +373,7 @@ function DashboardPage() {
                         >
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
+                            {task.project_id ? (() => { const project = (projects.data ?? []).find((item) => item.id === task.project_id); return project ? <span className="mt-1 inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"><EntityIcon icon={project.icon} color={project.color} containerClassName="size-5 rounded" className="size-3" /><span className="truncate">{project.name}</span></span> : null; })() : null}
                             {task.due_date ? <p className="mt-1 text-xs text-muted-foreground">Due {fmtDate(task.due_date)}</p> : null}
                           </div>
                           <SemanticBadge tone={priorityTone(task.priority)} className="shrink-0">
@@ -525,21 +504,6 @@ function DashboardPage() {
           </main>
         )}
       </div>
-
-      <nav aria-label="Today navigation" className="fixed inset-x-4 bottom-4 z-40 mx-auto w-fit max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-card/90 p-1.5 shadow-lg backdrop-blur-xl">
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {[
-            { to: "/dashboard" as const, label: "Today", icon: CalendarClock },
-            { to: "/tasks" as const, label: "Tasks", icon: ListTodo },
-            { to: "/finance" as const, label: "Money", icon: Wallet },
-            { to: "/health" as const, label: "Health", icon: HeartPulse },
-          ].map(({ to, label, icon: Icon }) => (
-            <Link key={to} to={to} aria-label={label} title={label} className="flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[status=active]:bg-accent data-[status=active]:text-primary">
-              <Icon className="size-4" />
-            </Link>
-          ))}
-        </div>
-      </nav>
 
       <QuickAddTransactionDialog open={quickMoney} onOpenChange={setQuickMoney} />
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
