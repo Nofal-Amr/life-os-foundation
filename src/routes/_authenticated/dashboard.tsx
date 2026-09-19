@@ -218,6 +218,8 @@ function MoneySplitBar({
   );
 }
 
+const iso = (date: Date) => date.toISOString().slice(0, 10);
+
 /** Elapsed time between the user's own two paydays. No score, just the dates. */
 function PaydayLine({
   from,
@@ -226,7 +228,7 @@ function PaydayLine({
 }: {
   from: Date;
   to: Date;
-  fmtDate: (value: string | Date) => string;
+  fmtDate: (value: string) => string;
 }) {
   const span = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
   const elapsed = Math.min(
@@ -242,7 +244,7 @@ function PaydayLine({
         />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Day {elapsed} of {span} since {fmtDate(from)} · next {fmtDate(to)}
+        Day {elapsed} of {span} since {fmtDate(iso(from))} · next {fmtDate(iso(to))}
       </p>
     </div>
   );
