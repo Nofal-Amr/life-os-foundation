@@ -35,6 +35,7 @@ import {
   transactionsQuery,
 } from "@/data/finance";
 import { dayTotals, foodLogsQuery } from "@/data/food";
+import { goalsQuery } from "@/data/goals";
 import {
   healthLogsQuery,
   medicationLogsQuery,
@@ -109,8 +110,10 @@ type ComingUpItem = {
   sortValue: string;
   title: string;
   detail: string;
-  to: "/tasks" | "/finance/recurring" | "/health";
+  to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources";
 };
+
+const SECTION_ORDER_CLASSES = ["order-1", "order-2", "order-3", "order-4", "order-5"] as const;
 
 function SectionHeading({ title, detail }: { title: string; detail?: string }) {
   return (
@@ -139,6 +142,7 @@ function DashboardPage() {
   const preferences = useQuery(preferencesQuery());
   const profile = useQuery(profileQuery());
   const projects = useQuery(projectsQuery());
+  const goals = useQuery(goalsQuery());
   const foodLogs = useQuery(foodLogsQuery());
   const resources = useQuery(resourcesQuery());
   const resourceReadings = useQuery(resourceReadingsQuery());
@@ -177,6 +181,7 @@ function DashboardPage() {
     preferences,
     profile,
     projects,
+    goals,
     foodLogs,
     resources,
     resourceReadings,
@@ -186,6 +191,9 @@ function DashboardPage() {
   const error = queries.find((query) => query.error)?.error;
 
   const openTasks = [...(tasks.data ?? [])].filter(isOpen).sort(sortNextUp).slice(0, 3);
+  const overdueTasks = (tasks.data ?? []).filter(
+    (task) => isOpen(task) && Boolean(task.due_date) && String(task.due_date) < today,
+  ).length;
   const todayPrayerLogs = (prayerLogs.data ?? []).filter(
     (log) => log.prayer_date === today && log.completed,
   );
@@ -226,17 +234,45 @@ function DashboardPage() {
     ? preferences.data.dimension_order
     : DEFAULT_DIMENSION_ORDER;
   const dimensionRank = new Map(dimensionOrder.map((dimension, index) => [dimension, index]));
+  const sectionOrder = (dimension: string) =>
+    SECTION_ORDER_CLASSES[Math.min(dimensionRank.get(dimension) ?? 4, 4)];
   const comingUp: ComingUpItem[] = [];
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
   for (const task of tasks.data ?? []) {
-    if (!isOpen(task) || !task.due_date || (task.due_date !== today && task.due_date !== new Date(Date.now() + 86_400_000).toISOString().slice(0, 10))) continue;
+    if (!isOpen(task) || !task.due_date || task.due_date > tomorrow) continue;
     comingUp.push({
       id: `task-${task.id}`,
       dimension: "discipline",
       sortValue: task.due_date,
       title: task.title,
-      detail: task.due_date === today ? "Task · Due today" : "Task · Due tomorrow",
+      detail: task.due_date < today ? `Task · Due ${fmtDate(task.due_date)}` : task.due_date === today ? "Task · Due today" : "Task · Due tomorrow",
       to: "/tasks",
+    });
+  }
+
+  for (const project of projects.data ?? []) {
+    if (project.status === "archived" || project.status === "completed" || !project.due_date || project.due_date > nextWeek) continue;
+    comingUp.push({
+      id: `project-${project.id}`,
+      dimension: "professional",
+      sortValue: project.due_date,
+      title: project.name,
+      detail: `Project · Due ${fmtDate(project.due_date)}`,
+      to: "/projects",
+    });
+  }
+
+  for (const goal of goals.data ?? []) {
+    if (goal.status === "completed" || !goal.target_date || goal.target_date > nextWeek) continue;
+    comingUp.push({
+      id: `goal-${goal.id}`,
+      dimension: "knowledge",
+      sortValue: goal.target_date,
+      title: goal.name,
+      detail: `Goal · Target ${fmtDate(goal.target_date)}`,
+      to: "/goals",
     });
   }
 
@@ -254,6 +290,18 @@ function DashboardPage() {
     }
   }
 
+  for (const { resource, facts } of quotaAlerts) {
+    if (!facts) continue;
+    comingUp.push({
+      id: `quota-${resource.id}`,
+      dimension: "professional",
+      sortValue: facts.runsOutOn,
+      title: resource.name,
+      detail: `Resource · ${Math.round(Number(facts.remaining) * 10) / 10} ${resource.unit} left · around ${fmtDate(facts.runsOutOn)}`,
+      to: "/resources",
+    });
+  }
+
   const todayDoseKeys = new Set(
     (medicationLogs.data ?? [])
       .filter((log) => log.log_date === today && log.taken)
@@ -263,16 +311,11 @@ function DashboardPage() {
     if (!medication.active) continue;
     for (const slot of medication.schedule_times ?? []) {
       if (todayDoseKeys.has(`${medication.id}-${slot}`)) continue;
-      comingUp.push({
-        id: `med-${medication.id}-${slot}`,
-        dimension: "health",
-        sortValue: `${today}T${slot}`,
-        title: medication.name,
-        detail: `Medication · ${fmtSlot(slot)}`,
-        to: "/health",
-      });
     }
   }
+  const scheduledDoses = (medications.data ?? []).filter((medication) => medication.active)
+    .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })));
+  const dosesDue = scheduledDoses.filter(({ medication, slot }) => !todayDoseKeys.has(`${medication.id}-${slot}`));
   comingUp.sort((a, b) => {
     const byDimension = (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
     return byDimension || a.sortValue.localeCompare(b.sortValue);
@@ -318,8 +361,8 @@ function DashboardPage() {
         ) : error ? (
           <ErrorState error={error} onRetry={() => queries.forEach((query) => query.refetch())} />
         ) : (
-          <main className="min-w-0 space-y-5">
-            <Card id="today-prayers" className="system-card scroll-mt-5">
+          <main className="flex min-w-0 flex-col gap-5">
+            <Card id="today-prayers" className={`system-card scroll-mt-5 ${sectionOrder("spirit")}`}>
               <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 space-y-0">
                 <SectionHeading
                   title="Today’s prayers"
@@ -389,10 +432,10 @@ function DashboardPage() {
               ) : null}
             </Card>
 
-            <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+            <div className={`min-w-0 ${sectionOrder("discipline")}`}>
               <Card className="system-card min-w-0">
                 <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 space-y-0">
-                  <SectionHeading title="Next up" detail="Up to three open tasks, highest priority first." />
+                  <SectionHeading title="Do" detail={overdueTasks ? `${overdueTasks} overdue · up to three open tasks` : "Up to three open tasks, highest priority first."} />
                   <Button type="button" size="sm" className="shrink-0" onClick={() => setQuickTask(true)}>
                     <Plus className="size-4" />
                     <span className="hidden sm:inline">Add task</span>
@@ -426,7 +469,9 @@ function DashboardPage() {
                   )}
                 </CardContent>
               </Card>
+            </div>
 
+            <div className={`min-w-0 ${sectionOrder("professional")}`}>
               <Card className="system-card min-w-0">
                 <CardHeader>
                   <SectionHeading title="Money" detail="Across active non-credit accounts." />
@@ -460,7 +505,7 @@ function DashboardPage() {
               </Card>
             </div>
 
-            <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(17rem,0.8fr)]">
+            <div className={`min-w-0 ${sectionOrder("knowledge")}`}>
               <Card className="system-card min-w-0">
                 <CardHeader>
                   <SectionHeading title="Coming up" detail="Due soon across your saved priorities." />
@@ -483,7 +528,9 @@ function DashboardPage() {
                   )}
                 </CardContent>
               </Card>
+            </div>
 
+            <div className={`min-w-0 ${sectionOrder("health")}`}>
               <Card className="system-card min-w-0">
                 <CardHeader>
                   <SectionHeading title="Health" detail="Today’s personal log." />
@@ -503,6 +550,11 @@ function DashboardPage() {
                       ? `Food logged today: ${todayCalories} kcal`
                       : "No food logged yet today."}
                   </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {scheduledDoses.length
+                      ? `${dosesDue.length} of ${scheduledDoses.length} scheduled medication ${scheduledDoses.length === 1 ? "entry" : "entries"} still due today.`
+                      : "No medication times scheduled today."}
+                  </p>
                   <div className="mt-4 grid gap-2">
                     <Button asChild className="w-full">
                       <Link to="/health">{todayHealth ? "Update today’s log" : "Log health"}</Link>
@@ -515,23 +567,13 @@ function DashboardPage() {
               </Card>
             </div>
 
-            {quotaAlerts.length || meterCosts.length ? (
-              <Card className="system-card min-w-0">
+            {meterCosts.length ? (
+              <Card className={`system-card min-w-0 ${sectionOrder("professional")}`}>
                 <CardHeader>
                   <SectionHeading title="Resources" detail="Worked out from your own readings." />
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
-                    {quotaAlerts.map(({ resource, facts }) => (
-                      <li key={resource.id} className="min-w-0">
-                        <span className="font-medium text-foreground">{resource.name}</span>{" "}
-                        <span className="text-muted-foreground">
-                          {Math.round(Number(facts!.remaining) * 10) / 10} {resource.unit} left · at
-                          this rate it reaches zero around {fmtDate(facts!.runsOutOn)}, before the
-                          cycle ends on {fmtDate(facts!.cycleEnd)}.
-                        </span>
-                      </li>
-                    ))}
                     {meterCosts.map(({ resource, facts }) => (
                       <li key={resource.id} className="min-w-0">
                         <span className="font-medium text-foreground">{resource.name}</span>{" "}
