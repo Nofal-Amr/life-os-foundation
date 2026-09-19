@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ImageIcon, Upload, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { Button } from "@/components/ui/button";
@@ -27,9 +27,19 @@ export function ProjectCover({ path, name, icon, color, className }: { path?: st
 
 export function ProjectCoverPicker({ file, currentPath, removeCurrent, onFileChange, onRemoveCurrent }: { file: File | null; currentPath?: string | null; removeCurrent: boolean; onFileChange: (file: File | null) => void; onRemoveCurrent: () => void }) {
   const input = useRef<HTMLInputElement>(null);
-  const preview = file ? URL.createObjectURL(file) : null;
+  const [preview, setPreview] = useState<string | null>(null);
   const currentUrl = useQuery(projectCoverUrlQuery(removeCurrent ? null : currentPath ?? null));
   const shown = preview ?? currentUrl.data;
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
 
   return (
     <div className="space-y-2">
@@ -42,8 +52,14 @@ export function ProjectCoverPicker({ file, currentPath, removeCurrent, onFileCha
           <input ref={input} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => {
             const selected = event.target.files?.[0];
             if (!selected) return;
-            validateProjectCover(selected);
-            onFileChange(selected);
+            try {
+              validateProjectCover(selected);
+              onFileChange(selected);
+            } catch (error) {
+              onFileChange(null);
+              event.target.value = "";
+              window.alert(error instanceof Error ? error.message : "Please choose another image.");
+            }
           }} />
           <Button type="button" size="sm" variant="outline" onClick={() => input.current?.click()}><Upload className="size-4" />{shown ? "Replace" : "Choose image"}</Button>
           {shown ? <Button type="button" size="sm" variant="ghost" onClick={() => { onFileChange(null); onRemoveCurrent(); }}><X className="size-4" />Remove</Button> : null}

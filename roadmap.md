@@ -13,6 +13,8 @@
 - [x] Calm warm-neutral visual direction
 - [x] Executive dashboard restyle with persisted light/dark theme
 - [x] Daily Today screen: prayers, next tasks, money, upcoming commitments, health, quick logs, and gain-framed activity from real rows
+- [x] Day-first date and date-time entry controls across tasks, projects, goals, finance, calendar, review and settings
+- [x] Optional private project cover images with stable fallbacks to each project's icon and colour
 - [x] Dashboard responsive overflow fixed across mobile, intermediate desktop, and wide screens
 - [x] Inline project and capability creation in the task form
 - [x] Confirm email/password sign-in is switched on in the connected backend's Auth settings

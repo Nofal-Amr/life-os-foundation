@@ -14,7 +14,7 @@ export type ProjectInput = {
   due_date: string | null;
   icon: string | null;
   color: string | null;
-  image_url: string | null;
+  image_url?: string | null;
 };
 
 export const PROJECT_IMAGES_BUCKET = "project-images";
@@ -98,8 +98,8 @@ export async function createProject(input: ProjectInput): Promise<Project> {
   return unwrap(await supabase.from("projects").insert({ ...input, user_id }).select().single()) as Project;
 }
 
-export async function updateProject(id: string, input: Partial<ProjectInput>) {
-  return unwrap(await supabase.from("projects").update(input).eq("id", id).select().single());
+export async function updateProject(id: string, input: Partial<ProjectInput>): Promise<Project> {
+  return unwrap(await supabase.from("projects").update(input).eq("id", id).select().single()) as Project;
 }
 
 export async function archiveProject(id: string) {

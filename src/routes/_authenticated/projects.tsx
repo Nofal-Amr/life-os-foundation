@@ -243,7 +243,7 @@ function ProjectsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
-        <ProjectCoverPicker file={coverFile} currentPath={editing?.image_url} removeCurrent={removeCover} onFileChange={(file) => { setCoverFile(file); if (file) setRemoveCover(false); }} onRemoveCurrent={() => setRemoveCover(true)} />
+        <ProjectCoverPicker file={coverFile} currentPath={editing?.image_url ?? null} removeCurrent={removeCover} onFileChange={(file) => { setCoverFile(file); if (file) setRemoveCover(false); }} onRemoveCurrent={() => setRemoveCover(true)} />
         <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>

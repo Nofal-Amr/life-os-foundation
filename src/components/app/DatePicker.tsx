@@ -51,10 +51,9 @@ export function DatePicker({
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
-            selected={selected}
-            defaultMonth={selected}
+            {...(selected ? { selected, defaultMonth: selected } : {})}
             onSelect={(date) => onChange(date ? format(date, "yyyy-MM-dd") : "")}
-            disabled={disableFuture ? { after: today } : undefined}
+            {...(disableFuture ? { disabled: { after: today } } : {})}
             initialFocus
             className="pointer-events-auto p-3"
           />
@@ -86,7 +85,7 @@ export function DateTimePicker({
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_7.5rem] gap-2">
-      <DatePicker id={id} value={date} onChange={setDate} />
+      <DatePicker {...(id ? { id } : {})} value={date} onChange={setDate} />
       <input
         type="time"
         aria-label="Time"
