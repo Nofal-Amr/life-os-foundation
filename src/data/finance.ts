@@ -62,7 +62,9 @@ export const financeKeys = {
   transactions: ["transactions"] as const,
   recurring: ["recurring_costs"] as const,
   payday: ["payday_config"] as const,
+  pockets: ["account_pockets"] as const,
 };
+
 
 /* ------------------------------- queries ------------------------------- */
 
@@ -196,7 +198,9 @@ export type TransactionInput = {
   kind: TransactionKind;
   description: string | null;
   date: string;
+  pocket_id?: string | null;
 };
+
 
 export async function createTransaction(input: TransactionInput): Promise<Transaction> {
   const user_id = await currentUserId();
@@ -396,26 +400,55 @@ export function daysUntil(date: Date, from: Date = new Date()): number {
 
 /* ------------------------------ balances ------------------------------- */
 
-export function accountBalance(account: Account, transactions: Transaction[]): number {
+export function accountBalance(
+  account: Account,
+  transactions: Transaction[],
+  pockets: AccountPocket[] = [],
+): number {
   const moved = transactions
     .filter((t) => t.account_id === account.id)
     .reduce((sum, t) => sum + Number(t.amount), 0);
-  return Number(account.opening_balance) + moved;
+  const pocketOpening = pockets
+    .filter((p) => p.account_id === account.id)
+    .reduce((sum, p) => sum + Number(p.opening_balance), 0);
+  return Number(account.opening_balance) + pocketOpening + moved;
+}
+
+/** A pocket holds its own opening balance plus the transactions assigned to it. */
+export function pocketBalance(pocket: AccountPocket, transactions: Transaction[]): number {
+  const moved = transactions
+    .filter((t) => t.pocket_id === pocket.id)
+    .reduce((sum, t) => sum + Number(t.amount), 0);
+  return Number(pocket.opening_balance) + moved;
 }
 
 /** Spendable money: active accounts that are not credit. */
-export function liquidBalance(accounts: Account[], transactions: Transaction[]): number {
+export function liquidBalance(
+  accounts: Account[],
+  transactions: Transaction[],
+  pockets: AccountPocket[] = [],
+): number {
   return accounts
     .filter((a) => a.active && a.type !== "credit")
-    .reduce((sum, a) => sum + accountBalance(a, transactions), 0);
+    .reduce((sum, a) => sum + accountBalance(a, transactions, pockets), 0);
 }
 
 /** Active recurring costs falling due on or before the given date. */
-export function committedBefore(costs: RecurringCost[], before: Date | null): number {
-  if (!before) return 0;
+export function upcomingCostsBefore(
+  costs: RecurringCost[],
+  before: Date | null,
+): RecurringCost[] {
+  if (!before) return [];
   return costs
     .filter((c) => c.active && parseISO(c.next_due_date) <= before)
-    .reduce((sum, c) => sum + Math.abs(Number(c.amount)), 0);
+    .sort((a, b) => a.next_due_date.localeCompare(b.next_due_date));
+}
+
+export function committedBefore(costs: RecurringCost[], before: Date | null): number {
+  return upcomingCostsBefore(costs, before).reduce(
+    (sum, c) => sum + Math.abs(Number(c.amount)),
+    0,
+  );
 }
 
 export function availableBeforePayday(args: {
@@ -424,9 +457,68 @@ export function availableBeforePayday(args: {
   costs: RecurringCost[];
   payday: Date | null;
   safetyBuffer: number | null;
-}): { liquid: number; committed: number; buffer: number; available: number } {
-  const liquid = liquidBalance(args.accounts, args.transactions);
-  const committed = committedBefore(args.costs, args.payday);
+  pockets?: AccountPocket[];
+}): {
+  liquid: number;
+  committed: number;
+  buffer: number;
+  available: number;
+  upcoming: RecurringCost[];
+} {
+  const liquid = liquidBalance(args.accounts, args.transactions, args.pockets ?? []);
+  const upcoming = upcomingCostsBefore(args.costs, args.payday);
+  const committed = upcoming.reduce((sum, c) => sum + Math.abs(Number(c.amount)), 0);
   const buffer = Number(args.safetyBuffer ?? 0);
-  return { liquid, committed, buffer, available: liquid - committed - buffer };
+  return { liquid, committed, buffer, available: liquid - committed - buffer, upcoming };
 }
+
+/* ------------------------------- pockets ------------------------------- */
+
+export type AccountPocket = Database["public"]["Tables"]["account_pockets"]["Row"];
+
+export const POCKET_KINDS: { value: string; label: string }[] = [
+  { value: "cash", label: "Cash in hand" },
+  { value: "debit", label: "Debit / bank" },
+  { value: "savings", label: "Savings" },
+];
+
+export function pocketKindLabel(kind: string): string {
+  return POCKET_KINDS.find((option) => option.value === kind)?.label ?? kind;
+}
+
+export const accountPocketsQuery = () =>
+  queryOptions({
+    queryKey: financeKeys.pockets,
+    queryFn: async () =>
+      unwrap(
+        await supabase.from("account_pockets").select("*").order("created_at", { ascending: true }),
+      ) as AccountPocket[],
+  });
+
+export type PocketInput = {
+  account_id: string;
+  name: string;
+  kind: string;
+  opening_balance: number;
+};
+
+export async function createPocket(input: PocketInput): Promise<AccountPocket> {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase.from("account_pockets").insert({ ...input, user_id }).select().single(),
+  ) as AccountPocket;
+}
+
+export async function updatePocket(
+  id: string,
+  input: Partial<PocketInput>,
+): Promise<AccountPocket> {
+  return unwrap(
+    await supabase.from("account_pockets").update(input).eq("id", id).select().single(),
+  ) as AccountPocket;
+}
+
+export async function deletePocket(id: string): Promise<void> {
+  unwrap(await supabase.from("account_pockets").delete().eq("id", id).select());
+}
+

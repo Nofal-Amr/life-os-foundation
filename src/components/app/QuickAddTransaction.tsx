@@ -22,7 +22,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  accountPocketsQuery,
   accountsQuery,
+
   createCategory,
   createTransaction,
   financeCategoriesQuery,
@@ -47,12 +49,16 @@ export function QuickAddTransactionDialog({
 }) {
   const queryClient = useQueryClient();
   const accounts = useQuery(accountsQuery());
+  const pockets = useQuery(accountPocketsQuery());
+
   const categories = useQuery(financeCategoriesQuery());
   const transactions = useQuery(transactionsQuery());
 
   const [kind, setKind] = useState<CategoryKind>("expense");
   const [amount, setAmount] = useState("");
   const [accountId, setAccountId] = useState("");
+  const [pocketId, setPocketId] = useState("");
+
   const [categoryId, setCategoryId] = useState("");
   const [note, setNote] = useState("");
   const [showNewCategory, setShowNewCategory] = useState(false);
@@ -70,6 +76,9 @@ export function QuickAddTransactionDialog({
     if (!open) return;
     const fallback = activeAccounts[0]?.id ?? "";
     setAccountId(lastUsed?.account_id ?? fallback);
+    setPocketId(lastUsed?.pocket_id ?? "");
+
+
     setCategoryId(lastUsed?.category_id ?? "");
     setKind(lastUsed && Number(lastUsed.amount) > 0 ? "income" : "expense");
     setAmount("");
@@ -102,7 +111,9 @@ export function QuickAddTransactionDialog({
         kind: kind === "income" ? "income" : "expense",
         description: note.trim() || null,
         date: todayISO(),
+        pocket_id: pocketId || null,
       });
+
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
@@ -211,7 +222,39 @@ export function QuickAddTransactionDialog({
             ) : null}
           </div>
 
+          {(pockets.data ?? []).some((pocket) => pocket.account_id === accountId) ? (
+            <div className="space-y-2">
+              <Label>Pocket</Label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-pressed={pocketId === ""}
+                  className={cn("min-h-11 rounded-full px-4 text-sm", pocketId === "" ? "border-primary bg-primary text-primary-foreground" : "")}
+                  onClick={() => setPocketId("")}
+                >
+                  No pocket
+                </Button>
+                {(pockets.data ?? [])
+                  .filter((pocket) => pocket.account_id === accountId)
+                  .map((pocket) => (
+                    <Button
+                      key={pocket.id}
+                      type="button"
+                      variant="outline"
+                      aria-pressed={pocketId === pocket.id}
+                      className={cn("min-h-11 rounded-full px-4 text-sm", pocketId === pocket.id ? "border-primary bg-primary text-primary-foreground" : "")}
+                      onClick={() => setPocketId(pocket.id)}
+                    >
+                      {pocket.name}
+                    </Button>
+                  ))}
+              </div>
+            </div>
+          ) : null}
+
           {activeAccounts.length > 1 ? (
+
             <div className="space-y-2">
               <Label>Account</Label>
               <Select value={accountId} onValueChange={setAccountId}>

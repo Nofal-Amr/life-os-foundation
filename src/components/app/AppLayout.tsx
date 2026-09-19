@@ -60,13 +60,39 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 px-3 py-6">
+          <SheetContent side="left" className="flex w-64 flex-col justify-between overflow-y-auto px-3 py-6">
             <SheetTitle className="sr-only">Navigation</SheetTitle>
             <div className="space-y-6">
               <Brand />
               <SidebarNav onNavigate={() => setOpen(false)} />
             </div>
+            <div className="mt-6 space-y-2 px-1">
+              <div className="flex items-center gap-2 px-1">
+                <UserAvatar size="sm" />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleTheme}>
+                {theme === "dark" ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
+                {theme === "dark" ? "Light theme" : "Dark theme"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={() => {
+                  setOpen(false);
+                  signOut();
+                }}
+              >
+                <LogOut className="size-4" aria-hidden="true" />
+                Sign out
+              </Button>
+            </div>
           </SheetContent>
+
         </Sheet>
          <span className="truncate text-center text-sm font-semibold">Life OS</span>
          <Button variant="ghost" size="icon" aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>
