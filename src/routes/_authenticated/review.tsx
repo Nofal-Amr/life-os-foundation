@@ -23,7 +23,8 @@ import {
   saveReview,
   type ReviewInput,
 } from "@/data/reviews";
-import { formatDate, todayISO } from "@/lib/date";
+import { todayISO } from "@/lib/date";
+import { usePreferences } from "@/hooks/usePreferences";
 
 export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({
@@ -41,6 +42,7 @@ const MOODS = [1, 2, 3, 4, 5];
 
 function ReviewPage() {
   const queryClient = useQueryClient();
+  const { fmtDate } = usePreferences();
   const [date, setDate] = useState(todayISO());
   const review = useQuery(reviewByDateQuery(date));
   const history = useQuery(reviewsQuery());
@@ -183,7 +185,7 @@ function ReviewPage() {
                   className="text-left hover:underline"
                   onClick={() => setDate(r.review_date)}
                 >
-                  {formatDate(r.review_date)}
+                  {fmtDate(r.review_date)}
                 </button>
                 <span className="text-xs text-muted-foreground">
                   {r.mood ? `Mood ${r.mood}/5` : "—"}

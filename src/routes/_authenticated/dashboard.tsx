@@ -7,10 +7,13 @@ import {
   CheckSquare,
   LayoutDashboard,
   Moon,
+  Plus,
   Sparkles,
   Sun,
 } from "lucide-react";
+import { useState } from "react";
 
+import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 
@@ -85,6 +88,7 @@ function DashboardPage() {
   const capabilities = useQuery(capabilitiesQuery());
   const evidence = useQuery(evidenceQuery());
   const profile = useQuery(profileQuery());
+  const [quickAdd, setQuickAdd] = useState(false);
 
   const openTasks = (tasks.data ?? []).filter(isOpen).sort(sortDirectives);
   const directive = openTasks[0];
@@ -201,7 +205,10 @@ function DashboardPage() {
                 <div className="py-16 sm:py-24">
                   <h2 className="text-2xl font-semibold tracking-normal text-foreground">The system is clear.</h2>
                   <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">Create a task when you are ready to set the next directive.</p>
-                  <Button asChild className="mt-6 rounded-lg"><Link to="/tasks">Create a task</Link></Button>
+                  <Button type="button" className="mt-6 rounded-lg" onClick={() => setQuickAdd(true)}>
+                    <Plus className="size-4" aria-hidden="true" />
+                    Quick add task
+                  </Button>
                 </div>
               )}
             </section>
@@ -282,6 +289,18 @@ function DashboardPage() {
           ))}
         </div>
       </nav>
+
+      <Button
+        type="button"
+        aria-label="Quick add task"
+        title="Quick add task"
+        className="fixed bottom-24 right-5 z-40 size-14 rounded-full shadow-lg sm:bottom-6 sm:right-6"
+        onClick={() => setQuickAdd(true)}
+      >
+        <Plus className="size-6" />
+      </Button>
+
+      <QuickAddTaskDialog open={quickAdd} onOpenChange={setQuickAdd} />
     </div>
   );
 }

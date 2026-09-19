@@ -33,7 +33,8 @@ import {
   type CalendarEvent,
   type EventInput,
 } from "@/data/events";
-import { formatDateTime, isoToLocalInput, localInputToISO } from "@/lib/date";
+import { isoToLocalInput, localInputToISO } from "@/lib/date";
+import { usePreferences } from "@/hooks/usePreferences";
 
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
@@ -53,6 +54,7 @@ const emptyForm: FormState = { title: "", description: null, start: "", end: "" 
 
 function CalendarPage() {
   const queryClient = useQueryClient();
+  const { fmtDateTime } = usePreferences();
   const events = useQuery(eventsQuery());
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selected, setSelected] = useState<Date>(new Date());
@@ -214,8 +216,8 @@ function CalendarPage() {
                           </p>
                         ) : null}
                         <p className="mt-2 text-xs text-muted-foreground">
-                          {formatDateTime(event.start_at)}
-                          {event.end_at ? ` → ${formatDateTime(event.end_at)}` : ""}
+                          {fmtDateTime(event.start_at)}
+                          {event.end_at ? ` → ${fmtDateTime(event.end_at)}` : ""}
                         </p>
                       </div>
                       <div className="flex gap-2">

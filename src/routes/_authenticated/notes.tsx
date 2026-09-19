@@ -23,7 +23,7 @@ import {
   type Note,
   type NoteInput,
 } from "@/data/notes";
-import { formatDateTime } from "@/lib/date";
+import { usePreferences } from "@/hooks/usePreferences";
 
 export const Route = createFileRoute("/_authenticated/notes")({
   head: () => ({
@@ -41,6 +41,7 @@ const emptyForm: NoteInput = { title: "", body: null, tags: [] };
 
 function NotesPage() {
   const queryClient = useQueryClient();
+  const { fmtDateTime } = usePreferences();
   const notes = useQuery(notesQuery());
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -141,7 +142,7 @@ function NotesPage() {
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
-                  {formatDateTime(note.updated_at)}
+                  {fmtDateTime(note.updated_at)}
                 </span>
                 <div className="flex gap-1">
                   <Button size="sm" variant="ghost" onClick={() => openEdit(note)}>

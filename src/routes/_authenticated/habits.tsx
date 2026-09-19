@@ -35,7 +35,8 @@ import {
   type Habit,
   type HabitInput,
 } from "@/data/habits";
-import { formatDate, todayISO } from "@/lib/date";
+import { todayISO } from "@/lib/date";
+import { usePreferences } from "@/hooks/usePreferences";
 
 export const Route = createFileRoute("/_authenticated/habits")({
   head: () => ({
@@ -62,6 +63,7 @@ const emptyForm: HabitInput = {
 
 function HabitsPage() {
   const queryClient = useQueryClient();
+  const { fmtDate } = usePreferences();
   const habits = useQuery(habitsQuery());
   const logs = useQuery(habitLogsQuery());
   const today = todayISO();
@@ -184,7 +186,7 @@ function HabitsPage() {
                     </div>
                     {habitLogs.length > 0 ? (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Recent: {habitLogs.slice(0, 5).map((l) => formatDate(l.log_date)).join(" · ")}
+                        Recent: {habitLogs.slice(0, 5).map((l) => fmtDate(l.log_date)).join(" · ")}
                       </p>
                     ) : null}
                   </div>
