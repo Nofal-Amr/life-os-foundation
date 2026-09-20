@@ -253,6 +253,43 @@ function TasksPage() {
     setEvidenceTask(null);
   }
 
+  /** A copy starts clean: no dates, no completion, no move history. */
+  const duplicate = useMutation({
+    mutationFn: async (task: Task) => {
+      const copy = (await createTask({
+        title: task.title,
+        description: task.description,
+        status: task.status === "completed" ? "todo" : task.status,
+        priority: task.priority,
+        due_date: null,
+        start_date: null,
+        max_date: null,
+        project_id: task.project_id,
+        capability_id: task.capability_id,
+        goal_id: task.goal_id,
+        estimated_minutes: task.estimated_minutes,
+        estimate_unit: (task.estimate_unit as EstimateUnit | null) ?? "minutes",
+      })) as Task;
+      const steps = stepsOf(tasks.data ?? [], task.id);
+      for (const [index, step] of steps.entries()) {
+        await createStep({
+          parent_task_id: copy.id,
+          title: step.title,
+          estimated_minutes: step.estimated_minutes,
+          position: index,
+          project_id: copy.project_id,
+        });
+      }
+      return copy;
+    },
+    onSuccess: (copy) => {
+      invalidate();
+      openEdit(copy);
+      toast.success("Copied. Set its dates now if you like.");
+    },
+    onError,
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => deleteTask(id),
     onSuccess: () => {
