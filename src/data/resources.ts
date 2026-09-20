@@ -208,7 +208,7 @@ export function meterFacts(
       cycleConsumption = Number(last.reading) - Number(first.reading);
       const elapsed = daysBetween(first.reading_at, last.reading_at);
       const rate = elapsed > 0 ? cycleConsumption / elapsed : null;
-      const cycleLength = Number(resource.cycle_days ?? 0);
+      const cycleLength = Number(cycleLengthDays(resource, today) ?? 0);
       if (rate != null && unitCost != null && cycleLength > 0) {
         projectedCycleCost = rate * cycleLength * unitCost;
       }
