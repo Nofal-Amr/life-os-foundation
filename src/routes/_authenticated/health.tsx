@@ -293,6 +293,22 @@ function HealthPage() {
             food_categories: entry.food_categories,
             mood: entry.mood,
             note: entry.note,
+            sleep_score: entry.sleep_score,
+            sleep_source: entry.sleep_source,
+            sleep_start_at: entry.sleep_start_at,
+            sleep_end_at: entry.sleep_end_at,
+            time_in_bed_minutes: entry.time_in_bed_minutes,
+            actual_sleep_minutes: entry.actual_sleep_minutes,
+            deep_sleep_minutes: entry.deep_sleep_minutes,
+            rem_sleep_minutes: entry.rem_sleep_minutes,
+            light_sleep_minutes: entry.light_sleep_minutes,
+            awake_minutes: entry.awake_minutes,
+            sleep_latency_minutes: entry.sleep_latency_minutes,
+            blood_oxygen_avg:
+              entry.blood_oxygen_avg == null ? null : Number(entry.blood_oxygen_avg),
+            heart_rate_avg: entry.heart_rate_avg == null ? null : Number(entry.heart_rate_avg),
+            respiratory_rate_avg:
+              entry.respiratory_rate_avg == null ? null : Number(entry.respiratory_rate_avg),
           }
         : emptyLog(date),
     );
