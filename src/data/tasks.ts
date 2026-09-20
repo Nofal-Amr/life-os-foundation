@@ -16,9 +16,69 @@ export type TaskInput = {
   capability_id: string | null;
   goal_id: string | null;
   estimated_minutes?: number | null;
+  estimate_unit?: EstimateUnit;
+  start_date?: string | null;
+  max_date?: string | null;
   parent_task_id?: string | null;
   position?: number;
 };
+
+export type EstimateUnit = "minutes" | "hours" | "days";
+
+export const ESTIMATE_UNITS: { value: EstimateUnit; label: string; short: string; minutes: number }[] =
+  [
+    { value: "minutes", label: "minutes", short: "min", minutes: 1 },
+    { value: "hours", label: "hours", short: "h", minutes: 60 },
+    { value: "days", label: "days", short: "d", minutes: 1440 },
+  ];
+
+function unitInfo(unit: string | null | undefined) {
+  return ESTIMATE_UNITS.find((item) => item.value === unit) ?? ESTIMATE_UNITS[0]!;
+}
+
+/** Canonical minutes for a number entered in the unit the user chose. */
+export function estimateToMinutes(value: number | null, unit: EstimateUnit): number | null {
+  if (value == null || Number.isNaN(value) || value <= 0) return null;
+  return Math.round(value * unitInfo(unit).minutes);
+}
+
+/** The stored minutes shown back in the unit the user chose. */
+export function estimateInUnit(
+  minutes: number | null | undefined,
+  unit: string | null | undefined,
+): number | null {
+  if (minutes == null) return null;
+  const per = unitInfo(unit).minutes;
+  return Math.round((Number(minutes) / per) * 100) / 100;
+}
+
+/** "2 h", "3 d", "45 min" — always in the unit chosen, never converted. */
+export function estimateLabel(task: {
+  estimated_minutes: number | null;
+  estimate_unit?: string | null;
+}): string {
+  const value = estimateInUnit(task.estimated_minutes, task.estimate_unit);
+  if (value == null) return "";
+  return `${value} ${unitInfo(task.estimate_unit).short}`;
+}
+
+/** Start, due and max must stay in that order. Returns a plain message or null. */
+export function dateOrderProblem(input: {
+  start_date?: string | null;
+  due_date?: string | null;
+  max_date?: string | null;
+}): string | null {
+  const { start_date: start, due_date: due, max_date: max } = input;
+  if (start && due && start > due) return "Start date is after the due date.";
+  if (due && max && due > max) return "Due date is after the max date.";
+  if (start && max && start > max) return "Start date is after the max date.";
+  return null;
+}
+
+/** A task with a future start date has not begun yet. */
+export function notStartedYet(task: Task, today: string): boolean {
+  return Boolean(task.start_date) && String(task.start_date) > today;
+}
 
 
 export type TaskFilter = "all" | "today" | "upcoming" | "overdue" | "inbox" | "completed";
