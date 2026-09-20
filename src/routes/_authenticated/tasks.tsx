@@ -131,7 +131,11 @@ function TasksPage() {
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
 
   const save = useMutation({
-    mutationFn: async () => (editing ? updateTask(editing.id, form, editing) : createTask(form)),
+    mutationFn: async () => {
+      const problem = dateOrderProblem(form);
+      if (problem) throw new Error(problem);
+      return editing ? updateTask(editing.id, form, editing) : createTask(form);
+    },
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
@@ -279,6 +283,9 @@ function TasksPage() {
       capability_id: task.capability_id,
       goal_id: task.goal_id,
       estimated_minutes: task.estimated_minutes,
+      estimate_unit: (task.estimate_unit as EstimateUnit | null) ?? "minutes",
+      start_date: task.start_date,
+      max_date: task.max_date,
     });
     setShowNewProject(false);
     setShowNewCapability(false);
@@ -346,7 +353,7 @@ function TasksPage() {
                         {task.title}
                         {task.estimated_minutes ? (
                           <span className="ml-1 text-sm font-normal text-muted-foreground">
-                            {minutesLabel(task.estimated_minutes)}
+                            · {estimateLabel(task)}
                           </span>
                         ) : null}
                       </p>
