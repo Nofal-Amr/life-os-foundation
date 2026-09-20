@@ -184,12 +184,34 @@ export function formatHeight(cm: number | null, prefs: DisplayPreferences): stri
   return `${Math.round(cm * 10) / 10} cm`;
 }
 
-/** Plain descriptive context for a BMI figure. Descriptive only, not advice. */
-export function bmiContext(value: number): string {
-  if (value < 18.5) return "That sits in the range usually described as underweight.";
-  if (value < 25) return "That sits in the range usually described as a healthy weight.";
-  if (value < 30) return "That sits in the range usually described as overweight.";
-  return "That sits in the range usually described as obese.";
+/* ---------- durations: always hours and minutes, never decimals ---------- */
+
+/** 318 → "5h 18m", 60 → "1h", 18 → "18m". Returns "—" when there is no figure. */
+export function formatDuration(minutes: number | null | undefined): string {
+  if (minutes == null || Number.isNaN(Number(minutes))) return "—";
+  const total = Math.round(Number(minutes));
+  if (total <= 0) return "0m";
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hours && mins) return `${hours}h ${mins}m`;
+  if (hours) return `${hours}h`;
+  return `${mins}m`;
+}
+
+/** Split stored minutes into the two fields used for entry. */
+export function splitDuration(minutes: number | null | undefined): {
+  hours: number | null;
+  minutes: number | null;
+} {
+  if (minutes == null) return { hours: null, minutes: null };
+  const total = Math.max(0, Math.round(Number(minutes)));
+  return { hours: Math.floor(total / 60), minutes: total % 60 };
+}
+
+/** Combine the two entry fields back into stored minutes. */
+export function joinDuration(hours: number | null, minutes: number | null): number | null {
+  if (hours == null && minutes == null) return null;
+  return (hours ?? 0) * 60 + (minutes ?? 0);
 }
 
 /* ---------- money: grouped figures, currency only once the user picks one ---------- */

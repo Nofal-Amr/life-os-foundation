@@ -98,14 +98,34 @@ export type HealthLogInput = {
   food_categories: string[] | null;
   mood: number | null;
   note: string | null;
+  /* Sleep, as read off a watch and typed in. Numbers only, no verdicts. */
+  sleep_score?: number | null;
+  sleep_source?: string | null;
+  sleep_start_at?: string | null;
+  sleep_end_at?: string | null;
+  time_in_bed_minutes?: number | null;
+  actual_sleep_minutes?: number | null;
+  deep_sleep_minutes?: number | null;
+  rem_sleep_minutes?: number | null;
+  light_sleep_minutes?: number | null;
+  awake_minutes?: number | null;
+  sleep_latency_minutes?: number | null;
+  blood_oxygen_avg?: number | null;
+  heart_rate_avg?: number | null;
+  respiratory_rate_avg?: number | null;
 };
 
 export async function saveHealthLog(input: HealthLogInput): Promise<HealthLog> {
   const user_id = await currentUserId();
+  /* Keep the older decimal field in step with the minutes entered. */
+  const sleep_hours =
+    input.actual_sleep_minutes != null
+      ? Math.round((input.actual_sleep_minutes / 60) * 100) / 100
+      : input.sleep_hours;
   return unwrap(
     await supabase
       .from("health_logs")
-      .upsert({ user_id, ...input }, { onConflict: "user_id,log_date" })
+      .upsert({ user_id, ...input, sleep_hours }, { onConflict: "user_id,log_date" })
       .select()
       .single(),
   ) as HealthLog;

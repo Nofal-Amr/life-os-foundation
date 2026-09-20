@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
+import { addDays, addMonths, differenceInCalendarDays, format, parseISO } from "date-fns";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -50,6 +50,8 @@ export type ResourceInput = {
   quota_amount: number | null;
   cycle_start_date: string | null;
   cycle_days: number | null;
+  cycle_unit?: "days" | "months";
+  cycle_count?: number;
   icon: string | null;
   color: string | null;
   active: boolean;
@@ -135,15 +137,44 @@ export type QuotaFacts = {
   runsOutBeforeCycleEnd: boolean | null;
 };
 
+/**
+ * The cycle the given day falls in. Months are real calendar months: a start
+ * day that does not exist in the target month clamps to that month's last day.
+ * Resources stored in days keep behaving exactly as before.
+ */
 export function cycleWindow(resource: Resource, today = new Date()):
   | { start: string; end: string }
   | null {
-  if (!resource.cycle_start_date || !resource.cycle_days || resource.cycle_days <= 0) return null;
-  let start = parseISO(resource.cycle_start_date);
+  if (!resource.cycle_start_date) return null;
+  const anchor = parseISO(resource.cycle_start_date);
+
+  if (resource.cycle_unit === "months") {
+    const count = Number(resource.cycle_count ?? 0);
+    if (count <= 0) return null;
+    let periods = 0;
+    /* Walk forward whole cycles until the next one starts after today. */
+    while (differenceInCalendarDays(today, addMonths(anchor, (periods + 1) * count)) >= 0) {
+      periods += 1;
+      if (periods > 1200) break;
+    }
+    const start = addMonths(anchor, periods * count);
+    const end = addDays(addMonths(anchor, (periods + 1) * count), -1);
+    return { start: format(start, "yyyy-MM-dd"), end: format(end, "yyyy-MM-dd") };
+  }
+
+  if (!resource.cycle_days || resource.cycle_days <= 0) return null;
+  let start = anchor;
   const length = Number(resource.cycle_days);
   while (differenceInCalendarDays(today, start) >= length) start = addDays(start, length);
   const end = addDays(start, length - 1);
   return { start: format(start, "yyyy-MM-dd"), end: format(end, "yyyy-MM-dd") };
+}
+
+/** Real length of the current cycle in days, from its own start and end. */
+export function cycleLengthDays(resource: Resource, today = new Date()): number | null {
+  const window = cycleWindow(resource, today);
+  if (!window) return null;
+  return differenceInCalendarDays(parseISO(window.end), parseISO(window.start)) + 1;
 }
 
 /** Never guesses: returns null whenever fewer than two readings exist. */
@@ -177,7 +208,7 @@ export function meterFacts(
       cycleConsumption = Number(last.reading) - Number(first.reading);
       const elapsed = daysBetween(first.reading_at, last.reading_at);
       const rate = elapsed > 0 ? cycleConsumption / elapsed : null;
-      const cycleLength = Number(resource.cycle_days ?? 0);
+      const cycleLength = Number(cycleLengthDays(resource, today) ?? 0);
       if (rate != null && unitCost != null && cycleLength > 0) {
         projectedCycleCost = rate * cycleLength * unitCost;
       }

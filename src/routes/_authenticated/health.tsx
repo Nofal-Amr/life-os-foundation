@@ -12,6 +12,11 @@ import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -36,7 +41,13 @@ import {
 } from "@/data/health";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
-import { bmiContext, weightToDisplay, weightToStored } from "@/lib/format";
+import {
+  formatDuration,
+  joinDuration,
+  splitDuration,
+  weightToDisplay,
+  weightToStored,
+} from "@/lib/format";
 import { scaleTone } from "@/lib/semantics";
 
 export const Route = createFileRoute("/_authenticated/health")({
@@ -78,12 +89,122 @@ function emptyLog(date: string): HealthLogInput {
     food_categories: null,
     mood: null,
     note: null,
+    sleep_score: null,
+    sleep_source: null,
+    sleep_start_at: null,
+    sleep_end_at: null,
+    time_in_bed_minutes: null,
+    actual_sleep_minutes: null,
+    deep_sleep_minutes: null,
+    rem_sleep_minutes: null,
+    light_sleep_minutes: null,
+    awake_minutes: null,
+    sleep_latency_minutes: null,
+    blood_oxygen_avg: null,
+    heart_rate_avg: null,
+    respiratory_rate_avg: null,
   };
 }
 
 function num(value: string): number | null {
   const parsed = Number(value);
   return value.trim() === "" || Number.isNaN(parsed) ? null : parsed;
+}
+
+/** "HH:mm" for a stored timestamp, in the reader's own time. */
+function timeOf(value?: string | null): string {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+}
+
+function timeToISO(date: string, time: string): string | null {
+  if (!time) return null;
+  const parsed = new Date(`${date}T${time}`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+/** A single figure typed in as hours + minutes, stored as minutes. */
+function DurationField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number | null | undefined;
+  onChange: (next: number | null) => void;
+}) {
+  const parts = splitDuration(value);
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={`${id}-hours`}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={`${id}-hours`}
+          type="number"
+          inputMode="numeric"
+          min="0"
+          aria-label={`${label} hours`}
+          className="h-12 w-20 text-base tabular-nums"
+          value={parts.hours ?? ""}
+          onChange={(event) => onChange(joinDuration(num(event.target.value), parts.minutes))}
+        />
+        <span className="text-sm text-muted-foreground">h</span>
+        <Input
+          id={`${id}-minutes`}
+          type="number"
+          inputMode="numeric"
+          min="0"
+          max="59"
+          aria-label={`${label} minutes`}
+          className="h-12 w-20 text-base tabular-nums"
+          value={parts.minutes ?? ""}
+          onChange={(event) => onChange(joinDuration(parts.hours, num(event.target.value)))}
+        />
+        <span className="text-sm text-muted-foreground">m</span>
+      </div>
+    </div>
+  );
+}
+
+/** A plain number field with no interpretation attached. */
+function NumberField({
+  id,
+  label,
+  value,
+  onChange,
+  suffix,
+  step = "1",
+}: {
+  id: string;
+  label: string;
+  value: number | null | undefined;
+  onChange: (next: number | null) => void;
+  suffix?: string;
+  step?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          type="number"
+          inputMode={step === "1" ? "numeric" : "decimal"}
+          step={step}
+          min="0"
+          className="h-12 w-28 text-base tabular-nums"
+          value={value ?? ""}
+          onChange={(event) => onChange(num(event.target.value))}
+        />
+        {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
+      </div>
+    </div>
+  );
 }
 
 function ScaleRow({
@@ -144,6 +265,7 @@ function HealthPage() {
   const { prefs, fmtDate, fmtLongDate, fmtSlot, fmtHeight, weightUnit } = usePreferences();
 
   const [date, setDate] = useState(todayISO());
+  const [sleepDetail, setSleepDetail] = useState(false);
 
   // Land on the named block when arriving from a link such as /health#medications.
   useEffect(() => {
@@ -192,6 +314,22 @@ function HealthPage() {
             food_categories: entry.food_categories,
             mood: entry.mood,
             note: entry.note,
+            sleep_score: entry.sleep_score,
+            sleep_source: entry.sleep_source,
+            sleep_start_at: entry.sleep_start_at,
+            sleep_end_at: entry.sleep_end_at,
+            time_in_bed_minutes: entry.time_in_bed_minutes,
+            actual_sleep_minutes: entry.actual_sleep_minutes,
+            deep_sleep_minutes: entry.deep_sleep_minutes,
+            rem_sleep_minutes: entry.rem_sleep_minutes,
+            light_sleep_minutes: entry.light_sleep_minutes,
+            awake_minutes: entry.awake_minutes,
+            sleep_latency_minutes: entry.sleep_latency_minutes,
+            blood_oxygen_avg:
+              entry.blood_oxygen_avg == null ? null : Number(entry.blood_oxygen_avg),
+            heart_rate_avg: entry.heart_rate_avg == null ? null : Number(entry.heart_rate_avg),
+            respiratory_rate_avg:
+              entry.respiratory_rate_avg == null ? null : Number(entry.respiratory_rate_avg),
           }
         : emptyLog(date),
     );
@@ -316,8 +454,9 @@ function HealthPage() {
   }
 
   const heightCm = body.data?.height_cm == null ? null : Number(body.data.height_cm);
-  const storedWeight = weightToStored(weightInput, prefs);
-  const bmiValue = bmi(heightCm, storedWeight);
+  const savedWeight = body.data?.weight_kg == null ? null : Number(body.data.weight_kg);
+  const savedWeightDate = savedWeight == null ? null : (body.data?.updated_at ?? null);
+  const bmiValue = bmi(heightCm, savedWeight);
   const recent = (logs.data ?? []).filter((log) => log.log_date !== date).slice(0, 7);
   const dayDoses = (doses.data ?? []).filter((dose) => dose.log_date === date);
   const activeMeds = (medications.data ?? []).filter((medication) => medication.active);
@@ -367,14 +506,25 @@ function HealthPage() {
                 </Button>
               )}
             </form>
-            {bmiValue != null ? (
-              <div className="mt-4 rounded-xl border border-border px-4 py-3">
-                <p className="text-sm font-medium tabular-nums text-foreground">
-                  BMI {bmiValue.toFixed(1)}
+            <div className="mt-4 rounded-xl border border-border px-4 py-3">
+              {bmiValue != null ? (
+                <>
+                  <p className="text-sm font-medium tabular-nums text-foreground">
+                    BMI {bmiValue.toFixed(1)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Weight in kg ÷ height in m², from {fmtHeight(heightCm ?? 0)} and the weight
+                    saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}.
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {heightCm == null
+                    ? "Add your height in Settings and save a weight to see your BMI here."
+                    : "Save a weight to see your BMI here."}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">{bmiContext(bmiValue)}</p>
-              </div>
-            ) : null}
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -411,22 +561,19 @@ function HealthPage() {
                     onCheckedChange={(value) => setLogForm({ ...logForm, water_ok: value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sleep">Sleep (hours)</Label>
-                  <Input
-                    id="sleep"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.5"
-                    min="0"
-                    max="24"
-                    className="h-12 text-base"
-                    value={logForm.sleep_hours ?? ""}
-                    onChange={(event) =>
-                      setLogForm({ ...logForm, sleep_hours: num(event.target.value) })
-                    }
-                  />
-                </div>
+                <NumberField
+                  id="sleep-score"
+                  label="Sleep score"
+                  value={logForm.sleep_score}
+                  onChange={(value) => setLogForm({ ...logForm, sleep_score: value })}
+                  suffix="of 100"
+                />
+                <DurationField
+                  id="sleep-actual"
+                  label="Sleep time"
+                  value={logForm.actual_sleep_minutes}
+                  onChange={(value) => setLogForm({ ...logForm, actual_sleep_minutes: value })}
+                />
                 <ScaleRow
                   label="Stress"
                   kind="stress"
@@ -446,6 +593,119 @@ function HealthPage() {
                   onChange={(value) => setLogForm({ ...logForm, food_quality: value })}
                 />
               </div>
+
+              <Collapsible open={sleepDetail} onOpenChange={setSleepDetail}>
+                <CollapsibleTrigger asChild>
+                  <Button type="button" variant="outline" className="h-11">
+                    {sleepDetail ? "Hide detail" : "More detail"}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 grid gap-5 sm:grid-cols-2">
+                  <DurationField
+                    id="time-in-bed"
+                    label="Time in bed"
+                    value={logForm.time_in_bed_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, time_in_bed_minutes: value })}
+                  />
+                  <DurationField
+                    id="deep-sleep"
+                    label="Deep sleep"
+                    value={logForm.deep_sleep_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, deep_sleep_minutes: value })}
+                  />
+                  <DurationField
+                    id="rem-sleep"
+                    label="REM sleep"
+                    value={logForm.rem_sleep_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, rem_sleep_minutes: value })}
+                  />
+                  <DurationField
+                    id="light-sleep"
+                    label="Light sleep"
+                    value={logForm.light_sleep_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, light_sleep_minutes: value })}
+                  />
+                  <DurationField
+                    id="awake"
+                    label="Awake"
+                    value={logForm.awake_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, awake_minutes: value })}
+                  />
+                  <DurationField
+                    id="sleep-latency"
+                    label="Time to fall asleep"
+                    value={logForm.sleep_latency_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, sleep_latency_minutes: value })}
+                  />
+                  <NumberField
+                    id="blood-oxygen"
+                    label="Blood oxygen average"
+                    value={logForm.blood_oxygen_avg}
+                    onChange={(value) => setLogForm({ ...logForm, blood_oxygen_avg: value })}
+                    suffix="%"
+                    step="0.1"
+                  />
+                  <NumberField
+                    id="heart-rate"
+                    label="Heart rate average"
+                    value={logForm.heart_rate_avg}
+                    onChange={(value) => setLogForm({ ...logForm, heart_rate_avg: value })}
+                    suffix="bpm"
+                    step="0.1"
+                  />
+                  <NumberField
+                    id="respiratory-rate"
+                    label="Respiratory rate average"
+                    value={logForm.respiratory_rate_avg}
+                    onChange={(value) => setLogForm({ ...logForm, respiratory_rate_avg: value })}
+                    suffix="per min"
+                    step="0.1"
+                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="sleep-start">Sleep started</Label>
+                    <Input
+                      id="sleep-start"
+                      type="time"
+                      className="h-12 text-base"
+                      value={timeOf(logForm.sleep_start_at)}
+                      onChange={(event) =>
+                        setLogForm({
+                          ...logForm,
+                          sleep_start_at: timeToISO(date, event.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sleep-end">Sleep ended</Label>
+                    <Input
+                      id="sleep-end"
+                      type="time"
+                      className="h-12 text-base"
+                      value={timeOf(logForm.sleep_end_at)}
+                      onChange={(event) =>
+                        setLogForm({
+                          ...logForm,
+                          sleep_end_at: timeToISO(date, event.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="sleep-source">Measured with</Label>
+                    <Input
+                      id="sleep-source"
+                      placeholder="Device name, if you want to record it"
+                      className="h-12 text-base"
+                      value={logForm.sleep_source ?? ""}
+                      onChange={(event) =>
+                        setLogForm({ ...logForm, sleep_source: event.target.value || null })
+                      }
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
 
               <div className="space-y-2">
                 <Label>Food categories</Label>
@@ -511,8 +771,16 @@ function HealthPage() {
                     </button>
                     <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       {log.trained ? <SemanticBadge tone="positive">Trained</SemanticBadge> : null}
-                      {log.sleep_hours != null ? (
-                        <span className="tabular-nums">{Number(log.sleep_hours)}h sleep</span>
+                      {log.actual_sleep_minutes != null || log.sleep_hours != null ? (
+                        <span className="tabular-nums">
+                          {formatDuration(
+                            log.actual_sleep_minutes ?? Math.round(Number(log.sleep_hours) * 60),
+                          )}{" "}
+                          sleep
+                        </span>
+                      ) : null}
+                      {log.sleep_score != null ? (
+                        <span className="tabular-nums">Sleep score {log.sleep_score}</span>
                       ) : null}
                       {log.mood != null ? (
                         <SemanticBadge tone={scaleTone("mood", log.mood)}>

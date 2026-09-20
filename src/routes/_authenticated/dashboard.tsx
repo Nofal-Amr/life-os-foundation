@@ -20,7 +20,6 @@ import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
-import { minutesLabel } from "@/components/app/TaskSteps";
 
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -65,7 +64,9 @@ import {
 } from "@/data/spirit";
 import {
   completeTask,
+  estimateLabel,
   isOpen,
+  notStartedYet,
   stepsOf,
   taskKeys,
   tasksQuery,
@@ -102,6 +103,7 @@ type NextAction = {
   item: Task;
   parent: Task;
   minutes: number | null;
+  estimate: string;
 };
 
 function urgencyRank(task: Task, today: string) {
@@ -115,11 +117,18 @@ function urgencyRank(task: Task, today: string) {
  * its first open step, so the thing shown is always small enough to start.
  */
 function nextActions(tasks: Task[], today: string): NextAction[] {
-  const parents = topLevelTasks(tasks).filter(isOpen);
+  const parents = topLevelTasks(tasks).filter(
+    (task) => isOpen(task) && !notStartedYet(task, today),
+  );
   const candidates = parents.map((parent) => {
     const step = stepsOf(tasks, parent.id).find(isOpen);
     const item = step ?? parent;
-    return { item, parent, minutes: item.estimated_minutes ?? null };
+    return {
+      item,
+      parent,
+      minutes: item.estimated_minutes ?? null,
+      estimate: estimateLabel(item),
+    };
   });
 
   return candidates.sort((a, b) => {
@@ -468,18 +477,23 @@ function DashboardPage() {
   const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
   for (const task of topLevelTasks(allTasks)) {
-    if (!isOpen(task) || !task.due_date || task.due_date > nextWeek) continue;
+    if (!isOpen(task)) continue;
+    const notStarted = notStartedYet(task, today);
+    const marker = notStarted ? String(task.start_date) : task.due_date;
+    if (!marker || marker > nextWeek) continue;
     comingUp.push({
       id: `task-${task.id}`,
       dimension: "discipline",
-      sortValue: task.due_date,
+      sortValue: marker,
       title: task.title,
-      detail:
-        task.due_date === today ? "Task · Due today" : `Task · Due ${fmtDate(task.due_date)}`,
+      detail: notStarted
+        ? `Task · Starts ${fmtDate(String(task.start_date))}`
+        : task.due_date === today
+          ? "Task · Due today"
+          : `Task · Due ${fmtDate(String(task.due_date))}`,
       kind: "commitment",
       to: "/tasks",
     });
-
   }
 
   for (const project of projects.data ?? []) {
@@ -823,7 +837,7 @@ function DashboardPage() {
           {action.item.title}
           {action.minutes ? (
             <span className="ml-2 text-base font-normal text-muted-foreground">
-              {minutesLabel(action.minutes)}
+              · {action.estimate}
             </span>
           ) : null}
         </p>

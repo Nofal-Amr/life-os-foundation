@@ -28,9 +28,15 @@ import { createEvidence, evidenceKeys } from "@/data/evidence";
 import { createGoal, goalKeys, goalsQuery } from "@/data/goals";
 import { createProject, projectKeys, projectsQuery } from "@/data/projects";
 import {
+  ESTIMATE_UNITS,
   completeTask,
+  createStep,
   createTask,
+  dateOrderProblem,
   deleteTask,
+  estimateInUnit,
+  estimateLabel,
+  estimateToMinutes,
   filterTasks,
   reopenTask,
   stepProgress,
@@ -39,6 +45,7 @@ import {
   tasksQuery,
   topLevelTasks,
   updateTask,
+  type EstimateUnit,
   type Task,
   type TaskFilter,
   type TaskInput,
@@ -77,10 +84,13 @@ const emptyForm: TaskInput = {
   status: "inbox",
   priority: "medium",
   due_date: null,
+  start_date: null,
+  max_date: null,
   project_id: null,
   capability_id: null,
   goal_id: null,
   estimated_minutes: null,
+  estimate_unit: "minutes",
 };
 
 const NO_PROJECT = "none";
@@ -121,7 +131,11 @@ function TasksPage() {
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
 
   const save = useMutation({
-    mutationFn: async () => (editing ? updateTask(editing.id, form, editing) : createTask(form)),
+    mutationFn: async () => {
+      const problem = dateOrderProblem(form);
+      if (problem) throw new Error(problem);
+      return editing ? updateTask(editing.id, form, editing) : createTask(form);
+    },
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
@@ -239,6 +253,43 @@ function TasksPage() {
     setEvidenceTask(null);
   }
 
+  /** A copy starts clean: no dates, no completion, no move history. */
+  const duplicate = useMutation({
+    mutationFn: async (task: Task) => {
+      const copy = (await createTask({
+        title: task.title,
+        description: task.description,
+        status: task.status === "completed" ? "todo" : task.status,
+        priority: task.priority,
+        due_date: null,
+        start_date: null,
+        max_date: null,
+        project_id: task.project_id,
+        capability_id: task.capability_id,
+        goal_id: task.goal_id,
+        estimated_minutes: task.estimated_minutes,
+        estimate_unit: (task.estimate_unit as EstimateUnit | null) ?? "minutes",
+      })) as unknown as Task;
+      const steps = stepsOf(tasks.data ?? [], task.id);
+      for (const [index, step] of steps.entries()) {
+        await createStep({
+          parent_task_id: copy.id,
+          title: step.title,
+          estimated_minutes: step.estimated_minutes,
+          position: index,
+          project_id: copy.project_id,
+        });
+      }
+      return copy;
+    },
+    onSuccess: (copy) => {
+      invalidate();
+      openEdit(copy);
+      toast.success("Copied. Set its dates now if you like.");
+    },
+    onError,
+  });
+
   const remove = useMutation({
     mutationFn: (id: string) => deleteTask(id),
     onSuccess: () => {
@@ -269,6 +320,9 @@ function TasksPage() {
       capability_id: task.capability_id,
       goal_id: task.goal_id,
       estimated_minutes: task.estimated_minutes,
+      estimate_unit: (task.estimate_unit as EstimateUnit | null) ?? "minutes",
+      start_date: task.start_date,
+      max_date: task.max_date,
     });
     setShowNewProject(false);
     setShowNewCapability(false);
@@ -336,7 +390,7 @@ function TasksPage() {
                         {task.title}
                         {task.estimated_minutes ? (
                           <span className="ml-1 text-sm font-normal text-muted-foreground">
-                            {minutesLabel(task.estimated_minutes)}
+                            · {estimateLabel(task)}
                           </span>
                         ) : null}
                       </p>
@@ -396,6 +450,14 @@ function TasksPage() {
                     )}
                     <Button size="sm" variant="ghost" onClick={() => openEdit(task)}>
                       Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={duplicate.isPending}
+                      onClick={() => duplicate.mutate(task)}
+                    >
+                      Duplicate
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setToDelete(task)}>
                       Delete
@@ -497,25 +559,76 @@ function TasksPage() {
             </Select>
           </div>
           <div className="space-y-2">
+            <Label htmlFor="task-start">Start date (optional)</Label>
+            <DatePicker
+              id="task-start"
+              value={form.start_date ?? null}
+              onChange={(value) => setForm({ ...form, start_date: value || null })}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="task-due">Due date</Label>
             <DatePicker id="task-due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="task-minutes">Estimate in minutes (optional)</Label>
-            <Input
-              id="task-minutes"
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={form.estimated_minutes ?? ""}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  estimated_minutes: event.target.value ? Number(event.target.value) : null,
-                })
-              }
+            <Label htmlFor="task-max">Max date (optional)</Label>
+            <DatePicker
+              id="task-max"
+              value={form.max_date ?? null}
+              onChange={(value) => setForm({ ...form, max_date: value || null })}
             />
+            <p className="text-xs text-muted-foreground">The date this cannot pass.</p>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="task-estimate">Estimate (optional)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="task-estimate"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                className="w-24 tabular-nums"
+                value={estimateInUnit(form.estimated_minutes, form.estimate_unit) ?? ""}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    estimated_minutes: estimateToMinutes(
+                      event.target.value ? Number(event.target.value) : null,
+                      form.estimate_unit ?? "minutes",
+                    ),
+                  })
+                }
+              />
+              <Select
+                value={form.estimate_unit ?? "minutes"}
+                onValueChange={(value) => {
+                  const unit = value as EstimateUnit;
+                  const shown = estimateInUnit(form.estimated_minutes, form.estimate_unit);
+                  setForm({
+                    ...form,
+                    estimate_unit: unit,
+                    estimated_minutes: estimateToMinutes(shown, unit),
+                  });
+                }}
+              >
+                <SelectTrigger className="flex-1" aria-label="Estimate unit">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ESTIMATE_UNITS.map((unit) => (
+                    <SelectItem key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {dateOrderProblem(form) ? (
+            <p className="text-sm text-destructive sm:col-span-2" role="alert">
+              {dateOrderProblem(form)}
+            </p>
+          ) : null}
           <div className="space-y-2">
             <Label>Project</Label>
             <Select
