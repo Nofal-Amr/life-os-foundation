@@ -265,6 +265,7 @@ function HealthPage() {
   const { prefs, fmtDate, fmtLongDate, fmtSlot, fmtHeight, weightUnit } = usePreferences();
 
   const [date, setDate] = useState(todayISO());
+  const [sleepDetail, setSleepDetail] = useState(false);
 
   // Land on the named block when arriving from a link such as /health#medications.
   useEffect(() => {
@@ -770,8 +771,16 @@ function HealthPage() {
                     </button>
                     <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                       {log.trained ? <SemanticBadge tone="positive">Trained</SemanticBadge> : null}
-                      {log.sleep_hours != null ? (
-                        <span className="tabular-nums">{Number(log.sleep_hours)}h sleep</span>
+                      {log.actual_sleep_minutes != null || log.sleep_hours != null ? (
+                        <span className="tabular-nums">
+                          {formatDuration(
+                            log.actual_sleep_minutes ?? Math.round(Number(log.sleep_hours) * 60),
+                          )}{" "}
+                          sleep
+                        </span>
+                      ) : null}
+                      {log.sleep_score != null ? (
+                        <span className="tabular-nums">Sleep score {log.sleep_score}</span>
                       ) : null}
                       {log.mood != null ? (
                         <SemanticBadge tone={scaleTone("mood", log.mood)}>
