@@ -433,8 +433,9 @@ function HealthPage() {
   }
 
   const heightCm = body.data?.height_cm == null ? null : Number(body.data.height_cm);
-  const storedWeight = weightToStored(weightInput, prefs);
-  const bmiValue = bmi(heightCm, storedWeight);
+  const savedWeight = body.data?.weight_kg == null ? null : Number(body.data.weight_kg);
+  const savedWeightDate = savedWeight == null ? null : (body.data?.updated_at ?? null);
+  const bmiValue = bmi(heightCm, savedWeight);
   const recent = (logs.data ?? []).filter((log) => log.log_date !== date).slice(0, 7);
   const dayDoses = (doses.data ?? []).filter((dose) => dose.log_date === date);
   const activeMeds = (medications.data ?? []).filter((medication) => medication.active);
@@ -484,14 +485,25 @@ function HealthPage() {
                 </Button>
               )}
             </form>
-            {bmiValue != null ? (
-              <div className="mt-4 rounded-xl border border-border px-4 py-3">
-                <p className="text-sm font-medium tabular-nums text-foreground">
-                  BMI {bmiValue.toFixed(1)}
+            <div className="mt-4 rounded-xl border border-border px-4 py-3">
+              {bmiValue != null ? (
+                <>
+                  <p className="text-sm font-medium tabular-nums text-foreground">
+                    BMI {bmiValue.toFixed(1)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Weight in kg ÷ height in m², from {fmtHeight(heightCm ?? 0)} and the weight
+                    saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}.
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {heightCm == null
+                    ? "Add your height in Settings and save a weight to see your BMI here."
+                    : "Save a weight to see your BMI here."}
                 </p>
-                <p className="mt-1 text-xs text-muted-foreground">{bmiContext(bmiValue)}</p>
-              </div>
-            ) : null}
+              )}
+            </div>
           </CardContent>
         </Card>
 
