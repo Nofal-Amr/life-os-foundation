@@ -28,9 +28,15 @@ import { createEvidence, evidenceKeys } from "@/data/evidence";
 import { createGoal, goalKeys, goalsQuery } from "@/data/goals";
 import { createProject, projectKeys, projectsQuery } from "@/data/projects";
 import {
+  ESTIMATE_UNITS,
   completeTask,
+  createStep,
   createTask,
+  dateOrderProblem,
   deleteTask,
+  estimateInUnit,
+  estimateLabel,
+  estimateToMinutes,
   filterTasks,
   reopenTask,
   stepProgress,
@@ -39,6 +45,7 @@ import {
   tasksQuery,
   topLevelTasks,
   updateTask,
+  type EstimateUnit,
   type Task,
   type TaskFilter,
   type TaskInput,
@@ -77,10 +84,13 @@ const emptyForm: TaskInput = {
   status: "inbox",
   priority: "medium",
   due_date: null,
+  start_date: null,
+  max_date: null,
   project_id: null,
   capability_id: null,
   goal_id: null,
   estimated_minutes: null,
+  estimate_unit: "minutes",
 };
 
 const NO_PROJECT = "none";
