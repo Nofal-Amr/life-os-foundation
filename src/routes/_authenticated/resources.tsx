@@ -82,6 +82,9 @@ const emptyResource: ResourceInput = {
   quota_amount: null,
   cycle_start_date: null,
   cycle_days: null,
+  /* Most bills run in calendar months, so that is the starting point. */
+  cycle_unit: "months",
+  cycle_count: 1,
   icon: null,
   color: null,
   active: true,
