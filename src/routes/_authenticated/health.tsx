@@ -36,7 +36,13 @@ import {
 } from "@/data/health";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
-import { bmiContext, weightToDisplay, weightToStored } from "@/lib/format";
+import {
+  formatDuration,
+  joinDuration,
+  splitDuration,
+  weightToDisplay,
+  weightToStored,
+} from "@/lib/format";
 import { scaleTone } from "@/lib/semantics";
 
 export const Route = createFileRoute("/_authenticated/health")({
@@ -78,12 +84,107 @@ function emptyLog(date: string): HealthLogInput {
     food_categories: null,
     mood: null,
     note: null,
+    sleep_score: null,
+    sleep_source: null,
+    sleep_start_at: null,
+    sleep_end_at: null,
+    time_in_bed_minutes: null,
+    actual_sleep_minutes: null,
+    deep_sleep_minutes: null,
+    rem_sleep_minutes: null,
+    light_sleep_minutes: null,
+    awake_minutes: null,
+    sleep_latency_minutes: null,
+    blood_oxygen_avg: null,
+    heart_rate_avg: null,
+    respiratory_rate_avg: null,
   };
 }
 
 function num(value: string): number | null {
   const parsed = Number(value);
   return value.trim() === "" || Number.isNaN(parsed) ? null : parsed;
+}
+
+/** A single figure typed in as hours + minutes, stored as minutes. */
+function DurationField({
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number | null | undefined;
+  onChange: (next: number | null) => void;
+}) {
+  const parts = splitDuration(value);
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={`${id}-hours`}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={`${id}-hours`}
+          type="number"
+          inputMode="numeric"
+          min="0"
+          aria-label={`${label} hours`}
+          className="h-12 w-20 text-base tabular-nums"
+          value={parts.hours ?? ""}
+          onChange={(event) => onChange(joinDuration(num(event.target.value), parts.minutes))}
+        />
+        <span className="text-sm text-muted-foreground">h</span>
+        <Input
+          id={`${id}-minutes`}
+          type="number"
+          inputMode="numeric"
+          min="0"
+          max="59"
+          aria-label={`${label} minutes`}
+          className="h-12 w-20 text-base tabular-nums"
+          value={parts.minutes ?? ""}
+          onChange={(event) => onChange(joinDuration(parts.hours, num(event.target.value)))}
+        />
+        <span className="text-sm text-muted-foreground">m</span>
+      </div>
+    </div>
+  );
+}
+
+/** A plain number field with no interpretation attached. */
+function NumberField({
+  id,
+  label,
+  value,
+  onChange,
+  suffix,
+  step = "1",
+}: {
+  id: string;
+  label: string;
+  value: number | null | undefined;
+  onChange: (next: number | null) => void;
+  suffix?: string;
+  step?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          id={id}
+          type="number"
+          inputMode={step === "1" ? "numeric" : "decimal"}
+          step={step}
+          min="0"
+          className="h-12 w-28 text-base tabular-nums"
+          value={value ?? ""}
+          onChange={(event) => onChange(num(event.target.value))}
+        />
+        {suffix ? <span className="text-sm text-muted-foreground">{suffix}</span> : null}
+      </div>
+    </div>
+  );
 }
 
 function ScaleRow({
