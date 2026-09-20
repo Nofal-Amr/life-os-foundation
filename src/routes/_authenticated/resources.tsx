@@ -136,6 +136,8 @@ function ResourcesPage() {
         quota_amount: null,
         cycle_start_date: null,
         cycle_days: null,
+        cycle_unit: "months",
+        cycle_count: 1,
         icon: null,
         color: null,
         active: true,
