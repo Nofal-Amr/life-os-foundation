@@ -514,25 +514,76 @@ function TasksPage() {
             </Select>
           </div>
           <div className="space-y-2">
+            <Label htmlFor="task-start">Start date (optional)</Label>
+            <DatePicker
+              id="task-start"
+              value={form.start_date}
+              onChange={(value) => setForm({ ...form, start_date: value || null })}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="task-due">Due date</Label>
             <DatePicker id="task-due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="task-minutes">Estimate in minutes (optional)</Label>
-            <Input
-              id="task-minutes"
-              type="number"
-              min={1}
-              inputMode="numeric"
-              value={form.estimated_minutes ?? ""}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  estimated_minutes: event.target.value ? Number(event.target.value) : null,
-                })
-              }
+            <Label htmlFor="task-max">Max date (optional)</Label>
+            <DatePicker
+              id="task-max"
+              value={form.max_date}
+              onChange={(value) => setForm({ ...form, max_date: value || null })}
             />
+            <p className="text-xs text-muted-foreground">The date this cannot pass.</p>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="task-estimate">Estimate (optional)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="task-estimate"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                className="w-24 tabular-nums"
+                value={estimateInUnit(form.estimated_minutes, form.estimate_unit) ?? ""}
+                onChange={(event) =>
+                  setForm({
+                    ...form,
+                    estimated_minutes: estimateToMinutes(
+                      event.target.value ? Number(event.target.value) : null,
+                      form.estimate_unit ?? "minutes",
+                    ),
+                  })
+                }
+              />
+              <Select
+                value={form.estimate_unit ?? "minutes"}
+                onValueChange={(value) => {
+                  const unit = value as EstimateUnit;
+                  const shown = estimateInUnit(form.estimated_minutes, form.estimate_unit);
+                  setForm({
+                    ...form,
+                    estimate_unit: unit,
+                    estimated_minutes: estimateToMinutes(shown, unit),
+                  });
+                }}
+              >
+                <SelectTrigger className="flex-1" aria-label="Estimate unit">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ESTIMATE_UNITS.map((unit) => (
+                    <SelectItem key={unit.value} value={unit.value}>
+                      {unit.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {dateOrderProblem(form) ? (
+            <p className="text-sm text-destructive sm:col-span-2" role="alert">
+              {dateOrderProblem(form)}
+            </p>
+          ) : null}
           <div className="space-y-2">
             <Label>Project</Label>
             <Select
