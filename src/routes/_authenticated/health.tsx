@@ -540,22 +540,19 @@ function HealthPage() {
                     onCheckedChange={(value) => setLogForm({ ...logForm, water_ok: value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sleep">Sleep (hours)</Label>
-                  <Input
-                    id="sleep"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.5"
-                    min="0"
-                    max="24"
-                    className="h-12 text-base"
-                    value={logForm.sleep_hours ?? ""}
-                    onChange={(event) =>
-                      setLogForm({ ...logForm, sleep_hours: num(event.target.value) })
-                    }
-                  />
-                </div>
+                <NumberField
+                  id="sleep-score"
+                  label="Sleep score"
+                  value={logForm.sleep_score}
+                  onChange={(value) => setLogForm({ ...logForm, sleep_score: value })}
+                  suffix="of 100"
+                />
+                <DurationField
+                  id="sleep-actual"
+                  label="Sleep time"
+                  value={logForm.actual_sleep_minutes}
+                  onChange={(value) => setLogForm({ ...logForm, actual_sleep_minutes: value })}
+                />
                 <ScaleRow
                   label="Stress"
                   kind="stress"
@@ -575,6 +572,119 @@ function HealthPage() {
                   onChange={(value) => setLogForm({ ...logForm, food_quality: value })}
                 />
               </div>
+
+              <Collapsible open={sleepDetail} onOpenChange={setSleepDetail}>
+                <CollapsibleTrigger asChild>
+                  <Button type="button" variant="outline" className="h-11">
+                    {sleepDetail ? "Hide detail" : "More detail"}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 grid gap-5 sm:grid-cols-2">
+                  <DurationField
+                    id="time-in-bed"
+                    label="Time in bed"
+                    value={logForm.time_in_bed_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, time_in_bed_minutes: value })}
+                  />
+                  <DurationField
+                    id="deep-sleep"
+                    label="Deep sleep"
+                    value={logForm.deep_sleep_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, deep_sleep_minutes: value })}
+                  />
+                  <DurationField
+                    id="rem-sleep"
+                    label="REM sleep"
+                    value={logForm.rem_sleep_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, rem_sleep_minutes: value })}
+                  />
+                  <DurationField
+                    id="light-sleep"
+                    label="Light sleep"
+                    value={logForm.light_sleep_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, light_sleep_minutes: value })}
+                  />
+                  <DurationField
+                    id="awake"
+                    label="Awake"
+                    value={logForm.awake_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, awake_minutes: value })}
+                  />
+                  <DurationField
+                    id="sleep-latency"
+                    label="Time to fall asleep"
+                    value={logForm.sleep_latency_minutes}
+                    onChange={(value) => setLogForm({ ...logForm, sleep_latency_minutes: value })}
+                  />
+                  <NumberField
+                    id="blood-oxygen"
+                    label="Blood oxygen average"
+                    value={logForm.blood_oxygen_avg}
+                    onChange={(value) => setLogForm({ ...logForm, blood_oxygen_avg: value })}
+                    suffix="%"
+                    step="0.1"
+                  />
+                  <NumberField
+                    id="heart-rate"
+                    label="Heart rate average"
+                    value={logForm.heart_rate_avg}
+                    onChange={(value) => setLogForm({ ...logForm, heart_rate_avg: value })}
+                    suffix="bpm"
+                    step="0.1"
+                  />
+                  <NumberField
+                    id="respiratory-rate"
+                    label="Respiratory rate average"
+                    value={logForm.respiratory_rate_avg}
+                    onChange={(value) => setLogForm({ ...logForm, respiratory_rate_avg: value })}
+                    suffix="per min"
+                    step="0.1"
+                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="sleep-start">Sleep started</Label>
+                    <Input
+                      id="sleep-start"
+                      type="time"
+                      className="h-12 text-base"
+                      value={timeOf(logForm.sleep_start_at)}
+                      onChange={(event) =>
+                        setLogForm({
+                          ...logForm,
+                          sleep_start_at: timeToISO(date, event.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sleep-end">Sleep ended</Label>
+                    <Input
+                      id="sleep-end"
+                      type="time"
+                      className="h-12 text-base"
+                      value={timeOf(logForm.sleep_end_at)}
+                      onChange={(event) =>
+                        setLogForm({
+                          ...logForm,
+                          sleep_end_at: timeToISO(date, event.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="sleep-source">Measured with</Label>
+                    <Input
+                      id="sleep-source"
+                      placeholder="Device name, if you want to record it"
+                      className="h-12 text-base"
+                      value={logForm.sleep_source ?? ""}
+                      onChange={(event) =>
+                        setLogForm({ ...logForm, sleep_source: event.target.value || null })
+                      }
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
 
               <div className="space-y-2">
                 <Label>Food categories</Label>
