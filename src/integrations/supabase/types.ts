@@ -578,45 +578,87 @@ export type Database = {
       }
       health_logs: {
         Row: {
+          actual_sleep_minutes: number | null
+          awake_minutes: number | null
+          blood_oxygen_avg: number | null
           created_at: string
+          deep_sleep_minutes: number | null
           food_categories: string[] | null
           food_quality: number | null
+          heart_rate_avg: number | null
           id: string
+          light_sleep_minutes: number | null
           log_date: string
           mood: number | null
           note: string | null
+          rem_sleep_minutes: number | null
+          respiratory_rate_avg: number | null
+          sleep_end_at: string | null
           sleep_hours: number | null
+          sleep_latency_minutes: number | null
+          sleep_score: number | null
+          sleep_source: string | null
+          sleep_start_at: string | null
           stress_level: number | null
+          time_in_bed_minutes: number | null
           trained: boolean | null
           updated_at: string
           user_id: string
           water_ok: boolean | null
         }
         Insert: {
+          actual_sleep_minutes?: number | null
+          awake_minutes?: number | null
+          blood_oxygen_avg?: number | null
           created_at?: string
+          deep_sleep_minutes?: number | null
           food_categories?: string[] | null
           food_quality?: number | null
+          heart_rate_avg?: number | null
           id?: string
+          light_sleep_minutes?: number | null
           log_date?: string
           mood?: number | null
           note?: string | null
+          rem_sleep_minutes?: number | null
+          respiratory_rate_avg?: number | null
+          sleep_end_at?: string | null
           sleep_hours?: number | null
+          sleep_latency_minutes?: number | null
+          sleep_score?: number | null
+          sleep_source?: string | null
+          sleep_start_at?: string | null
           stress_level?: number | null
+          time_in_bed_minutes?: number | null
           trained?: boolean | null
           updated_at?: string
           user_id: string
           water_ok?: boolean | null
         }
         Update: {
+          actual_sleep_minutes?: number | null
+          awake_minutes?: number | null
+          blood_oxygen_avg?: number | null
           created_at?: string
+          deep_sleep_minutes?: number | null
           food_categories?: string[] | null
           food_quality?: number | null
+          heart_rate_avg?: number | null
           id?: string
+          light_sleep_minutes?: number | null
           log_date?: string
           mood?: number | null
           note?: string | null
+          rem_sleep_minutes?: number | null
+          respiratory_rate_avg?: number | null
+          sleep_end_at?: string | null
           sleep_hours?: number | null
+          sleep_latency_minutes?: number | null
+          sleep_score?: number | null
+          sleep_source?: string | null
+          sleep_start_at?: string | null
           stress_level?: number | null
+          time_in_bed_minutes?: number | null
           trained?: boolean | null
           updated_at?: string
           user_id?: string
@@ -704,6 +746,7 @@ export type Database = {
       notes: {
         Row: {
           body: string | null
+          body_format: string
           created_at: string
           id: string
           tags: string[]
@@ -713,6 +756,7 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          body_format?: string
           created_at?: string
           id?: string
           tags?: string[]
@@ -722,6 +766,7 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          body_format?: string
           created_at?: string
           id?: string
           tags?: string[]
@@ -1025,8 +1070,10 @@ export type Database = {
           category_id: string | null
           color: string | null
           created_at: string
+          cycle_count: number
           cycle_days: number | null
           cycle_start_date: string | null
+          cycle_unit: string
           icon: string | null
           id: string
           kind: Database["public"]["Enums"]["resource_kind"]
@@ -1043,8 +1090,10 @@ export type Database = {
           category_id?: string | null
           color?: string | null
           created_at?: string
+          cycle_count?: number
           cycle_days?: number | null
           cycle_start_date?: string | null
+          cycle_unit?: string
           icon?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["resource_kind"]
@@ -1061,8 +1110,10 @@ export type Database = {
           category_id?: string | null
           color?: string | null
           created_at?: string
+          cycle_count?: number
           cycle_days?: number | null
           cycle_start_date?: string | null
+          cycle_unit?: string
           icon?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["resource_kind"]
@@ -1090,6 +1141,50 @@ export type Database = {
           },
         ]
       }
+      task_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          id: string
+          note: string | null
+          planned_minutes: number | null
+          started_at: string
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          note?: string | null
+          planned_minutes?: number | null
+          started_at?: string
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          note?: string | null
+          planned_minutes?: number | null
+          started_at?: string
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_sessions_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           capability_id: string | null
@@ -1097,16 +1192,19 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          estimate_unit: string
           estimated_minutes: number | null
           goal_id: string | null
           id: string
           last_postponed_at: string | null
+          max_date: string | null
           original_due_date: string | null
           parent_task_id: string | null
           position: number
           postponed_count: number
           priority: Database["public"]["Enums"]["priority_level"]
           project_id: string | null
+          start_date: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at: string
@@ -1118,16 +1216,19 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          estimate_unit?: string
           estimated_minutes?: number | null
           goal_id?: string | null
           id?: string
           last_postponed_at?: string | null
+          max_date?: string | null
           original_due_date?: string | null
           parent_task_id?: string | null
           position?: number
           postponed_count?: number
           priority?: Database["public"]["Enums"]["priority_level"]
           project_id?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
           updated_at?: string
@@ -1139,16 +1240,19 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          estimate_unit?: string
           estimated_minutes?: number | null
           goal_id?: string | null
           id?: string
           last_postponed_at?: string | null
+          max_date?: string | null
           original_due_date?: string | null
           parent_task_id?: string | null
           position?: number
           postponed_count?: number
           priority?: Database["public"]["Enums"]["priority_level"]
           project_id?: string | null
+          start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
           updated_at?: string
@@ -1290,6 +1394,147 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vehicle_logs: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string | null
+          fuel_amount: number | null
+          full_tank: boolean | null
+          id: string
+          kind: string
+          log_date: string
+          next_service_date: string | null
+          next_service_odometer: number | null
+          odometer: number | null
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          fuel_amount?: number | null
+          full_tank?: boolean | null
+          id?: string
+          kind?: string
+          log_date?: string
+          next_service_date?: string | null
+          next_service_odometer?: number | null
+          odometer?: number | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          fuel_amount?: number | null
+          full_tank?: boolean | null
+          id?: string
+          kind?: string
+          log_date?: string
+          next_service_date?: string | null
+          next_service_odometer?: number | null
+          odometer?: number | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_logs_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          account_id: string | null
+          active: boolean
+          category_id: string | null
+          color: string | null
+          created_at: string
+          fuel_unit: string
+          icon: string | null
+          id: string
+          make: string | null
+          model: string | null
+          name: string
+          odometer_unit: string
+          plate: string | null
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          account_id?: string | null
+          active?: boolean
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          fuel_unit?: string
+          icon?: string | null
+          id?: string
+          make?: string | null
+          model?: string | null
+          name: string
+          odometer_unit?: string
+          plate?: string | null
+          updated_at?: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          account_id?: string | null
+          active?: boolean
+          category_id?: string | null
+          color?: string | null
+          created_at?: string
+          fuel_unit?: string
+          icon?: string | null
+          id?: string
+          make?: string | null
+          model?: string | null
+          name?: string
+          odometer_unit?: string
+          plate?: string | null
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
