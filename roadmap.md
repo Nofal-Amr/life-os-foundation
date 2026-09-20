@@ -120,3 +120,16 @@
 - [x] Opening a switched-off page shows a calm page with a switch-back-on button
 - [x] Resources offers one-tap empty starting points (Electricity, Water, Internet) with no figures attached
 - [x] Empty pages now explain in one plain sentence what the section is for, with one action
+
+## Sleep, BMI, task estimates, task dates, duplicating and monthly cycles
+
+- [x] Sleep logged in two small fields: a score out of 100 and sleep time as hours and minutes
+- [x] Everything else from the watch (time in bed, deep, REM, light, awake, latency, blood oxygen, heart rate, breathing rate, start and end, device name) sits under "More detail", collapsed and never required
+- [x] Sleep lengths always read as "5h 18m", never as a decimal
+- [x] Sleep and BMI show numbers only — no labels, colours, targets or comments
+- [x] BMI shown to one decimal with how it was worked out and the date of the weight used; a short prompt when height or weight is missing
+- [x] Task estimates can be entered in minutes, hours or days, and read back in the unit chosen ("2 h", "3 d", "45 min")
+- [x] Tasks can carry a start date, a due date and a hard max date, with a plain message if the order is wrong
+- [x] Something not started yet stays out of the next action but still shows in Coming up with its start date
+- [x] Duplicate copies a task and its steps, all incomplete, with a clean history and no dates, and opens it for editing
+- [x] Resource cycles can be every N months (real calendar months, clamped when a month is short) or every N days
