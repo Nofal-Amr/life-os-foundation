@@ -269,7 +269,7 @@ function TasksPage() {
         goal_id: task.goal_id,
         estimated_minutes: task.estimated_minutes,
         estimate_unit: (task.estimate_unit as EstimateUnit | null) ?? "minutes",
-      })) as Task;
+      })) as unknown as Task;
       const steps = stepsOf(tasks.data ?? [], task.id);
       for (const [index, step] of steps.entries()) {
         await createStep({
@@ -562,7 +562,7 @@ function TasksPage() {
             <Label htmlFor="task-start">Start date (optional)</Label>
             <DatePicker
               id="task-start"
-              value={form.start_date}
+              value={form.start_date ?? null}
               onChange={(value) => setForm({ ...form, start_date: value || null })}
             />
           </div>
@@ -574,7 +574,7 @@ function TasksPage() {
             <Label htmlFor="task-max">Max date (optional)</Label>
             <DatePicker
               id="task-max"
-              value={form.max_date}
+              value={form.max_date ?? null}
               onChange={(value) => setForm({ ...form, max_date: value || null })}
             />
             <p className="text-xs text-muted-foreground">The date this cannot pass.</p>
