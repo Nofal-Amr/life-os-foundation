@@ -451,6 +451,14 @@ function TasksPage() {
                     <Button size="sm" variant="ghost" onClick={() => openEdit(task)}>
                       Edit
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={duplicate.isPending}
+                      onClick={() => duplicate.mutate(task)}
+                    >
+                      Duplicate
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => setToDelete(task)}>
                       Delete
                     </Button>
