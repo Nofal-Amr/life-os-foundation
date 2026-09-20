@@ -12,6 +12,11 @@ import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -104,6 +109,21 @@ function emptyLog(date: string): HealthLogInput {
 function num(value: string): number | null {
   const parsed = Number(value);
   return value.trim() === "" || Number.isNaN(parsed) ? null : parsed;
+}
+
+/** "HH:mm" for a stored timestamp, in the reader's own time. */
+function timeOf(value?: string | null): string {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+}
+
+function timeToISO(date: string, time: string): string | null {
+  if (!time) return null;
+  const parsed = new Date(`${date}T${time}`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 /** A single figure typed in as hours + minutes, stored as minutes. */
