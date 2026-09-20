@@ -221,6 +221,8 @@ function ResourcesPage() {
       quota_amount: resource.quota_amount == null ? null : Number(resource.quota_amount),
       cycle_start_date: resource.cycle_start_date,
       cycle_days: resource.cycle_days,
+      cycle_unit: resource.cycle_unit === "days" ? "days" : "months",
+      cycle_count: resource.cycle_count ?? 1,
       icon: resource.icon,
       color: resource.color,
       active: resource.active,
@@ -523,18 +525,48 @@ function ResourcesPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="resource-cycle-days">Cycle length in days</Label>
-            <Input
-              id="resource-cycle-days"
-              type="number"
-              min="1"
-              inputMode="numeric"
-              className="h-12 tabular-nums"
-              value={form.cycle_days ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, cycle_days: e.target.value === "" ? null : Number(e.target.value) })
-              }
-            />
+            <Label htmlFor="resource-cycle-count">Cycle length</Label>
+            <div className="flex gap-2">
+              <Input
+                id="resource-cycle-count"
+                type="number"
+                min="1"
+                inputMode="numeric"
+                aria-label="Cycle length amount"
+                className="h-12 w-24 tabular-nums"
+                value={
+                  form.cycle_unit === "days" ? (form.cycle_days ?? "") : (form.cycle_count ?? "")
+                }
+                onChange={(e) => {
+                  const value = e.target.value === "" ? null : Number(e.target.value);
+                  setForm(
+                    form.cycle_unit === "days"
+                      ? { ...form, cycle_days: value }
+                      : { ...form, cycle_count: value ?? 1 },
+                  );
+                }}
+              />
+              <Select
+                value={form.cycle_unit === "days" ? "days" : "months"}
+                onValueChange={(v) =>
+                  setForm({
+                    ...form,
+                    cycle_unit: v === "days" ? "days" : "months",
+                  })
+                }
+              >
+                <SelectTrigger className="h-12 flex-1" aria-label="Cycle length unit">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="months">months</SelectItem>
+                  <SelectItem value="days">days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Months follow the calendar, so a cycle keeps its start day each month.
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Money category</Label>
