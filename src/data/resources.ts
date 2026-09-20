@@ -51,7 +51,7 @@ export type ResourceInput = {
   cycle_start_date: string | null;
   cycle_days: number | null;
   cycle_unit?: "days" | "months";
-  cycle_count?: number | null;
+  cycle_count?: number;
   icon: string | null;
   color: string | null;
   active: boolean;
