@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, Moon, Sun } from "lucide-react";
+import { ArrowDown, ArrowUp, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -49,7 +49,7 @@ import {
 import { MODULES } from "@/data/modules";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
-import { useTheme } from "@/hooks/useTheme";
+import { useTheme, type ThemePreference } from "@/hooks/useTheme";
 import { requestDeviceLocation } from "@/lib/geolocation";
 import {
   financeKeys,
@@ -102,7 +102,7 @@ function SettingsPage() {
   const prayer = useQuery(prayerSettingsQuery());
   const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
-  const { theme, toggleTheme } = useTheme();
+  const { preference, setPreference } = useTheme();
   const { prefs, weightUnit } = usePreferences();
   const { enabled: enabledModuleKeys, toggleModule, isSaving } = useModules();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -824,17 +824,32 @@ function SettingsPage() {
         <Card className="system-card">
           <CardHeader>
             <CardTitle className="text-base">Appearance</CardTitle>
-            <CardDescription>Your theme choice is remembered on this device.</CardDescription>
+            <CardDescription>
+              Light uses Executive Crisp, dark uses Pro Dark. System follows your device. Remembered on this device.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button type="button" variant="outline" className="h-12" onClick={toggleTheme}>
-              {theme === "dark" ? (
-                <Sun className="size-4" aria-hidden="true" />
-              ) : (
-                <Moon className="size-4" aria-hidden="true" />
-              )}
-              {theme === "dark" ? "Switch to light" : "Switch to dark"}
-            </Button>
+            <div role="radiogroup" aria-label="Theme" className="inline-flex gap-1 rounded-xl bg-secondary p-1">
+              {(
+                [
+                  { value: "light", label: "Light", icon: Sun },
+                  { value: "dark", label: "Dark", icon: Moon },
+                  { value: "system", label: "System", icon: Monitor },
+                ] as { value: ThemePreference; label: string; icon: typeof Sun }[]
+              ).map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={preference === value}
+                  onClick={() => setPreference(value)}
+                  className={`inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${preference === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Icon className="size-4" aria-hidden="true" />
+                  {label}
+                </button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

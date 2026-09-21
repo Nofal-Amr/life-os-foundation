@@ -166,9 +166,9 @@ export function BottomNav() {
   const { navItems } = useVisible();
   const activeSection = sectionFor(pathname);
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+    <nav className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 md:hidden">
       <ul
-        className="grid"
+        className="system-dock grid px-1"
         style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
       >
         {navItems.map(({ to, label, icon: Icon }) => (
@@ -176,10 +176,13 @@ export function BottomNav() {
             <Link
               to={to}
               aria-current={pathname === to || activeSection === to ? "page" : undefined}
-              className={`flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] transition-colors ${pathname === to || activeSection === to ? "font-medium text-primary" : "text-muted-foreground"}`}
+              className={`relative flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] transition-colors ${pathname === to || activeSection === to ? "font-medium text-foreground" : "text-muted-foreground"}`}
             >
-              <Icon className="size-5" aria-hidden="true" />
+              <Icon className="size-5" strokeWidth={1.5} aria-hidden="true" />
               {label}
+              {(pathname === to || activeSection === to) && (
+                <span className="absolute bottom-1 size-[3px] rounded-full bg-primary" aria-hidden="true" />
+              )}
             </Link>
           </li>
         ))}
