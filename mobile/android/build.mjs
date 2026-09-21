@@ -8,7 +8,7 @@
 import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { delimiter, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -72,9 +72,9 @@ if (!existsSync(join(web, "index.html")))
   throw new Error("dist/client/index.html missing; the web build failed.");
 
 rmSync(out, { recursive: true, force: true });
-const dirs = ["res", "classes", "dex", "assets/www"].map((d) => join(out, d));
+const dirs = ["res", "classes", "dex", "assets/www", "gen"].map((d) => join(out, d));
 dirs.forEach((d) => mkdirSync(d, { recursive: true }));
-const [resOut, classesOut, dexOut, wwwOut] = dirs;
+const [resOut, classesOut, dexOut, wwwOut, genOut] = dirs;
 cpSync(web, wwwOut, { recursive: true });
 
 // 2. Resources and manifest.
@@ -89,6 +89,9 @@ run(bt("aapt2"), [
   androidJar,
   "--manifest",
   join(here, "AndroidManifest.xml"),
+  // R.java, so Java code can refer to resources (e.g. the notification icon).
+  "--java",
+  genOut,
   "--auto-add-overlay",
   compiled,
 ]);
@@ -102,6 +105,8 @@ const walk = (dir) =>
       : e.name.endsWith(".java") && sources.push(join(dir, e.name)),
   );
 walk(join(here, "src"));
+walk(genOut);
+// core-lambda-stubs lets javac compile lambdas against android.jar.
 run(jdk("javac"), [
   "-source",
   "8",
@@ -109,7 +114,7 @@ run(jdk("javac"), [
   "8",
   "-Xlint:-options",
   "-bootclasspath",
-  androidJar,
+  [androidJar, join(sdk, "build-tools", buildTools, "core-lambda-stubs.jar")].join(delimiter),
   "-d",
   classesOut,
   ...sources,

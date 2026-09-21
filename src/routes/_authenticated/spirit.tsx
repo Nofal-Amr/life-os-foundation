@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { DateNav } from "@/components/app/DateNav";
+import { PrayerDayList, PrayerStats } from "@/components/app/PrayerLog";
+import { PrayerReminderSettings } from "@/components/app/PrayerReminders";
 import { PageHeader } from "@/components/app/PageHeader";
 import { GlanceSection, RingStat } from "@/components/app/StatCards";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -22,6 +24,7 @@ import {
   type PrayerName,
 } from "@/data/spirit";
 import { prayersOn } from "@/data/stats";
+import { prayerCounts } from "@/data/week";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
@@ -64,25 +67,6 @@ function SpiritPage() {
   const { fmtTime, fmtDate } = usePreferences();
   const [date, setDate] = useState(todayISO());
 
-  const onError = (e: unknown) =>
-    toast.error(e instanceof Error ? e.message : "Something went wrong.");
-
-  const setLog = useMutation({
-    mutationFn: (input: {
-      prayer_name: PrayerName;
-      completed: boolean;
-      on_time: boolean | null;
-    }) => logPrayer({ prayer_date: date, ...input }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
-    onError,
-  });
-
-  const unsetLog = useMutation({
-    mutationFn: (prayer_name: PrayerName) => clearPrayerLog(date, prayer_name),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
-    onError,
-  });
-
   if (settings.isLoading || logs.isLoading) {
     return (
       <>
@@ -121,11 +105,11 @@ function SpiritPage() {
   const nextPrayer = date === todayISO() && times ? String(times.nextPrayer()).toLowerCase() : null;
 
   const dayLogs = (logs.data ?? []).filter((log) => log.prayer_date === date);
-  const doneCount = dayLogs.filter((log) => log.completed).length;
+  const doneCount = dayLogs.filter((log) => prayerCounts(log)).length;
   const prayers = prayersOn(logs.data ?? [], date);
   const weekDates = lastSevenDates(date);
   const weekLogged = (logs.data ?? []).filter(
-    (log) => weekDates.has(log.prayer_date) && log.completed,
+    (log) => weekDates.has(log.prayer_date) && prayerCounts(log),
   ).length;
 
   return (
@@ -164,105 +148,42 @@ function SpiritPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card className="system-card">
-            <CardHeader>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <CardTitle className="text-base">
-                  {doneCount} of 5 recorded
-                </CardTitle>
-                <span className="text-xs text-muted-foreground">
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="text-sm font-semibold">
+                {doneCount} of 5 prayed
+                <span className="ml-2 font-normal text-muted-foreground">
                   {weekLogged} of 35 over the last seven days
                 </span>
-              </div>
-              <CardDescription>
-                {config?.city
-                  ? `Times calculated for ${config.city}.`
-                  : "Times calculated for your saved coordinates."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {PRAYER_NAMES.map((name) => {
-                const time = times ? (times[name] as Date) : null;
-                const log = dayLogs.find((item) => item.prayer_name === name);
-                const marked = !!log?.completed;
-                const isNext = nextPrayer === name;
-                return (
-                  <div key={name} className="rounded-xl border border-border bg-card">
-                    <button
-                      type="button"
-                      aria-pressed={marked}
-                      className={`flex min-h-14 w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition-colors ${
-                        marked ? "tone-positive" : "hover:bg-accent/50"
-                      }`}
-                      onClick={() =>
-                        marked
-                          ? unsetLog.mutate(name)
-                          : setLog.mutate({ prayer_name: name, completed: true, on_time: null })
-                      }
-                    >
-                      <span className="flex items-baseline gap-3">
-                        <span className="w-20 text-sm font-medium">{PRAYER_LABELS[name]}</span>
-                        <span className="text-sm tabular-nums opacity-80">
-                          {time ? fmtTime(time) : "—"}
-                        </span>
-                        {isNext && !marked ? (
-                          <span className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-                            Next
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="flex items-center gap-2 text-xs font-medium">
-                        {marked ? (
-                          <>
-                            <Check className="size-4" aria-hidden="true" />
-                            Prayed
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground">Mark as prayed</span>
-                        )}
-                      </span>
-                    </button>
-                    {marked ? (
-                      <div className="flex items-center gap-2 px-4 pb-3 pt-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={log?.on_time === true ? "secondary" : "ghost"}
-                          aria-pressed={log?.on_time === true}
-                          onClick={() =>
-                            setLog.mutate({
-                              prayer_name: name,
-                              completed: true,
-                              on_time: log?.on_time === true ? null : true,
-                            })
-                          }
-                        >
-                          On time
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant={log?.on_time === false ? "secondary" : "ghost"}
-                          aria-pressed={log?.on_time === false}
-                          onClick={() =>
-                            setLog.mutate({
-                              prayer_name: name,
-                              completed: true,
-                              on_time: log?.on_time === false ? null : false,
-                            })
-                          }
-                        >
-                          Later
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
+              </p>
+              <span className="text-xs text-muted-foreground">
+                {config?.city ? `Times for ${config.city}` : "Times for your saved location"}
+              </span>
+            </div>
+            <PrayerDayList
+              date={date}
+              logs={logs.data ?? []}
+              times={times ? prayerDates(times) : null}
+              next={nextPrayer as PrayerName | null}
+              formatTime={fmtTime}
+            />
+          </section>
         )}
+
+        <PrayerStats logs={logs.data ?? []} today={todayISO()} />
+        <PrayerReminderSettings />
       </div>
     </>
   );
+}
+
+/** The five prayer times as a plain record. */
+function prayerDates(times: ReturnType<typeof prayerTimesFor>): Record<PrayerName, Date> {
+  return {
+    fajr: times.fajr,
+    dhuhr: times.dhuhr,
+    asr: times.asr,
+    maghrib: times.maghrib,
+    isha: times.isha,
+  };
 }

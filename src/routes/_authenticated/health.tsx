@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DateNav } from "@/components/app/DateNav";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
+import { SamsungHealthCard } from "@/components/app/SamsungHealthCard";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import {
   GlanceSection,
@@ -568,6 +569,8 @@ function HealthPage() {
             </StatCard>
           )}
         </GlanceSection>
+
+        <SamsungHealthCard />
 
         <Card className="system-card">
           <CardHeader>

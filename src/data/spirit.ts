@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { currentUserId, unwrap } from "@/lib/supabase-helpers";
+import { currentUserId, unwrap, writeWithColumnFallback } from "@/lib/supabase-helpers";
 
 export type PrayerLog = Database["public"]["Tables"]["prayer_logs"]["Row"];
 export type PrayerSettings = Database["public"]["Tables"]["prayer_settings"]["Row"];
@@ -61,7 +61,7 @@ export const prayerLogsQuery = () =>
           .from("prayer_logs")
           .select("*")
           .order("prayer_date", { ascending: false })
-          .limit(200),
+          .limit(2000),
       ) as PrayerLog[],
   });
 
@@ -148,4 +148,71 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     /* fall through to coordinates */
   }
   return `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+}
+
+/* ------------------------------- statuses ------------------------------ */
+
+export const PRAYER_STATUSES = ["jamaah", "on_time", "late", "missed"] as const;
+export type PrayerStatus = (typeof PRAYER_STATUSES)[number];
+
+export const PRAYER_STATUS_LABELS: Record<PrayerStatus, string> = {
+  jamaah: "In jamaah",
+  on_time: "On time",
+  late: "Late",
+  missed: "Missed",
+};
+
+/** A log's status; rows from before statuses existed are read from completed/on_time. */
+export function statusOf(log: PrayerLog | undefined | null): PrayerStatus | null {
+  if (!log) return null;
+  if (log.status && (PRAYER_STATUSES as readonly string[]).includes(log.status)) {
+    return log.status as PrayerStatus;
+  }
+  if (!log.completed) return "missed";
+  return log.on_time === false ? "late" : "on_time";
+}
+
+/** Records how a prayer was prayed, or clears it with null. */
+export async function setPrayerStatus(
+  prayer_date: string,
+  prayer_name: PrayerName,
+  status: PrayerStatus | null,
+): Promise<void> {
+  if (!status) return clearPrayerLog(prayer_date, prayer_name);
+  const user_id = await currentUserId();
+  const row = {
+    user_id,
+    prayer_date,
+    prayer_name,
+    status,
+    // Kept in step for older screens and reports.
+    completed: status !== "missed",
+    on_time: status === "late" ? false : status === "missed" ? null : true,
+  };
+  unwrap(
+    await writeWithColumnFallback(row, (input) =>
+      supabase
+        .from("prayer_logs")
+        .upsert(input, { onConflict: "user_id,prayer_date,prayer_name" })
+        .select()
+        .single(),
+    ),
+  );
+}
+
+/** Status counts over a date range (inclusive), for the stats summary. */
+export function prayerStatusCounts(
+  logs: PrayerLog[],
+  from: string,
+  to: string,
+): Record<PrayerStatus, number> & { logged: number } {
+  const counts = { jamaah: 0, on_time: 0, late: 0, missed: 0, logged: 0 };
+  for (const log of logs) {
+    if (log.prayer_date < from || log.prayer_date > to) continue;
+    const status = statusOf(log);
+    if (!status) continue;
+    counts[status] += 1;
+    counts.logged += 1;
+  }
+  return counts;
 }

@@ -27,11 +27,16 @@ export function hasEnoughPoints(points: readonly unknown[]): boolean {
 export type Fraction = { done: number; total: number };
 
 /** Prayers logged as completed on a date, out of the five daily prayers. */
+/** Prayed in any way (jamaah, on time or late); missed and unlogged don't count. */
+function prayed(log: PrayerLog): boolean {
+  return log.status ? log.status !== "missed" : log.completed;
+}
+
 export function prayersOn(logs: PrayerLog[], date: string): Fraction {
   const names = new Set<string>(PRAYER_NAMES);
   const done = new Set(
     logs
-      .filter((log) => log.prayer_date === date && log.completed && names.has(log.prayer_name))
+      .filter((log) => log.prayer_date === date && prayed(log) && names.has(log.prayer_name))
       .map((log) => log.prayer_name),
   ).size;
   return { done, total: PRAYER_NAMES.length };

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { PrayerTiles } from "@/components/app/PrayerLog";
 import { SplitAcrossDaysDialog } from "@/components/app/SplitAcrossDays";
 import { Ring, type ChartTone } from "@/components/app/StatCards";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -477,7 +478,6 @@ function DayDetail({
 }) {
   const taskToggle = useOptimisticToggle<Task>(taskKeys.all);
   const habitToggle = useOptimisticToggle<HabitLog>(habitKeys.logs);
-  const prayerToggle = useOptimisticToggle<PrayerLog>(spiritKeys.logs);
   const onError = (error: unknown) =>
     toast.error(error instanceof Error ? error.message : "Couldn't save that.");
 
@@ -524,38 +524,6 @@ function DayDetail({
     onSettled: habitToggle.settle,
   });
 
-  const togglePrayer = useMutation({
-    mutationFn: async ({ name, logged }: { name: PrayerName; logged: boolean }) => {
-      if (logged) await clearPrayerLog(day.date, name);
-      else
-        await logPrayer({
-          prayer_date: day.date,
-          prayer_name: name,
-          completed: true,
-          on_time: null,
-        });
-    },
-    onMutate: ({ name, logged }) =>
-      prayerToggle.begin((rows) =>
-        logged
-          ? rows.filter((row) => !(row.prayer_date === day.date && row.prayer_name === name))
-          : [
-              {
-                id: `local-${name}`,
-                prayer_date: day.date,
-                prayer_name: name,
-                completed: true,
-              } as PrayerLog,
-              ...rows,
-            ],
-      ),
-    onError: (error, _vars, previous) => {
-      prayerToggle.rollback(previous);
-      onError(error);
-    },
-    onSettled: prayerToggle.settle,
-  });
-
   const groups = useMemo(() => {
     const byProject = new Map<string, Task[]>();
     for (const task of day.tasks) {
@@ -572,10 +540,6 @@ function DayDetail({
   const title = day.isToday ? "Today" : format(parseISO(day.date), "EEEE");
   const logged = (habitId: string) =>
     habitLogs.some((log) => log.habit_id === habitId && log.log_date === day.date);
-  const prayed = (name: PrayerName) =>
-    !!prayerLogs?.some(
-      (log) => log.prayer_date === day.date && log.prayer_name === name && prayerCounts(log),
-    );
   const [splitting, setSplitting] = useState<Task | null>(null);
 
   return (
@@ -710,34 +674,7 @@ function DayDetail({
                 {day.prayers.done}/{day.prayers.total}
               </span>
             </div>
-            <div className="grid grid-cols-5 gap-1.5">
-              {PRAYER_NAMES.map((name) => {
-                const on = prayed(name);
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    disabled={day.isFuture}
-                    aria-pressed={on}
-                    onClick={() => togglePrayer.mutate({ name, logged: on })}
-                    className={cn(
-                      "flex flex-col items-center gap-1 rounded-lg border px-1 py-2 text-[11px] font-medium transition-colors active:scale-[0.97] disabled:opacity-40",
-                      on
-                        ? "border-transparent text-primary-foreground"
-                        : "border-border text-muted-foreground",
-                    )}
-                    style={on ? { background: `var(--chart-${PRAYER_TONE})` } : undefined}
-                  >
-                    {on ? (
-                      <Check className="size-3.5" aria-hidden="true" />
-                    ) : (
-                      <span className="size-3.5" />
-                    )}
-                    {PRAYER_LABELS[name]}
-                  </button>
-                );
-              })}
-            </div>
+            <PrayerTiles date={day.date} logs={prayerLogs} disabled={day.isFuture} />
           </div>
         ) : null}
       </div>

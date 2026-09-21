@@ -5,6 +5,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.app.NotificationManager;
+import android.os.Build;
+import android.provider.Settings;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +16,7 @@ import android.view.Window;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -25,6 +29,8 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.JSONObject;
+
 /**
  * Life OS for Android: a WebView that runs the same React app as the website.
  *
@@ -36,6 +42,8 @@ public class MainActivity extends Activity {
     private static final String APP_HOST = "app.lifeos.local";
     private static final String APP_URL = "https://" + APP_HOST + "/";
     private static final int LOCATION_REQUEST = 1;
+    private static final int NOTIFICATION_REQUEST = 2;
+    private static final int HEALTH_REQUEST = 3;
     /** Lets the web app know it runs inside this shell (see src/routes/auth.tsx). */
     private static final String UA_MARKER = "LifeOSAndroid";
     private static final String CALLBACK_SCHEME = "lifeos";
@@ -43,6 +51,8 @@ public class MainActivity extends Activity {
     private WebView webView;
     private String pendingGeoOrigin;
     private GeolocationPermissions.Callback pendingGeoCallback;
+    /** The host of the page on screen; the bridge only answers the app's own pages. */
+    private volatile String currentHost = APP_HOST;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +75,8 @@ public class MainActivity extends Activity {
         settings.setUserAgentString(settings.getUserAgentString() + " " + UA_MARKER);
 
         webView.setWebViewClient(new AppClient());
+        webView.addJavascriptInterface(new NativeBridge(), "LifeOSNative");
+        Reminders.ensureChannel(this);
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage message) {
@@ -118,6 +130,10 @@ public class MainActivity extends Activity {
         if (intent == null || intent.getData() == null) return null;
         Uri data = intent.getData();
         if (!CALLBACK_SCHEME.equals(data.getScheme())) return null;
+        if ("open".equals(data.getHost())) {
+            String path = data.getEncodedPath();
+            return APP_URL + (path == null ? "" : path.replaceFirst("^/", ""));
+        }
         String query = data.getEncodedQuery();
         String fragment = data.getEncodedFragment();
         // A unique query forces a full page load. The app is usually already on
@@ -142,6 +158,12 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (requestCode == NOTIFICATION_REQUEST || requestCode == HEALTH_REQUEST) {
+            // Let the page re-check what it is now allowed to do.
+            String event = requestCode == HEALTH_REQUEST ? "life-os-health-permissions" : "life-os-notification-permissions";
+            webView.evaluateJavascript("window.dispatchEvent(new Event('" + event + "'))", null);
+            return;
+        }
         if (requestCode != LOCATION_REQUEST || pendingGeoCallback == null) return;
         boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
         pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
@@ -172,6 +194,11 @@ public class MainActivity extends Activity {
     }
 
     private final class AppClient extends WebViewClient {
+        @Override
+        public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+            currentHost = Uri.parse(url).getHost();
+        }
+
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri url = request.getUrl();
@@ -232,5 +259,71 @@ public class MainActivity extends Activity {
         if (p.endsWith(".woff")) return "font/woff";
         if (p.endsWith(".txt")) return "text/plain";
         return "application/octet-stream";
+    }
+
+    /** Called from the web app via window.LifeOSNative (see src/lib/native.ts). */
+    private final class NativeBridge {
+        private boolean trusted() {
+            return APP_HOST.equals(currentHost);
+        }
+
+        @JavascriptInterface
+        public boolean canNotify() {
+            if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+            return getSystemService(NotificationManager.class).areNotificationsEnabled();
+        }
+
+        @JavascriptInterface
+        public void requestNotifications() {
+            if (!trusted()) return;
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33
+                    && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, NOTIFICATION_REQUEST);
+                } else {
+                    startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()));
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void scheduleReminders(String json) {
+            if (!trusted()) return;
+            Reminders.replaceAll(MainActivity.this, json);
+        }
+
+        @JavascriptInterface
+        public String healthStatus() {
+            return HealthReader.status(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void requestHealth() {
+            if (!trusted() || !HealthReader.supported()) return;
+            runOnUiThread(() -> requestPermissions(HealthReader.PERMISSIONS, HEALTH_REQUEST));
+        }
+
+        @JavascriptInterface
+        public void readHealth(String json) {
+            if (!trusted()) return;
+            String id;
+            int days;
+            try {
+                JSONObject args = new JSONObject(json);
+                id = args.getString("id");
+                days = Math.max(1, Math.min(365, args.optInt("days", 30)));
+            } catch (Exception bad) {
+                return;
+            }
+            HealthReader.read(MainActivity.this, days, result -> runOnUiThread(() ->
+                webView.evaluateJavascript(
+                    "window.__lifeOSNativeCallback && window.__lifeOSNativeCallback("
+                        + JSONObject.quote(id) + "," + JSONObject.quote(result.toString()) + ")",
+                    null)));
+        }
     }
 }

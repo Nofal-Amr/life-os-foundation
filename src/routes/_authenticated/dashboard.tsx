@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
+import { PrayerTiles } from "@/components/app/PrayerLog";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
 
@@ -62,6 +63,7 @@ import {
   spiritKeys,
   type PrayerName,
 } from "@/data/spirit";
+import { prayerCounts } from "@/data/week";
 import {
   completeTask,
   estimateLabel,
@@ -82,9 +84,17 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Today — Life OS" },
-      { name: "description", content: "Your next action, plus a one-line look at prayers, money, body and what is coming up." },
+      {
+        name: "description",
+        content:
+          "Your next action, plus a one-line look at prayers, money, body and what is coming up.",
+      },
       { property: "og:title", content: "Today — Life OS" },
-      { property: "og:description", content: "Your next action, plus a one-line look at prayers, money, body and what is coming up." },
+      {
+        property: "og:description",
+        content:
+          "Your next action, plus a one-line look at prayers, money, body and what is coming up.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -302,7 +312,9 @@ function StatusRow({
             size="sm"
             className="ml-auto h-auto min-h-11 px-1 text-xs text-muted-foreground"
           >
-            <Link to={to} {...(hash ? { hash } : {})}>{linkLabel ?? `Open ${label}`}</Link>
+            <Link to={to} {...(hash ? { hash } : {})}>
+              {linkLabel ?? `Open ${label}`}
+            </Link>
           </Button>
         ) : null}
       </div>
@@ -335,8 +347,6 @@ function StatusRow({
     </div>
   );
 }
-
-
 
 function DashboardPage() {
   const queryClient = useQueryClient();
@@ -388,7 +398,6 @@ function DashboardPage() {
     onError,
   });
 
-
   /** Completing the shown action promotes the next one in place. */
   const finish = useMutation({
     mutationFn: (id: string) => completeTask(id),
@@ -431,7 +440,7 @@ function DashboardPage() {
   ).length;
 
   const todayPrayerLogs = (prayerLogs.data ?? []).filter(
-    (log) => log.prayer_date === today && log.completed,
+    (log) => log.prayer_date === today && prayerCounts(log),
   );
   const prayerConfig = prayerSettings.data;
   const hasPrayerLocation = prayerConfig?.latitude != null && prayerConfig?.longitude != null;
@@ -453,7 +462,6 @@ function DashboardPage() {
   const money = useAvailableBeforePayday();
   const { isEnabled } = useModules();
   const todayHealth = (healthLogs.data ?? []).find((log) => log.log_date === today);
-
 
   /* Food and resources: derived only from rows the user logged. */
   const todayFoodLogs = (foodLogs.data ?? []).filter((log) => log.log_date === today);
@@ -498,7 +506,13 @@ function DashboardPage() {
   }
 
   for (const project of projects.data ?? []) {
-    if (project.status === "archived" || project.status === "completed" || !project.due_date || project.due_date > nextWeek) continue;
+    if (
+      project.status === "archived" ||
+      project.status === "completed" ||
+      !project.due_date ||
+      project.due_date > nextWeek
+    )
+      continue;
     comingUp.push({
       id: `project-${project.id}`,
       dimension: "professional",
@@ -507,7 +521,6 @@ function DashboardPage() {
       detail: `Project · Due ${fmtDate(project.due_date)}`,
       kind: "commitment",
       to: "/projects",
-
     });
   }
 
@@ -521,7 +534,6 @@ function DashboardPage() {
       detail: `Goal · Target ${fmtDate(goal.target_date)}`,
       kind: "commitment",
       to: "/goals",
-
     });
   }
 
@@ -536,7 +548,6 @@ function DashboardPage() {
         detail: `Recurring cost · ${fmtMoney(Number(cost.amount))} · ${fmtDate(cost.next_due_date)}`,
         kind: "projection",
         to: "/finance/recurring",
-
       });
     }
   }
@@ -551,7 +562,6 @@ function DashboardPage() {
       detail: `Resource · ${Math.round(Number(facts.remaining) * 10) / 10} ${resource.unit} left · around ${fmtDate(facts.runsOutOn)}`,
       kind: "projection",
       to: "/resources",
-
     });
   }
 
@@ -562,15 +572,17 @@ function DashboardPage() {
   );
   const scheduledDoses = (medications.data ?? [])
     .filter((medication) => medication.active)
-    .flatMap((medication) => (medication.schedule_times ?? []).map((slot) => ({ medication, slot })))
+    .flatMap((medication) =>
+      (medication.schedule_times ?? []).map((slot) => ({ medication, slot })),
+    )
     .sort((a, b) => a.slot.localeCompare(b.slot));
   const dosesDue = scheduledDoses.filter(
     ({ medication, slot }) => !takenDoseKeys.has(`${medication.id}-${slot}`),
   );
 
-
   comingUp.sort((a, b) => {
-    const byDimension = (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
+    const byDimension =
+      (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99);
     return byDimension || a.sortValue.localeCompare(b.sortValue);
   });
 
@@ -614,34 +626,24 @@ function DashboardPage() {
       compact={!hasPrayerLocation}
     >
       {hasPrayerLocation ? (
-        <div id="today-prayers" className="mt-3 grid min-w-0 grid-cols-5 gap-1.5 scroll-mt-5">
-          {PRAYER_NAMES.map((name) => {
-            const log = todayPrayerLogs.find((item) => item.prayer_name === name);
-            const marked = Boolean(log);
-            const time = prayerTimes ? (prayerTimes[name] as Date) : null;
-            return (
-              <Button
-                key={name}
-                type="button"
-                variant="outline"
-                aria-pressed={marked}
-                aria-label={`${PRAYER_LABELS[name]}${marked ? " logged" : ""}`}
-                className={`h-auto min-h-14 min-w-0 flex-col gap-0.5 px-1 py-2 ${marked ? "tone-positive" : ""}`}
-                onClick={() =>
-                  marked ? unsetPrayer.mutate(name) : setPrayer.mutate({ prayer_name: name, on_time: null })
-                }
-              >
-                <span className="w-full truncate text-xs font-medium">{PRAYER_LABELS[name]}</span>
-                <span className="w-full truncate text-[11px] tabular-nums opacity-75">
-                  {time ? fmtTime(time) : "—"}
-                </span>
-                <span className="flex items-center gap-1 text-[11px]">
-                  {marked ? <Check className="size-3" /> : null}
-                  {marked ? "Prayed" : nextPrayer === name ? "Next" : "Log"}
-                </span>
-              </Button>
-            );
-          })}
+        <div id="today-prayers" className="mt-3 min-w-0 scroll-mt-5">
+          <PrayerTiles
+            date={today}
+            logs={prayerLogs.data ?? []}
+            times={
+              prayerTimes
+                ? {
+                    fajr: prayerTimes.fajr,
+                    dhuhr: prayerTimes.dhuhr,
+                    asr: prayerTimes.asr,
+                    maghrib: prayerTimes.maghrib,
+                    isha: prayerTimes.isha,
+                  }
+                : null
+            }
+            next={nextPrayer as PrayerName | null}
+            formatTime={fmtTime}
+          />
         </div>
       ) : null}
     </StatusRow>
@@ -712,29 +714,27 @@ function DashboardPage() {
     <div key="health" className="min-w-0 divide-y divide-border/60">
       {isEnabled("body") ? medicationRow : null}
       {isEnabled("body") ? (
-      <StatusRow
-        icon={HeartPulse}
-        label="Health log"
-        value={todayHealth ? "Logged today" : "Nothing logged yet today"}
-        to="/health"
-        hash="daily-log"
-        linkLabel={todayHealth ? "Open today’s log" : "Log health"}
-        compact={!todayHealth}
-      />
+        <StatusRow
+          icon={HeartPulse}
+          label="Health log"
+          value={todayHealth ? "Logged today" : "Nothing logged yet today"}
+          to="/health"
+          hash="daily-log"
+          linkLabel={todayHealth ? "Open today’s log" : "Log health"}
+          compact={!todayHealth}
+        />
       ) : null}
       {isEnabled("food") ? (
-      <StatusRow
-        icon={Utensils}
-        label="Calories"
-        value={
-          todayFoodLogs.length
-            ? `${todayCalories} kcal logged today`
-            : "No food logged yet today"
-        }
-        to="/food"
-        linkLabel={todayFoodLogs.length ? "Open Food" : "Log food"}
-        compact={!todayFoodLogs.length}
-      />
+        <StatusRow
+          icon={Utensils}
+          label="Calories"
+          value={
+            todayFoodLogs.length ? `${todayCalories} kcal logged today` : "No food logged yet today"
+          }
+          to="/food"
+          linkLabel={todayFoodLogs.length ? "Open Food" : "Log food"}
+          compact={!todayFoodLogs.length}
+        />
       ) : null}
     </div>
   );
@@ -776,9 +776,7 @@ function DashboardPage() {
             available={money.available}
             fmtMoney={fmtMoney}
           />
-          {lastPayday ? (
-            <PaydayLine from={lastPayday} to={payday} fmtDate={fmtDate} />
-          ) : null}
+          {lastPayday ? <PaydayLine from={lastPayday} to={payday} fmtDate={fmtDate} /> : null}
         </>
       ) : null}
     </StatusRow>
@@ -812,9 +810,7 @@ function DashboardPage() {
 
   /* Prayers are the daily anchor and stay first; the rest follows the saved order. */
   const strips: { dimension: string; node: ReactNode }[] = [
-    ...(isEnabled("body") || isEnabled("food")
-      ? [{ dimension: "health", node: bodyRows }]
-      : []),
+    ...(isEnabled("body") || isEnabled("food") ? [{ dimension: "health", node: bodyRows }] : []),
     ...(isEnabled("money") ? [{ dimension: "professional", node: moneyRow }] : []),
     ...(isEnabled("resources") ? [{ dimension: "professional", node: resourceRows }] : []),
   ].filter((strip) => strip.node != null);
@@ -823,7 +819,6 @@ function DashboardPage() {
     (a, b) => (dimensionRank.get(a.dimension) ?? 99) - (dimensionRank.get(b.dimension) ?? 99),
   );
   if (isEnabled("spirit")) strips.unshift({ dimension: "spirit", node: prayerRow });
-
 
   function ActionBlock({ action, large }: { action: NextAction; large?: boolean }) {
     const isStep = action.item.id !== action.parent.id;
@@ -845,7 +840,10 @@ function DashboardPage() {
         {(action.parent.postponed_count ?? 0) >= 3 ? (
           <p className="mt-2 text-xs text-muted-foreground">
             Moved {action.parent.postponed_count} times
-            {action.parent.original_due_date ? ` since ${fmtDate(action.parent.original_due_date)}` : ""}.
+            {action.parent.original_due_date
+              ? ` since ${fmtDate(action.parent.original_due_date)}`
+              : ""}
+            .
           </p>
         ) : null}
         <div className={`mt-4 flex flex-wrap gap-2 ${large ? "" : "gap-2"}`}>
@@ -891,45 +889,55 @@ function DashboardPage() {
           <main className="flex min-w-0 flex-col gap-10">
             {/* Zone 1 — the one thing to do. */}
             {isEnabled("do") ? (
-            <section className="min-w-0">
-              <Card className="system-card min-w-0 border-primary/30">
-                <CardHeader>
-                  <SectionHeading
-                    title="Next action"
-                    detail={overdueTasks ? `${overdueTasks} open ${overdueTasks === 1 ? "task is" : "tasks are"} past their date.` : undefined}
-                  />
-                </CardHeader>
-                <CardContent>
-                  {primary ? (
-                    <ActionBlock action={primary} large />
-                  ) : (
-                    <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
-                      <p className="min-w-0 text-sm text-muted-foreground">No open tasks right now.</p>
-                      <Button type="button" onClick={() => setQuickTask(true)}>Add a task</Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {alsoToday.length ? (
-                <div className="mt-4 min-w-0 rounded-lg border border-border/60 px-4 py-3">
-                  <h2 className="text-sm font-medium text-muted-foreground">Also today</h2>
-                  <div className="mt-1 divide-y divide-border/60">
-                    {alsoToday.map((action) => (
-                      <div key={action.item.id} className="py-3 first:pt-1 last:pb-1">
-                        <ActionBlock action={action} />
+              <section className="min-w-0">
+                <Card className="system-card min-w-0 border-primary/30">
+                  <CardHeader>
+                    <SectionHeading
+                      title="Next action"
+                      detail={
+                        overdueTasks
+                          ? `${overdueTasks} open ${overdueTasks === 1 ? "task is" : "tasks are"} past their date.`
+                          : undefined
+                      }
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    {primary ? (
+                      <ActionBlock action={primary} large />
+                    ) : (
+                      <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
+                        <p className="min-w-0 text-sm text-muted-foreground">
+                          No open tasks right now.
+                        </p>
+                        <Button type="button" onClick={() => setQuickTask(true)}>
+                          Add a task
+                        </Button>
                       </div>
-                    ))}
+                    )}
+                  </CardContent>
+                </Card>
+
+                {alsoToday.length ? (
+                  <div className="mt-4 min-w-0 rounded-lg border border-border/60 px-4 py-3">
+                    <h2 className="text-sm font-medium text-muted-foreground">Also today</h2>
+                    <div className="mt-1 divide-y divide-border/60">
+                      {alsoToday.map((action) => (
+                        <div key={action.item.id} className="py-3 first:pt-1 last:pb-1">
+                          <ActionBlock action={action} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-            </section>
+                ) : null}
+              </section>
             ) : null}
 
             {/* Zone 2 — one block for everything today, each row acting on itself. */}
             <section className="min-w-0">
               <h2 className="text-base font-semibold text-foreground">Today</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Your own figures, and the logging beside them.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your own figures, and the logging beside them.
+              </p>
               {strips.length === 0 ? (
                 <p className="mt-3 text-sm text-muted-foreground">
                   No modules are switched on yet. Choose what to track in Settings.
@@ -990,43 +998,52 @@ function DashboardPage() {
 
               <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">
                 {isEnabled("calendar") ? (
-                <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
-                  <Link to="/calendar">Calendar</Link>
-                </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    size="sm"
+                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                  >
+                    <Link to="/calendar">Calendar</Link>
+                  </Button>
                 ) : null}
                 {isEnabled("notes") ? (
-                <Button asChild variant="link" size="sm" className="h-auto min-h-11 px-2 text-xs text-muted-foreground">
-                  <Link to="/notes">Notes</Link>
-                </Button>
+                  <Button
+                    asChild
+                    variant="link"
+                    size="sm"
+                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                  >
+                    <Link to="/notes">Notes</Link>
+                  </Button>
                 ) : null}
                 {isEnabled("money") ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
-                  onClick={() => setQuickMoney(true)}
-                >
-                  Log expense
-                </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                    onClick={() => setQuickMoney(true)}
+                  >
+                    Log expense
+                  </Button>
                 ) : null}
                 {isEnabled("do") ? (
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
-                  onClick={() => setQuickTask(true)}
-                >
-                  Add task
-                </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
+                    onClick={() => setQuickTask(true)}
+                  >
+                    Add task
+                  </Button>
                 ) : null}
               </div>
             </section>
           </main>
         )}
       </div>
-
 
       <QuickAddTransactionDialog open={quickMoney} onOpenChange={setQuickMoney} />
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />

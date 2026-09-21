@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
+import { usePrayerReminderSync } from "./PrayerReminders";
 import { useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
@@ -27,6 +28,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { displayName } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
+  usePrayerReminderSync();
 
   return (
     <div className="min-h-screen bg-background">
