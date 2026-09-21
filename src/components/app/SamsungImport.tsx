@@ -23,10 +23,13 @@ export function SamsungImport() {
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+  /** When nothing could be read: the file names that were picked, to show what arrived. */
+  const [unread, setUnread] = useState<string[] | null>(null);
 
   async function read(files: FileList) {
     setReading(true);
     setResult(null);
+    setUnread(null);
     try {
       const texts: { name: string; text: string }[] = [];
       for (const file of Array.from(files)) {
@@ -45,9 +48,8 @@ export function SamsungImport() {
         throw new Error("No CSV files found. Pick the .zip or the CSV files inside it.");
       const parsed = parseSamsungExport(texts);
       if (!parsed.samples.length) {
-        throw new Error(
-          "None of those files had steps, sleep, heart rate, weight or workouts. Pick the files whose names start with com.samsung.",
-        );
+        setUnread(texts.map((file) => file.name.split(/[\/]/).pop() ?? file.name));
+        return;
       }
       setResult(parsed);
     } catch (error) {
@@ -111,6 +113,27 @@ export function SamsungImport() {
           onChange={(event) => event.target.files?.length && void read(event.target.files)}
         />
       </div>
+
+      {unread ? (
+        <div className="space-y-2 rounded-lg bg-secondary p-3 text-xs">
+          <p className="text-sm font-medium">
+            None of these had steps, sleep, heart rate, weight or workouts
+          </p>
+          <p className="text-muted-foreground">
+            Pick all the files in the folder (long-press one, then tap the rest). The ones needed
+            are named like com.samsung.shealth.tracker.pedometer_day_summary, …sleep, …heart_rate,
+            com.samsung.health.weight and …exercise. If they're there and still not read, send a
+            screenshot of this list.
+          </p>
+          <ul className="max-h-40 space-y-0.5 overflow-y-auto font-mono text-[11px] text-muted-foreground">
+            {unread.map((name) => (
+              <li key={name} className="break-all">
+                {name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {result ? (
         <div className="space-y-3 rounded-lg bg-secondary p-3">

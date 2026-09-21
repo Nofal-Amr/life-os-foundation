@@ -100,11 +100,15 @@ export function parseSamsungExport(files: { name: string; text: string }[]): Imp
     const name = base(file.name);
     if (!name.endsWith(".csv")) continue;
 
-    if (name.startsWith("com.samsung.shealth.step_daily_trend")) {
-      // One row per device per day; source_type -2 is Samsung's merged total.
+    if (
+      name.startsWith("com.samsung.shealth.step_daily_trend") ||
+      name.startsWith("com.samsung.shealth.tracker.pedometer_day_summary")
+    ) {
+      // One row per device per day. In step_daily_trend, source_type -2 is
+      // Samsung's merged total; newer versions use pedometer_day_summary.
       const best = new Map<string, { steps: number; merged: boolean }>();
       for (const row of parseSamsungCsv(file.text).rows) {
-        const steps = num(row["count"]);
+        const steps = num(row["count"] || row["step_count"]);
         const at = utc(row["day_time"]);
         if (!at || !(steps > 0)) continue;
         const day = at.slice(0, 10);

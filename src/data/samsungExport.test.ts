@@ -76,3 +76,18 @@ describe("Samsung Health download", () => {
     ).toEqual([]);
   });
 });
+
+describe("newer Samsung Health versions", () => {
+  it("reads daily steps from pedometer_day_summary", () => {
+    const csv = [
+      "com.samsung.shealth.tracker.pedometer_day_summary,7006011,3",
+      "step_count,day_time,deviceuuid,datauuid",
+      "8938,1789948800000,phone,d1",
+    ].join("\n");
+    const result = parseSamsungExport([
+      { name: "com.samsung.shealth.tracker.pedometer_day_summary.20260921162149.csv", text: csv },
+    ]);
+    expect(result.counts.steps).toBe(1);
+    expect(result.samples[0]!.value).toBe(8938);
+  });
+});
