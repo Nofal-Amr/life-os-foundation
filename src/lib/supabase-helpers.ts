@@ -5,9 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
  * client-provided input.
  */
 export async function currentUserId(): Promise<string> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) throw new Error("You must be signed in.");
-  return data.user.id;
+  // getSession reads the stored session, so this works offline. Row-level
+  // security still checks the token on the server for every request.
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.user) throw new Error("You must be signed in.");
+  return data.session.user.id;
 }
 
 export function unwrap<T>({ data, error }: { data: T | null; error: unknown }): T {

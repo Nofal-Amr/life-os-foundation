@@ -4,6 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { clearOfflineData } from "@/lib/offline";
 
 type AuthContextValue = {
   session: Session | null;
@@ -56,6 +57,9 @@ export function useSignOut() {
   return async () => {
     await queryClient.cancelQueries();
     queryClient.clear();
+    // Device copies belong to this account only. Anything still queued offline
+    // was already shown as pending before sign-out.
+    await clearOfflineData();
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   };

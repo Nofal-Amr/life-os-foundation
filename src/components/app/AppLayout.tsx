@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
+import { SyncIndicator } from "./SyncIndicator";
 import { useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
@@ -35,6 +36,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <SidebarNav />
         </div>
         <div className="space-y-2 px-1">
+          <SyncIndicator />
           <Link to="/settings" className="flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-accent">
             <UserAvatar size="sm" />
             <div className="min-w-0">
@@ -95,7 +97,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </SheetContent>
 
         </Sheet>
-         <span className="truncate text-center text-sm font-semibold">Life OS</span>
+         <div className="flex min-w-0 flex-col items-center">
+           <span className="truncate text-center text-sm font-semibold">Life OS</span>
+           <SyncIndicator className="mt-0.5" />
+         </div>
          <Button variant="ghost" size="icon" aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>
            {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
          </Button>
