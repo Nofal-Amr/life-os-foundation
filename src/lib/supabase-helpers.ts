@@ -61,8 +61,31 @@ export async function writeWithColumnFallback<
     const column =
       error?.code === "PGRST204" ? /'([^']+)' column/.exec(error.message ?? "")?.[1] : undefined;
     if (!column || !(column in row)) return result;
+    reportMissingColumn(column);
     const { [column]: _dropped, ...rest } = row;
     row = rest as I;
   }
   return run(row);
+}
+
+/**
+ * Columns that saves had to drop because the database hasn't been updated.
+ * The app shows a notice (MigrationNotice) so this never fails silently.
+ */
+const missingColumns = new Set<string>();
+const missingListeners = new Set<() => void>();
+
+function reportMissingColumn(column: string) {
+  if (missingColumns.has(column)) return;
+  missingColumns.add(column);
+  missingListeners.forEach((listener) => listener());
+}
+
+export function getMissingColumns(): string[] {
+  return [...missingColumns];
+}
+
+export function onMissingColumns(listener: () => void): () => void {
+  missingListeners.add(listener);
+  return () => missingListeners.delete(listener);
 }

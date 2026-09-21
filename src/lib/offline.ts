@@ -269,7 +269,15 @@ type Write = {
   params: URLSearchParams;
   rows: Row[];
   patch: Row;
+  /** Upsert conflict columns (?on_conflict=...): rows matching on these are merged, not added. */
+  conflict?: string[] | undefined;
 };
+
+function sameRow(existing: Row, row: Row, conflict: string[] | undefined): boolean {
+  if (conflict?.length)
+    return conflict.every((column) => String(existing[column]) === String(row[column]));
+  return existing["id"] !== undefined && existing["id"] === row["id"];
+}
 
 async function applyToCache(write: Write): Promise<Row[]> {
   const affected: Row[] = [];
@@ -297,17 +305,23 @@ async function applyToCache(write: Write): Promise<Row[]> {
     let changed = false;
 
     if (write.kind === "insert") {
-      if (single) continue;
       for (const row of write.rows) {
-        if (matches(row, readParams) !== true) continue;
         const index = rows.findIndex(
-          (existing) => existing["id"] !== undefined && existing["id"] === row["id"],
+          (existing) => existing && sameRow(existing, row, write.conflict),
         );
-        if (index >= 0) rows[index] = { ...rows[index], ...row };
-        else rows.push(row);
-        changed = true;
+        if (index >= 0) {
+          // An upsert updates the existing row and keeps its id.
+          const merged = { ...rows[index], ...row, id: rows[index]!["id"] ?? row["id"] };
+          rows[index] = merged;
+          affected.push(merged);
+          changed = true;
+        } else if (!single && matches(row, readParams) === true) {
+          rows.push(row);
+          affected.push(row);
+          changed = true;
+        }
       }
-      if (changed) rows = applyOrder(rows, readParams);
+      if (changed && !single) rows = applyOrder(rows, readParams);
     } else {
       const next: Row[] = [];
       for (const row of rows) {
@@ -340,7 +354,10 @@ async function applyToCache(write: Write): Promise<Row[]> {
     const writable = await store(RESPONSES, "readwrite");
     await Promise.all(updated.map((entry) => done(writable.put(entry))));
   }
-  if (write.kind === "insert") return write.rows;
+  if (write.kind === "insert") {
+    // Prefer the merged rows (they carry the real ids); fall back to what was sent.
+    return write.rows.map((row) => affected.find((a) => sameRow(a, row, write.conflict)) ?? row);
+  }
   // De-duplicate rows seen in several cached lists.
   const byId = new Map<unknown, Row>();
   affected.forEach((row) => byId.set(row["id"] ?? byId.size, row));
@@ -412,15 +429,17 @@ async function queueWrite(
 
   if (method === "POST") {
     const parsed = bodyText ? (JSON.parse(bodyText) as Row | Row[]) : [];
+    const conflict = params.get("on_conflict")?.split(",").filter(Boolean);
     const rows = (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
       ...row,
       // Client ids let the queued insert and the local copy agree once synced.
-      id: row["id"] ?? crypto.randomUUID(),
+      // Upserts match on their conflict columns instead, so they get no new id.
+      ...(conflict?.length ? {} : { id: row["id"] ?? crypto.randomUUID() }),
       created_at: row["created_at"] ?? now,
       updated_at: row["updated_at"] ?? now,
     }));
     body = JSON.stringify(Array.isArray(parsed) ? rows : rows[0]);
-    result = await applyToCache({ kind: "insert", table, params, rows, patch: {} });
+    result = await applyToCache({ kind: "insert", table, params, rows, patch: {}, conflict });
   } else if (method === "PATCH") {
     const patch = bodyText ? (JSON.parse(bodyText) as Row) : {};
     result = await applyToCache({ kind: "update", table, params, rows: [], patch });

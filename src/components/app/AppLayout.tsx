@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
+import { MigrationNotice } from "./MigrationNotice";
 import { usePrayerReminderSync } from "./PrayerReminders";
 import { trackScreen } from "@/lib/analytics";
 import { useEffect, useState, type ReactNode } from "react";
@@ -138,6 +139,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <main className="min-w-0 overflow-x-clip px-4 pb-28 pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
         <div className="mx-auto w-full min-w-0 max-w-6xl">
+          <MigrationNotice />
           <SectionTabs />
           {/* Keyed by page, so each page eases in instead of snapping. */}
           <div
