@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
+import { HubCard } from "@/components/app/HubCard";
 import { PrayerTiles } from "@/components/app/PrayerLog";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
@@ -887,6 +888,9 @@ function DashboardPage() {
           <ErrorState error={error} onRetry={() => queries.forEach((query) => query.refetch())} />
         ) : (
           <main className="flex min-w-0 flex-col gap-10">
+            {/* Zone 0 — the life snapshot (Serious counts or RPG sheet). */}
+            <HubCard />
+
             {/* Zone 1 — the one thing to do. */}
             {isEnabled("do") ? (
               <section className="min-w-0">

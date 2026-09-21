@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { UsageInsights } from "@/components/app/UsageInsights";
 import { CurrencyCombobox } from "@/components/app/CurrencyCombobox";
 import { DatePicker } from "@/components/app/DatePicker";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -52,12 +53,7 @@ import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useTheme, type ThemePreference } from "@/hooks/useTheme";
 import { requestDeviceLocation } from "@/lib/geolocation";
-import {
-  financeKeys,
-  hasPaydaySetup,
-  paydayConfigQuery,
-  savePaydayConfig,
-} from "@/data/finance";
+import { financeKeys, hasPaydaySetup, paydayConfigQuery, savePaydayConfig } from "@/data/finance";
 import {
   DATE_FORMATS,
   TIME_FORMATS,
@@ -104,7 +100,7 @@ function SettingsPage() {
   const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
   const { preference, setPreference } = useTheme();
-  const { prefs, weightUnit, weekStartsOn } = usePreferences();
+  const { prefs, weightUnit, weekStartsOn, skin } = usePreferences();
   const { enabled: enabledModuleKeys, toggleModule, isSaving } = useModules();
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -162,9 +158,7 @@ function SettingsPage() {
     setExpectedNet(
       payday.data.expected_net_amount == null ? "" : String(payday.data.expected_net_amount),
     );
-    setSafetyBuffer(
-      payday.data.safety_buffer == null ? "" : String(payday.data.safety_buffer),
-    );
+    setSafetyBuffer(payday.data.safety_buffer == null ? "" : String(payday.data.safety_buffer));
   }, [payday.data]);
 
   const onError = (e: unknown) =>
@@ -291,8 +285,7 @@ function SettingsPage() {
     savePrefs.mutate({ dimension_order: next });
   }
 
-  const loading =
-    profile.isLoading || preferences.isLoading || body.isLoading || prayer.isLoading;
+  const loading = profile.isLoading || preferences.isLoading || body.isLoading || prayer.isLoading;
   const loadError = profile.error ?? preferences.error ?? body.error ?? prayer.error;
 
   if (loading) {
@@ -334,7 +327,9 @@ function SettingsPage() {
         <Card className="system-card">
           <CardHeader>
             <CardTitle className="text-base">Identity</CardTitle>
-            <CardDescription>Your name is used across the app instead of your email.</CardDescription>
+            <CardDescription>
+              Your name is used across the app instead of your email.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -551,7 +546,12 @@ function SettingsPage() {
                 )}
                 <div className="space-y-2">
                   <Label htmlFor="birthdate">Birthdate</Label>
-                  <DatePicker id="birthdate" value={birthdate} disableFuture onChange={setBirthdate} />
+                  <DatePicker
+                    id="birthdate"
+                    value={birthdate}
+                    disableFuture
+                    onChange={setBirthdate}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="target-weight">Target weight ({weightUnit})</Label>
@@ -715,7 +715,10 @@ function SettingsPage() {
             </div>
             <div className="space-y-2">
               <Label>Currency</Label>
-              <CurrencyCombobox value={prefs.currency} onChange={(currency) => savePrefs.mutate({ currency })} />
+              <CurrencyCombobox
+                value={prefs.currency}
+                onChange={(currency) => savePrefs.mutate({ currency })}
+              />
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -844,11 +847,16 @@ function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">Appearance</CardTitle>
             <CardDescription>
-              Light uses Executive Crisp, dark uses Pro Dark. System follows your device. Remembered on this device.
+              Light uses Executive Crisp, dark uses Pro Dark. System follows your device. Remembered
+              on this device.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div role="radiogroup" aria-label="Theme" className="inline-flex gap-1 rounded-xl bg-secondary p-1">
+            <div
+              role="radiogroup"
+              aria-label="Theme"
+              className="inline-flex gap-1 rounded-xl bg-secondary p-1"
+            >
               {(
                 [
                   { value: "light", label: "Light", icon: Sun },
@@ -869,8 +877,41 @@ function SettingsPage() {
                 </button>
               ))}
             </div>
+
+            <div className="mt-6 space-y-2">
+              <p className="text-sm font-medium">Skin</p>
+              <p className="text-xs text-muted-foreground">
+                Same data, two ways to see it. Serious shows plain counts. RPG shows the same logs
+                as XP, levels and 0–100 stats, each with how it is worked out.
+              </p>
+              <div
+                role="radiogroup"
+                aria-label="Skin"
+                className="inline-flex gap-1 rounded-xl bg-secondary p-1"
+              >
+                {(
+                  [
+                    { value: "serious", label: "Serious" },
+                    { value: "rpg", label: "RPG" },
+                  ] as const
+                ).map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={skin === value}
+                    onClick={() => savePrefs.mutate({ skin: value })}
+                    className={`inline-flex h-10 items-center rounded-lg px-4 text-sm font-medium transition-colors ${skin === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
+
+        <UsageInsights />
       </div>
     </>
   );

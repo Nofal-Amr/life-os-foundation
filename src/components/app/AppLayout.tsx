@@ -1,8 +1,9 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { usePrayerReminderSync } from "./PrayerReminders";
-import { useState, type ReactNode } from "react";
+import { trackScreen } from "@/lib/analytics";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
 import { SectionTabs } from "@/components/app/SectionTabs";
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth, useSignOut } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-
 
 function Brand() {
   return (
@@ -29,58 +29,82 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { displayName } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
   usePrayerReminderSync();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  useEffect(() => trackScreen(pathname), [pathname]);
 
   return (
     <div className="min-h-screen bg-background">
-       <aside className="fixed inset-y-0 left-0 hidden w-60 min-w-0 flex-col justify-between overflow-y-auto border-r border-border bg-sidebar px-3 py-6 md:flex">
+      <aside className="fixed inset-y-0 left-0 hidden w-60 min-w-0 flex-col justify-between overflow-y-auto border-r border-border bg-sidebar px-3 py-6 md:flex">
         <div className="space-y-6">
           <Brand />
           <SidebarNav />
         </div>
         <div className="space-y-2 px-1">
           <SyncIndicator />
-          <Link to="/settings" className="flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-accent">
+          <Link
+            to="/settings"
+            className="flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-accent"
+          >
             <UserAvatar size="sm" />
             <div className="min-w-0">
               <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
               <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
             </div>
           </Link>
-           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleTheme}>
-             {theme === "dark" ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
-             {theme === "dark" ? "Light theme" : "Dark theme"}
-           </Button>
+          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleTheme}>
+            {theme === "dark" ? (
+              <Sun className="size-4" aria-hidden="true" />
+            ) : (
+              <Moon className="size-4" aria-hidden="true" />
+            )}
+            {theme === "dark" ? "Light theme" : "Dark theme"}
+          </Button>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" aria-hidden="true" />
             Sign out
           </Button>
         </div>
-
       </aside>
 
-       <header className="sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Open navigation">
               <Menu className="size-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="flex w-64 flex-col justify-between overflow-y-auto px-3 py-6">
+          <SheetContent
+            side="left"
+            className="flex w-64 flex-col justify-between overflow-y-auto px-3 py-6"
+          >
             <SheetTitle className="sr-only">Navigation</SheetTitle>
             <div className="space-y-6">
               <Brand />
               <SidebarNav onNavigate={() => setOpen(false)} />
             </div>
             <div className="mt-6 space-y-2 px-1">
-              <Link to="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-accent">
+              <Link
+                to="/settings"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-accent"
+              >
                 <UserAvatar size="sm" />
                 <div className="min-w-0">
                   <p className="truncate text-xs font-medium text-foreground">{displayName}</p>
                   <p className="truncate text-[11px] text-muted-foreground">{user?.email}</p>
                 </div>
               </Link>
-              <Button variant="ghost" size="sm" className="w-full justify-start" onClick={toggleTheme}>
-                {theme === "dark" ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+                onClick={toggleTheme}
+              >
+                {theme === "dark" ? (
+                  <Sun className="size-4" aria-hidden="true" />
+                ) : (
+                  <Moon className="size-4" aria-hidden="true" />
+                )}
                 {theme === "dark" ? "Light theme" : "Dark theme"}
               </Button>
               <Button
@@ -97,22 +121,32 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </Button>
             </div>
           </SheetContent>
-
         </Sheet>
-         <div className="flex min-w-0 flex-col items-center">
-           <span className="truncate text-center text-sm font-semibold">Life OS</span>
-           <SyncIndicator className="mt-0.5" />
-         </div>
-         <Button variant="ghost" size="icon" aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"} onClick={toggleTheme}>
-           {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
-         </Button>
+        <div className="flex min-w-0 flex-col items-center">
+          <span className="truncate text-center text-sm font-semibold">Life OS</span>
+          <SyncIndicator className="mt-0.5" />
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+          onClick={toggleTheme}
+        >
+          {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+        </Button>
       </header>
 
-       <main className="min-w-0 overflow-x-clip px-4 pb-28 pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
-          <div className="mx-auto w-full min-w-0 max-w-6xl">
-            <SectionTabs />
+      <main className="min-w-0 overflow-x-clip px-4 pb-28 pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
+        <div className="mx-auto w-full min-w-0 max-w-6xl">
+          <SectionTabs />
+          {/* Keyed by page, so each page eases in instead of snapping. */}
+          <div
+            key={pathname}
+            className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-200"
+          >
             {children}
           </div>
+        </div>
       </main>
 
       <BottomNav />

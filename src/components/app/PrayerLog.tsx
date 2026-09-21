@@ -18,6 +18,7 @@ import {
   type PrayerName,
   type PrayerStatus,
 } from "@/data/spirit";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,7 +44,10 @@ export function usePrayerStatus() {
       date: string;
       name: PrayerName;
       status: PrayerStatus | null;
-    }) => setPrayerStatus(date, name, status),
+    }) => {
+      track("prayer_logged", { status });
+      return setPrayerStatus(date, name, status);
+    },
     onMutate: async ({ date, name, status }) => {
       await queryClient.cancelQueries({ queryKey: spiritKeys.logs });
       const previous = queryClient.getQueryData<PrayerLog[]>(spiritKeys.logs);

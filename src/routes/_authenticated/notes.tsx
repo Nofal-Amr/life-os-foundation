@@ -38,6 +38,7 @@ import {
   type Note,
   type NoteInput,
 } from "@/data/notes";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/notes")({
@@ -452,6 +453,7 @@ function NoteEditor({
       if (created.current) await updateNote(current.id, input);
       else {
         await createNote({ ...input, id: current.id });
+        track("note_created", { checklist: !!input.checklist });
         created.current = true;
       }
       setSaved(true);

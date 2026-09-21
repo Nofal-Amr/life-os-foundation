@@ -34,6 +34,7 @@ import {
   type CategoryKind,
 } from "@/data/finance";
 import { todayISO } from "@/lib/date";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 /**
@@ -123,6 +124,7 @@ export function QuickAddTransactionDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
+      track("money_logged", { kind });
       onOpenChange(false);
       toast.success("Logged.");
     },

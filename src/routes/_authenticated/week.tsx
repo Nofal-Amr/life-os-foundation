@@ -45,6 +45,7 @@ import {
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/week")({
@@ -484,7 +485,10 @@ function DayDetail({
   const toggleTask = useMutation({
     mutationFn: async (task: Task) => {
       if (isDone(task)) await reopenTask(task.id);
-      else await completeTask(task.id);
+      else {
+        await completeTask(task.id);
+        track("task_done", { from: "week" });
+      }
     },
     onMutate: (task) =>
       taskToggle.begin((rows) =>
