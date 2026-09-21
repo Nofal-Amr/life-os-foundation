@@ -32,7 +32,10 @@ export function toError(error: unknown): Error {
         : typeof error === "string"
           ? error
           : "";
-  if (isNetworkMessage(message) || (typeof navigator !== "undefined" && navigator.onLine === false)) {
+  if (
+    isNetworkMessage(message) ||
+    (typeof navigator !== "undefined" && navigator.onLine === false)
+  ) {
     return new Error("You're offline. This will load again when you're back online.");
   }
   return new Error(message || "Something went wrong. Please try again.");

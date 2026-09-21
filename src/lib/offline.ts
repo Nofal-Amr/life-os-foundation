@@ -13,8 +13,22 @@
  */
 import { useSyncExternalStore } from "react";
 
-type CachedResponse = { key: string; table: string; url: string; status: number; headers: Record<string, string>; body: string };
-type OutboxEntry = { id?: number; url: string; method: string; headers: Record<string, string>; body: string; createdAt: string };
+type CachedResponse = {
+  key: string;
+  table: string;
+  url: string;
+  status: number;
+  headers: Record<string, string>;
+  body: string;
+};
+type OutboxEntry = {
+  id?: number;
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: string;
+  createdAt: string;
+};
 type Row = Record<string, unknown>;
 
 export type SyncStatus = {
@@ -124,7 +138,9 @@ function headerObject(headers: Headers): Record<string, string> {
 }
 
 function isNetworkError(error: unknown) {
-  return error instanceof TypeError || (error instanceof DOMException && error.name !== "AbortError");
+  return (
+    error instanceof TypeError || (error instanceof DOMException && error.name !== "AbortError")
+  );
 }
 
 function jsonResponse(body: unknown, status: number, headers: Record<string, string> = {}) {
@@ -187,10 +203,19 @@ function matchOne(row: Row, column: string, expression: string): boolean | null 
       break;
     case "is":
       result =
-        value === "null" ? cell === null || cell === undefined : value === "true" ? cell === true : value === "false" ? cell === false : false;
+        value === "null"
+          ? cell === null || cell === undefined
+          : value === "true"
+            ? cell === true
+            : value === "false"
+              ? cell === false
+              : false;
       break;
     case "in": {
-      const items = value.replace(/^\(|\)$/g, "").split(",").map((item) => item.replace(/^"|"$/g, ""));
+      const items = value
+        .replace(/^\(|\)$/g, "")
+        .split(",")
+        .map((item) => item.replace(/^"|"$/g, ""));
       result = items.includes(String(cell));
       break;
     }
@@ -238,7 +263,13 @@ function applyOrder(rows: Row[], params: URLSearchParams) {
 
 /* ------------------------------------------------- Apply writes to the cache */
 
-type Write = { kind: "insert" | "update" | "delete"; table: string; params: URLSearchParams; rows: Row[]; patch: Row };
+type Write = {
+  kind: "insert" | "update" | "delete";
+  table: string;
+  params: URLSearchParams;
+  rows: Row[];
+  patch: Row;
+};
 
 async function applyToCache(write: Write): Promise<Row[]> {
   const affected: Row[] = [];
@@ -269,7 +300,9 @@ async function applyToCache(write: Write): Promise<Row[]> {
       if (single) continue;
       for (const row of write.rows) {
         if (matches(row, readParams) !== true) continue;
-        const index = rows.findIndex((existing) => existing["id"] !== undefined && existing["id"] === row["id"]);
+        const index = rows.findIndex(
+          (existing) => existing["id"] !== undefined && existing["id"] === row["id"],
+        );
         if (index >= 0) rows[index] = { ...rows[index], ...row };
         else rows.push(row);
         changed = true;
@@ -296,7 +329,10 @@ async function applyToCache(write: Write): Promise<Row[]> {
     }
 
     if (changed) {
-      updated.push({ ...entry, body: single ? JSON.stringify(rows[0] ?? null) : JSON.stringify(rows) });
+      updated.push({
+        ...entry,
+        body: single ? JSON.stringify(rows[0] ?? null) : JSON.stringify(rows),
+      });
     }
   }
 
@@ -327,7 +363,14 @@ async function handleRead(request: Request, url: URL, table: string): Promise<Re
           if (value) headers[name] = value;
         });
         const body = request.method === "HEAD" ? "" : await response.clone().text();
-        const entry: CachedResponse = { key, table, url: url.href, status: response.status, headers, body };
+        const entry: CachedResponse = {
+          key,
+          table,
+          url: url.href,
+          status: response.status,
+          headers,
+          body,
+        };
         store(RESPONSES, "readwrite")
           .then((responses) => responses.put(entry))
           .catch(() => {});
@@ -344,7 +387,8 @@ async function handleRead(request: Request, url: URL, table: string): Promise<Re
   // (which already includes those changes).
   try {
     const cached = (await done((await store(RESPONSES)).get(key))) as CachedResponse | undefined;
-    if (cached) return new Response(cached.body || null, { status: cached.status, headers: cached.headers });
+    if (cached)
+      return new Response(cached.body || null, { status: cached.status, headers: cached.headers });
   } catch {
     // Fall through.
   }
@@ -352,7 +396,12 @@ async function handleRead(request: Request, url: URL, table: string): Promise<Re
   return offlineError();
 }
 
-async function queueWrite(request: Request, url: URL, table: string, bodyText: string): Promise<Response> {
+async function queueWrite(
+  request: Request,
+  url: URL,
+  table: string,
+  bodyText: string,
+): Promise<Response> {
   const method = request.method;
   const params = url.searchParams;
   const accept = request.headers.get("accept") ?? "";
@@ -402,7 +451,8 @@ async function handleWrite(request: Request, url: URL, table: string): Promise<R
     try {
       const response = await nativeFetch(request);
       if (!status.online) setStatus({ online: true });
-      if (response.ok) void mirrorOnlineWrite(request.method, url, table, bodyText, response.clone());
+      if (response.ok)
+        void mirrorOnlineWrite(request.method, url, table, bodyText, response.clone());
       return response;
     } catch (error) {
       if (!isNetworkError(error)) throw error;
@@ -413,16 +463,30 @@ async function handleWrite(request: Request, url: URL, table: string): Promise<R
 }
 
 /** Keeps the device copy in step with writes that reached the server. */
-async function mirrorOnlineWrite(method: string, url: URL, table: string, bodyText: string, response: Response) {
+async function mirrorOnlineWrite(
+  method: string,
+  url: URL,
+  table: string,
+  bodyText: string,
+  response: Response,
+) {
   try {
     const params = url.searchParams;
     if (method === "POST") {
       const text = await response.text();
-      const parsed = (text ? JSON.parse(text) : bodyText ? JSON.parse(bodyText) : []) as Row | Row[];
+      const parsed = (text ? JSON.parse(text) : bodyText ? JSON.parse(bodyText) : []) as
+        Row | Row[];
       const rows = Array.isArray(parsed) ? parsed : [parsed];
-      if (rows.every((row) => row["id"] !== undefined)) await applyToCache({ kind: "insert", table, params, rows, patch: {} });
+      if (rows.every((row) => row["id"] !== undefined))
+        await applyToCache({ kind: "insert", table, params, rows, patch: {} });
     } else if (method === "PATCH") {
-      await applyToCache({ kind: "update", table, params, rows: [], patch: bodyText ? (JSON.parse(bodyText) as Row) : {} });
+      await applyToCache({
+        kind: "update",
+        table,
+        params,
+        rows: [],
+        patch: bodyText ? (JSON.parse(bodyText) as Row) : {},
+      });
     } else if (method === "DELETE") {
       await applyToCache({ kind: "delete", table, params, rows: [], patch: {} });
     }
@@ -459,11 +523,16 @@ async function flush() {
     // Replays must be safe to repeat if a response was lost on the way back.
     if (entry.method === "POST") {
       const prefer = headers["prefer"] ?? "";
-      if (!prefer.includes("resolution=")) headers["prefer"] = [prefer, "resolution=ignore-duplicates"].filter(Boolean).join(",");
+      if (!prefer.includes("resolution="))
+        headers["prefer"] = [prefer, "resolution=ignore-duplicates"].filter(Boolean).join(",");
     }
     let response: Response;
     try {
-      response = await nativeFetch(entry.url, { method: entry.method, headers, body: entry.body || null });
+      response = await nativeFetch(entry.url, {
+        method: entry.method,
+        headers,
+        body: entry.body || null,
+      });
     } catch {
       setStatus({ online: false });
       break;
@@ -514,8 +583,10 @@ export function installOffline(options: {
     const url = new URL(request.url);
     const table = tableOf(url);
     if (!table) return nativeFetch(request);
-    if (request.method === "GET" || request.method === "HEAD") return handleRead(request, url, table);
-    if (["POST", "PATCH", "DELETE"].includes(request.method)) return handleWrite(request, url, table);
+    if (request.method === "GET" || request.method === "HEAD")
+      return handleRead(request, url, table);
+    if (["POST", "PATCH", "DELETE"].includes(request.method))
+      return handleWrite(request, url, table);
     return nativeFetch(request);
   };
 

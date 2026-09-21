@@ -19,9 +19,12 @@ const win = process.platform === "win32";
 const sdk =
   process.env.ANDROID_HOME ||
   process.env.ANDROID_SDK_ROOT ||
-  (win ? join(process.env.LOCALAPPDATA ?? "", "Android", "Sdk") : join(homedir(), "Android", "Sdk"));
+  (win
+    ? join(process.env.LOCALAPPDATA ?? "", "Android", "Sdk")
+    : join(homedir(), "Android", "Sdk"));
 const javaHome =
-  process.env.JAVA_HOME && existsSync(join(process.env.JAVA_HOME, "bin", win ? "javac.exe" : "javac"))
+  process.env.JAVA_HOME &&
+  existsSync(join(process.env.JAVA_HOME, "bin", win ? "javac.exe" : "javac"))
     ? process.env.JAVA_HOME
     : win
       ? "C:\\Program Files\\Android\\Android Studio\\jbr"
@@ -52,7 +55,9 @@ for (const [label, path] of [
 }
 
 const run = (cmd, args, opts = {}) => {
-  console.log(`> ${relative(root, cmd) || cmd} ${args.map((a) => (a.includes(" ") ? `"${a}"` : a)).join(" ")}`);
+  console.log(
+    `> ${relative(root, cmd) || cmd} ${args.map((a) => (a.includes(" ") ? `"${a}"` : a)).join(" ")}`,
+  );
   execFileSync(cmd, args, { stdio: "inherit", cwd: root, ...opts });
 };
 
@@ -63,7 +68,8 @@ if (process.env.SKIP_WEB !== "1") {
   });
 }
 const web = join(root, "dist", "client");
-if (!existsSync(join(web, "index.html"))) throw new Error("dist/client/index.html missing; the web build failed.");
+if (!existsSync(join(web, "index.html")))
+  throw new Error("dist/client/index.html missing; the web build failed.");
 
 rmSync(out, { recursive: true, force: true });
 const dirs = ["res", "classes", "dex", "assets/www"].map((d) => join(out, d));
@@ -77,9 +83,12 @@ run(bt("aapt2"), ["compile", "--dir", join(here, "res"), "-o", compiled]);
 const unsigned = join(out, "unsigned.apk");
 run(bt("aapt2"), [
   "link",
-  "-o", unsigned,
-  "-I", androidJar,
-  "--manifest", join(here, "AndroidManifest.xml"),
+  "-o",
+  unsigned,
+  "-I",
+  androidJar,
+  "--manifest",
+  join(here, "AndroidManifest.xml"),
   "--auto-add-overlay",
   compiled,
 ]);
@@ -88,17 +97,44 @@ run(bt("aapt2"), [
 const sources = [];
 const walk = (dir) =>
   readdirSync(dir, { withFileTypes: true }).forEach((e) =>
-    e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith(".java") && sources.push(join(dir, e.name)),
+    e.isDirectory()
+      ? walk(join(dir, e.name))
+      : e.name.endsWith(".java") && sources.push(join(dir, e.name)),
   );
 walk(join(here, "src"));
-run(jdk("javac"), ["-source", "8", "-target", "8", "-Xlint:-options", "-bootclasspath", androidJar, "-d", classesOut, ...sources]);
+run(jdk("javac"), [
+  "-source",
+  "8",
+  "-target",
+  "8",
+  "-Xlint:-options",
+  "-bootclasspath",
+  androidJar,
+  "-d",
+  classesOut,
+  ...sources,
+]);
 const classFiles = [];
 const walkClasses = (dir) =>
   readdirSync(dir, { withFileTypes: true }).forEach((e) =>
-    e.isDirectory() ? walkClasses(join(dir, e.name)) : e.name.endsWith(".class") && classFiles.push(join(dir, e.name)),
+    e.isDirectory()
+      ? walkClasses(join(dir, e.name))
+      : e.name.endsWith(".class") && classFiles.push(join(dir, e.name)),
   );
 walkClasses(classesOut);
-run(jdk("java"), ["-cp", btJar("d8"), "com.android.tools.r8.D8", "--release", "--min-api", "26", "--lib", androidJar, "--output", dexOut, ...classFiles]);
+run(jdk("java"), [
+  "-cp",
+  btJar("d8"),
+  "com.android.tools.r8.D8",
+  "--release",
+  "--min-api",
+  "26",
+  "--lib",
+  androidJar,
+  "--output",
+  dexOut,
+  ...classFiles,
+]);
 
 // 4. Add classes.dex and the web bundle, then align and sign. (Assets go in via
 // jar rather than aapt2 -A, which writes backslash paths on Windows.)
@@ -111,15 +147,42 @@ const keystore = join(homedir(), ".android", "debug.keystore");
 if (!existsSync(keystore)) {
   mkdirSync(dirname(keystore), { recursive: true });
   run(jdk("keytool"), [
-    "-genkeypair", "-v", "-keystore", keystore, "-storepass", "android", "-alias", "androiddebugkey",
-    "-keypass", "android", "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000",
-    "-dname", "CN=Android Debug,O=Android,C=US",
+    "-genkeypair",
+    "-v",
+    "-keystore",
+    keystore,
+    "-storepass",
+    "android",
+    "-alias",
+    "androiddebugkey",
+    "-keypass",
+    "android",
+    "-keyalg",
+    "RSA",
+    "-keysize",
+    "2048",
+    "-validity",
+    "10000",
+    "-dname",
+    "CN=Android Debug,O=Android,C=US",
   ]);
 }
 const apk = join(out, "life-os-debug.apk");
-run(jdk("java"), ["-jar", btJar("apksigner"),
-  "sign", "--ks", keystore, "--ks-pass", "pass:android", "--ks-key-alias", "androiddebugkey",
-  "--key-pass", "pass:android", "--out", apk, aligned,
+run(jdk("java"), [
+  "-jar",
+  btJar("apksigner"),
+  "sign",
+  "--ks",
+  keystore,
+  "--ks-pass",
+  "pass:android",
+  "--ks-key-alias",
+  "androiddebugkey",
+  "--key-pass",
+  "pass:android",
+  "--out",
+  apk,
+  aligned,
 ]);
 run(jdk("java"), ["-jar", btJar("apksigner"), "verify", apk]);
 console.log(`\nAPK ready: ${relative(root, apk)}`);

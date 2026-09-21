@@ -21,7 +21,8 @@ export const getRouter = () => {
 
   installOffline({
     supabaseUrl: String((supabase as unknown as { supabaseUrl: string | URL }).supabaseUrl),
-    getAccessToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
+    getAccessToken: async () =>
+      (await supabase.auth.getSession()).data.session?.access_token ?? null,
     onSynced: () => void queryClient.invalidateQueries(),
   });
 

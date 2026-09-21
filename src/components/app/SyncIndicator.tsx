@@ -34,7 +34,10 @@ export function SyncIndicator({ className = "" }: { className?: string }) {
       className={`tone-quiet inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[11px] font-medium disabled:cursor-default ${className}`}
     >
       {online ? (
-        <RefreshCw className={`size-3 shrink-0 ${syncing ? "animate-spin" : ""}`} aria-hidden="true" />
+        <RefreshCw
+          className={`size-3 shrink-0 ${syncing ? "animate-spin" : ""}`}
+          aria-hidden="true"
+        />
       ) : (
         <CloudOff className="size-3 shrink-0" aria-hidden="true" />
       )}
