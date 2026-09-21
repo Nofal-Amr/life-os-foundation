@@ -2,8 +2,6 @@ import { format, isValid, parseISO } from "date-fns";
 import { CalendarIcon, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { usePreferences } from "@/hooks/usePreferences";
 import { cn } from "@/lib/utils";
 
@@ -35,36 +33,57 @@ export function DatePicker({
   const today = new Date();
   today.setHours(23, 59, 59, 999);
 
+  const max = disableFuture ? format(today, "yyyy-MM-dd") : undefined;
+
+  // A native date input sits invisibly over the button, so tapping opens the
+  // phone's own date picker (like the time picker) while the button keeps
+  // showing the date in the user's chosen format.
   return (
     <div className={cn("flex min-w-0 gap-1", className)}>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            id={id}
-            type="button"
-            variant="outline"
-            disabled={disabled}
-            className={cn("h-12 min-w-0 flex-1 justify-start text-left font-normal", !selected && "text-muted-foreground")}
-          >
-            <CalendarIcon className="size-4 shrink-0" />
-            <span className="truncate">
-              {selected ? fmtDate(format(selected, "yyyy-MM-dd")) : placeholder}
-            </span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            {...(selected ? { selected, defaultMonth: selected } : {})}
-            onSelect={(date) => onChange(date ? format(date, "yyyy-MM-dd") : "")}
-            {...(disableFuture ? { disabled: { after: today } } : {})}
-            initialFocus
-            className="pointer-events-auto p-3"
-          />
-        </PopoverContent>
-      </Popover>
+      <div className="relative min-w-0 flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          disabled={disabled}
+          tabIndex={-1}
+          aria-hidden="true"
+          className={cn(
+            "pointer-events-none h-12 w-full justify-start text-left font-normal",
+            !selected && "text-muted-foreground",
+          )}
+        >
+          <CalendarIcon className="size-4 shrink-0" />
+          <span className="truncate">
+            {selected ? fmtDate(format(selected, "yyyy-MM-dd")) : placeholder}
+          </span>
+        </Button>
+        <input
+          id={id}
+          type="date"
+          aria-label={placeholder}
+          disabled={disabled}
+          value={selected ? format(selected, "yyyy-MM-dd") : ""}
+          max={max}
+          onChange={(event) => onChange(event.target.value)}
+          onClick={(event) => {
+            try {
+              event.currentTarget.showPicker?.();
+            } catch {
+              // Older browsers open the picker on their own.
+            }
+          }}
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+        />
+      </div>
       {value ? (
-        <Button type="button" variant="ghost" size="icon" className="h-12 w-10 shrink-0" onClick={() => onChange("")} aria-label="Clear date">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-12 w-10 shrink-0"
+          onClick={() => onChange("")}
+          aria-label="Clear date"
+        >
           <X className="size-4" />
         </Button>
       ) : null}
@@ -85,7 +104,14 @@ export function DateTimePicker({
 }) {
   const [date = "", time = ""] = value.split("T");
   const setDate = (nextDate: string) => onChange(nextDate ? `${nextDate}T${time || "09:00"}` : "");
-  const setTime = (nextTime: string) => onChange(date ? `${date}T${nextTime}` : nextTime ? `${format(new Date(), "yyyy-MM-dd")}T${nextTime}` : "");
+  const setTime = (nextTime: string) =>
+    onChange(
+      date
+        ? `${date}T${nextTime}`
+        : nextTime
+          ? `${format(new Date(), "yyyy-MM-dd")}T${nextTime}`
+          : "",
+    );
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_7.5rem] gap-2">

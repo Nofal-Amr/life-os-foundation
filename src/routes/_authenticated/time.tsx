@@ -9,7 +9,7 @@ import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentit
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorState, LoadingState } from "@/components/app/States";
-import { useClock, useTimer } from "@/components/app/Timer";
+import { TaskTimerButton, useClock, useTimer } from "@/components/app/Timer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,7 @@ import {
   logTime,
   minutesByDay,
   minutesByKey,
+  minutesByTask,
   timeKeys,
   type Activity,
   type TimeEntry,
@@ -105,6 +106,16 @@ function TimePage() {
     [byKey, list, tasks.data],
   );
   const maxMinutes = Math.max(1, ...weekRows.map((r) => r.minutes));
+  const tracked = minutesByTask(all);
+  const focusTasks = (tasks.data ?? [])
+    .filter(
+      (task) =>
+        task.status !== "completed" &&
+        task.status !== "cancelled" &&
+        (task.status === "in_progress" || (task.due_date != null && task.due_date <= today)),
+    )
+    .sort((a, b) => Number(b.status === "in_progress") - Number(a.status === "in_progress"))
+    .slice(0, 6);
 
   if (entries.isLoading || activities.isLoading) {
     return (
@@ -185,28 +196,33 @@ function TimePage() {
                     <button
                       type="button"
                       className="flex min-w-0 flex-1 items-center gap-2 text-left active:scale-[0.98]"
-                      onClick={() =>
-                        active && running
-                          ? stop.mutate(running)
-                          : start.mutate({
-                              activity_id: activity.id,
-                              task_id: null,
-                              label: activity.name,
-                            })
-                      }
+                      onClick={() => {
+                        // Stopping only happens with the Stop button, so a
+                        // double tap can't end a timer by accident.
+                        if (active) return;
+                        start.mutate({
+                          activity_id: activity.id,
+                          task_id: null,
+                          label: activity.name,
+                        });
+                      }}
                     >
                       <EntityIcon icon={activity.icon} color={activity.color} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium">{activity.name}</span>
                         <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                           {active ? (
-                            <Square className="size-2.5 fill-current" />
+                            <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                           ) : (
                             <Play className="size-2.5" />
                           )}
-                          {active
-                            ? "Stop"
-                            : `${formatMinutes(byKey.get(`a:${activity.id}`) ?? 0)} this week`}
+                          <span className="truncate">
+                            {active
+                              ? "Running"
+                              : byKey.get(`a:${activity.id}`)
+                                ? `${formatMinutes(byKey.get(`a:${activity.id}`)!)} · 7d`
+                                : "Start"}
+                          </span>
                         </span>
                       </span>
                     </button>
@@ -236,7 +252,7 @@ function TimePage() {
                   onClick={() => starters.mutate()}
                   disabled={starters.isPending}
                 >
-                  Add Gaming, Reading, Learning, Social, Hobby, Exercise
+                  Add a starter set
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setAdding(true)}>
                   My own
@@ -245,6 +261,33 @@ function TimePage() {
             </div>
           )}
         </section>
+
+        {/* Tasks to work on: in progress, due today or overdue. */}
+        {focusTasks.length ? (
+          <section className="space-y-2">
+            <h2 className="text-sm font-semibold">Tasks to work on</h2>
+            <ul className="space-y-1.5">
+              {focusTasks.map((task) => (
+                <li key={task.id} className="stat-card flex items-center gap-2 py-1.5 pl-4 pr-1.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{task.title}</p>
+                    <p className="text-xs tabular-nums text-muted-foreground">
+                      {task.status === "in_progress"
+                        ? "In progress"
+                        : task.due_date && task.due_date < today
+                          ? "Overdue"
+                          : "Due today"}
+                      {tracked.get(task.id)
+                        ? ` · ${formatMinutes(tracked.get(task.id)!)} tracked`
+                        : ""}
+                    </p>
+                  </div>
+                  <TaskTimerButton task={task} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         {/* This week, per activity. */}
         <section className="stat-card space-y-3 p-5">

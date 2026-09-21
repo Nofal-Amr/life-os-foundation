@@ -8,6 +8,7 @@ import { EntityIcon } from "@/components/app/EntityIdentity";
 import { Button } from "@/components/ui/button";
 import {
   activitiesQuery,
+  deleteTimeEntry,
   formatClock,
   runningEntry,
   startTimer,
@@ -69,7 +70,15 @@ export function useTimer() {
   });
 
   const stop = useMutation({
-    mutationFn: (entry: TimeEntry) => stopTimer(entry.id),
+    mutationFn: async (entry: TimeEntry) => {
+      // Under a minute is almost always a mis-tap; don't keep a "0 min" entry.
+      if (Date.now() - new Date(entry.started_at).getTime() < 60_000) {
+        await deleteTimeEntry(entry.id);
+        toast.message("Timer discarded: it ran for under a minute.");
+        return;
+      }
+      await stopTimer(entry.id);
+    },
     onMutate: async (entry) => {
       await queryClient.cancelQueries({ queryKey: timeKeys.entries });
       const previous = queryClient.getQueryData<TimeEntry[]>(timeKeys.entries);

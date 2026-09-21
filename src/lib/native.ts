@@ -64,7 +64,7 @@ export function scheduleReminders(reminders: Reminder[]): void {
 export function nativeRequest(
   method: "readHealth",
   args: Record<string, unknown>,
-  timeoutMs = 60_000,
+  timeoutMs = 120_000,
 ): Promise<string> {
   const native = bridge();
   const fn = native?.[method];

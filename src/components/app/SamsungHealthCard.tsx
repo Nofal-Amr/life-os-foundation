@@ -56,13 +56,15 @@ export function SamsungHealthCard() {
   const today = todayISO();
 
   const sync = useMutation({
-    mutationFn: () => syncHealthFromPhone(30),
+    mutationFn: (_manual: boolean) => syncHealthFromPhone(30),
     onSuccess: (result) => {
       setReport(result);
       void queryClient.invalidateQueries({ queryKey: healthSampleKeys.all });
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Couldn't read Samsung Health."),
+    onError: (error, manual) => {
+      if (manual)
+        toast.error(error instanceof Error ? error.message : "Couldn't read Samsung Health.");
+    },
   });
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export function SamsungHealthCard() {
   useEffect(() => {
     if (status !== "ready") return;
     const last = lastHealthSync();
-    if (!last || Date.now() - last.getTime() > AUTO_SYNC_AFTER_MS) sync.mutate();
+    if (!last || Date.now() - last.getTime() > AUTO_SYNC_AFTER_MS) sync.mutate(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
@@ -150,7 +152,7 @@ export function SamsungHealthCard() {
             size="sm"
             variant="outline"
             disabled={sync.isPending}
-            onClick={() => sync.mutate()}
+            onClick={() => sync.mutate(true)}
           >
             <RefreshCw className={cn("size-4", sync.isPending && "animate-spin")} />
             {sync.isPending ? "Syncing…" : "Sync now"}
