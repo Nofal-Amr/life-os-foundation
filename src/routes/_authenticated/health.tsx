@@ -3,6 +3,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { BedDouble, Check, Pill, Plus, Scale, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AreaHabits } from "@/components/app/AreaHabits";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DateNav } from "@/components/app/DateNav";
@@ -507,6 +508,7 @@ function HealthPage() {
 
       <div className="space-y-5">
         <DateNav value={date} onChange={setDate} />
+        <AreaHabits category="health" title="Health habits" date={date} />
 
         <GlanceSection>
           {medRing ? (

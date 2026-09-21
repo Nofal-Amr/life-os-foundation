@@ -12,6 +12,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { useXp } from "@/hooks/useXp";
 
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
@@ -398,12 +399,13 @@ function DashboardPage() {
     onError,
   });
 
+  const xp = useXp();
   /** Completing the shown action promotes the next one in place. */
   const finish = useMutation({
     mutationFn: (id: string) => completeTask(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
-      toast.success("Done.");
+      toast.success("Done." + xp.suffix({ kind: "task" }));
     },
     onError,
   });
@@ -905,7 +907,9 @@ function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     {primary ? (
-                      <ActionBlock action={primary} large />
+                      <div key={primary.item.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out">
+                        <ActionBlock action={primary} large />
+                      </div>
                     ) : (
                       <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
                         <p className="min-w-0 text-sm text-muted-foreground">

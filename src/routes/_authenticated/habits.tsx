@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useXp } from "@/hooks/useXp";
+import { HABIT_CATEGORIES, categoryLabel, guessHabitCategory, habitCategory } from "@/data/habitCategories";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
@@ -61,16 +63,20 @@ const emptyForm: HabitInput = {
   active: true,
   icon: null,
   color: null,
+  category: null,
 };
 
 function HabitsPage() {
   const queryClient = useQueryClient();
+  const xp = useXp();
   const { fmtDate } = usePreferences();
   const habits = useQuery(habitsQuery());
   const logs = useQuery(habitLogsQuery());
   const today = todayISO();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const [categoryTouched, setCategoryTouched] = useState(false);
   const [editing, setEditing] = useState<Habit | null>(null);
   const [form, setForm] = useState<HabitInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Habit | null>(null);
@@ -91,7 +97,10 @@ function HabitsPage() {
   const toggleLog = useMutation({
     mutationFn: ({ habitId, done }: { habitId: string; done: boolean }) =>
       done ? unlogHabit(habitId, today) : logHabit(habitId, today),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: habitKeys.logs }),
+    onSuccess: (_data, { done }) => {
+      if (!done) xp.toast({ kind: "habit" });
+      return queryClient.invalidateQueries({ queryKey: habitKeys.logs });
+    },
     onError,
   });
 
@@ -116,12 +125,14 @@ function HabitsPage() {
   });
 
   function openCreate() {
+    setCategoryTouched(false);
     setEditing(null);
     setForm(emptyForm);
     setDialogOpen(true);
   }
 
   function openEdit(habit: Habit) {
+    setCategoryTouched(Boolean(habit.category));
     setEditing(habit);
     setForm({
       name: habit.name,
@@ -131,6 +142,7 @@ function HabitsPage() {
       active: habit.active,
       icon: habit.icon,
       color: habit.color,
+      category: habitCategory(habit),
     });
     setDialogOpen(true);
   }
@@ -162,8 +174,15 @@ function HabitsPage() {
           action={<Button onClick={openCreate}>New habit</Button>}
         />
       ) : (
+        <div className="space-y-8">
+          {HABIT_CATEGORIES.map(({ value: category, label: categoryName }) => {
+            const group = (habits.data ?? []).filter((habit) => habitCategory(habit) === category);
+            if (!group.length) return null;
+            return (
+              <section key={category} className="space-y-3">
+                <h2 className="section-title">{categoryName}</h2>
         <ul className="space-y-3">
-          {(habits.data ?? []).map((habit) => {
+          {group.map((habit) => {
             const habitLogs = allLogs.filter((l) => l.habit_id === habit.id);
             const done = habitLogs.some((l) => l.log_date === today);
             return (
@@ -188,6 +207,7 @@ function HabitsPage() {
                         {labelOf(HABIT_FREQUENCIES, habit.frequency)}
                       </Badge>
                       <span>Target {habit.target}×</span>
+                      {!habit.category ? <span>{categoryLabel(habitCategory(habit))} (guessed)</span> : null}
                        <span>{habitLogs.length} {habitLogs.length === 1 ? "entry" : "entries"} logged</span>
                      </div>
                    </div>
@@ -222,6 +242,10 @@ function HabitsPage() {
             );
           })}
         </ul>
+              </section>
+            );
+          })}
+        </div>
       )}
 
       <FormDialog
@@ -237,8 +261,41 @@ function HabitsPage() {
             id="habit-name"
             required
             value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                name: e.target.value,
+                // Until a category is picked by hand, follow the name.
+                category: categoryTouched ? (form.category ?? null) : guessHabitCategory(e.target.value),
+              })
+            }
           />
+        </div>
+        <div className="space-y-2">
+          <Label>Part of life</Label>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Part of life">
+            {HABIT_CATEGORIES.map(({ value, label }) => {
+              const selected = (form.category ?? guessHabitCategory(form.name)) === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    setCategoryTouched(true);
+                    setForm({ ...form, category: value });
+                  }}
+                  className={`min-h-9 rounded-full border px-3 text-sm transition-colors duration-150 ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-accent"}`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            It shows up in that part of the app, like Health habits on the Health page.
+          </p>
         </div>
         <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
         <div className="space-y-2">

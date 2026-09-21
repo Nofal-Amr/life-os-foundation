@@ -576,6 +576,7 @@ export type Database = {
       habits: {
         Row: {
           active: boolean
+          category: string | null
           color: string | null
           created_at: string
           description: string | null
@@ -589,6 +590,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          category?: string | null
           color?: string | null
           created_at?: string
           description?: string | null
@@ -602,6 +604,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          category?: string | null
           color?: string | null
           created_at?: string
           description?: string | null

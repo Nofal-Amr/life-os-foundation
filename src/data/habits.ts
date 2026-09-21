@@ -3,7 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { todayISO } from "@/lib/date";
-import { currentUserId, unwrap } from "@/lib/supabase-helpers";
+import { currentUserId, unwrap, writeWithColumnFallback } from "@/lib/supabase-helpers";
 
 export type Habit = Database["public"]["Tables"]["habits"]["Row"];
 export type HabitLog = Database["public"]["Tables"]["habit_logs"]["Row"];
@@ -15,6 +15,7 @@ export type HabitInput = {
   active: boolean;
   icon: string | null;
   color: string | null;
+  category?: string | null;
 };
 
 export const habitKeys = {
@@ -46,11 +47,19 @@ export const habitLogsQuery = () =>
 
 export async function createHabit(input: HabitInput) {
   const user_id = await currentUserId();
-  return unwrap(await supabase.from("habits").insert({ ...input, user_id }).select().single());
+  return unwrap(
+    await writeWithColumnFallback({ ...input, user_id }, (row) =>
+      supabase.from("habits").insert(row).select().single(),
+    ),
+  );
 }
 
 export async function updateHabit(id: string, input: Partial<HabitInput>) {
-  return unwrap(await supabase.from("habits").update(input).eq("id", id).select().single());
+  return unwrap(
+    await writeWithColumnFallback({ ...input }, (row) =>
+      supabase.from("habits").update(row).eq("id", id).select().single(),
+    ),
+  );
 }
 
 export async function archiveHabit(id: string) {

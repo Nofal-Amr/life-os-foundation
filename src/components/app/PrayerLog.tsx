@@ -3,6 +3,7 @@ import { addDays, format, parseISO } from "date-fns";
 import { Check, Clock, Users, X, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { useXp } from "@/hooks/useXp";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -35,6 +36,7 @@ export const STATUS_STYLE: Record<PrayerStatus, { icon: LucideIcon; color: strin
 /** Sets a prayer's status with an instant, rolled-back-on-error update. */
 export function usePrayerStatus() {
   const queryClient = useQueryClient();
+  const xp = useXp();
   return useMutation({
     mutationFn: ({
       date,
@@ -47,6 +49,9 @@ export function usePrayerStatus() {
     }) => {
       track("prayer_logged", { status });
       return setPrayerStatus(date, name, status);
+    },
+    onSuccess: (_data, { status }) => {
+      if (status) xp.toast({ kind: "prayer", status });
     },
     onMutate: async ({ date, name, status }) => {
       await queryClient.cancelQueries({ queryKey: spiritKeys.logs });

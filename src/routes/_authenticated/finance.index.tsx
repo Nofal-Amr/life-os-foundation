@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AnimatedNumber } from "@/components/app/AnimatedNumber";
+import { AreaHabits } from "@/components/app/AreaHabits";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
@@ -269,6 +271,7 @@ function FinanceOverview() {
         description="Everything here comes from what you have logged."
         actions={<Button onClick={openCreate}>New account</Button>}
       />
+      <AreaHabits category="money" title="Money habits" className="mb-6" />
 
       {loading ? (
         <LoadingState rows={4} />
@@ -293,7 +296,7 @@ function FinanceOverview() {
                   Left to spend before payday
                 </p>
                 <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
-                  {fmtMoney(totals.available)}
+                  <AnimatedNumber value={fmtMoney(totals.available)} />
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {untilPayday ? `${untilPayday} · ` : ""}After upcoming recurring costs and your
@@ -413,7 +416,7 @@ function FinanceOverview() {
                   Balance you can spend
                 </p>
                 <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
-                  {hasAccounts ? fmtMoney(totals.liquid) : "—"}
+                  {hasAccounts ? <AnimatedNumber value={fmtMoney(totals.liquid)} /> : "—"}
                 </p>
                 {hasAccounts ? <MoneyActions onAdd={setQuickAdd} /> : null}
                 {separateAccounts.length ? (

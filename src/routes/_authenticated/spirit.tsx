@@ -4,6 +4,7 @@ import { Check, Moon } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { AreaHabits } from "@/components/app/AreaHabits";
 
 import { DateNav } from "@/components/app/DateNav";
 import { PrayerDayList, PrayerStats } from "@/components/app/PrayerLog";
@@ -118,6 +119,7 @@ function SpiritPage() {
 
       <div className="space-y-5">
         <DateNav value={date} onChange={setDate} />
+        <AreaHabits category="spirit" title="Spirit habits" date={date} />
 
         <GlanceSection>
           <RingStat

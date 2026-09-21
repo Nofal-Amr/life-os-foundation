@@ -135,15 +135,16 @@ export function QuickAdd() {
           </SheetTitle>
 
           {panel === "menu" ? (
-            <div className="grid grid-cols-3 gap-2 animate-in fade-in duration-200 ease-out">
+            <div className="grid grid-cols-3 gap-2">
               {actions
                 .filter((action) => action.show)
-                .map(({ key, label, icon: Icon, run }) => (
+                .map(({ key, label, icon: Icon, run }, index) => (
                   <button
                     key={key}
                     type="button"
                     onClick={run}
-                    className="stat-card flex min-h-20 flex-col items-center justify-center gap-2 px-2 py-4 text-sm font-medium transition-[scale,background-color] duration-150 ease-out hover:bg-accent active:scale-[0.97]"
+                    style={{ animationDelay: `${index * 30}ms` }}
+                    className="stat-card flex min-h-20 flex-col items-center justify-center gap-2 px-2 py-4 text-sm font-medium transition-[scale,background-color] duration-150 ease-out hover:bg-accent active:scale-[0.97] animate-in fade-in slide-in-from-bottom-2 fill-mode-backwards duration-300"
                   >
                     <Icon className="size-6 text-primary" aria-hidden="true" />
                     {label}

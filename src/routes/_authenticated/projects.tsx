@@ -35,6 +35,9 @@ import {
   type ProjectInput,
 } from "@/data/projects";
 import { tasksQuery } from "@/data/tasks";
+import { goalsQuery } from "@/data/goals";
+import { projectGoals, projectProgress } from "@/data/links";
+import { CountBar, GoalChips } from "@/components/app/LinkedProgress";
 import { usePreferences } from "@/hooks/usePreferences";
 import { priorityLabel, priorityTone, projectStatusTone } from "@/lib/semantics";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
@@ -67,6 +70,7 @@ function ProjectsPage() {
   const queryClient = useQueryClient();
   const projects = useQuery(projectsQuery());
   const tasks = useQuery(tasksQuery());
+  const goals = useQuery(goalsQuery());
   const { fmtDate } = usePreferences();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
@@ -192,6 +196,10 @@ function ProjectsPage() {
                             </SemanticBadge>
                             <span>Start {fmtDate(project.start_date)}</span>
                             <span>Due {fmtDate(project.due_date)}</span>
+                          </div>
+                          <div className="mt-4 max-w-md space-y-3">
+                            <CountBar count={projectProgress(tasks.data ?? [], project.id)} label="tasks" />
+                            <GoalChips goals={projectGoals(tasks.data ?? [], goals.data ?? [], project.id)} />
                           </div>
                          </div>
                         </div>

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/chart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
+import { AnimatedNumber } from "@/components/app/AnimatedNumber";
 
 /**
  * Presentation for the "at a glance" cards. Nothing here computes or judges a
@@ -103,11 +104,13 @@ function Hero({ value, caption }: { value: ReactNode; caption?: ReactNode }) {
       <p className="text-4xl font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
         {unit ? (
           <>
-            {unit[1]}
+            <AnimatedNumber value={unit[1]!} />
             <span className="ml-1 text-lg font-medium tracking-normal text-muted-foreground">
               {unit[2]}
             </span>
           </>
+        ) : typeof value === "string" ? (
+          <AnimatedNumber value={value} />
         ) : (
           value
         )}

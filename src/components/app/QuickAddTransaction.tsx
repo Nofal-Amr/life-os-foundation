@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Plus, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useXp } from "@/hooks/useXp";
 
 import { Button } from "@/components/ui/button";
 import { EntityIcon } from "@/components/app/EntityIdentity";
@@ -52,6 +53,7 @@ export function QuickAddTransactionDialog({
   initialKind?: CategoryKind;
 }) {
   const queryClient = useQueryClient();
+  const xp = useXp();
   const accounts = useQuery(accountsQuery());
   const pockets = useQuery(accountPocketsQuery());
 
@@ -126,7 +128,7 @@ export function QuickAddTransactionDialog({
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
       track("money_logged", { kind });
       onOpenChange(false);
-      toast.success("Logged.");
+      toast.success("Logged." + xp.suffix({ kind: "transaction" }));
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Something went wrong."),
   });

@@ -17,11 +17,13 @@ const FEATURES: Record<string, string> = {
   tariff: "electricity tiers",
   counts_toward_spendable: "accounts kept separate",
   time_entries: "timers and time tracking",
+  category: "habit categories",
 };
 
 /** Which SQL file adds what, so the notice names the right one. */
 const FILE_FOR: Record<string, string> = {
   time_entries: "supabase/migrations/20260921170000_time_tracking.sql",
+  category: "supabase/migrations/20260921220000_habit_categories.sql",
 };
 const DEFAULT_FILE = "supabase/migrations/20260921140000_week_prayers_notes_health_skins.sql";
 
@@ -54,6 +56,13 @@ export function MigrationNotice() {
         if (error?.code === "PGRST205" || error?.code === "42P01") {
           setMissing((current) => [...new Set([...current, "time_entries"])]);
         }
+      });
+    void supabase
+      .from("habits")
+      .select("category")
+      .limit(1)
+      .then(({ error }) => {
+        if (error?.code === "42703") setMissing((current) => [...new Set([...current, "category"])]);
       });
     return () => void stop();
   }, []);

@@ -266,6 +266,17 @@
   background-repeat: no-repeat;
 }
 
+/* Crossing something off draws the line in rather than snapping it on. */
+.line-through {
+  animation: strike-in 260ms var(--ease-out);
+}
+
+@keyframes strike-in {
+  from {
+    text-decoration-color: transparent;
+  }
+}
+
 /* A section heading inside a page: sentence case, carried by weight. */
 @utility section-title {
   font-size: 1rem;

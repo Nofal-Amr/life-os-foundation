@@ -33,6 +33,9 @@ import {
   type GoalInput,
 } from "@/data/goals";
 import { tasksQuery } from "@/data/tasks";
+import { projectsQuery } from "@/data/projects";
+import { goalLinks } from "@/data/links";
+import { CountBar, GoalLinksList } from "@/components/app/LinkedProgress";
 import { usePreferences } from "@/hooks/usePreferences";
 import { goalStatusLabel, goalStatusTone } from "@/lib/semantics";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
@@ -64,6 +67,7 @@ function GoalsPage() {
   const queryClient = useQueryClient();
   const goals = useQuery(goalsQuery());
   const tasks = useQuery(tasksQuery());
+  const projects = useQuery(projectsQuery());
   const { fmtDate } = usePreferences();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
@@ -161,9 +165,18 @@ function GoalsPage() {
                     {goal.category ? <SemanticBadge tone="neutral">{goal.category}</SemanticBadge> : null}
                     <span>Target {fmtDate(goal.target_date)}</span>
                   </div>
+                  {(() => {
+                    const links = goalLinks(tasks.data ?? [], projects.data ?? [], goal.id);
+                    return (
+                      <div className="mt-4 max-w-md space-y-3">
+                        <CountBar count={links.tasks} label="linked tasks done" />
+                        <GoalLinksList links={links} />
+                      </div>
+                    );
+                  })()}
                   <div className="mt-4 max-w-md space-y-2">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Progress</span>
+                      <span>Your own estimate</span>
                       <span className="tabular-nums">{goal.progress}%</span>
                     </div>
                     <Progress value={goal.progress} />
