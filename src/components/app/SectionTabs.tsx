@@ -5,6 +5,8 @@ import { useModules } from "@/hooks/useModules";
 
 type SectionTab = {
   to:
+    | "/dashboard"
+    | "/week"
     | "/tasks"
     | "/projects"
     | "/goals"
@@ -38,17 +40,25 @@ const MONEY_TABS: SectionTab[] = [
   { to: "/resources", label: "Resources", module: "resources" },
 ];
 
+const TODAY_TABS: SectionTab[] = [
+  { to: "/dashboard", label: "Today" },
+  { to: "/week", label: "Week" },
+];
+
 const BODY_TABS: SectionTab[] = [
   { to: "/health", label: "Health" },
   { to: "/food", label: "Food", module: "food" },
 ];
 
 function tabsFor(pathname: string) {
+  if (TODAY_TABS.some((tab) => pathname.startsWith(tab.to)))
+    return { label: "Today", tabs: TODAY_TABS };
   if (DO_TABS.some((tab) => pathname.startsWith(tab.to))) return { label: "Do", tabs: DO_TABS };
   if (pathname.startsWith("/finance") || pathname.startsWith("/resources")) {
     return { label: "Money", tabs: MONEY_TABS };
   }
-  if (BODY_TABS.some((tab) => pathname.startsWith(tab.to))) return { label: "Body", tabs: BODY_TABS };
+  if (BODY_TABS.some((tab) => pathname.startsWith(tab.to)))
+    return { label: "Body", tabs: BODY_TABS };
   return null;
 }
 

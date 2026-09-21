@@ -6,6 +6,7 @@ import {
   ChevronRight,
   HeartPulse,
   LayoutDashboard,
+  Menu,
   Moon,
   NotebookPen,
   Sunset,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import type { ModuleKey } from "@/data/modules";
 import { useModules } from "@/hooks/useModules";
 
@@ -25,6 +27,10 @@ export const NAV_ITEMS = [
 ] as const;
 
 const SECTION_ITEMS = {
+  "/dashboard": [
+    { to: "/dashboard" as const, label: "Today", module: null },
+    { to: "/week" as const, label: "Week", module: null },
+  ],
   "/tasks": [
     { to: "/tasks" as const, label: "Tasks", module: null },
     { to: "/projects" as const, label: "Projects", module: null },
@@ -52,7 +58,13 @@ const TOOLS = [
 ];
 
 function sectionFor(pathname: string) {
-  if (["/tasks", "/projects", "/goals", "/habits", "/capabilities"].some((path) => pathname.startsWith(path))) return "/tasks";
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/week")) return "/dashboard";
+  if (
+    ["/tasks", "/projects", "/goals", "/habits", "/capabilities"].some((path) =>
+      pathname.startsWith(path),
+    )
+  )
+    return "/tasks";
   if (pathname.startsWith("/finance") || pathname.startsWith("/resources")) return "/finance";
   if (pathname.startsWith("/health") || pathname.startsWith("/food")) return "/health";
   return null;
@@ -106,7 +118,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 aria-expanded={openSection === to}
                 aria-controls={`${label.toLowerCase()}-submenu`}
                 aria-label={openSection === to ? `Hide ${label} pages` : `Show ${label} pages`}
-                onClick={() => setOpenSection((current) => current === to ? null : to)}
+                onClick={() => setOpenSection((current) => (current === to ? null : to))}
                 className="size-9 shrink-0 text-muted-foreground"
               >
                 <ChevronRight
@@ -117,12 +129,15 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             ) : null}
           </div>
           {to in SECTION_ITEMS && openSection === to ? (
-            <div id={`${label.toLowerCase()}-submenu`} className="ml-7 mt-1 space-y-0.5 border-l border-border pl-2">
+            <div
+              id={`${label.toLowerCase()}-submenu`}
+              className="ml-7 mt-1 space-y-0.5 border-l border-border pl-2"
+            >
               {sectionItems(to as keyof typeof SECTION_ITEMS).map((item) => (
                 <Link
                   key={item.to}
                   to={item.to}
-                  activeOptions={{ exact: item.to === "/finance" }}
+                  activeOptions={{ exact: item.to === "/finance" || item.to === "/dashboard" }}
                   onClick={onNavigate}
                   className="block truncate rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
                 >
@@ -143,14 +158,25 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             aria-controls="tools-submenu"
             onClick={() => setToolsOpen((current) => !current)}
           >
-            <span className="flex items-center gap-3"><Activity className="size-4" />Tools</span>
-            <ChevronRight className={`size-4 transition-transform ${toolsOpen ? "rotate-90" : ""}`} />
+            <span className="flex items-center gap-3">
+              <Activity className="size-4" />
+              Tools
+            </span>
+            <ChevronRight
+              className={`size-4 transition-transform ${toolsOpen ? "rotate-90" : ""}`}
+            />
           </Button>
           {toolsOpen ? (
             <div id="tools-submenu" className="ml-7 mt-1 space-y-0.5 border-l border-border pl-2">
               {tools.map(({ to, label, icon: Icon }) => (
-                <Link key={to} to={to} onClick={onNavigate} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground">
-                  <Icon className="size-3.5" />{label}
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={onNavigate}
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
+                >
+                  <Icon className="size-3.5" />
+                  {label}
                 </Link>
               ))}
             </div>
@@ -163,13 +189,17 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { navItems } = useVisible();
+  const { navItems, tools } = useVisible();
   const activeSection = sectionFor(pathname);
+  const [moreOpen, setMoreOpen] = useState(false);
+  // "More" is active on pages that only the side menu lists (tools, settings).
+  const onMoreRoute =
+    pathname.startsWith("/settings") || tools.some((item) => pathname.startsWith(item.to));
   return (
     <nav className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 md:hidden">
       <ul
         className="system-dock grid px-1"
-        style={{ gridTemplateColumns: `repeat(${navItems.length}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${navItems.length + 1}, minmax(0, 1fr))` }}
       >
         {navItems.map(({ to, label, icon: Icon }) => (
           <li key={to}>
@@ -181,12 +211,50 @@ export function BottomNav() {
               <Icon className="size-5" strokeWidth={1.5} aria-hidden="true" />
               {label}
               {(pathname === to || activeSection === to) && (
-                <span className="absolute bottom-1 size-[3px] rounded-full bg-primary" aria-hidden="true" />
+                <span
+                  className="absolute bottom-1 size-[3px] rounded-full bg-primary"
+                  aria-hidden="true"
+                />
               )}
             </Link>
           </li>
         ))}
+        <li>
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            aria-haspopup="dialog"
+            aria-current={onMoreRoute ? "page" : undefined}
+            className={`relative flex w-full flex-col items-center gap-1 px-1 py-2.5 text-[11px] transition-colors ${onMoreRoute ? "font-medium text-foreground" : "text-muted-foreground"}`}
+          >
+            <Menu className="size-5" strokeWidth={1.5} aria-hidden="true" />
+            More
+            {onMoreRoute ? (
+              <span
+                className="absolute bottom-1 size-[3px] rounded-full bg-primary"
+                aria-hidden="true"
+              />
+            ) : null}
+          </button>
+        </li>
       </ul>
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent
+          side="bottom"
+          className="max-h-[85vh] overflow-y-auto rounded-t-3xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6"
+        >
+          <SheetTitle className="mb-3 px-3 text-base">Everything in Life OS</SheetTitle>
+          {/* The same menu as the desktop sidebar, so both always match. */}
+          <SidebarNav onNavigate={() => setMoreOpen(false)} />
+          <Link
+            to="/settings"
+            onClick={() => setMoreOpen(false)}
+            className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            Settings
+          </Link>
+        </SheetContent>
+      </Sheet>
     </nav>
   );
 }
