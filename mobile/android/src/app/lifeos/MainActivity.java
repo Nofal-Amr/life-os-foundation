@@ -17,6 +17,7 @@ import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -44,6 +45,7 @@ public class MainActivity extends Activity {
     private static final int LOCATION_REQUEST = 1;
     private static final int NOTIFICATION_REQUEST = 2;
     private static final int HEALTH_REQUEST = 3;
+    private static final int FILE_REQUEST = 4;
     /** Lets the web app know it runs inside this shell (see src/routes/auth.tsx). */
     private static final String UA_MARKER = "LifeOSAndroid";
     private static final String CALLBACK_SCHEME = "lifeos";
@@ -53,6 +55,8 @@ public class MainActivity extends Activity {
     private GeolocationPermissions.Callback pendingGeoCallback;
     /** The host of the page on screen; the bridge only answers the app's own pages. */
     private volatile String currentHost = APP_HOST;
+    /** Pending <input type="file"> request from the page. */
+    private ValueCallback<Uri[]> fileCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +86,25 @@ public class MainActivity extends Activity {
             public boolean onConsoleMessage(ConsoleMessage message) {
                 // Visible with: adb logcat -s LifeOS
                 Log.i("LifeOS", message.messageLevel() + " " + message.message());
+                return true;
+            }
+
+            /** Lets <input type="file"> open the phone's file picker (e.g. Samsung Health downloads). */
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+                if (fileCallback != null) fileCallback.onReceiveValue(null);
+                fileCallback = callback;
+                Intent intent = params.createIntent();
+                if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) {
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                }
+                try {
+                    startActivityForResult(intent, FILE_REQUEST);
+                } catch (Exception noPicker) {
+                    fileCallback = null;
+                    callback.onReceiveValue(null);
+                    return false;
+                }
                 return true;
             }
 
@@ -154,6 +177,23 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         if (webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != FILE_REQUEST || fileCallback == null) return;
+        Uri[] picked = null;
+        if (resultCode == RESULT_OK && data != null) {
+            if (data.getClipData() != null) {
+                picked = new Uri[data.getClipData().getItemCount()];
+                for (int i = 0; i < picked.length; i++) picked[i] = data.getClipData().getItemAt(i).getUri();
+            } else if (data.getData() != null) {
+                picked = new Uri[] { data.getData() };
+            }
+        }
+        fileCallback.onReceiveValue(picked);
+        fileCallback = null;
     }
 
     @Override

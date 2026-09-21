@@ -4,6 +4,7 @@ import { Activity, Footprints, HeartPulse, Moon, RefreshCw, Scale, Flame } from 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { SamsungImport } from "@/components/app/SamsungImport";
 import { Button } from "@/components/ui/button";
 import {
   dailyValues,
@@ -206,6 +207,7 @@ export function SamsungHealthCard() {
           ) : null}
         </>
       ) : null}
+      <SamsungImport />
     </section>
   );
 }
