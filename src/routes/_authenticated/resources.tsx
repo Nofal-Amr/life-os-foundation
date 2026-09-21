@@ -283,7 +283,12 @@ function ResourcesPage() {
             detail={`From your reading on ${fmtDate(ring.readingAt.slice(0, 10))}.`}
             tone={2}
             ringLabel={`${plain(ring.remaining)} of ${plain(ring.quota)} ${ring.unit} left`}
-          />
+          >
+            <Button size="sm" variant="outline" onClick={() => openReading(resource)}>
+              <Plus className="size-4" />
+              Add reading
+            </Button>
+          </RingStat>
         );
       }
       if (resource.unit_cost == null) {

@@ -218,6 +218,7 @@ export function RingStat({
   ringLabel,
   icon,
   badge,
+  children,
 }: {
   title: string;
   done: number;
@@ -228,6 +229,8 @@ export function RingStat({
   detail?: ReactNode;
   tone: ChartTone;
   ringLabel: string;
+  /** Actions under the ring, so the card is something you can act on. */
+  children?: ReactNode;
 } & CardChrome) {
   const [lead, rest] = splitHeadline(headline);
   return (
@@ -252,6 +255,7 @@ export function RingStat({
           caption={detail}
         />
       </div>
+      {children ? <div className="mt-4 min-w-0">{children}</div> : null}
     </StatCard>
   );
 }

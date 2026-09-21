@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { BedDouble, Pill, Plus, Scale, Sparkles, X } from "lucide-react";
+import { BedDouble, Check, Pill, Plus, Scale, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,11 +22,7 @@ import {
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -494,10 +490,55 @@ function HealthPage() {
               total={medRing.total}
               center={`${medRing.done}/${medRing.total}`}
               headline={`${medRing.done} of ${medRing.total}`}
-              detail={medRing.total === 1 ? "scheduled dose marked taken" : "scheduled doses marked taken"}
+              detail={
+                medRing.total === 1 ? "scheduled dose marked taken" : "scheduled doses marked taken"
+              }
               tone={3}
               ringLabel={`${medRing.done} of ${medRing.total} scheduled doses taken`}
-            />
+            >
+              <div className="flex flex-wrap gap-2">
+                {(medications.data ?? [])
+                  .filter((medication) => medication.active)
+                  .flatMap((medication) =>
+                    [...new Set(medication.schedule_times ?? [])].map((slot) => ({
+                      medication,
+                      slot,
+                    })),
+                  )
+                  .map(({ medication, slot }) => {
+                    const taken = dayDoses.some(
+                      (dose) =>
+                        dose.medication_id === medication.id &&
+                        dose.time_slot === slot &&
+                        dose.taken,
+                    );
+                    return (
+                      <button
+                        key={`${medication.id}-${slot}`}
+                        type="button"
+                        aria-pressed={taken}
+                        onClick={() =>
+                          toggleDose.mutate({
+                            medication_id: medication.id,
+                            time_slot: slot,
+                            taken: !taken,
+                          })
+                        }
+                        className={`inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-xs transition-transform active:scale-[0.97] ${
+                          taken ? "tone-positive" : "border-border hover:bg-accent/50"
+                        }`}
+                      >
+                        {taken ? <Check className="size-3.5" aria-hidden="true" /> : null}
+                        <span className="font-medium">{medication.name}</span>
+                        <span className="tabular-nums text-muted-foreground">{fmtSlot(slot)}</span>
+                        {!taken ? (
+                          <span className="text-muted-foreground">· Mark taken</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+              </div>
+            </RingStat>
           ) : (
             <StatCard title="Medication today" icon={Pill}>
               <p className="text-sm text-muted-foreground">
@@ -633,7 +674,6 @@ function HealthPage() {
         </Card>
 
         <Card id="daily-log" className="system-card scroll-mt-20">
-
           <CardHeader>
             <CardTitle className="text-base">
               Log for {date === todayISO() ? "today" : fmtLongDate(new Date(`${date}T12:00:00`))}
@@ -810,7 +850,6 @@ function HealthPage() {
                 </CollapsibleContent>
               </Collapsible>
 
-
               <div className="space-y-2">
                 <Label>Food categories</Label>
                 <div className="flex flex-wrap gap-2">
@@ -865,7 +904,10 @@ function HealthPage() {
             ) : (
               <ul className="divide-y divide-border">
                 {recent.map((log) => (
-                  <li key={log.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                  <li
+                    key={log.id}
+                    className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+                  >
                     <button
                       type="button"
                       className="font-medium text-foreground hover:underline"
@@ -908,7 +950,6 @@ function HealthPage() {
         </Card>
 
         <Card id="medications" className="system-card scroll-mt-20">
-
           <CardHeader className="gap-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -1021,7 +1062,6 @@ function HealthPage() {
           </CardContent>
         </Card>
       </div>
-
 
       <FormDialog
         open={medDialog}
