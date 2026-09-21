@@ -104,8 +104,9 @@ export function SamsungImport() {
         <input
           ref={input}
           type="file"
+          // No accept filter: phones often label Samsung CSVs with a generic type,
+          // which a filter would grey out. Files are checked by name instead.
           multiple
-          accept=".zip,.csv,application/zip,text/csv,text/comma-separated-values"
           className="hidden"
           onChange={(event) => event.target.files?.length && void read(event.target.files)}
         />
