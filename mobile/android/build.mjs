@@ -71,7 +71,10 @@ const web = join(root, "dist", "client");
 if (!existsSync(join(web, "index.html")))
   throw new Error("dist/client/index.html missing; the web build failed.");
 
-rmSync(out, { recursive: true, force: true });
+// Clear the contents rather than the folder, which Windows may hold open.
+if (existsSync(out)) {
+  for (const entry of readdirSync(out)) rmSync(join(out, entry), { recursive: true, force: true });
+}
 const dirs = ["res", "classes", "dex", "assets/www", "gen"].map((d) => join(out, d));
 dirs.forEach((d) => mkdirSync(d, { recursive: true }));
 const [resOut, classesOut, dexOut, wwwOut, genOut] = dirs;

@@ -7,6 +7,7 @@ type SectionTab = {
   to:
     | "/dashboard"
     | "/week"
+    | "/time"
     | "/tasks"
     | "/projects"
     | "/goals"
@@ -43,6 +44,7 @@ const MONEY_TABS: SectionTab[] = [
 const TODAY_TABS: SectionTab[] = [
   { to: "/dashboard", label: "Today" },
   { to: "/week", label: "Week" },
+  { to: "/time", label: "Time" },
 ];
 
 const BODY_TABS: SectionTab[] = [

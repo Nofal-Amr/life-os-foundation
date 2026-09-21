@@ -330,6 +330,14 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Ongoing notification with a live clock while a timer runs; empty title clears it. */
+        @JavascriptInterface
+        public void showTimer(String title, double startedAt) {
+            if (!trusted()) return;
+            if (title == null || title.isEmpty()) TimerNotice.clear(MainActivity.this);
+            else TimerNotice.show(MainActivity.this, title, (long) startedAt);
+        }
+
         @JavascriptInterface
         public void scheduleReminders(String json) {
             if (!trusted()) return;

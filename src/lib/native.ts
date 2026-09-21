@@ -11,6 +11,7 @@ type NativeBridge = {
   healthStatus?(): string;
   requestHealth?(): void;
   openHealthSettings?(which: string): void;
+  showTimer?(title: string, startedAt: number): void;
 };
 
 declare global {
@@ -113,4 +114,9 @@ export function requestHealthAccess(): void {
 /** Opens Health Connect: its main screen, or the page with Life OS's permissions. */
 export function openHealthSettings(which: "home" | "app"): void {
   bridge()?.openHealthSettings?.(which);
+}
+
+/** Shows (or, with null, clears) the phone's ongoing "timer running" notification. */
+export function showTimerNotice(timer: { title: string; startedAt: number } | null): void {
+  bridge()?.showTimer?.(timer?.title ?? "", timer?.startedAt ?? 0);
 }

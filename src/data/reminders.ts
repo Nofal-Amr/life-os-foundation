@@ -11,6 +11,8 @@ export type ReminderSettings = {
   /** Prayer reminders. */
   enabled: boolean;
   leadMinutes: number;
+  /** A second notification exactly at the prayer time ("Maghrib is now"). */
+  atTime: boolean;
   /** A daily summary of tasks due that day. */
   tasksEnabled: boolean;
   /** "HH:mm", local time. */
@@ -20,6 +22,7 @@ export type ReminderSettings = {
 export const DEFAULT_REMINDERS: ReminderSettings = {
   enabled: true,
   leadMinutes: 10,
+  atTime: true,
   tasksEnabled: true,
   taskTime: "09:00",
 };

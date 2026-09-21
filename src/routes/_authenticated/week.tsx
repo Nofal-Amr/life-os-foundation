@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { PrayerTiles } from "@/components/app/PrayerLog";
 import { SplitAcrossDaysDialog } from "@/components/app/SplitAcrossDays";
+import { TaskTimerButton } from "@/components/app/Timer";
 import { Ring, type ChartTone } from "@/components/app/StatCards";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -581,13 +582,16 @@ function DayDetail({
               </div>
               <ul className="space-y-1.5">
                 {group.items.map((task) => (
-                  <li key={task.id}>
-                    <CheckRow
-                      checked={isDone(task)}
-                      label={task.title}
-                      hint={task.description}
-                      onToggle={() => toggleTask.mutate(task)}
-                    />
+                  <li key={task.id} className="flex items-stretch gap-1.5">
+                    <div className="min-w-0 flex-1">
+                      <CheckRow
+                        checked={isDone(task)}
+                        label={task.title}
+                        hint={task.description}
+                        onToggle={() => toggleTask.mutate(task)}
+                      />
+                    </div>
+                    {!isDone(task) ? <TaskTimerButton task={task} className="h-auto" /> : null}
                   </li>
                 ))}
               </ul>

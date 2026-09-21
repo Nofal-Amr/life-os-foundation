@@ -52,13 +52,20 @@ import {
   type TaskInput,
 } from "@/data/tasks";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
-import { GlanceSection, NotEnoughData, Ring, StatCard, WeeklyBars } from "@/components/app/StatCards";
+import { TaskTimerButton } from "@/components/app/Timer";
+import { formatMinutes, minutesByTask, timeEntriesQuery } from "@/data/time";
+import {
+  GlanceSection,
+  NotEnoughData,
+  Ring,
+  StatCard,
+  WeeklyBars,
+} from "@/components/app/StatCards";
 import { TaskStepsEditor, minutesLabel, stepsLine } from "@/components/app/TaskSteps";
 import { hasEnoughPoints, tasksCompletedPerWeek } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { priorityLabel, priorityTone, taskStatusLabel, taskStatusTone } from "@/lib/semantics";
-
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
@@ -107,6 +114,8 @@ function TasksPage() {
   const navigate = Route.useNavigate();
   const queryClient = useQueryClient();
   const tasks = useQuery(tasksQuery());
+  const timeEntries = useQuery(timeEntriesQuery());
+  const tracked = minutesByTask(timeEntries.data ?? []);
   const projects = useQuery(projectsQuery());
   const capabilities = useQuery(capabilitiesQuery());
   const goals = useQuery(goalsQuery());
@@ -175,7 +184,13 @@ function TasksPage() {
   });
 
   const addCapability = useMutation({
-    mutationFn: () => createCapability({ name: newCapabilityName.trim(), description: null, icon: null, color: null }),
+    mutationFn: () =>
+      createCapability({
+        name: newCapabilityName.trim(),
+        description: null,
+        icon: null,
+        color: null,
+      }),
     onSuccess: (capability) => {
       if (!capability) return;
       queryClient.setQueryData(capabilityKeys.all, (current: typeof capabilities.data) => [
@@ -339,13 +354,11 @@ function TasksPage() {
     navigate({ hash: "", replace: true });
   }, [navigate, taskHash, tasks.data]);
 
-
   const allTasks = tasks.data ?? [];
   const visible = filterTasks(topLevelTasks(allTasks), filter);
   const weekly = tasksCompletedPerWeek(allTasks);
   const weeklyTotal = weekly.reduce((sum, week) => sum + week.total, 0);
-  const projectName = (id: string | null) =>
-    (projects.data ?? []).find((p) => p.id === id)?.name;
+  const projectName = (id: string | null) => (projects.data ?? []).find((p) => p.id === id)?.name;
 
   return (
     <>
@@ -407,16 +420,19 @@ function TasksPage() {
               <li key={task.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <button
-                      type="button"
-                      className="text-left"
-                      onClick={() => openEdit(task)}
-                    >
-                      <p className={`font-medium ${completed ? "text-muted-foreground line-through" : ""}`}>
+                    <button type="button" className="text-left" onClick={() => openEdit(task)}>
+                      <p
+                        className={`font-medium ${completed ? "text-muted-foreground line-through" : ""}`}
+                      >
                         {task.title}
                         {task.estimated_minutes ? (
                           <span className="ml-1 text-sm font-normal text-muted-foreground">
                             · {estimateLabel(task)}
+                          </span>
+                        ) : null}
+                        {tracked.get(task.id) ? (
+                          <span className="ml-1 text-sm font-normal tabular-nums text-muted-foreground">
+                            · {formatMinutes(tracked.get(task.id)!)} tracked
                           </span>
                         ) : null}
                       </p>
@@ -437,10 +453,24 @@ function TasksPage() {
                         <SemanticBadge tone="danger">Overdue</SemanticBadge>
                       ) : null}
                       {task.due_date ? <span>Due {fmtDate(task.due_date)}</span> : null}
-                       {task.project_id ? (() => {
-                         const project = (projects.data ?? []).find((item) => item.id === task.project_id);
-                         return project ? <span className="inline-flex items-center gap-1.5"><EntityIcon icon={project.icon} color={project.color} containerClassName="size-5 rounded" className="size-3" />{project.name}</span> : null;
-                       })() : null}
+                      {task.project_id
+                        ? (() => {
+                            const project = (projects.data ?? []).find(
+                              (item) => item.id === task.project_id,
+                            );
+                            return project ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <EntityIcon
+                                  icon={project.icon}
+                                  color={project.color}
+                                  containerClassName="size-5 rounded"
+                                  className="size-3"
+                                />
+                                {project.name}
+                              </span>
+                            ) : null;
+                          })()
+                        : null}
                     </div>
                     {steps.length ? (
                       <Button
@@ -462,7 +492,8 @@ function TasksPage() {
                           label={`${progress.done} of ${progress.total} steps done`}
                         />
                         <span className="ml-2">
-                          {stepsLine(progress.done, progress.total)} · {isExpanded ? "Hide steps" : "Show steps"}
+                          {stepsLine(progress.done, progress.total)} ·{" "}
+                          {isExpanded ? "Hide steps" : "Show steps"}
                         </span>
                       </Button>
                     ) : null}
@@ -482,7 +513,10 @@ function TasksPage() {
                       {completed ? "Reopen" : "Complete"}
                     </Button>
                     {completed ? null : (
-                      <ShrinkItButton onClick={() => setShrinkTask(task)} />
+                      <>
+                        <TaskTimerButton task={task} />
+                        <ShrinkItButton onClick={() => setShrinkTask(task)} />
+                      </>
                     )}
                     <Button size="sm" variant="ghost" onClick={() => openEdit(task)}>
                       Edit
@@ -505,8 +539,13 @@ function TasksPage() {
                     {steps.map((step) => {
                       const stepDone = step.status === "completed";
                       return (
-                        <li key={step.id} className="flex min-w-0 items-center justify-between gap-3 py-2">
-                          <span className={`min-w-0 truncate text-sm ${stepDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                        <li
+                          key={step.id}
+                          className="flex min-w-0 items-center justify-between gap-3 py-2"
+                        >
+                          <span
+                            className={`min-w-0 truncate text-sm ${stepDone ? "text-muted-foreground line-through" : "text-foreground"}`}
+                          >
                             {step.title}
                             {step.estimated_minutes ? (
                               <span className="ml-1 text-xs text-muted-foreground">
@@ -604,7 +643,11 @@ function TasksPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="task-due">Due date</Label>
-            <DatePicker id="task-due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
+            <DatePicker
+              id="task-due"
+              value={form.due_date}
+              onChange={(value) => setForm({ ...form, due_date: value || null })}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="task-max">Max date (optional)</Label>
@@ -686,7 +729,15 @@ function TasksPage() {
                 <SelectItem value={NO_PROJECT}>No project</SelectItem>
                 {(projects.data ?? []).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                     <span className="flex items-center gap-2"><EntityIcon icon={p.icon} color={p.color} containerClassName="size-5 rounded" className="size-3" />{p.name}</span>
+                    <span className="flex items-center gap-2">
+                      <EntityIcon
+                        icon={p.icon}
+                        color={p.color}
+                        containerClassName="size-5 rounded"
+                        className="size-3"
+                      />
+                      {p.name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -737,7 +788,15 @@ function TasksPage() {
                 <SelectItem value={NONE}>No capability</SelectItem>
                 {(capabilities.data ?? []).map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                     <span className="flex items-center gap-2"><EntityIcon icon={c.icon} color={c.color} containerClassName="size-5 rounded" className="size-3" />{c.name}</span>
+                    <span className="flex items-center gap-2">
+                      <EntityIcon
+                        icon={c.icon}
+                        color={c.color}
+                        containerClassName="size-5 rounded"
+                        className="size-3"
+                      />
+                      {c.name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -788,7 +847,15 @@ function TasksPage() {
                 <SelectItem value={NONE}>No goal</SelectItem>
                 {(goals.data ?? []).map((g) => (
                   <SelectItem key={g.id} value={g.id}>
-                     <span className="flex items-center gap-2"><EntityIcon icon={g.icon} color={g.color} containerClassName="size-5 rounded" className="size-3" />{g.name}</span>
+                    <span className="flex items-center gap-2">
+                      <EntityIcon
+                        icon={g.icon}
+                        color={g.color}
+                        containerClassName="size-5 rounded"
+                        className="size-3"
+                      />
+                      {g.name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -867,7 +934,6 @@ function TasksPage() {
         </div>
       </FormDialog>
 
-
       <ConfirmDialog
         open={!!toDelete}
         onOpenChange={(open) => !open && setToDelete(null)}
@@ -882,6 +948,5 @@ function TasksPage() {
         onOpenChange={(open) => !open && setShrinkTask(null)}
       />
     </>
-
   );
 }

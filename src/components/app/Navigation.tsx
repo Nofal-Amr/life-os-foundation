@@ -30,6 +30,7 @@ const SECTION_ITEMS = {
   "/dashboard": [
     { to: "/dashboard" as const, label: "Today", module: null },
     { to: "/week" as const, label: "Week", module: null },
+    { to: "/time" as const, label: "Time", module: null },
   ],
   "/tasks": [
     { to: "/tasks" as const, label: "Tasks", module: null },
@@ -58,7 +59,8 @@ const TOOLS = [
 ];
 
 function sectionFor(pathname: string) {
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/week")) return "/dashboard";
+  if (["/dashboard", "/week", "/time"].some((path) => pathname.startsWith(path)))
+    return "/dashboard";
   if (
     ["/tasks", "/projects", "/goals", "/habits", "/capabilities"].some((path) =>
       pathname.startsWith(path),

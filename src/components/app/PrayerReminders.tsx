@@ -124,23 +124,33 @@ export function useReminderSync() {
         );
         for (const name of PRAYER_NAMES) {
           const time = times[name] as Date;
-          const at = time.getTime() - settings.leadMinutes * 60_000;
-          if (at <= now) continue;
           const logged = (logs.data ?? []).some(
             (log) => log.prayer_date === date && log.prayer_name === name && statusOf(log),
           );
           if (logged) continue;
-          reminders.push({
-            id: `${date}-${name}`,
-            at,
-            title:
-              settings.leadMinutes > 0
-                ? `${PRAYER_LABELS[name]} in ${settings.leadMinutes} minutes`
-                : `${PRAYER_LABELS[name]} is now`,
-            body: `${PRAYER_LABELS[name]} at ${fmtTime(time)}. Tap to log it.`,
-            path: "/spirit",
-            channel: "prayers",
-          });
+          // Early reminder (if a lead time is set).
+          const early = time.getTime() - settings.leadMinutes * 60_000;
+          if (settings.leadMinutes > 0 && early > now) {
+            reminders.push({
+              id: `${date}-${name}`,
+              at: early,
+              title: `${PRAYER_LABELS[name]} in ${settings.leadMinutes} minutes`,
+              body: `${PRAYER_LABELS[name]} at ${fmtTime(time)}.`,
+              path: "/spirit",
+              channel: "prayers",
+            });
+          }
+          // At the prayer time itself.
+          if ((settings.atTime || settings.leadMinutes === 0) && time.getTime() > now) {
+            reminders.push({
+              id: `${date}-${name}-now`,
+              at: time.getTime(),
+              title: `It's time for ${PRAYER_LABELS[name]}`,
+              body: `${PRAYER_LABELS[name]} · ${fmtTime(time)}. Tap to log it.`,
+              path: "/spirit",
+              channel: "prayers",
+            });
+          }
         }
       }
     }
@@ -205,8 +215,18 @@ function PrayerControls({
         />
       </div>
       {settings.enabled ? (
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor="prayer-at-time">Also notify at the prayer time</Label>
+          <Switch
+            id="prayer-at-time"
+            checked={settings.atTime}
+            onCheckedChange={(atTime) => update({ atTime })}
+          />
+        </div>
+      ) : null}
+      {settings.enabled ? (
         <div className="space-y-2">
-          <Label>Remind me</Label>
+          <Label>Remind me before</Label>
           <Select
             value={String(settings.leadMinutes)}
             onValueChange={(value) => update({ leadMinutes: Number(value) })}
@@ -217,7 +237,7 @@ function PrayerControls({
             <SelectContent>
               {[0, 5, 10, 15, 30].map((minutes) => (
                 <SelectItem key={minutes} value={String(minutes)}>
-                  {minutes === 0 ? "At the prayer time" : `${minutes} minutes before`}
+                  {minutes === 0 ? "No early reminder" : `${minutes} minutes before`}
                 </SelectItem>
               ))}
             </SelectContent>

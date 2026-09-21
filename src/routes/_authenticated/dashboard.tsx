@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { HubCard } from "@/components/app/HubCard";
+import { TaskTimerButton } from "@/components/app/Timer";
 import { PrayerTiles } from "@/components/app/PrayerLog";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
@@ -858,6 +859,7 @@ function DashboardPage() {
             <Check className="size-4" />
             Done
           </Button>
+          <TaskTimerButton task={action.item} withLabel size={large ? "default" : "sm"} />
           <ShrinkItButton
             size={large ? "default" : "sm"}
             onClick={() => setShrinkTask(action.parent)}

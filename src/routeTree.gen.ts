@@ -27,6 +27,7 @@ import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSpiritRouteImport } from './routes/_authenticated/spirit'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
+import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/time'
 import { Route as AuthenticatedWeekRouteImport } from './routes/_authenticated/week'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance.index'
@@ -124,6 +125,11 @@ const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTimeRoute = AuthenticatedTimeRouteImport.update({
+  id: '/time',
+  path: '/time',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedWeekRoute = AuthenticatedWeekRouteImport.update({
   id: '/week',
   path: '/week',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/spirit': typeof AuthenticatedSpiritRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/time': typeof AuthenticatedTimeRoute
   '/week': typeof AuthenticatedWeekRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/spirit': typeof AuthenticatedSpiritRoute
   '/tasks': typeof AuthenticatedTasksRoute
+  '/time': typeof AuthenticatedTimeRoute
   '/week': typeof AuthenticatedWeekRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/spirit': typeof AuthenticatedSpiritRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
+  '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/week': typeof AuthenticatedWeekRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/_authenticated/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spirit'
     | '/tasks'
+    | '/time'
     | '/week'
     | '/auth/update-password'
     | '/finance/categories'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/spirit'
     | '/tasks'
+    | '/time'
     | '/week'
     | '/auth/update-password'
     | '/finance/categories'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/spirit'
     | '/_authenticated/tasks'
+    | '/_authenticated/time'
     | '/_authenticated/week'
     | '/auth/update-password'
     | '/_authenticated/finance/categories'
@@ -447,6 +459,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTasksRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/time': {
+      id: '/_authenticated/time'
+      path: '/time'
+      fullPath: '/time'
+      preLoaderRoute: typeof AuthenticatedTimeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/week': {
       id: '/_authenticated/week'
       path: '/week'
@@ -525,6 +544,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSpiritRoute: typeof AuthenticatedSpiritRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
+  AuthenticatedTimeRoute: typeof AuthenticatedTimeRoute
   AuthenticatedWeekRoute: typeof AuthenticatedWeekRoute
 }
 
@@ -544,6 +564,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSpiritRoute: AuthenticatedSpiritRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
+  AuthenticatedTimeRoute: AuthenticatedTimeRoute,
   AuthenticatedWeekRoute: AuthenticatedWeekRoute,
 }
 

@@ -100,6 +100,42 @@ export type Database = {
         }
         Relationships: []
       }
+      activities: {
+        Row: {
+          archived: boolean
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          archived?: boolean
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       body_stats: {
         Row: {
           birthdate: string | null
@@ -1301,6 +1337,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      time_entries: {
+        Row: {
+          activity_id: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          label: string | null
+          note: string | null
+          started_at: string
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          label?: string | null
+          note?: string | null
+          started_at: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          activity_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          label?: string | null
+          note?: string | null
+          started_at?: string
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       transactions: {
         Row: {
