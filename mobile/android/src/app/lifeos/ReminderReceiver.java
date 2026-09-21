@@ -22,7 +22,8 @@ public class ReminderReceiver extends BroadcastReceiver {
             context, id == null ? 0 : id.hashCode(), open,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        Notification notification = new Notification.Builder(context, Reminders.CHANNEL_ID)
+        String channel = intent.getStringExtra("channel");
+        Notification notification = new Notification.Builder(context, channel == null ? Reminders.CHANNEL_ID : channel)
             .setSmallIcon(R.drawable.ic_stat_prayer)
             .setContentTitle(intent.getStringExtra("title"))
             .setContentText(intent.getStringExtra("body"))

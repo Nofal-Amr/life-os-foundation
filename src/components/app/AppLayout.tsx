@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { MigrationNotice } from "./MigrationNotice";
-import { usePrayerReminderSync } from "./PrayerReminders";
+import { useReminderSync } from "./PrayerReminders";
 import { trackScreen } from "@/lib/analytics";
 import { useEffect, useState, type ReactNode } from "react";
 
@@ -29,7 +29,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { displayName } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
-  usePrayerReminderSync();
+  useReminderSync();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   useEffect(() => trackScreen(pathname), [pathname]);
 

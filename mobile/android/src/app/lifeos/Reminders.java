@@ -18,6 +18,7 @@ import org.json.JSONObject;
  */
 final class Reminders {
     static final String CHANNEL_ID = "prayers";
+    static final String TASKS_CHANNEL_ID = "tasks";
     private static final String PREFS = "reminders";
     private static final String KEY_LIST = "list";
 
@@ -39,11 +40,18 @@ final class Reminders {
     static void ensureChannel(Context context) {
         if (Build.VERSION.SDK_INT < 26) return;
         NotificationManager manager = context.getSystemService(NotificationManager.class);
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return;
-        NotificationChannel channel =
-            new NotificationChannel(CHANNEL_ID, "Prayer reminders", NotificationManager.IMPORTANCE_HIGH);
-        channel.setDescription("A reminder before each prayer you haven't logged yet.");
-        manager.createNotificationChannel(channel);
+        if (manager.getNotificationChannel(CHANNEL_ID) == null) {
+            NotificationChannel channel =
+                new NotificationChannel(CHANNEL_ID, "Prayer reminders", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("A reminder before each prayer you haven't logged yet.");
+            manager.createNotificationChannel(channel);
+        }
+        if (manager.getNotificationChannel(TASKS_CHANNEL_ID) == null) {
+            NotificationChannel channel =
+                new NotificationChannel(TASKS_CHANNEL_ID, "Task reminders", NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("What's due each day, at the time you choose.");
+            manager.createNotificationChannel(channel);
+        }
     }
 
     private static void schedule(Context context, String json) {
@@ -81,6 +89,7 @@ final class Reminders {
         intent.putExtra("title", item.optString("title"));
         intent.putExtra("body", item.optString("body"));
         intent.putExtra("path", item.optString("path", "/"));
+        intent.putExtra("channel", item.optString("channel", CHANNEL_ID));
         return PendingIntent.getBroadcast(
             context,
             item.optString("id").hashCode(),

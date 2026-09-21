@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { addDays, format } from "date-fns";
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, ListChecks, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { DEFAULT_REMINDERS, taskReminders, type ReminderSettings } from "@/data/reminders";
 import {
   PRAYER_LABELS,
   PRAYER_NAMES,
@@ -20,8 +22,10 @@ import {
   prayerSettingsQuery,
   statusOf,
 } from "@/data/spirit";
+import { tasksQuery } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
+import { todayISO } from "@/lib/date";
 import {
   canNotify,
   isAndroidApp,
@@ -33,17 +37,16 @@ import { prayerTimesFor } from "@/lib/prayer";
 
 /** Per device: reminders fire on the phone they are set on. */
 const STORAGE_KEY = "life-os-prayer-reminders";
-type ReminderSettings = { enabled: boolean; leadMinutes: number };
-const DEFAULTS: ReminderSettings = { enabled: false, leadMinutes: 10 };
+const ASKED_KEY = "life-os-notifications-asked";
 
 function readSettings(): ReminderSettings {
   try {
     return {
-      ...DEFAULTS,
+      ...DEFAULT_REMINDERS,
       ...(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as Partial<ReminderSettings>),
     };
   } catch {
-    return DEFAULTS;
+    return DEFAULT_REMINDERS;
   }
 }
 
@@ -56,144 +59,276 @@ function writeSettings(settings: ReminderSettings) {
   window.dispatchEvent(new Event("life-os-reminders-changed"));
 }
 
-/**
- * Keeps the phone's prayer reminders scheduled for the next 7 days. Mounted
- * once in the app layout; reschedules when times, logs or settings change.
- * A prayer already logged today is not reminded.
- */
-export function usePrayerReminderSync() {
-  const { enabled: modules } = useModules();
-  const settingsQuery = useQuery({ ...prayerSettingsQuery(), enabled: isAndroidApp() });
-  const logs = useQuery({ ...prayerLogsQuery(), enabled: isAndroidApp() });
-  const { fmtTime } = usePreferences();
-  const [settings, setSettings] = useState(DEFAULTS);
-
+function useReminderSettings() {
+  const [settings, setSettings] = useState(DEFAULT_REMINDERS);
   useEffect(() => {
     setSettings(readSettings());
     const onChange = () => setSettings(readSettings());
     window.addEventListener("life-os-reminders-changed", onChange);
     return () => window.removeEventListener("life-os-reminders-changed", onChange);
   }, []);
-
-  useEffect(() => {
-    if (!isAndroidApp()) return;
-    const config = settingsQuery.data;
-    const on = settings.enabled && modules.includes("spirit");
-    if (!on || config?.latitude == null || config.longitude == null) {
-      scheduleReminders([]);
-      return;
-    }
-    const now = Date.now();
-    const reminders: Reminder[] = [];
-    for (let offset = 0; offset < 7; offset++) {
-      const date = format(addDays(new Date(), offset), "yyyy-MM-dd");
-      const times = prayerTimesFor(
-        Number(config.latitude),
-        Number(config.longitude),
-        config.calc_method,
-        config.asr_school,
-        date,
-      );
-      for (const name of PRAYER_NAMES) {
-        const time = times[name] as Date;
-        const at = time.getTime() - settings.leadMinutes * 60_000;
-        if (at <= now) continue;
-        const logged = (logs.data ?? []).some(
-          (log) => log.prayer_date === date && log.prayer_name === name && statusOf(log),
-        );
-        if (logged) continue;
-        reminders.push({
-          id: `${date}-${name}`,
-          at,
-          title:
-            settings.leadMinutes > 0
-              ? `${PRAYER_LABELS[name]} in ${settings.leadMinutes} minutes`
-              : `${PRAYER_LABELS[name]} is now`,
-          body: `${PRAYER_LABELS[name]} at ${fmtTime(time)}. Tap to log it.`,
-          path: "/spirit",
-        });
-      }
-    }
-    scheduleReminders(reminders);
-    // fmtTime changes identity every render; the time format is in preferences anyway.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settingsQuery.data, logs.data, settings, modules]);
+  const update = (patch: Partial<ReminderSettings>) => {
+    const next = { ...readSettings(), ...patch };
+    writeSettings(next);
+    if ((patch.enabled || patch.tasksEnabled) && !canNotify()) requestNotifications();
+  };
+  return [settings, update] as const;
 }
 
-/** Settings card on the Spirit page. */
-export function PrayerReminderSettings() {
-  const [settings, setSettings] = useState(DEFAULTS);
-  const [allowed, setAllowed] = useState(true);
+/**
+ * Keeps the phone's reminders scheduled for the next 7 days: one before each
+ * prayer not yet logged, and a daily summary of tasks due. Mounted once in
+ * the app layout; reschedules whenever times, logs, tasks or settings change.
+ */
+export function useReminderSync() {
   const android = isAndroidApp();
+  const { enabled: modules } = useModules();
+  const prayerSettings = useQuery({ ...prayerSettingsQuery(), enabled: android });
+  const logs = useQuery({ ...prayerLogsQuery(), enabled: android });
+  const tasks = useQuery({ ...tasksQuery(), enabled: android });
+  const { fmtTime } = usePreferences();
+  const [settings] = useReminderSettings();
+
+  // Ask for notification permission once, since reminders are on by default.
+  useEffect(() => {
+    if (!android || canNotify()) return;
+    try {
+      if (localStorage.getItem(ASKED_KEY)) return;
+      localStorage.setItem(ASKED_KEY, "1");
+    } catch {
+      return;
+    }
+    requestNotifications();
+  }, [android]);
 
   useEffect(() => {
-    setSettings(readSettings());
-    setAllowed(canNotify());
-    const onFocus = () => setAllowed(canNotify());
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
+    if (!android) return;
+    const now = Date.now();
+    const reminders: Reminder[] = [];
+
+    const config = prayerSettings.data;
+    if (
+      settings.enabled &&
+      modules.includes("spirit") &&
+      config?.latitude != null &&
+      config.longitude != null
+    ) {
+      for (let offset = 0; offset < 7; offset++) {
+        const date = format(addDays(new Date(), offset), "yyyy-MM-dd");
+        const times = prayerTimesFor(
+          Number(config.latitude),
+          Number(config.longitude),
+          config.calc_method,
+          config.asr_school,
+          date,
+        );
+        for (const name of PRAYER_NAMES) {
+          const time = times[name] as Date;
+          const at = time.getTime() - settings.leadMinutes * 60_000;
+          if (at <= now) continue;
+          const logged = (logs.data ?? []).some(
+            (log) => log.prayer_date === date && log.prayer_name === name && statusOf(log),
+          );
+          if (logged) continue;
+          reminders.push({
+            id: `${date}-${name}`,
+            at,
+            title:
+              settings.leadMinutes > 0
+                ? `${PRAYER_LABELS[name]} in ${settings.leadMinutes} minutes`
+                : `${PRAYER_LABELS[name]} is now`,
+            body: `${PRAYER_LABELS[name]} at ${fmtTime(time)}. Tap to log it.`,
+            path: "/spirit",
+            channel: "prayers",
+          });
+        }
+      }
+    }
+
+    if (settings.tasksEnabled && modules.includes("do")) {
+      reminders.push(
+        ...taskReminders({
+          tasks: tasks.data ?? [],
+          today: todayISO(),
+          time: settings.taskTime,
+          now,
+        }),
+      );
+    }
+
+    scheduleReminders(reminders);
+    // fmtTime changes identity every render; the time format lives in preferences anyway.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [android, prayerSettings.data, logs.data, tasks.data, settings, modules]);
+}
+
+function useNotificationsAllowed() {
+  const [allowed, setAllowed] = useState(true);
+  useEffect(() => {
+    const refresh = () => setAllowed(canNotify());
+    refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("life-os-notification-permissions", refresh);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("life-os-notification-permissions", refresh);
+      document.removeEventListener("visibilitychange", refresh);
     };
   }, []);
+  return allowed;
+}
 
-  const update = (patch: Partial<ReminderSettings>) => {
-    const next = { ...settings, ...patch };
-    setSettings(next);
-    writeSettings(next);
-    if (patch.enabled && !canNotify()) requestNotifications();
-  };
-
+function PrayerControls({
+  settings,
+  update,
+}: {
+  settings: ReminderSettings;
+  update: (patch: Partial<ReminderSettings>) => void;
+}) {
   return (
-    <section className="stat-card space-y-4 p-5">
+    <div className="space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-sm font-semibold">
-            {settings.enabled ? <Bell className="size-4" /> : <BellOff className="size-4" />}
-            Prayer reminders
+            <Moon className="size-4" aria-hidden="true" />
+            Prayers
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {android
-              ? "A notification on this phone before each prayer you haven't logged yet."
-              : "Reminders arrive as notifications in the Life OS Android app."}
+            Before each prayer you haven't logged yet. Needs your location in Settings.
           </p>
         </div>
-        {android ? (
-          <Switch
-            checked={settings.enabled}
-            onCheckedChange={(enabled) => update({ enabled })}
-            aria-label="Prayer reminders"
-          />
-        ) : null}
+        <Switch
+          checked={settings.enabled}
+          onCheckedChange={(enabled) => update({ enabled })}
+          aria-label="Prayer reminders"
+        />
       </div>
-      {android && settings.enabled ? (
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-2">
-            <Label>Remind me</Label>
-            <Select
-              value={String(settings.leadMinutes)}
-              onValueChange={(value) => update({ leadMinutes: Number(value) })}
-            >
-              <SelectTrigger className="h-11 w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[0, 5, 10, 15, 30].map((minutes) => (
-                  <SelectItem key={minutes} value={String(minutes)}>
-                    {minutes === 0 ? "At the prayer time" : `${minutes} minutes before`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {!allowed ? (
-            <Button type="button" variant="outline" onClick={requestNotifications}>
-              Allow notifications
-            </Button>
-          ) : null}
+      {settings.enabled ? (
+        <div className="space-y-2">
+          <Label>Remind me</Label>
+          <Select
+            value={String(settings.leadMinutes)}
+            onValueChange={(value) => update({ leadMinutes: Number(value) })}
+          >
+            <SelectTrigger className="h-11 w-52">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[0, 5, 10, 15, 30].map((minutes) => (
+                <SelectItem key={minutes} value={String(minutes)}>
+                  {minutes === 0 ? "At the prayer time" : `${minutes} minutes before`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function TaskControls({
+  settings,
+  update,
+}: {
+  settings: ReminderSettings;
+  update: (patch: Partial<ReminderSettings>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <ListChecks className="size-4" aria-hidden="true" />
+            Tasks
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            One notification a day with what's due, including anything overdue.
+          </p>
+        </div>
+        <Switch
+          checked={settings.tasksEnabled}
+          onCheckedChange={(tasksEnabled) => update({ tasksEnabled })}
+          aria-label="Task reminders"
+        />
+      </div>
+      {settings.tasksEnabled ? (
+        <div className="space-y-2">
+          <Label htmlFor="task-reminder-time">At</Label>
+          <Input
+            id="task-reminder-time"
+            type="time"
+            className="h-11 w-36 tabular-nums"
+            value={settings.taskTime}
+            onChange={(event) => event.target.value && update({ taskTime: event.target.value })}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Settings page: prayer and task reminders together. */
+export function ReminderSettingsCard() {
+  const [settings, update] = useReminderSettings();
+  const allowed = useNotificationsAllowed();
+  const android = isAndroidApp();
+  const on = settings.enabled || settings.tasksEnabled;
+  return (
+    <section className="stat-card space-y-5 p-5">
+      <div>
+        <p className="flex items-center gap-2 text-base font-semibold">
+          {on ? <Bell className="size-4" /> : <BellOff className="size-4" />}
+          Reminders
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {android
+            ? "Notifications on this phone. They keep working when the app is closed."
+            : "Reminders arrive as notifications in the Life OS Android app. Set them there."}
+        </p>
+      </div>
+      {android ? (
+        <>
+          {!allowed ? (
+            <div className="tone-warning flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm">
+              <span>Notifications are off for Life OS, so reminders can't show.</span>
+              <Button type="button" size="sm" onClick={requestNotifications}>
+                Allow notifications
+              </Button>
+            </div>
+          ) : null}
+          <PrayerControls settings={settings} update={update} />
+          <div className="border-t border-border" />
+          <TaskControls settings={settings} update={update} />
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+/** Spirit page: just the prayer part. */
+export function PrayerReminderSettings() {
+  const [settings, update] = useReminderSettings();
+  const allowed = useNotificationsAllowed();
+  if (!isAndroidApp()) {
+    return (
+      <section className="stat-card p-5 text-sm text-muted-foreground">
+        Prayer reminders arrive as notifications in the Life OS Android app.
+      </section>
+    );
+  }
+  return (
+    <section className="stat-card space-y-4 p-5">
+      {!allowed ? (
+        <div className="tone-warning flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm">
+          <span>Notifications are off for Life OS.</span>
+          <Button type="button" size="sm" onClick={requestNotifications}>
+            Allow notifications
+          </Button>
+        </div>
+      ) : null}
+      <PrayerControls settings={settings} update={update} />
     </section>
   );
 }

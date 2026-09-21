@@ -50,6 +50,8 @@ export type Reminder = {
   body: string;
   /** App path opened when the notification is tapped. */
   path: string;
+  /** Android notification channel: "prayers" (default) or "tasks". */
+  channel?: "prayers" | "tasks";
 };
 
 /** Replaces every scheduled reminder with this list. */

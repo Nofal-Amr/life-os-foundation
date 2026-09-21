@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { ReminderSettingsCard } from "@/components/app/PrayerReminders";
 import { UsageInsights } from "@/components/app/UsageInsights";
 import { CurrencyCombobox } from "@/components/app/CurrencyCombobox";
 import { DatePicker } from "@/components/app/DatePicker";
@@ -910,6 +911,8 @@ function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <ReminderSettingsCard />
 
         <UsageInsights />
       </div>
