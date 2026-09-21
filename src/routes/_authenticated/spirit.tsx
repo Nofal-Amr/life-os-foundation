@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import { Check, Moon } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -138,6 +138,7 @@ function SpiritPage() {
         <GlanceSection>
           <RingStat
             title={date === todayISO() ? "Prayers today" : `Prayers on ${fmtDate(date)}`}
+            icon={Moon}
             done={prayers.done}
             total={prayers.total}
             center={`${prayers.done}/${prayers.total}`}

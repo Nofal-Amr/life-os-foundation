@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { Info, Plus, Trash2 } from "lucide-react";
+import { CalendarDays, Info, Plus, Trash2, Wallet } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -344,6 +344,7 @@ function FinanceOverview() {
             {cycle ? (
               <RingStat
                 title="Payday cycle"
+                icon={CalendarDays}
                 done={cycle.elapsed}
                 total={cycle.total}
                 center={`${cycle.elapsed}/${cycle.total}`}
@@ -353,7 +354,7 @@ function FinanceOverview() {
                 ringLabel={`${cycle.elapsed} of ${cycle.total} days of the payday cycle have passed`}
               />
             ) : (
-              <StatCard title="Payday cycle">
+              <StatCard title="Payday cycle" icon={CalendarDays}>
                 <p className="text-sm text-muted-foreground">
                   Set your payday in{" "}
                   <Link to="/settings" className="text-foreground underline underline-offset-4">
@@ -365,7 +366,7 @@ function FinanceOverview() {
             )}
 
             {categories.error ? (
-              <StatCard title="Spending per week">
+              <StatCard title="Spending per week" icon={Wallet}>
                 <p className="text-sm text-muted-foreground">
                   Categories could not be loaded, so this chart is paused.
                 </p>
@@ -373,14 +374,20 @@ function FinanceOverview() {
             ) : categories.data && hasEnoughPoints(spend.rows) ? (
               <WeeklyBars
                 title="Spending per week"
+                icon={Wallet}
+                badge="8 weeks"
                 description="Money out, by category, over the last 8 weeks."
                 rows={spend.rows}
                 series={spend.series}
                 formatValue={fmtMoney}
-                summary={`${fmtMoney(spendTotal)} logged across ${spend.rows.length} weeks.`}
+                hero={{
+                  value: fmtMoney(spendTotal),
+                  caption: `logged across ${spend.rows.length} weeks`,
+                }}
+                legend
               />
             ) : categories.data ? (
-              <StatCard title="Spending per week">
+              <StatCard title="Spending per week" icon={Wallet}>
                 <NotEnoughData hint="Log spending in at least two different weeks." />
               </StatCard>
             ) : null}

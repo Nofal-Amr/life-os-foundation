@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Plus, Wifi, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -254,7 +254,7 @@ function ResourcesPage() {
         const ring = quotaRing(resource, readings.data ?? []);
         if (!ring) {
           return (
-            <StatCard key={resource.id} title={`${resource.name} left`}>
+            <StatCard key={resource.id} title={`${resource.name} left`} icon={Wifi}>
               <p className="text-sm text-muted-foreground">
                 Add a quota amount and a reading to see this.
               </p>
@@ -265,6 +265,7 @@ function ResourcesPage() {
           <RingStat
             key={resource.id}
             title={`${resource.name} left`}
+            icon={Wifi}
             done={ring.remaining}
             total={ring.quota}
             center={plain(ring.remaining)}
@@ -277,17 +278,17 @@ function ResourcesPage() {
       }
       if (resource.unit_cost == null) {
         return (
-          <StatCard key={resource.id} title={`${resource.name} cost per day`}>
+          <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={Zap}>
             <p className="text-sm text-muted-foreground">Set a unit cost to see this.</p>
           </StatCard>
         );
       }
       const points = meterCostPerDay(resource, readings.data ?? []);
-      const latest = points[points.length - 1];
       return hasEnoughPoints(points) ? (
         <TrendLine
           key={resource.id}
           title={`${resource.name} cost per day`}
+          icon={Zap}
           description="Worked out between each pair of your readings."
           points={points}
           tone={4}
@@ -296,14 +297,10 @@ function ResourcesPage() {
           formatTick={plain}
           formatDate={fmtDate}
           formatAxisDate={fmtShortDate}
-          summary={
-            latest
-              ? `Latest ${fmtMoney(latest.value)} per day on ${fmtDate(latest.date)} · ${points.length} intervals`
-              : undefined
-          }
+          summary={`Per day, between readings · ${points.length} intervals`}
         />
       ) : (
-        <StatCard key={resource.id} title={`${resource.name} cost per day`}>
+        <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={Zap}>
           <NotEnoughData hint="Needs readings on at least three different days." />
         </StatCard>
       );

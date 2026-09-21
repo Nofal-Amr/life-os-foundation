@@ -83,11 +83,16 @@
   --border: oklch(0.208 0.04 266 / 6%);
   --input: oklch(0.88 0.015 264);
   --ring: oklch(0.589 0.148 238);
-  --chart-1: oklch(0.589 0.148 238);
-  --chart-2: oklch(0.476 0.089 183);
-  --chart-3: oklch(0.585 0.204 277);
-  --chart-4: oklch(0.7 0.07 85);
-  --chart-5: oklch(0.6 0.06 320);
+  /* Categorical series colours, checked for colour-blind separation and 3:1 contrast. */
+  --chart-1: oklch(0.5 0.15 250);
+  --chart-2: oklch(0.64 0.12 180);
+  --chart-3: oklch(0.52 0.2 285);
+  --chart-4: oklch(0.66 0.15 65);
+  --chart-5: oklch(0.58 0.18 350);
+  --stat-card-shadow: 0 1px 2px oklch(0.208 0.04 266 / 6%), 0 12px 28px -12px oklch(0.208 0.04 266 / 18%);
+  --stat-card-sheen: none;
+  --stat-well: oklch(0.975 0.005 265);
+  --stat-well-shadow: inset 0 1px 2px oklch(0.208 0.04 266 / 5%);
   --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.208 0.04 266);
   --sidebar-primary: oklch(0.589 0.148 238);
@@ -130,11 +135,15 @@
   --border: oklch(1 0 0 / 7%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.794 0.122 182);
-  --chart-1: oklch(0.794 0.122 182);
-  --chart-2: oklch(0.68 0.06 145);
-  --chart-3: oklch(0.66 0.06 230);
-  --chart-4: oklch(0.76 0.08 85);
-  --chart-5: oklch(0.66 0.07 320);
+  --chart-1: oklch(0.6 0.15 250);
+  --chart-2: oklch(0.665 0.12 180);
+  --chart-3: oklch(0.56 0.18 285);
+  --chart-4: oklch(0.665 0.14 65);
+  --chart-5: oklch(0.6 0.17 350);
+  --stat-card-shadow: inset 0 1px 0 oklch(1 0 0 / 7%), 0 16px 36px -14px oklch(0 0 0 / 70%);
+  --stat-card-sheen: linear-gradient(to bottom, oklch(1 0 0 / 3.5%), transparent 45%);
+  --stat-well: oklch(0.165 0.011 265);
+  --stat-well-shadow: inset 0 2px 6px oklch(0 0 0 / 35%);
   --sidebar: oklch(0.178 0.01 265);
   --sidebar-foreground: oklch(0.965 0.006 240);
   --sidebar-primary: oklch(0.794 0.122 182);
@@ -175,6 +184,22 @@
   border-radius: 1rem;
   background: var(--color-card);
   box-shadow: var(--system-card-shadow);
+}
+
+/* The "at a glance" cards: the same surface as system-card, lifted further. */
+@utility stat-card {
+  border: 1px solid var(--color-border);
+  border-radius: 1.25rem;
+  background-color: var(--color-card);
+  background-image: var(--stat-card-sheen);
+  box-shadow: var(--stat-card-shadow);
+}
+
+/* A recessed panel inside a stat card that holds a chart. */
+@utility stat-well {
+  border-radius: 0.875rem;
+  background: var(--stat-well);
+  box-shadow: var(--stat-well-shadow);
 }
 
 @utility system-canvas {

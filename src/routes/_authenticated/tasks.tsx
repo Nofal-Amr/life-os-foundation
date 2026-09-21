@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useLocation } from "@tanstack/react-router";
+import { ListChecks } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -359,13 +360,16 @@ function TasksPage() {
           {hasEnoughPoints(weekly) ? (
             <WeeklyBars
               title="Tasks completed per week"
+              icon={ListChecks}
+              badge="8 weeks"
               rows={weekly}
               series={[{ key: "total", label: "Tasks completed", total: weeklyTotal }]}
               formatValue={(value) => String(Math.round(value))}
-              summary={`${weeklyTotal} completed in the last 8 weeks. Steps are not counted.`}
+              hero={{ value: String(weeklyTotal), caption: "completed in the last 8 weeks" }}
+              summary="Steps are not counted."
             />
           ) : (
-            <StatCard title="Tasks completed per week">
+            <StatCard title="Tasks completed per week" icon={ListChecks}>
               <NotEnoughData hint="Complete tasks in at least two different weeks." />
             </StatCard>
           )}

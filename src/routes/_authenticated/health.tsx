@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Plus, X } from "lucide-react";
+import { BedDouble, Pill, Plus, Scale, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -476,9 +476,6 @@ function HealthPage() {
   const sleepHours = healthSeries(logs.data ?? [], "sleep_hours", sleepDays);
   const sleepScores = healthSeries(logs.data ?? [], "sleep_score", sleepDays);
   const hoursText = (value: number) => `${Math.round(value * 10) / 10} h`;
-  const latestOf = (points: { date: string; value: number }[]) => points[points.length - 1];
-  const latestHours = latestOf(sleepHours);
-  const latestScore = latestOf(sleepScores);
 
   return (
     <>
@@ -491,6 +488,7 @@ function HealthPage() {
           {medRing ? (
             <RingStat
               title={date === todayISO() ? "Medication today" : `Medication on ${fmtDate(date)}`}
+              icon={Pill}
               done={medRing.done}
               total={medRing.total}
               center={`${medRing.done}/${medRing.total}`}
@@ -500,7 +498,7 @@ function HealthPage() {
               ringLabel={`${medRing.done} of ${medRing.total} scheduled doses taken`}
             />
           ) : (
-            <StatCard title="Medication today">
+            <StatCard title="Medication today" icon={Pill}>
               <p className="text-sm text-muted-foreground">
                 No doses are scheduled. Add times to a medication below to see this.
               </p>
@@ -509,6 +507,8 @@ function HealthPage() {
 
           <LatestValueCard
             title="Weight"
+            icon={Scale}
+            tone={4}
             value={savedWeight == null ? "—" : fmtWeight(savedWeight)}
             detail={
               savedWeight == null
@@ -533,20 +533,18 @@ function HealthPage() {
           {hasEnoughPoints(sleepHours) ? (
             <TrendLine
               title="Sleep hours"
+              icon={BedDouble}
+              badge={`${sleepDays} days`}
               points={sleepHours}
               tone={1}
               seriesLabel="Sleep hours"
               formatValue={hoursText}
               formatDate={fmtDate}
               formatAxisDate={fmtShortDate}
-              summary={
-                latestHours
-                  ? `Latest ${hoursText(latestHours.value)} on ${fmtDate(latestHours.date)} · ${sleepHours.length} entries in ${sleepDays} days`
-                  : undefined
-              }
+              summary={`${sleepHours.length} entries in ${sleepDays} days`}
             />
           ) : (
-            <StatCard title="Sleep hours">
+            <StatCard title="Sleep hours" icon={BedDouble}>
               <NotEnoughData hint="Log sleep hours on at least two days." />
             </StatCard>
           )}
@@ -554,20 +552,18 @@ function HealthPage() {
           {hasEnoughPoints(sleepScores) ? (
             <TrendLine
               title="Sleep score"
+              icon={Sparkles}
+              badge={`${sleepDays} days`}
               points={sleepScores}
               tone={5}
               seriesLabel="Sleep score"
               formatValue={(value) => String(Math.round(value))}
               formatDate={fmtDate}
               formatAxisDate={fmtShortDate}
-              summary={
-                latestScore
-                  ? `Latest ${Math.round(latestScore.value)} on ${fmtDate(latestScore.date)} · ${sleepScores.length} entries in ${sleepDays} days`
-                  : undefined
-              }
+              summary={`${sleepScores.length} entries in ${sleepDays} days`}
             />
           ) : (
-            <StatCard title="Sleep score">
+            <StatCard title="Sleep score" icon={Sparkles}>
               <NotEnoughData hint="Enter a sleep score on at least two days." />
             </StatCard>
           )}

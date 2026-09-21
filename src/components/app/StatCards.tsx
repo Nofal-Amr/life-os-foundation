@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import type { LucideIcon } from "lucide-react";
+import { useId, type ReactNode } from "react";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
   ChartContainer,
@@ -19,6 +20,9 @@ import { cn } from "@/lib/utils";
 /** The five chart tokens from the theme; the same in every state of the data. */
 export type ChartTone = 1 | 2 | 3 | 4 | 5;
 const toneColor = (tone: ChartTone) => `var(--chart-${tone})`;
+/** The same hue, faded, for ring tracks and area fills. */
+const toneTint = (tone: ChartTone, percent: number) =>
+  `color-mix(in oklch, var(--chart-${tone}) ${percent}%, transparent)`;
 
 export function GlanceSection({
   children,
@@ -31,31 +35,90 @@ export function GlanceSection({
     <section aria-labelledby="glance-heading" className={cn("mb-6", className)}>
       <h2
         id="glance-heading"
-        className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground"
+        className="mb-3 flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-muted-foreground"
       >
+        <span aria-hidden className="size-1.5 rounded-full bg-primary" />
         At a glance
       </h2>
-      <div className="grid min-w-0 gap-4 md:grid-cols-2">{children}</div>
+      <div className="grid min-w-0 items-start gap-4 md:grid-cols-2">{children}</div>
     </section>
   );
 }
+
+/** Optional header decoration shared by every card. */
+export type CardChrome = {
+  /** Identifies the card; tinted with the card's series colour. */
+  icon?: LucideIcon | undefined;
+  /** A short factual tag on the right, such as the range a chart covers. */
+  badge?: string | undefined;
+};
 
 export function StatCard({
   title,
   description,
   children,
   className,
+  icon: Icon,
+  tone,
+  badge,
 }: {
   title: string;
   description?: ReactNode;
   children: ReactNode;
   className?: string;
-}) {
+  tone?: ChartTone | undefined;
+} & CardChrome) {
   return (
-    <div className={cn("system-card min-w-0 p-4", className)}>
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      {description ? <p className="mt-0.5 text-xs text-muted-foreground">{description}</p> : null}
-      <div className="mt-3">{children}</div>
+    <div className={cn("stat-card min-w-0 p-5", className)}>
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          {Icon ? (
+            <span
+              aria-hidden
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+              style={{
+                background: tone ? toneTint(tone, 14) : "var(--muted)",
+                color: tone ? toneColor(tone) : "var(--muted-foreground)",
+              }}
+            >
+              <Icon className="size-4" />
+            </span>
+          ) : null}
+          <p className="truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {title}
+          </p>
+        </div>
+        {badge ? (
+          <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
+            {badge}
+          </span>
+        ) : null}
+      </div>
+      {description ? <p className="mt-2 text-xs text-muted-foreground">{description}</p> : null}
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+/** Large figure with a quiet caption, the visual anchor of a card. */
+function Hero({ value, caption }: { value: ReactNode; caption?: ReactNode }) {
+  /* "82.4 kg" reads as a large figure with a small unit; the text is unchanged. */
+  const unit = typeof value === "string" ? /^(-?[\d.,]+)\s+(\S+)$/.exec(value) : null;
+  return (
+    <div className="min-w-0">
+      <p className="text-4xl font-semibold leading-none tracking-tight tabular-nums text-foreground">
+        {unit ? (
+          <>
+            {unit[1]}
+            <span className="ml-1 text-lg font-medium tracking-normal text-muted-foreground">
+              {unit[2]}
+            </span>
+          </>
+        ) : (
+          value
+        )}
+      </p>
+      {caption ? <p className="mt-2 text-xs text-muted-foreground">{caption}</p> : null}
     </div>
   );
 }
@@ -105,14 +168,16 @@ export function Ring({
         /* Inline, so a parent's `[&_svg]:size-*` rule (buttons) cannot shrink it. */
         style={{ width: size, height: size }}
       >
+        {/* The whole ring in a faint tint of the series colour. */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           fill="none"
           strokeWidth={stroke}
-          className="stroke-muted-foreground/20"
+          stroke={toneTint(tone, 18)}
         />
+        {/* The logged share, drawn solid. */}
         {fraction > 0 ? (
           <circle
             cx={size / 2}
@@ -120,7 +185,7 @@ export function Ring({
             r={radius}
             fill="none"
             strokeWidth={stroke}
-            strokeLinecap="round"
+            strokeLinecap={fraction >= 1 ? "butt" : "round"}
             stroke={toneColor(tone)}
             strokeDasharray={`${fraction * circumference} ${circumference}`}
           />
@@ -135,6 +200,12 @@ export function Ring({
   );
 }
 
+/** Splits "3 of 5" into the leading figure and the rest, so the figure can lead. */
+function splitHeadline(headline: string): [string, string] {
+  const match = /^(\S+)(.*)$/.exec(headline);
+  return match ? [match[1] ?? headline, match[2] ?? ""] : [headline, ""];
+}
+
 /** A ring card: the ring beside its plain-language figures. */
 export function RingStat({
   title,
@@ -145,6 +216,8 @@ export function RingStat({
   detail,
   tone,
   ringLabel,
+  icon,
+  badge,
 }: {
   title: string;
   done: number;
@@ -155,17 +228,29 @@ export function RingStat({
   detail?: ReactNode;
   tone: ChartTone;
   ringLabel: string;
-}) {
+} & CardChrome) {
+  const [lead, rest] = splitHeadline(headline);
   return (
-    <StatCard title={title}>
-      <div className="flex min-w-0 items-center gap-4">
-        <Ring done={done} total={total} tone={tone} label={ringLabel}>
-          <span className="text-base font-semibold tabular-nums">{center}</span>
-        </Ring>
-        <div className="min-w-0">
-          <p className="text-2xl font-semibold tabular-nums tracking-tight">{headline}</p>
-          {detail ? <p className="mt-1 text-xs text-muted-foreground">{detail}</p> : null}
+    <StatCard title={title} tone={tone} icon={icon} badge={badge}>
+      <div className="flex min-w-0 items-center gap-5">
+        <div className="stat-well shrink-0 rounded-full p-2">
+          <Ring done={done} total={total} tone={tone} size={104} stroke={11} label={ringLabel}>
+            <span className="font-mono text-base font-semibold tabular-nums">{center}</span>
+          </Ring>
         </div>
+        <Hero
+          value={
+            <>
+              {lead}
+              {rest ? (
+                <span className="text-lg font-medium tracking-normal text-muted-foreground">
+                  {rest}
+                </span>
+              ) : null}
+            </>
+          }
+          caption={detail}
+        />
       </div>
     </StatCard>
   );
@@ -176,15 +261,18 @@ export function LatestValueCard({
   title,
   value,
   detail,
+  tone,
+  icon,
+  badge,
 }: {
   title: string;
   value: string;
   detail?: ReactNode;
-}) {
+  tone?: ChartTone | undefined;
+} & CardChrome) {
   return (
-    <StatCard title={title}>
-      <p className="text-3xl font-semibold tabular-nums tracking-tight">{value}</p>
-      {detail ? <p className="mt-1 text-xs text-muted-foreground">{detail}</p> : null}
+    <StatCard title={title} tone={tone} icon={icon} badge={badge}>
+      <Hero value={value} caption={detail} />
     </StatCard>
   );
 }
@@ -198,6 +286,12 @@ const axisProps = {
   className: "text-[11px]",
 } as const;
 
+const gridProps = {
+  vertical: false,
+  strokeDasharray: "3 3",
+  stroke: "var(--border)",
+} as const;
+
 export function TrendLine({
   title,
   description,
@@ -209,7 +303,9 @@ export function TrendLine({
   formatTick,
   seriesLabel,
   summary,
-}: {
+  icon,
+  badge,
+}: CardChrome & {
   title: string;
   description?: ReactNode;
   points: { date: string; value: number }[];
@@ -221,54 +317,79 @@ export function TrendLine({
   /** A shorter form of the value for the axis; defaults to `formatValue`. */
   formatTick?: (value: number) => string;
   seriesLabel: string;
-  /** A factual line under the chart, such as the latest value and its date. */
+  /** A factual line under the chart, such as how many entries it draws on. */
   summary?: ReactNode;
 }) {
+  const gradientId = `trend-${useId().replace(/:/g, "")}`;
   const config: ChartConfig = { value: { label: seriesLabel, color: toneColor(tone) } };
+  const latest = points[points.length - 1];
+  /* Markers only while they stay readable; the hover layer covers the rest. */
+  const showDots = points.length <= 14;
   return (
-    <StatCard title={title} description={description}>
-      <ChartContainer config={config} className="aspect-auto h-44 w-full justify-start">
-        <LineChart data={points} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} strokeDasharray="3 3" />
-          <XAxis
-            {...axisProps}
-            dataKey="date"
-            tickFormatter={formatAxisDate ?? formatDate}
-            interval="preserveStartEnd"
-            minTickGap={24}
-          />
-          <YAxis
-            {...axisProps}
-            width={44}
-            tickFormatter={(value: number) => (formatTick ?? formatValue)(value)}
-            domain={["auto", "auto"]}
-          />
-          <ChartTooltip
-            cursor={false}
-            content={
-              <ChartTooltipContent
-                labelFormatter={(_, payload) => {
-                  const date = payload?.[0]?.payload?.date;
-                  return typeof date === "string" ? formatDate(date) : "";
-                }}
-                formatter={(value) => (
-                  <span className="font-medium tabular-nums">{formatValue(Number(value))}</span>
-                )}
-              />
-            }
-          />
-          <Line
-            dataKey="value"
-            type="monotone"
-            stroke="var(--color-value)"
-            strokeWidth={2}
-            dot={{ r: 3, fill: "var(--color-value)", strokeWidth: 0 }}
-            activeDot={{ r: 5 }}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ChartContainer>
-      {summary ? <p className="mt-2 text-xs text-muted-foreground">{summary}</p> : null}
+    <StatCard title={title} description={description} tone={tone} icon={icon} badge={badge}>
+      {latest ? (
+        <Hero value={formatValue(latest.value)} caption={`Latest, ${formatDate(latest.date)}`} />
+      ) : null}
+      <div className="stat-well mt-4 px-2 pt-3 pb-1">
+        <ChartContainer config={config} className="aspect-auto h-40 w-full justify-start">
+          <AreaChart data={points} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={toneColor(tone)} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={toneColor(tone)} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid {...gridProps} />
+            <XAxis
+              {...axisProps}
+              dataKey="date"
+              tickFormatter={formatAxisDate ?? formatDate}
+              interval="preserveStartEnd"
+              minTickGap={24}
+            />
+            <YAxis
+              {...axisProps}
+              width={44}
+              tickFormatter={(value: number) => (formatTick ?? formatValue)(value)}
+              domain={["auto", "auto"]}
+            />
+            <ChartTooltip
+              cursor={{ stroke: "var(--muted-foreground)", strokeDasharray: "3 3" }}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(_, payload) => {
+                    const date = payload?.[0]?.payload?.date;
+                    return typeof date === "string" ? formatDate(date) : "";
+                  }}
+                  formatter={(value) => (
+                    <span className="font-medium tabular-nums">{formatValue(Number(value))}</span>
+                  )}
+                />
+              }
+            />
+            <Area
+              dataKey="value"
+              type="monotone"
+              stroke="var(--color-value)"
+              strokeWidth={2}
+              fill={`url(#${gradientId})`}
+              dot={
+                showDots
+                  ? { r: 4, fill: "var(--color-value)", stroke: "var(--stat-well)", strokeWidth: 2 }
+                  : false
+              }
+              activeDot={{
+                r: 5,
+                fill: "var(--color-value)",
+                stroke: "var(--stat-well)",
+                strokeWidth: 2,
+              }}
+              isAnimationActive={false}
+            />
+          </AreaChart>
+        </ChartContainer>
+      </div>
+      {summary ? <p className="mt-3 text-xs text-muted-foreground">{summary}</p> : null}
     </StatCard>
   );
 }
@@ -285,83 +406,107 @@ export function WeeklyBars({
   rows,
   series,
   formatValue,
+  hero,
+  legend = false,
   summary,
-}: {
+  icon,
+  badge,
+}: CardChrome & {
   title: string;
   description?: ReactNode;
   rows: ({ weekStart: string; label: string } & Record<string, number | string>)[];
   series: BarSeries[];
   formatValue: (value: number) => string;
+  /** The headline figure for the whole chart, such as the total it shows. */
+  hero?: { value: string; caption: string };
+  /** Show the legend even for a single series. It always shows for two or more. */
+  legend?: boolean;
   summary?: ReactNode;
 }) {
+  /* Colour follows the series' fixed slot; "Other" is always neutral. */
   const colorOf = (entry: BarSeries, index: number) =>
     entry.key === "other" ? "var(--muted-foreground)" : toneColor(((index % 5) + 1) as ChartTone);
   const config: ChartConfig = Object.fromEntries(
     series.map((entry, index) => [entry.key, { label: entry.label, color: colorOf(entry, index) }]),
   );
+  const showLegend = legend || series.length > 1;
   return (
-    <StatCard title={title} description={description}>
-      <ChartContainer config={config} className="aspect-auto h-44 w-full justify-start">
-        <BarChart data={rows} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} strokeDasharray="3 3" />
-          <XAxis {...axisProps} dataKey="label" interval="preserveStartEnd" minTickGap={16} />
-          <YAxis
-            {...axisProps}
-            width={40}
-            allowDecimals={false}
-            tickFormatter={(value: number) => formatValue(value)}
-          />
-          <ChartTooltip
-            cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-            content={
-              <ChartTooltipContent
-                labelFormatter={(_, payload) => {
-                  const label = payload?.[0]?.payload?.label;
-                  return typeof label === "string" ? `Week of ${label}` : "";
-                }}
-                formatter={(value, name) => (
-                  <span className="flex w-full items-center justify-between gap-3">
-                    <span className="text-muted-foreground">
-                      {config[String(name)]?.label ?? String(name)}
-                    </span>
-                    <span className="font-medium tabular-nums">{formatValue(Number(value))}</span>
-                  </span>
-                )}
-              />
-            }
-          />
-          {series.map((entry, index) => (
-            <Bar
-              key={entry.key}
-              dataKey={entry.key}
-              stackId="week"
-              fill={colorOf(entry, index)}
-              radius={index === series.length - 1 ? [4, 4, 0, 0] : 0}
-              isAnimationActive={false}
+    <StatCard title={title} description={description} tone={1} icon={icon} badge={badge}>
+      {hero ? <Hero value={hero.value} caption={hero.caption} /> : null}
+      <div className={cn("stat-well px-2 pt-3 pb-1", hero ? "mt-4" : null)}>
+        <ChartContainer config={config} className="aspect-auto h-44 w-full justify-start">
+          <BarChart
+            data={rows}
+            margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+            barCategoryGap="22%"
+          >
+            <CartesianGrid {...gridProps} />
+            <XAxis {...axisProps} dataKey="label" interval="preserveStartEnd" minTickGap={16} />
+            <YAxis
+              {...axisProps}
+              width={44}
+              allowDecimals={false}
+              tickFormatter={(value: number) => formatValue(value)}
             />
-          ))}
-        </BarChart>
-      </ChartContainer>
-      {series.length > 1 ? (
-        <ul className="mt-3 grid min-w-0 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+            <ChartTooltip
+              cursor={{ fill: "var(--muted)", opacity: 0.5 }}
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(_, payload) => {
+                    const label = payload?.[0]?.payload?.label;
+                    return typeof label === "string" ? `Week of ${label}` : "";
+                  }}
+                  formatter={(value, name) => (
+                    <span className="flex w-full items-center justify-between gap-3">
+                      <span className="text-muted-foreground">
+                        {config[String(name)]?.label ?? String(name)}
+                      </span>
+                      <span className="font-medium tabular-nums">{formatValue(Number(value))}</span>
+                    </span>
+                  )}
+                />
+              }
+            />
+            {series.map((entry, index) => (
+              <Bar
+                key={entry.key}
+                dataKey={entry.key}
+                stackId="week"
+                fill={colorOf(entry, index)}
+                /* A thin card-coloured edge keeps stacked segments apart. */
+                stroke="var(--stat-well)"
+                strokeWidth={series.length > 1 ? 1.5 : 0}
+                radius={4}
+                maxBarSize={32}
+                isAnimationActive={false}
+              />
+            ))}
+          </BarChart>
+        </ChartContainer>
+      </div>
+      {showLegend ? (
+        <ul className="mt-4 grid min-w-0 gap-2 text-sm sm:grid-cols-2">
           {series.map((entry, index) => (
-            <li key={entry.key} className="flex min-w-0 items-center justify-between gap-2">
+            <li
+              key={entry.key}
+              className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-muted/60 px-3 py-2"
+            >
               <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
                 <span
                   aria-hidden
-                  className="size-2.5 shrink-0 rounded-full"
+                  className="size-3 shrink-0 rounded-[4px]"
                   style={{ background: colorOf(entry, index) }}
                 />
                 <span className="truncate">{entry.label}</span>
               </span>
-              <span className="shrink-0 tabular-nums text-foreground">
+              <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums text-foreground">
                 {formatValue(entry.total)}
               </span>
             </li>
           ))}
         </ul>
       ) : null}
-      {summary ? <p className="mt-2 text-xs text-muted-foreground">{summary}</p> : null}
+      {summary ? <p className="mt-3 text-xs text-muted-foreground">{summary}</p> : null}
     </StatCard>
   );
 }
