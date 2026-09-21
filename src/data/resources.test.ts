@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { cycleWindow, type Resource } from "./resources";
+import { cycleWindow, tierUsage, type Resource, type ResourceReading } from "./resources";
+import { EGYPT_RESIDENTIAL_2026 } from "./tariff";
 
 function withCycle(extra: Partial<Resource>): Resource {
   return {
@@ -57,5 +58,52 @@ describe("cycleWindow", () => {
 
   it("returns nothing without a start date", () => {
     expect(cycleWindow(withCycle({ cycle_unit: "months", cycle_count: 1 }))).toBeNull();
+  });
+});
+
+describe("tier usage for electricity", () => {
+  const prepaid = {
+    id: "e",
+    kind: "quota",
+    tariff: EGYPT_RESIDENTIAL_2026,
+    cycle_start_date: null,
+    cycle_days: null,
+    cycle_unit: null,
+    cycle_count: null,
+  } as unknown as Resource;
+  const reading = (value: number, at: string) =>
+    ({ resource_id: "e", reading: value, reading_at: at }) as ResourceReading;
+  const today = new Date("2026-09-21T12:00:00");
+
+  it("adds up drops in a prepaid balance this month and ignores top-ups", () => {
+    const usage = tierUsage(
+      prepaid,
+      [
+        reading(500, "2026-08-30T10:00:00"), // last reading before September: the starting point
+        reading(380, "2026-09-10T10:00:00"), // used 120
+        reading(900, "2026-09-12T10:00:00"), // top-up
+        reading(820, "2026-09-20T10:00:00"), // used 80
+      ],
+      undefined,
+      today,
+    )!;
+    expect(usage.used).toBe(200);
+    expect(usage.bill.tier).toBe(3);
+    expect(usage.until).toEqual({ next: 4, kwh: 0 });
+  });
+
+  it("previews a reading before it's saved", () => {
+    const usage = tierUsage(
+      prepaid,
+      [reading(500, "2026-09-01T10:00:00")],
+      { reading: 260, at: "2026-09-21T10:00:00" },
+      today,
+    )!;
+    expect(usage.used).toBe(240);
+    expect(usage.bill.tier).toBe(4);
+  });
+
+  it("is null without a tariff", () => {
+    expect(tierUsage({ ...prepaid, tariff: null } as Resource, [], undefined, today)).toBeNull();
   });
 });

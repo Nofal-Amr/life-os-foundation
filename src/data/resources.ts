@@ -157,7 +157,60 @@ export type QuotaFacts = {
   runsOutOn: string | null;
   cycleEnd: string | null;
   runsOutBeforeCycleEnd: boolean | null;
+  /** With a tariff (e.g. a prepaid electricity meter): usage this month and its tier. */
+  tier: TierUsage | null;
 };
+
+export type TierUsage = {
+  tariff: Tariff;
+  /** Usage so far in the billing period, in the resource's unit. */
+  used: number;
+  bill: Bill;
+  until: { next: number; kwh: number } | null;
+  periodStart: string;
+};
+
+/**
+ * Usage in the current billing period (the resource's cycle, else the
+ * calendar month), for tiered pricing. A running-total meter uses last minus
+ * first; a prepaid balance adds up each drop and ignores top-ups (rises).
+ * `pending` lets the reading dialog preview a reading before it's saved.
+ */
+export function tierUsage(
+  resource: Resource,
+  readings: ResourceReading[],
+  pending?: { reading: number; at: string },
+  today = new Date(),
+): TierUsage | null {
+  const tariff = parseTariff(resource.tariff);
+  if (!tariff) return null;
+  const periodStart = cycleWindow(resource, today)?.start ?? format(today, "yyyy-MM-01");
+  const list = [
+    ...readingsFor(resource, readings),
+    ...(pending ? [{ reading: pending.reading, reading_at: pending.at } as ResourceReading] : []),
+  ];
+  // The last reading before the period counts as its starting point.
+  const before = list.filter((r) => r.reading_at.slice(0, 10) < periodStart).at(-1);
+  const inPeriod = list.filter((r) => r.reading_at.slice(0, 10) >= periodStart);
+  const series = before ? [before, ...inPeriod] : inPeriod;
+  let used = 0;
+  if (resource.kind === "meter") {
+    if (series.length > 1) used = Number(series.at(-1)!.reading) - Number(series[0]!.reading);
+  } else {
+    for (let i = 1; i < series.length; i++) {
+      const drop = Number(series[i - 1]!.reading) - Number(series[i]!.reading);
+      if (drop > 0) used += drop;
+    }
+  }
+  used = Math.max(0, used);
+  return {
+    tariff,
+    used,
+    bill: billFor(tariff, used),
+    until: untilNextTier(tariff, used),
+    periodStart,
+  };
+}
 
 /**
  * The cycle the given day falls in. Months are real calendar months: a start
@@ -307,5 +360,6 @@ export function quotaFacts(
     runsOutOn,
     cycleEnd: window?.end ?? null,
     runsOutBeforeCycleEnd: runsOutOn && window ? runsOutOn < window.end : null,
+    tier: tierUsage(resource, readings, undefined, today),
   };
 }

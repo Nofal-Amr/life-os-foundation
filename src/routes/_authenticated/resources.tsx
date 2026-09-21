@@ -40,6 +40,7 @@ import {
   createResource,
   deleteResource,
   meterFacts,
+  tierUsage,
   quotaFacts,
   readingsFor,
   resourceKeys,
@@ -260,6 +261,34 @@ function ResourcesPage() {
   const glance = list
     .filter((resource) => resource.active)
     .map((resource) => {
+      const usage = tierUsage(resource, readings.data ?? []);
+      if (usage) {
+        const tier = usage.bill.tier;
+        const top = usage.tariff.tiers[tier - 1]!.max;
+        return (
+          <RingStat
+            key={resource.id}
+            title={`${resource.name} this month`}
+            icon={Zap}
+            done={usage.used}
+            total={top ?? usage.used}
+            center={`Tier ${tier}`}
+            headline={`${plain(usage.used)} ${resource.unit}`}
+            detail={
+              usage.until
+                ? `${Math.ceil(usage.until.kwh)} ${resource.unit} until tier ${usage.until.next} · about ${fmtMoney(usage.bill.total)} so far`
+                : `Highest tier · about ${fmtMoney(usage.bill.total)} so far`
+            }
+            tone={4}
+            ringLabel={`${plain(usage.used)} ${resource.unit} used this month, tier ${tier} of ${usage.tariff.tiers.length}`}
+          >
+            <Button size="sm" variant="outline" onClick={() => openReading(resource)}>
+              <Plus className="size-4" />
+              Add reading
+            </Button>
+          </RingStat>
+        );
+      }
       if (resource.kind === "quota") {
         const ring = quotaRing(resource, readings.data ?? []);
         if (!ring) {
@@ -473,35 +502,47 @@ function ResourcesPage() {
                         ) : null}
                       </dl>
                     ) : quota ? (
-                      <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
-                        <div>
-                          <dt className="text-muted-foreground">Left</dt>
-                          <dd className="tabular-nums">
-                            {round(quota.remaining)} {resource.unit}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-muted-foreground">Average a day</dt>
-                          <dd className="tabular-nums">
-                            {quota.perDay == null ? "—" : `${round(quota.perDay)} ${resource.unit}`}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-muted-foreground">At that rate</dt>
-                          <dd className="tabular-nums">
-                            {quota.daysLeft == null
-                              ? "—"
-                              : `about ${Math.floor(quota.daysLeft)} ${Math.floor(quota.daysLeft) === 1 ? "day" : "days"} left`}
-                          </dd>
-                        </div>
-                        {quota.runsOutOn && quota.cycleEnd ? (
-                          <div className="sm:col-span-3 text-muted-foreground">
-                            {quota.runsOutBeforeCycleEnd
-                              ? `At this rate it reaches zero around ${fmtDate(quota.runsOutOn)}, before the cycle ends on ${fmtDate(quota.cycleEnd)}.`
-                              : `At this rate it lasts past the cycle end on ${fmtDate(quota.cycleEnd)}.`}
-                          </div>
+                      <>
+                        {quota.tier ? (
+                          <TierMeter
+                            tariff={quota.tier.tariff}
+                            kwh={quota.tier.used}
+                            unit={resource.unit}
+                            projectedTier={null}
+                          />
                         ) : null}
-                      </dl>
+                        <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
+                          <div>
+                            <dt className="text-muted-foreground">Left</dt>
+                            <dd className="tabular-nums">
+                              {round(quota.remaining)} {resource.unit}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">Average a day</dt>
+                            <dd className="tabular-nums">
+                              {quota.perDay == null
+                                ? "—"
+                                : `${round(quota.perDay)} ${resource.unit}`}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-muted-foreground">At that rate</dt>
+                            <dd className="tabular-nums">
+                              {quota.daysLeft == null
+                                ? "—"
+                                : `about ${Math.floor(quota.daysLeft)} ${Math.floor(quota.daysLeft) === 1 ? "day" : "days"} left`}
+                            </dd>
+                          </div>
+                          {quota.runsOutOn && quota.cycleEnd ? (
+                            <div className="sm:col-span-3 text-muted-foreground">
+                              {quota.runsOutBeforeCycleEnd
+                                ? `At this rate it reaches zero around ${fmtDate(quota.runsOutOn)}, before the cycle ends on ${fmtDate(quota.cycleEnd)}.`
+                                : `At this rate it lasts past the cycle end on ${fmtDate(quota.cycleEnd)}.`}
+                            </div>
+                          ) : null}
+                        </dl>
+                      </>
                     ) : null}
 
                     {meter && meter.cycleCost != null && resource.category_id ? (
@@ -582,7 +623,7 @@ function ResourcesPage() {
               onChange={(e) => setForm({ ...form, unit: e.target.value })}
             />
           </div>
-          {form.kind === "meter" ? (
+          {form.kind === "meter" || form.kind === "quota" ? (
             <div className="space-y-2 sm:col-span-2">
               <Label>Pricing</Label>
               <Select
@@ -607,7 +648,7 @@ function ResourcesPage() {
               ) : null}
             </div>
           ) : null}
-          <div className={form.tariff && form.kind === "meter" ? "hidden" : "space-y-2"}>
+          <div className={form.tariff ? "hidden" : "space-y-2"}>
             <Label htmlFor="resource-cost">Cost per unit</Label>
             <Input
               id="resource-cost"
@@ -788,6 +829,29 @@ function ResourcesPage() {
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">This will be your first reading.</p>
+              );
+            })()}
+            {(() => {
+              const value = Number(readingValue);
+              if (readingValue === "" || Number.isNaN(value)) return null;
+              const usage = tierUsage(readingFor, readings.data ?? [], {
+                reading: value,
+                at: new Date().toISOString(),
+              });
+              if (!usage) return null;
+              return (
+                <div className="rounded-lg bg-secondary p-3 text-sm">
+                  <p className="font-medium">
+                    With this reading: {round(usage.used)} {readingFor.unit} this month · tier{" "}
+                    {usage.bill.tier} of {usage.tariff.tiers.length}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {usage.until
+                      ? `${Math.ceil(usage.until.kwh)} ${readingFor.unit} left before tier ${usage.until.next}. `
+                      : "Highest tier. "}
+                    About {fmtMoney(usage.bill.total)} so far this month.
+                  </p>
+                </div>
               );
             })()}
           </div>
