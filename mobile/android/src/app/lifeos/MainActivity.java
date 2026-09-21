@@ -34,6 +34,9 @@ public class MainActivity extends Activity {
     private static final String APP_HOST = "app.lifeos.local";
     private static final String APP_URL = "https://" + APP_HOST + "/";
     private static final int LOCATION_REQUEST = 1;
+    /** Lets the web app know it runs inside this shell (see src/routes/auth.tsx). */
+    private static final String UA_MARKER = "LifeOSAndroid";
+    private static final String CALLBACK_SCHEME = "lifeos";
 
     private WebView webView;
     private String pendingGeoOrigin;
@@ -57,6 +60,7 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setMediaPlaybackRequiresUserGesture(true);
+        settings.setUserAgentString(settings.getUserAgentString() + " " + UA_MARKER);
 
         webView.setWebViewClient(new AppClient());
         webView.setWebChromeClient(new WebChromeClient() {
@@ -72,8 +76,33 @@ public class MainActivity extends Activity {
             }
         });
 
-        if (savedInstanceState != null) webView.restoreState(savedInstanceState);
+        String callback = callbackUrl(getIntent());
+        if (callback != null) webView.loadUrl(callback);
+        else if (savedInstanceState != null) webView.restoreState(savedInstanceState);
         else webView.loadUrl(APP_URL);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String callback = callbackUrl(intent);
+        if (callback != null) webView.loadUrl(callback);
+    }
+
+    /**
+     * Google/Apple sign-in finishes in the phone's browser and returns to
+     * lifeos://auth-callback?code=...#access_token=... . Hand the query and
+     * fragment to the web app's /auth page, which completes the session.
+     */
+    private static String callbackUrl(Intent intent) {
+        if (intent == null || intent.getData() == null) return null;
+        Uri data = intent.getData();
+        if (!CALLBACK_SCHEME.equals(data.getScheme())) return null;
+        String query = data.getEncodedQuery();
+        String fragment = data.getEncodedFragment();
+        return APP_URL + "auth"
+            + (query != null ? "?" + query : "")
+            + (fragment != null ? "#" + fragment : "");
     }
 
     @Override
