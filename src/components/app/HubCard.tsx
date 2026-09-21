@@ -63,36 +63,43 @@ export function HubCard() {
   return skin === "rpg" ? <RpgSheet hub={hub} /> : <SeriousHub lines={hub.lines} />;
 }
 
+/**
+ * Serious: the same card layout and bars as the RPG sheet, but each bar is a
+ * plain "done of scheduled" count with its real denominator — no levels, XP
+ * or 0–100 scores.
+ */
 function SeriousHub({ lines }: { lines: DimensionLine[] }) {
   return (
-    <section className="stat-card p-5" aria-label="Last 7 days">
+    <section className="stat-card space-y-4 p-5" aria-label="Last 7 days">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
         Last 7 days
       </p>
-      <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {lines.map((line) => {
           const { icon: Icon, to, tone } = META[line.key];
           return (
             <li key={line.key}>
               <Link
                 to={to}
-                className="flex items-center gap-3 rounded-xl bg-secondary/70 px-3 py-2.5 transition-colors hover:bg-secondary"
+                className="block rounded-xl bg-secondary/70 p-3 transition-colors hover:bg-secondary"
               >
-                <span
-                  className="flex size-8 shrink-0 items-center justify-center rounded-lg"
-                  style={{
-                    background: `color-mix(in oklch, var(--chart-${tone}) 16%, transparent)`,
-                    color: `var(--chart-${tone})`,
-                  }}
-                >
-                  <Icon className="size-4" aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-medium">{line.label}</span>
-                  <span className="block truncate text-xs tabular-nums text-muted-foreground">
-                    {line.count}
-                  </span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <Icon
+                    className="size-4"
+                    style={{ color: `var(--chart-${tone})` }}
+                    aria-hidden="true"
+                  />
+                  <span className="text-sm font-semibold">{line.label}</span>
+                </div>
+                <p className="mt-2 text-xs tabular-nums text-muted-foreground">{line.count}</p>
+                {line.ratio && line.ratio.total > 0 ? (
+                  <XpBar
+                    into={line.ratio.done}
+                    span={line.ratio.total}
+                    tone={tone}
+                    label={`${line.label}: ${line.count}`}
+                  />
+                ) : null}
               </Link>
             </li>
           );
