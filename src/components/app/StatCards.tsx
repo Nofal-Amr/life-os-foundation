@@ -33,11 +33,7 @@ export function GlanceSection({
 }) {
   return (
     <section aria-labelledby="glance-heading" className={cn("mb-6", className)}>
-      <h2
-        id="glance-heading"
-        className="mb-3 flex items-center gap-2 text-sm font-medium uppercase tracking-wide text-muted-foreground"
-      >
-        <span aria-hidden className="size-1.5 rounded-full bg-primary" />
+      <h2 id="glance-heading" className="section-title mb-3">
         At a glance
       </h2>
       <div className="grid min-w-0 items-start gap-4 md:grid-cols-2">{children}</div>
@@ -84,12 +80,10 @@ export function StatCard({
               <Icon className="size-4" />
             </span>
           ) : null}
-          <p className="truncate text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {title}
-          </p>
+          <p className="truncate text-sm font-medium text-foreground">{title}</p>
         </div>
         {badge ? (
-          <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs tabular-nums text-muted-foreground">
             {badge}
           </span>
         ) : null}
@@ -106,7 +100,7 @@ function Hero({ value, caption }: { value: ReactNode; caption?: ReactNode }) {
   const unit = typeof value === "string" ? /^(-?[\d.,]+)\s+(\S+)$/.exec(value) : null;
   return (
     <div className="min-w-0">
-      <p className="text-4xl font-semibold leading-none tracking-tight tabular-nums text-foreground">
+      <p className="text-4xl font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
         {unit ? (
           <>
             {unit[1]}
@@ -287,7 +281,7 @@ const axisProps = {
   tickLine: false,
   axisLine: false,
   tickMargin: 8,
-  className: "text-[11px]",
+  className: "text-xs",
 } as const;
 
 const gridProps = {

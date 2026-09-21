@@ -36,12 +36,12 @@ import { usePreferences } from "@/hooks/usePreferences";
 export const Route = createFileRoute("/_authenticated/capabilities")({
   head: () => ({
     meta: [
-      { title: "Capabilities — Life OS" },
+      { title: "Capabilities · Life OS" },
       {
         name: "description",
         content: "Track the capabilities you are building and the evidence behind them.",
       },
-      { property: "og:title", content: "Capabilities — Life OS" },
+      { property: "og:title", content: "Capabilities · Life OS" },
       {
         property: "og:description",
         content: "Track the capabilities you are building and the evidence behind them.",

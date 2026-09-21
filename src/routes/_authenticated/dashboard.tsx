@@ -21,7 +21,6 @@ import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { HubCard } from "@/components/app/HubCard";
 import { TaskTimerButton } from "@/components/app/Timer";
 import { PrayerTiles } from "@/components/app/PrayerLog";
-import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
 
 import { SemanticBadge } from "@/components/app/SemanticBadge";
@@ -85,13 +84,13 @@ import { prayerTimesFor } from "@/lib/prayer";
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Today — Life OS" },
+      { title: "Today · Life OS" },
       {
         name: "description",
         content:
           "Your next action, plus a one-line look at prayers, money, body and what is coming up.",
       },
-      { property: "og:title", content: "Today — Life OS" },
+      { property: "og:title", content: "Today · Life OS" },
       {
         property: "og:description",
         content:
@@ -176,7 +175,7 @@ type ComingUpItem = {
 function SectionHeading({ title, detail }: { title: string; detail?: string | undefined }) {
   return (
     <div className="min-w-0">
-      <h2 className="text-lg font-semibold text-foreground sm:text-xl">{title}</h2>
+      <h2 className="text-lg font-semibold tracking-[-0.01em] text-foreground">{title}</h2>
       {detail ? <p className="mt-1 text-sm text-muted-foreground">{detail}</p> : null}
     </div>
   );
@@ -305,7 +304,7 @@ function StatusRow({
       <div className="flex min-h-11 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 py-1.5">
         <Icon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <p className="min-w-0 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground/80">{label}</span> — {value}
+          <span className="font-medium text-foreground/80">{label}:</span> {value}
         </p>
         {to ? (
           <Button
@@ -374,7 +373,6 @@ function DashboardPage() {
   const resourceReadings = useQuery(resourceReadingsQuery());
 
   const [quickTask, setQuickTask] = useState(false);
-  const [quickMoney, setQuickMoney] = useState(false);
   const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
 
   const onError = (error: unknown) =>
@@ -697,10 +695,10 @@ function DashboardPage() {
                     <span className="ml-1 font-normal opacity-75">{medication.dosage}</span>
                   ) : null}
                 </span>
-                <span className="w-full truncate text-[11px] tabular-nums opacity-75">
+                <span className="w-full truncate text-xs tabular-nums opacity-75">
                   {fmtSlot(slot)}
                 </span>
-                <span className="flex items-center gap-1 text-[11px]">
+                <span className="flex items-center gap-1 text-xs">
                   {taken ? <Check className="size-3" /> : null}
                   {taken ? "Taken" : "Not taken"}
                 </span>
@@ -877,11 +875,12 @@ function DashboardPage() {
   return (
     <div className="min-w-0">
       <div className="w-full min-w-0">
-        <header className="pb-5">
-          <p className="text-sm text-muted-foreground">
-            {fmtLongDate(new Date())} · {greeting()}
+        <header className="pb-6">
+          <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
+          <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight tracking-[-0.025em] text-foreground">
+            {greeting()}
             {firstName ? `, ${firstName}` : ""}
-          </p>
+          </h1>
         </header>
 
         {loading ? (
@@ -963,7 +962,7 @@ function DashboardPage() {
             <section className="min-w-0 border-t border-border/60 pt-5 text-xs text-muted-foreground">
               <div className="grid min-w-0 gap-6 sm:grid-cols-2">
                 <div className="min-w-0">
-                  <h2 className="text-xs font-medium uppercase tracking-wide">Coming up</h2>
+                  <h2 className="text-sm font-medium text-foreground">Coming up</h2>
                   {visibleComingUp.length ? (
                     <div className="mt-1 divide-y divide-border/50">
                       {visibleComingUp.slice(0, 6).map((item) => (
@@ -988,7 +987,7 @@ function DashboardPage() {
                 </div>
 
                 <div className="min-w-0">
-                  <h2 className="text-xs font-medium uppercase tracking-wide">Today so far</h2>
+                  <h2 className="text-sm font-medium text-foreground">Today so far</h2>
                   {todayCounts.length ? (
                     <div className="mt-2 flex min-w-0 flex-wrap gap-2">
                       {todayCounts.map((item) => (
@@ -1024,35 +1023,12 @@ function DashboardPage() {
                     <Link to="/notes">Notes</Link>
                   </Button>
                 ) : null}
-                {isEnabled("money") ? (
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
-                    onClick={() => setQuickMoney(true)}
-                  >
-                    Log expense
-                  </Button>
-                ) : null}
-                {isEnabled("do") ? (
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
-                    onClick={() => setQuickTask(true)}
-                  >
-                    Add task
-                  </Button>
-                ) : null}
               </div>
             </section>
           </main>
         )}
       </div>
 
-      <QuickAddTransactionDialog open={quickMoney} onOpenChange={setQuickMoney} />
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
       <ShrinkItDialog
         task={shrinkTask}

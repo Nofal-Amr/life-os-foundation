@@ -539,7 +539,7 @@ export function EntityIdentityPicker({
                 <div className="space-y-4 pb-2">
                   {groups.map((entry) => (
                     <div key={entry.group}>
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="mb-2 text-xs font-medium text-muted-foreground">
                         {entry.group}
                       </p>
                       <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">

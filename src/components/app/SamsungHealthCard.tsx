@@ -187,7 +187,7 @@ export function SamsungHealthCard() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {tiles.map(({ icon: Icon, label, value }) => (
               <div key={label} className="rounded-xl bg-secondary p-3">
-                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Icon className="size-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate">{label}</span>
                 </p>
@@ -286,7 +286,7 @@ function DayChart({
                 }}
               />
               {!dense ? (
-                <span className="text-[10px] uppercase text-muted-foreground">
+                <span className="axis-label">
                   {format(parseISO(day), "EEEEE")}
                 </span>
               ) : null}
@@ -295,7 +295,7 @@ function DayChart({
         })}
       </div>
       {dense ? (
-        <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+        <div className="mt-1 flex justify-between text-2xs text-muted-foreground">
           <span>{format(parseISO(days[0]!), "d MMM")}</span>
           <span>{format(parseISO(days.at(-1)!), "d MMM")}</span>
         </div>
@@ -353,7 +353,7 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
       ) : null}
       <details className="rounded-lg bg-secondary px-3 py-2 text-xs">
         <summary className="cursor-pointer font-medium">Technical details</summary>
-        <pre className="mt-2 whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
+        <pre className="mt-2 whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground">
           {JSON.stringify(report.diagnostics, null, 1)}
         </pre>
       </details>

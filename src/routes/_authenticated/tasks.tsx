@@ -70,9 +70,9 @@ import { priorityLabel, priorityTone, taskStatusLabel, taskStatusTone } from "@/
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
     meta: [
-      { title: "Tasks — Life OS" },
+      { title: "Tasks · Life OS" },
       { name: "description", content: "Capture, filter and complete your tasks." },
-      { property: "og:title", content: "Tasks — Life OS" },
+      { property: "og:title", content: "Tasks · Life OS" },
       { property: "og:description", content: "Capture, filter and complete your tasks." },
     ],
   }),

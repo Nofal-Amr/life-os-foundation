@@ -74,12 +74,12 @@ import { RecurringList } from "./finance.recurring";
 export const Route = createFileRoute("/_authenticated/finance/")({
   head: () => ({
     meta: [
-      { title: "Money — Life OS" },
+      { title: "Money · Life OS" },
       {
         name: "description",
         content: "One glanceable figure: what you actually have before your next payday.",
       },
-      { property: "og:title", content: "Money — Life OS" },
+      { property: "og:title", content: "Money · Life OS" },
       {
         property: "og:description",
         content: "One glanceable figure: what you actually have before your next payday.",
@@ -289,7 +289,7 @@ function FinanceOverview() {
           <section className="stat-card p-6 sm:p-8">
             {setup && hasAccounts ? (
               <>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="text-sm font-medium text-muted-foreground">
                   Left to spend before payday
                 </p>
                 <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
@@ -409,7 +409,7 @@ function FinanceOverview() {
               </>
             ) : (
               <>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <p className="text-sm font-medium text-muted-foreground">
                   Balance you can spend
                 </p>
                 <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
@@ -498,7 +498,7 @@ function FinanceOverview() {
 
           {/* Accounts */}
           <section>
-            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-3 section-title">
               Accounts
             </h2>
             {!hasAccounts ? (
@@ -577,7 +577,7 @@ function FinanceOverview() {
           {/* Upcoming recurring costs stay in sight */}
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              <h2 className="section-title">
                 Coming up
               </h2>
               <Button asChild size="sm" variant="ghost">

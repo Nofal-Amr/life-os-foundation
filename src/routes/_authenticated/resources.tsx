@@ -73,12 +73,12 @@ const STARTER_RESOURCES: { name: string; kind: ResourceKind; unit: string }[] = 
 export const Route = createFileRoute("/_authenticated/resources")({
   head: () => ({
     meta: [
-      { title: "Resources — Life OS" },
+      { title: "Resources · Life OS" },
       {
         name: "description",
         content: "Meter readings and quotas, with usage and cost worked out from what you log.",
       },
-      { property: "og:title", content: "Resources — Life OS" },
+      { property: "og:title", content: "Resources · Life OS" },
       {
         property: "og:description",
         content: "Meter readings and quotas, with usage and cost worked out from what you log.",
@@ -357,7 +357,7 @@ function ResourcesPage() {
     <>
       <PageHeader
         title="Resources"
-        description="Electricity, water, data — usage and cost worked out from your own readings."
+        description="Electricity, water and data: usage and cost worked out from your own readings."
         actions={<Button onClick={openCreate}>New resource</Button>}
       />
 
@@ -394,7 +394,7 @@ function ResourcesPage() {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                These are empty starting points with no figures — edit or delete them freely.
+                These are empty starting points with no figures. Edit or delete them freely.
               </p>
             </div>
           }
@@ -936,7 +936,7 @@ function TierMeter({
           />
         ))}
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         {tariff.name} · {tariff.source}
       </p>
     </div>

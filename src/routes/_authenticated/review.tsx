@@ -30,9 +30,9 @@ import { usePreferences } from "@/hooks/usePreferences";
 export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({
     meta: [
-      { title: "Daily review — Life OS" },
+      { title: "Daily review · Life OS" },
       { name: "description", content: "A short structured reflection, once per day." },
-      { property: "og:title", content: "Daily review — Life OS" },
+      { property: "og:title", content: "Daily review · Life OS" },
       { property: "og:description", content: "A short structured reflection, once per day." },
     ],
   }),
@@ -83,7 +83,7 @@ function ReviewPage() {
     <>
       <PageHeader
         title="Daily review"
-        description="One review per day — saving again updates the same entry."
+        description="One review per day. Saving again updates the same entry."
       />
 
       <div className="mb-6 max-w-xs space-y-2">

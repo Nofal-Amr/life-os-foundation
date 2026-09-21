@@ -191,14 +191,14 @@ export function PrayerDayList({
                     {time ? formatTime(time) : "—"}
                   </span>
                   {next === name && !status ? (
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+                    <span className="text-2xs font-semibold uppercase tracking-wide text-primary">
                       Next
                     </span>
                   ) : null}
                 </span>
                 <span
                   className={cn(
-                    "flex h-full min-h-16 w-28 shrink-0 flex-col items-center justify-center gap-1 text-[11px] font-medium",
+                    "flex h-full min-h-16 w-28 shrink-0 flex-col items-center justify-center gap-1 text-xs font-medium",
                     status ? "text-white" : "border-l border-border text-muted-foreground",
                   )}
                   style={
@@ -271,11 +271,11 @@ export function PrayerTiles({
             >
               <span className="w-full truncate text-xs font-medium">{PRAYER_LABELS[name]}</span>
               {time && formatTime ? (
-                <span className="w-full truncate text-[10px] tabular-nums opacity-80">
+                <span className="w-full truncate text-2xs tabular-nums opacity-80">
                   {formatTime(time)}
                 </span>
               ) : null}
-              <span className="flex items-center gap-1 text-[10px]">
+              <span className="flex items-center gap-1 text-2xs">
                 {status ? (
                   <>
                     <StatusMark status={status} size="size-3" />
@@ -358,7 +358,7 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
                   {dates.map((date) => (
                     <span
                       key={date}
-                      className="text-center text-[9px] tabular-nums text-muted-foreground"
+                      className="text-center text-2xs tabular-nums text-muted-foreground"
                     >
                       {format(parseISO(date), "d")}
                     </span>
@@ -384,7 +384,7 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
                 <p className="mt-1 text-2xl font-semibold tabular-nums">
                   {Math.round((counts[status] / counts.logged) * 100)}%
                 </p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {counts[status]} of {counts.logged} logged
                 </p>
               </div>
@@ -409,7 +409,7 @@ function PrayerHeatRow({
 }) {
   return (
     <>
-      <span className="pr-2 text-[10px] font-medium text-muted-foreground">
+      <span className="pr-2 text-2xs font-medium text-muted-foreground">
         {PRAYER_LABELS[name]}
       </span>
       {dates.map((date) => {

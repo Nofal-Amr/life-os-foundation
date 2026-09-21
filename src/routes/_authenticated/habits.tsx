@@ -41,9 +41,9 @@ import { usePreferences } from "@/hooks/usePreferences";
 export const Route = createFileRoute("/_authenticated/habits")({
   head: () => ({
     meta: [
-      { title: "Habits — Life OS" },
+      { title: "Habits · Life OS" },
       { name: "description", content: "Track daily and weekly habits at your own pace." },
-      { property: "og:title", content: "Habits — Life OS" },
+      { property: "og:title", content: "Habits · Life OS" },
       {
         property: "og:description",
         content: "Track daily and weekly habits at your own pace.",

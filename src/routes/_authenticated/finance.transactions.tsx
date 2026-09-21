@@ -43,9 +43,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/finance/transactions")({
   head: () => ({
     meta: [
-      { title: "Transactions — Life OS" },
+      { title: "Transactions · Life OS" },
       { name: "description", content: "Everything you have logged, grouped by day." },
-      { property: "og:title", content: "Transactions — Life OS" },
+      { property: "og:title", content: "Transactions · Life OS" },
       { property: "og:description", content: "Everything you have logged, grouped by day." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

@@ -44,7 +44,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/notes")({
   head: () => ({
     meta: [
-      { title: "Notes — Life OS" },
+      { title: "Notes · Life OS" },
       { name: "description", content: "Quick notes and checklists that save as you type." },
     ],
   }),
@@ -215,7 +215,7 @@ function NotesPage() {
 
       {/* Take a note */}
       {view === "notes" ? (
-        <div className="mx-auto flex max-w-xl items-center gap-1 rounded-2xl border border-border bg-card pl-4 pr-1 shadow-sm">
+        <div className="mx-auto flex max-w-xl items-center gap-1 rounded-xl border border-border bg-card pl-4 pr-1 shadow-sm">
           <button
             type="button"
             onClick={() => startNote(false)}
@@ -336,7 +336,7 @@ function NoteGrid({
   return (
     <section>
       {title ? (
-        <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
           {title}
         </p>
       ) : null}
@@ -364,7 +364,7 @@ function NoteCard({
   const done = items?.filter((item) => item.done) ?? [];
   return (
     <article
-      className="group relative mb-3 break-inside-avoid rounded-2xl border border-border bg-card transition-shadow hover:shadow-md motion-safe:animate-in motion-safe:fade-in"
+      className="group relative mb-3 break-inside-avoid rounded-xl border border-border bg-card transition-shadow hover:shadow-md motion-safe:animate-in motion-safe:fade-in"
       style={{ background: noteBackground(note.color) }}
     >
       <button type="button" onClick={onOpen} className="block w-full p-4 pr-9 text-left">
@@ -393,7 +393,7 @@ function NoteCard({
         {note.tags.length ? (
           <div className="mt-3 flex flex-wrap gap-1">
             {note.tags.map((tag) => (
-              <span key={tag} className="rounded-full bg-foreground/[0.07] px-2 py-0.5 text-[11px]">
+              <span key={tag} className="rounded-full bg-foreground/[0.07] px-2 py-0.5 text-xs">
                 {tag}
               </span>
             ))}
@@ -537,7 +537,7 @@ function NoteEditor({
           <Button type="button" variant="ghost" size="icon" aria-label="Done" onClick={close}>
             <ArrowLeft className="size-5" />
           </Button>
-          <span className="ml-1 text-[11px] text-muted-foreground" aria-live="polite">
+          <span className="ml-1 text-xs text-muted-foreground" aria-live="polite">
             {saving
               ? "Saving…"
               : saved

@@ -32,12 +32,12 @@ import { prayerTimesFor } from "@/lib/prayer";
 export const Route = createFileRoute("/_authenticated/spirit")({
   head: () => ({
     meta: [
-      { title: "Spirit — Life OS" },
+      { title: "Spirit · Life OS" },
       {
         name: "description",
         content: "Prayer times for your location, with a simple record of each prayer.",
       },
-      { property: "og:title", content: "Spirit — Life OS" },
+      { property: "og:title", content: "Spirit · Life OS" },
       {
         property: "og:description",
         content: "Prayer times for your location, with a simple record of each prayer.",

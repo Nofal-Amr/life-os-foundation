@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "@fontsource-variable/hanken-grotesk";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -19,7 +20,14 @@
  */
 
 @theme inline {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  /* One dense-data size below xs (heatmaps, chart axes); nothing smaller. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  /* Motion: strong ease-out for anything appearing, drawer curve for sheets. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -184,11 +192,31 @@
     color-scheme: dark;
   }
 
+  ::selection {
+    background-color: color-mix(in oklch, var(--color-primary) 28%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-primary);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-feature-settings: "tnum" 1, "cv05" 1;
+    font-feature-settings: "tnum" 1;
     -webkit-font-smoothing: antialiased;
   }
 }
@@ -200,10 +228,16 @@
   box-shadow: var(--system-card-shadow);
 }
 
+/*
+ * Shape rules. Surfaces (cards, panels, empty states): 16px.
+ * Recessed wells: 12px. Fields and menus: 10px. Buttons: --button-radius
+ * (8px light, pill dark). Sheets: 24px top. Chips and avatars: full.
+ */
+
 /* The "at a glance" cards: the same surface as system-card, lifted further. */
 @utility stat-card {
   border: 1px solid var(--color-border);
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   background-color: var(--color-card);
   background-image: var(--stat-card-sheen);
   box-shadow: var(--stat-card-shadow);
@@ -211,7 +245,7 @@
 
 /* A recessed panel inside a stat card that holds a chart. */
 @utility stat-well {
-  border-radius: 0.875rem;
+  border-radius: 0.75rem;
   background: var(--stat-well);
   box-shadow: var(--stat-well-shadow);
 }
@@ -232,14 +266,55 @@
   background-repeat: no-repeat;
 }
 
+/* A section heading inside a page: sentence case, carried by weight. */
+@utility section-title {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-foreground);
+}
+
+/* Axis labels on dense data (weekday initials, heatmap columns). */
+@utility axis-label {
+  font-size: var(--text-2xs);
+  line-height: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+/* The one big number on a card. */
+@utility figure {
+  font-size: 1.75rem;
+  line-height: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Reduced motion means gentler, not none: fades and colour changes stay so
+ * state changes are still visible; slides, zooms and press-scales go.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+    --tw-enter-scale: 1 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-enter-rotate: 0 !important;
+    --tw-exit-rotate: 0 !important;
+  }
+
+  *:active {
+    scale: none !important;
   }
 }
 

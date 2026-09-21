@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/time")({
   head: () => ({
     meta: [
-      { title: "Time — Life OS" },
+      { title: "Time · Life OS" },
       {
         name: "description",
         content: "Where your time goes: timers and logged time per activity.",
@@ -210,7 +210,7 @@ function TimePage() {
                       <EntityIcon icon={activity.icon} color={activity.color} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium">{activity.name}</span>
-                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
                           {active ? (
                             <span className="size-1.5 animate-pulse rounded-full bg-primary" />
                           ) : (
@@ -335,7 +335,7 @@ function TimePage() {
                       background: perDay[index] ? "var(--chart-1)" : "var(--color-border)",
                     }}
                   />
-                  <span className="text-[10px] uppercase text-muted-foreground">
+                  <span className="axis-label">
                     {format(new Date(`${day}T12:00:00`), "EEEEE")}
                   </span>
                 </div>

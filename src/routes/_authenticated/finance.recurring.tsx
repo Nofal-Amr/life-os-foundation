@@ -43,12 +43,12 @@ import { todayISO } from "@/lib/date";
 export const Route = createFileRoute("/_authenticated/finance/recurring")({
   head: () => ({
     meta: [
-      { title: "Recurring costs — Life OS" },
+      { title: "Recurring costs · Life OS" },
       {
         name: "description",
         content: "Costs you expect again, shown before they arrive. Projections only until you log one.",
       },
-      { property: "og:title", content: "Recurring costs — Life OS" },
+      { property: "og:title", content: "Recurring costs · Life OS" },
       {
         property: "og:description",
         content: "Costs you expect again, shown before they arrive. Projections only until you log one.",
@@ -99,7 +99,7 @@ export function RecurringList({ compact = false }: { compact?: boolean }) {
     mutationFn: (cost: RecurringCost) => skipRecurringCost(cost),
     onSuccess: () => {
       invalidate();
-      toast.success("Skipped — nothing was logged.");
+      toast.success("Skipped. Nothing was logged.");
     },
     onError,
   });

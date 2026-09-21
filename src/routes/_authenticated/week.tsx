@@ -52,7 +52,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/week")({
   head: () => ({
     meta: [
-      { title: "Week — Life OS" },
+      { title: "Week · Life OS" },
       { name: "description", content: "Your week, day by day: what was due and what you logged." },
     ],
   }),
@@ -177,7 +177,7 @@ function WeekPage() {
             <section className="stat-card p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs font-medium text-muted-foreground">
                     {isThisWeek ? "This week" : "Week"}
                   </p>
                   <p className="mt-0.5 text-lg font-semibold tracking-tight">{range}</p>
@@ -196,7 +196,7 @@ function WeekPage() {
                     <p className="text-xl font-semibold tabular-nums leading-none">
                       {week.tasks.total ? week.tasks.done : "—"}
                     </p>
-                    <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {week.tasks.total ? `of ${week.tasks.total}` : "none due"}
                     </p>
                   </div>
@@ -209,7 +209,7 @@ function WeekPage() {
                     {trackPrayers ? <Tile label="Prayers" value={week.prayers} /> : null}
                     {trackMoney ? (
                       <div className="rounded-lg bg-secondary px-2.5 py-1.5">
-                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        <p className="text-xs text-muted-foreground">
                           Spent
                         </p>
                         <p className="text-sm font-semibold tabular-nums">{fmtMoney(week.spent)}</p>
@@ -300,7 +300,7 @@ function Meter({ value, tone }: { value: Fraction; tone: ChartTone }) {
 function Tile({ label, value }: { label: string; value: Fraction }) {
   return (
     <div className="rounded-lg bg-secondary px-2.5 py-1.5">
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold tabular-nums">
         {value.total ? (
           <>
@@ -370,7 +370,7 @@ function DayBars({
                   className="group flex h-full flex-col items-center justify-end gap-1.5 focus-visible:outline-none"
                 >
                   <span
-                    className="w-full max-w-7 rounded-md transition-all duration-300 group-focus-visible:ring-2 group-focus-visible:ring-ring"
+                    className="w-full max-w-7 rounded-md transition-[height,background-color] duration-300 ease-out group-focus-visible:ring-2 group-focus-visible:ring-ring"
                     style={{
                       height,
                       background: values[index]
@@ -380,7 +380,7 @@ function DayBars({
                   />
                   <span
                     className={cn(
-                      "text-[10px] uppercase",
+                      "text-xs uppercase",
                       active ? "font-semibold text-foreground" : "text-muted-foreground",
                     )}
                   >
@@ -438,7 +438,7 @@ function DayCard({
           {total ? `${done}/${total}` : "—"}
         </span>
       </Ring>
-      <span className="tone-quiet rounded-full border px-2 py-0.5 text-[10px] font-medium">
+      <span className="tone-quiet rounded-full border px-2 py-0.5 text-2xs font-medium">
         {label}
       </span>
     </button>
@@ -557,7 +557,7 @@ function DayDetail({
           </span>
         </h2>
         {day.tasksDone.total ? (
-          <span className="tone-info rounded-full border px-2 py-0.5 text-[11px] font-medium tabular-nums">
+          <span className="tone-info rounded-full border px-2 py-0.5 text-xs font-medium tabular-nums">
             {day.tasksDone.done} / {day.tasksDone.total} done
           </span>
         ) : null}
@@ -576,7 +576,7 @@ function DayDetail({
                 <p className="min-w-0 truncate text-sm font-semibold">
                   {group.project?.name ?? "No project"}
                 </p>
-                <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                   {group.items.filter(isDone).length}/{group.items.length}
                 </span>
               </div>
@@ -610,7 +610,7 @@ function DayDetail({
           <div className="stat-card space-y-2 p-4">
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold">Due later this week</p>
-              <span className="ml-auto text-[11px] text-muted-foreground">can be done early</span>
+              <span className="ml-auto text-xs text-muted-foreground">can be done early</span>
             </div>
             <ul className="space-y-1.5">
               {day.dueLater.map((task) => (
@@ -648,7 +648,7 @@ function DayDetail({
                 aria-hidden="true"
               />
               <p className="text-sm font-semibold">Daily habits</p>
-              <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+              <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                 {day.habits.done}/{day.habits.total}
               </span>
             </div>
@@ -678,7 +678,7 @@ function DayDetail({
                 aria-hidden="true"
               />
               <p className="text-sm font-semibold">Prayers</p>
-              <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+              <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                 {day.prayers.done}/{day.prayers.total}
               </span>
             </div>
@@ -741,7 +741,7 @@ function CheckRow({
         {hint ? <span className="block truncate text-xs text-muted-foreground">{hint}</span> : null}
       </span>
       {checked ? (
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <span className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
           Done
         </span>
       ) : null}

@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import type { ModuleKey } from "@/data/modules";
 import { useModules } from "@/hooks/useModules";
@@ -68,6 +69,29 @@ export function SectionTabs() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const { enabled } = useModules();
   const found = tabsFor(pathname);
+  const listRef = useRef<HTMLElement>(null);
+  // The underline slides from the previous tab to the new one, so it's clear
+  // these are sibling pages of one section.
+  const [bar, setBar] = useState<{ x: number; w: number; animate: boolean } | null>(null);
+  const sectionRef = useRef<string | undefined>(undefined);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return setBar(null);
+    // Only slide between tabs of the same section; a new section just appears.
+    const sameSection = sectionRef.current === found?.label;
+    sectionRef.current = found?.label;
+    const measure = (animate: boolean) => {
+      const active = list.querySelector<HTMLElement>('[data-status="active"]');
+      setBar(active ? { x: active.offsetLeft, w: active.offsetWidth, animate } : null);
+    };
+    measure(sameSection);
+    list.querySelector('[data-status="active"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // Widths change once the web font arrives and when the window resizes.
+    const observer = new ResizeObserver(() => measure(false));
+    observer.observe(list);
+    void document.fonts?.ready.then(() => measure(false));
+    return () => observer.disconnect();
+  }, [pathname, found?.label]);
   if (!found) return null;
   const section = {
     label: found.label,
@@ -77,15 +101,23 @@ export function SectionTabs() {
 
   return (
     <nav
-      className="mb-6 flex min-w-0 gap-1 overflow-x-auto border-b border-border pb-2"
+      ref={listRef}
+      className="relative mb-6 flex min-w-0 gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
       aria-label={`${section.label} sections`}
     >
+      {bar ? (
+        <span
+          aria-hidden="true"
+          className={`absolute bottom-0 left-0 h-0.5 rounded-full bg-primary ${bar.animate ? "transition-[translate,width] duration-250 ease-in-out" : ""}`}
+          style={{ width: bar.w, translate: `${bar.x}px 0` }}
+        />
+      ) : null}
       {section.tabs.map((tab) => (
         <Link
           key={tab.to}
           to={tab.to}
           activeOptions={{ exact: tab.exact ?? true }}
-          className="shrink-0 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground data-[status=active]:bg-accent data-[status=active]:font-medium data-[status=active]:text-foreground"
+          className="shrink-0 px-3 pb-3 pt-2 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
         >
           {tab.label}
         </Link>

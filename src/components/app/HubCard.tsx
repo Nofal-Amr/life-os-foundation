@@ -74,7 +74,7 @@ export function HubCard() {
 function SeriousHub({ lines }: { lines: DimensionLine[] }) {
   return (
     <section className="stat-card space-y-4 p-5" aria-label="Last 7 days">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="text-xs font-medium text-muted-foreground">
         Last 7 days
       </p>
       <ul className="grid gap-3 sm:grid-cols-2">
@@ -118,7 +118,7 @@ function RpgSheet({ hub }: { hub: ReturnType<typeof buildHub> }) {
     <section className="stat-card space-y-4 p-5" aria-label="Character sheet">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
             Character
           </p>
           <p className="text-2xl font-semibold tracking-tight">
@@ -156,7 +156,7 @@ function RpgSheet({ hub }: { hub: ReturnType<typeof buildHub> }) {
                   aria-hidden="true"
                 />
                 <span className="text-sm font-semibold">{line.label}</span>
-                <span className="text-[11px] text-muted-foreground">{line.maslow}</span>
+                <span className="text-xs text-muted-foreground">{line.maslow}</span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
@@ -196,7 +196,7 @@ function RpgSheet({ hub }: { hub: ReturnType<typeof buildHub> }) {
           );
         })}
       </ul>
-      <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <Sparkles className="size-3" aria-hidden="true" />
         Every point comes from something you logged. Tap ⓘ to see how.
       </p>

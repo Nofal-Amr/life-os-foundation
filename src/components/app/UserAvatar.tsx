@@ -5,7 +5,7 @@ import { avatarUrlQuery, profileQuery } from "@/data/profile";
 import { cn } from "@/lib/utils";
 
 const SIZES = {
-  sm: "size-8 text-[11px]",
+  sm: "size-8 text-xs",
   md: "size-9 text-xs",
   lg: "size-20 text-xl",
 } as const;

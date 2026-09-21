@@ -42,9 +42,9 @@ import { SemanticBadge } from "@/components/app/SemanticBadge";
 export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({
     meta: [
-      { title: "Projects — Life OS" },
+      { title: "Projects · Life OS" },
       { name: "description", content: "Plan and track your personal projects." },
-      { property: "og:title", content: "Projects — Life OS" },
+      { property: "og:title", content: "Projects · Life OS" },
       { property: "og:description", content: "Plan and track your personal projects." },
     ],
   }),

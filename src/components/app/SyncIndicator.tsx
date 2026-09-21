@@ -31,7 +31,7 @@ export function SyncIndicator({ className = "" }: { className?: string }) {
       onClick={() => void syncNow()}
       disabled={!online || syncing}
       aria-live="polite"
-      className={`tone-quiet inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-[11px] font-medium disabled:cursor-default ${className}`}
+      className={`tone-quiet inline-flex max-w-full items-center gap-1.5 truncate rounded-full border px-2.5 py-1 text-xs font-medium disabled:cursor-default ${className}`}
     >
       {online ? (
         <RefreshCw

@@ -68,13 +68,13 @@ import {
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Profile & Settings — Life OS" },
+      { title: "Profile & Settings · Life OS" },
       {
         name: "description",
         content:
           "Your name and picture, body and prayer setup, units, formats, priorities and theme.",
       },
-      { property: "og:title", content: "Profile & Settings — Life OS" },
+      { property: "og:title", content: "Profile & Settings · Life OS" },
       {
         property: "og:description",
         content:
@@ -670,7 +670,7 @@ function SettingsPage() {
             <CardTitle className="text-base">Money setup</CardTitle>
             <CardDescription>
               When you are paid and how much you want left untouched. Left empty until you fill it
-              in — Life OS never guesses these.
+              in; Life OS never guesses these.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -827,7 +827,7 @@ function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">Setup</CardTitle>
             <CardDescription>
-              Walk through the first-run questions again. Nothing is cleared — you just confirm or
+              Walk through the first-run questions again. Nothing is cleared; you just confirm or
               change your answers.
             </CardDescription>
           </CardHeader>

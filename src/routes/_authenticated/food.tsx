@@ -43,9 +43,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/food")({
   head: () => ({
     meta: [
-      { title: "Food — Life OS" },
+      { title: "Food · Life OS" },
       { name: "description", content: "A record of what you ate, with your own food library." },
-      { property: "og:title", content: "Food — Life OS" },
+      { property: "og:title", content: "Food · Life OS" },
       {
         property: "og:description",
         content: "A record of what you ate, with your own food library.",
@@ -210,7 +210,7 @@ function FoodPage() {
           />
         ) : (
           <>
-            <section className="rounded-2xl border border-border bg-card p-6">
+            <section className="system-card p-6">
               <p className="text-sm text-muted-foreground">Logged this day</p>
               <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
                 {round(totals.calories)} kcal
@@ -241,7 +241,7 @@ function FoodPage() {
             </section>
 
             <section>
-              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              <h2 className="mb-3 section-title">
                 Entries
               </h2>
               {dayLogs.length === 0 ? (
@@ -332,7 +332,7 @@ function FoodPage() {
 
             {(foods.data ?? []).length ? (
               <section>
-                <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                <h2 className="mb-3 section-title">
                   Your food library
                 </h2>
                 <ul className="space-y-2">
@@ -428,7 +428,7 @@ function FoodPage() {
         open={quickOpen}
         onOpenChange={setQuickOpen}
         title="One-off entry"
-        description="Just this once — nothing is added to your library."
+        description="Just this once. Nothing is added to your library."
         submitLabel="Log it"
         pending={addQuickLog.isPending}
         onSubmit={() => addQuickLog.mutate()}

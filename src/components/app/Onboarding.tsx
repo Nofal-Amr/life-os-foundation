@@ -237,7 +237,7 @@ export function Onboarding() {
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">What do you want to track?</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Everything is on. Switch off what you do not need — you can change this any time.
+                Everything is on. Switch off what you do not need. You can change this any time.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -285,7 +285,7 @@ export function Onboarding() {
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">Money basics</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                All optional. Anything you leave blank stays blank — no figure is guessed.
+                All optional. Anything you leave blank stays blank; no figure is guessed.
               </p>
             </div>
             <div className="space-y-2">

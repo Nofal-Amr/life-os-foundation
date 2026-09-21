@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -12,9 +12,9 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — Life OS" },
+      { title: "Sign in · Life OS" },
       { name: "description", content: "Sign in to your private Life OS workspace." },
-      { property: "og:title", content: "Sign in — Life OS" },
+      { property: "og:title", content: "Sign in · Life OS" },
       { property: "og:description", content: "Sign in to your private Life OS workspace." },
     ],
   }),
@@ -46,7 +46,9 @@ async function providerEnabled(provider: "google"): Promise<boolean> {
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>("signin");
+  const [mode, setMode] = useState<Mode>(() =>
+    new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "signin",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
@@ -139,13 +141,17 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Life OS</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            <Link to="/" className="rounded-md">
+              Life OS
+            </Link>
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Your calm, private space for projects, habits and reflection.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6">
+        <div className="system-card p-6">
           <Tabs
             value={mode === "reset" ? "signin" : mode}
             onValueChange={(v) => setMode(v as Mode)}
@@ -174,7 +180,7 @@ function AuthPage() {
                 <GoogleMark />
                 Continue with Google
               </Button>
-              <div className="flex items-center gap-3 pt-2 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <div className="flex items-center gap-3 pt-2 text-xs text-muted-foreground">
                 <span className="h-px flex-1 bg-border" />
                 or with email
                 <span className="h-px flex-1 bg-border" />

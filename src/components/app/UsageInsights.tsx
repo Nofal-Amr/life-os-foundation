@@ -86,7 +86,7 @@ export function UsageInsights() {
         ) : (
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
                 Screens · 30 days
               </p>
               <ul className="space-y-1 text-sm">
@@ -102,7 +102,7 @@ export function UsageInsights() {
               </ul>
             </div>
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
                 Actions · 30 days
               </p>
               <ul className="space-y-1 text-sm">

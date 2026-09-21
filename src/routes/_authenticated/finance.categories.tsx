@@ -37,9 +37,9 @@ import { usePreferences } from "@/hooks/usePreferences";
 export const Route = createFileRoute("/_authenticated/finance/categories")({
   head: () => ({
     meta: [
-      { title: "Money categories — Life OS" },
+      { title: "Money categories · Life OS" },
       { name: "description", content: "Your own spending and income categories, with optional monthly budgets." },
-      { property: "og:title", content: "Money categories — Life OS" },
+      { property: "og:title", content: "Money categories · Life OS" },
       {
         property: "og:description",
         content: "Your own spending and income categories, with optional monthly budgets.",
@@ -99,7 +99,7 @@ function CategoriesPage() {
     mutationFn: () => addStarterCategories(),
     onSuccess: () => {
       invalidate();
-      toast.success("Starter categories added — edit or remove any of them.");
+      toast.success("Starter categories added. Edit or remove any of them.");
     },
     onError,
   });
@@ -139,7 +139,7 @@ function CategoriesPage() {
       ) : list.length === 0 ? (
         <EmptyState
           title="Nothing logged yet"
-          description={`Start from a plain set of labels — ${STARTER_CATEGORIES.map((c) => c.name).join(", ")} — and change anything you like. They come with no amounts.`}
+          description={`Start from a plain set of labels (${STARTER_CATEGORIES.map((c) => c.name).join(", ")}) and change anything you like. They come with no amounts.`}
           action={
             <div className="flex flex-wrap justify-center gap-2">
               <Button onClick={() => starter.mutate()} disabled={starter.isPending}>

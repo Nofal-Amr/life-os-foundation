@@ -47,9 +47,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/calendar")({
   head: () => ({
     meta: [
-      { title: "Calendar — Life OS" },
+      { title: "Calendar · Life OS" },
       { name: "description", content: "Everything with a date, in one month view." },
-      { property: "og:title", content: "Calendar — Life OS" },
+      { property: "og:title", content: "Calendar · Life OS" },
       { property: "og:description", content: "Everything with a date, in one month view." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -309,7 +309,7 @@ function CalendarPage() {
                 <ChevronRight className="size-4" />
               </Button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-muted-foreground">
+            <div className="grid grid-cols-7 gap-1 text-center axis-label">
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
                 <div key={d} className="py-1">
                   {d}
@@ -362,7 +362,7 @@ function CalendarPage() {
             {selectedItems.length === 0 ? (
               <EmptyState
                 title="Nothing on this day"
-                description="Everything with a date — tasks, projects, goals, costs and events — shows up here so nothing stays out of sight."
+                description="Everything with a date shows up here: tasks, projects, goals, costs and events."
                 action={<Button onClick={() => openCreate(selected)}>New event</Button>}
               />
             ) : (

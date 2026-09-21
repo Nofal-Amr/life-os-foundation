@@ -11,9 +11,9 @@ export const Route = createFileRoute("/auth/update-password")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Choose a new password — Life OS" },
+      { title: "Choose a new password · Life OS" },
       { name: "description", content: "Set a new password for your Life OS account." },
-      { property: "og:title", content: "Choose a new password — Life OS" },
+      { property: "og:title", content: "Choose a new password · Life OS" },
       { property: "og:description", content: "Set a new password for your Life OS account." },
     ],
   }),
@@ -42,7 +42,7 @@ function UpdatePasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <form
-        className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-card p-6"
+        className="w-full max-w-sm space-y-4 system-card p-6"
         onSubmit={(e) => {
           e.preventDefault();
           submit();

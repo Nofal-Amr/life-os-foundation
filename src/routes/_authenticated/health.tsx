@@ -62,12 +62,12 @@ import { scaleTone } from "@/lib/semantics";
 export const Route = createFileRoute("/_authenticated/health")({
   head: () => ({
     meta: [
-      { title: "Health — Life OS" },
+      { title: "Health · Life OS" },
       {
         name: "description",
         content: "A fast daily health log, your weight, and your own medication schedule.",
       },
-      { property: "og:title", content: "Health — Life OS" },
+      { property: "og:title", content: "Health · Life OS" },
       {
         property: "og:description",
         content: "A fast daily health log, your weight, and your own medication schedule.",
@@ -268,7 +268,7 @@ function ScaleRow({
           </button>
         ))}
       </div>
-      <div className="flex justify-between text-[11px] text-muted-foreground">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>{SCALE_ENDS[kind][0]}</span>
         <span>{SCALE_ENDS[kind][1]}</span>
       </div>

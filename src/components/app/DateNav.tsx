@@ -42,7 +42,7 @@ export function DateNav({
           <ChevronLeft className="size-5" />
         </Button>
         <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
           <p className="text-sm font-medium text-foreground">
             {isToday(date) ? "Today" : fmtLongDate(date)}
           </p>

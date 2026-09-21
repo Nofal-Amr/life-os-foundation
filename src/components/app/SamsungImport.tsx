@@ -48,7 +48,7 @@ export function SamsungImport() {
         throw new Error("No CSV files found. Pick the .zip or the CSV files inside it.");
       const parsed = parseSamsungExport(texts);
       if (!parsed.samples.length) {
-        setUnread(texts.map((file) => file.name.split(/[\/]/).pop() ?? file.name));
+        setUnread(texts.map((file) => file.name.split("/").pop() ?? file.name));
         return;
       }
       setResult(parsed);
@@ -125,7 +125,7 @@ export function SamsungImport() {
             com.samsung.health.weight and …exercise. If they're there and still not read, send a
             screenshot of this list.
           </p>
-          <ul className="max-h-40 space-y-0.5 overflow-y-auto font-mono text-[11px] text-muted-foreground">
+          <ul className="max-h-40 space-y-0.5 overflow-y-auto font-mono text-xs text-muted-foreground">
             {unread.map((name) => (
               <li key={name} className="break-all">
                 {name}
