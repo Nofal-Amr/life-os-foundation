@@ -93,6 +93,8 @@ run(bt("aapt2"), [
   "--java",
   genOut,
   "--auto-add-overlay",
+  // Debug build: lets chrome://inspect attach to the WebView.
+  "--debug-mode",
   compiled,
 ]);
 

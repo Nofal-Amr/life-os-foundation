@@ -28,6 +28,7 @@ import {
   createTransaction,
   financeCategoriesQuery,
   financeKeys,
+  nowTime,
   signedAmount,
   transactionsQuery,
   type CategoryKind,
@@ -63,6 +64,8 @@ export function QuickAddTransactionDialog({
 
   const [categoryId, setCategoryId] = useState("");
   const [note, setNote] = useState("");
+  const [date, setDate] = useState(todayISO());
+  const [time, setTime] = useState(nowTime());
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
@@ -84,6 +87,8 @@ export function QuickAddTransactionDialog({
     setKind(initialKind ?? (lastUsed && Number(lastUsed.amount) > 0 ? "income" : "expense"));
     setAmount("");
     setNote("");
+    setDate(todayISO());
+    setTime(nowTime());
     setShowNewCategory(false);
     setNewCategoryName("");
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -111,7 +116,8 @@ export function QuickAddTransactionDialog({
         amount: signedAmount(value, kind === "income" ? "income" : "expense"),
         kind: kind === "income" ? "income" : "expense",
         description: note.trim() || null,
-        date: todayISO(),
+        date: date || todayISO(),
+        occurred_time: time || null,
         pocket_id: pocketId || null,
       });
     },
@@ -313,6 +319,30 @@ export function QuickAddTransactionDialog({
               </Select>
             </div>
           ) : null}
+
+          <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="quick-date">Date</Label>
+              <Input
+                id="quick-date"
+                type="date"
+                className="h-12"
+                value={date}
+                max={todayISO()}
+                onChange={(event) => setDate(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="quick-time">Time</Label>
+              <Input
+                id="quick-time"
+                type="time"
+                className="h-12 tabular-nums"
+                value={time}
+                onChange={(event) => setTime(event.target.value)}
+              />
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="quick-note">Note</Label>

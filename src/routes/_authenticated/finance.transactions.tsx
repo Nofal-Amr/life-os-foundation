@@ -23,6 +23,7 @@ import {
 import {
   accountPocketsQuery,
   accountsQuery,
+  compareTransactions,
   createCategory,
   deleteTransaction,
   financeCategoriesQuery,
@@ -60,7 +61,7 @@ function TransactionsPage() {
   const categories = useQuery(financeCategoriesQuery());
   const pockets = useQuery(accountPocketsQuery());
 
-  const { fmtDate, fmtSignedMoney } = usePreferences();
+  const { fmtDate, fmtSignedMoney, fmtTime } = usePreferences();
 
   const [accountFilter, setAccountFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -102,16 +103,17 @@ function TransactionsPage() {
   });
 
   const addCategory = useMutation({
-    mutationFn: () => createCategory({
-      name: newCategoryName.trim(),
-      kind: form?.amount && form.amount > 0 ? "income" : "expense",
-      color: null,
-      icon: null,
-      monthly_budget: null,
-    }),
+    mutationFn: () =>
+      createCategory({
+        name: newCategoryName.trim(),
+        kind: form?.amount && form.amount > 0 ? "income" : "expense",
+        color: null,
+        icon: null,
+        monthly_budget: null,
+      }),
     onSuccess: (category) => {
       queryClient.invalidateQueries({ queryKey: financeKeys.categories });
-      setForm((current) => current ? { ...current, category_id: category.id } : current);
+      setForm((current) => (current ? { ...current, category_id: category.id } : current));
       setNewCategoryName("");
       setShowNewCategory(false);
       toast.success("Category created and selected.");
@@ -119,8 +121,7 @@ function TransactionsPage() {
     onError,
   });
 
-  const accountName = (id: string) =>
-    (accounts.data ?? []).find((a) => a.id === id)?.name ?? "—";
+  const accountName = (id: string) => (accounts.data ?? []).find((a) => a.id === id)?.name ?? "—";
   const categoryName = (id: string | null) =>
     id ? ((categories.data ?? []).find((c) => c.id === id)?.name ?? "—") : "No category";
 
@@ -138,6 +139,7 @@ function TransactionsPage() {
       list.push(t);
       map.set(t.date, list);
     }
+    for (const list of map.values()) list.sort(compareTransactions);
     return [...map.entries()];
   }, [transactions.data, accountFilter, categoryFilter, from, to]);
 
@@ -151,6 +153,7 @@ function TransactionsPage() {
       description: transaction.description,
       date: transaction.date,
       pocket_id: transaction.pocket_id,
+      occurred_time: transaction.occurred_time?.slice(0, 5) ?? null,
     });
 
     setEditAmount(Math.abs(Number(transaction.amount)).toFixed(2));
@@ -177,7 +180,15 @@ function TransactionsPage() {
               <SelectItem value="all">All accounts</SelectItem>
               {(accounts.data ?? []).map((a) => (
                 <SelectItem key={a.id} value={a.id}>
-                     <span className="flex items-center gap-2"><EntityIcon icon={a.icon} color={a.color} containerClassName="size-5 rounded" className="size-3" />{a.name}</span>
+                  <span className="flex items-center gap-2">
+                    <EntityIcon
+                      icon={a.icon}
+                      color={a.color}
+                      containerClassName="size-5 rounded"
+                      className="size-3"
+                    />
+                    {a.name}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -194,7 +205,15 @@ function TransactionsPage() {
               <SelectItem value="none">No category</SelectItem>
               {(categories.data ?? []).map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                   <span className="flex items-center gap-2"><EntityIcon icon={c.icon} color={c.color} containerClassName="size-5 rounded" className="size-3" />{c.name}</span>
+                  <span className="flex items-center gap-2">
+                    <EntityIcon
+                      icon={c.icon}
+                      color={c.color}
+                      containerClassName="size-5 rounded"
+                      className="size-3"
+                    />
+                    {c.name}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -202,7 +221,12 @@ function TransactionsPage() {
         </div>
         <div className="space-y-1">
           <Label htmlFor="filter-from">From</Label>
-          <DatePicker id="filter-from" value={from} onChange={setFrom} className="[&_button]:h-11" />
+          <DatePicker
+            id="filter-from"
+            value={from}
+            onChange={setFrom}
+            className="[&_button]:h-11"
+          />
         </div>
         <div className="space-y-1">
           <Label htmlFor="filter-to">To</Label>
@@ -234,11 +258,28 @@ function TransactionsPage() {
                       className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
                     >
                       <div className="min-w-0">
-                         <p className="flex min-w-0 items-center gap-2 font-medium">
-                           {(() => { const category = (categories.data ?? []).find((item) => item.id === t.category_id); return category ? <EntityIcon icon={category.icon} color={category.color} containerClassName="size-6 rounded" className="size-3" /> : null; })()}
-                           <span className="truncate">{t.description || categoryName(t.category_id)}</span>
-                         </p>
+                        <p className="flex min-w-0 items-center gap-2 font-medium">
+                          {(() => {
+                            const category = (categories.data ?? []).find(
+                              (item) => item.id === t.category_id,
+                            );
+                            return category ? (
+                              <EntityIcon
+                                icon={category.icon}
+                                color={category.color}
+                                containerClassName="size-6 rounded"
+                                className="size-3"
+                              />
+                            ) : null;
+                          })()}
+                          <span className="truncate">
+                            {t.description || categoryName(t.category_id)}
+                          </span>
+                        </p>
                         <p className="mt-1 text-xs text-muted-foreground">
+                          {t.occurred_time
+                            ? `${fmtTime(new Date(`${t.date}T${t.occurred_time}`))} · `
+                            : ""}
                           {categoryName(t.category_id)} · {accountName(t.account_id)}
                         </p>
                       </div>
@@ -289,12 +330,15 @@ function TransactionsPage() {
                   step="0.01"
                   min="0"
                   className="h-12 tabular-nums"
-                   value={editAmount}
-                   onChange={(e) => {
-                     setEditAmount(e.target.value);
-                     setForm({ ...form, amount: signedAmount(Number(e.target.value), form.kind) });
-                   }}
-                   onBlur={() => { const value = Number(editAmount); if (!Number.isNaN(value)) setEditAmount(value.toFixed(2)); }}
+                  value={editAmount}
+                  onChange={(e) => {
+                    setEditAmount(e.target.value);
+                    setForm({ ...form, amount: signedAmount(Number(e.target.value), form.kind) });
+                  }}
+                  onBlur={() => {
+                    const value = Number(editAmount);
+                    if (!Number.isNaN(value)) setEditAmount(value.toFixed(2));
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -320,7 +364,23 @@ function TransactionsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-date">Date</Label>
-                <DatePicker id="edit-date" value={form.date} onChange={(value) => setForm({ ...form, date: value })} />
+                <DatePicker
+                  id="edit-date"
+                  value={form.date}
+                  onChange={(value) => setForm({ ...form, date: value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-time">Time</Label>
+                <Input
+                  id="edit-time"
+                  type="time"
+                  className="h-12 tabular-nums"
+                  value={form.occurred_time ?? ""}
+                  onChange={(event) =>
+                    setForm({ ...form, occurred_time: event.target.value || null })
+                  }
+                />
               </div>
               <div className="space-y-2">
                 <Label>Account</Label>
@@ -334,7 +394,15 @@ function TransactionsPage() {
                   <SelectContent>
                     {(accounts.data ?? []).map((a) => (
                       <SelectItem key={a.id} value={a.id}>
-                         <span className="flex items-center gap-2"><EntityIcon icon={a.icon} color={a.color} containerClassName="size-5 rounded" className="size-3" />{a.name}</span>
+                        <span className="flex items-center gap-2">
+                          <EntityIcon
+                            icon={a.icon}
+                            color={a.color}
+                            containerClassName="size-5 rounded"
+                            className="size-3"
+                          />
+                          {a.name}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -364,7 +432,6 @@ function TransactionsPage() {
                 </div>
               ) : null}
               <div className="space-y-2">
-
                 <Label>Category</Label>
                 <Select
                   value={form.category_id ?? "none"}
@@ -377,13 +444,44 @@ function TransactionsPage() {
                     <SelectItem value="none">No category</SelectItem>
                     {(categories.data ?? []).map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                         <span className="flex items-center gap-2"><EntityIcon icon={c.icon} color={c.color} containerClassName="size-5 rounded" className="size-3" />{c.name}</span>
+                        <span className="flex items-center gap-2">
+                          <EntityIcon
+                            icon={c.icon}
+                            color={c.color}
+                            containerClassName="size-5 rounded"
+                            className="size-3"
+                          />
+                          {c.name}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="button" size="sm" variant="ghost" className="px-0" onClick={() => setShowNewCategory((current) => !current)}>+ New category</Button>
-                {showNewCategory ? <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2"><Input aria-label="New category name" value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} /><Button type="button" disabled={!newCategoryName.trim() || addCategory.isPending} onClick={() => addCategory.mutate()}>Add</Button></div> : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="px-0"
+                  onClick={() => setShowNewCategory((current) => !current)}
+                >
+                  + New category
+                </Button>
+                {showNewCategory ? (
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                    <Input
+                      aria-label="New category name"
+                      value={newCategoryName}
+                      onChange={(event) => setNewCategoryName(event.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      disabled={!newCategoryName.trim() || addCategory.isPending}
+                      onClick={() => addCategory.mutate()}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="space-y-2">
@@ -407,7 +505,6 @@ function TransactionsPage() {
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
       <QuickAddTransactionDialog open={quickAddOpen} onOpenChange={setQuickAddOpen} />
-
     </>
   );
 }

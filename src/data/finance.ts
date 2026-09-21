@@ -11,7 +11,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { currentUserId, unwrap } from "@/lib/supabase-helpers";
+import { currentUserId, unwrap, writeWithColumnFallback } from "@/lib/supabase-helpers";
 
 type Enums = Database["public"]["Enums"];
 
@@ -243,16 +243,28 @@ export type TransactionInput = {
   description: string | null;
   date: string;
   pocket_id?: string | null;
+  /** Time of day, "HH:mm" (optional). */
+  occurred_time?: string | null;
 };
+
+/** "HH:mm" now, for pre-filling the time of a new transaction. */
+export function nowTime(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+/** Newest first: by date, then time of day (entries without a time last). */
+export function compareTransactions(a: Transaction, b: Transaction): number {
+  if (a.date !== b.date) return b.date.localeCompare(a.date);
+  return (b.occurred_time ?? "").localeCompare(a.occurred_time ?? "");
+}
 
 export async function createTransaction(input: TransactionInput): Promise<Transaction> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase
-      .from("transactions")
-      .insert({ ...input, user_id })
-      .select()
-      .single(),
+    await writeWithColumnFallback({ ...input, user_id }, (row) =>
+      supabase.from("transactions").insert(row).select().single(),
+    ),
   ) as Transaction;
 }
 
@@ -261,7 +273,9 @@ export async function updateTransaction(
   input: Partial<TransactionInput>,
 ): Promise<Transaction> {
   return unwrap(
-    await supabase.from("transactions").update(input).eq("id", id).select().single(),
+    await writeWithColumnFallback(input, (row) =>
+      supabase.from("transactions").update(row).eq("id", id).select().single(),
+    ),
   ) as Transaction;
 }
 
