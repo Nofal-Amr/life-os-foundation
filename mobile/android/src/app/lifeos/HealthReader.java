@@ -2,7 +2,12 @@ package app.lifeos;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageInfo;
+import android.health.connect.AggregateRecordsGroupedByPeriodResponse;
+import android.health.connect.AggregateRecordsRequest;
 import android.health.connect.HealthConnectException;
+import android.health.connect.LocalTimeRangeFilter;
+import android.health.connect.datatypes.DataOrigin;
 import android.health.connect.HealthConnectManager;
 import android.health.connect.ReadRecordsRequestUsingFilters;
 import android.health.connect.ReadRecordsResponse;
@@ -22,6 +27,12 @@ import org.json.JSONObject;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.ZoneId;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -101,16 +112,154 @@ final class HealthReader {
         }
 
         Executor executor = Executors.newSingleThreadExecutor();
-        AtomicInteger left = new AtomicInteger(types.size());
+        boolean stepsAllowed = types.contains(StepsRecord.class);
+        JSONObject diagnostics = diagnostics(context, missing);
+        JSONArray daily = new JSONArray();
+        AtomicInteger left = new AtomicInteger(types.size() + (stepsAllowed ? 1 : 0));
+        Runnable after = () -> {
+            if (left.decrementAndGet() != 0) return;
+            // Daily totals (phone + watch, deduplicated by Health Connect) replace raw step records.
+            JSONArray out = new JSONArray();
+            JSONObject counts = new JSONObject();
+            for (int i = 0; i < samples.length(); i++) {
+                JSONObject sample = samples.optJSONObject(i);
+                String kind = sample.optString("kind");
+                put(counts, kind, counts.optInt(kind) + 1);
+                if (daily.length() > 0 && "steps".equals(kind)) continue;
+                out.put(sample);
+            }
+            for (int i = 0; i < daily.length(); i++) out.put(daily.opt(i));
+            put(diagnostics, "records30d", counts);
+            put(result, "samples", out);
+            put(result, "errors", errors);
+            put(result, "diagnostics", diagnostics);
+            done.finish(result);
+        };
         for (Class<? extends Record> type : types) {
-            readType(manager, type, range, executor, samples, errors, () -> {
-                if (left.decrementAndGet() == 0) {
-                    put(result, "samples", samples);
-                    put(result, "errors", errors);
-                    done.finish(result);
-                }
-            });
+            readType(manager, type, range, executor, samples, errors, after);
         }
+        if (stepsAllowed) dailySteps(manager, days, executor, daily, diagnostics, errors, after);
+    }
+
+    /** Steps per local day via Health Connect's aggregate API. */
+    private static void dailySteps(
+        HealthConnectManager manager,
+        int days,
+        Executor executor,
+        JSONArray daily,
+        JSONObject diagnostics,
+        JSONArray errors,
+        Runnable after
+    ) {
+        LocalDateTime start = LocalDate.now().minusDays(days).atStartOfDay();
+        LocalDateTime end = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalTimeRangeFilter filter = new LocalTimeRangeFilter.Builder().setStartTime(start).setEndTime(end).build();
+        AggregateRecordsRequest<Long> request = new AggregateRecordsRequest.Builder<Long>(filter)
+            .addAggregationType(StepsRecord.STEPS_COUNT_TOTAL)
+            .build();
+        try {
+            manager.aggregateGroupByPeriod(request, Period.ofDays(1), executor,
+                new OutcomeReceiver<List<AggregateRecordsGroupedByPeriodResponse<Long>>, HealthConnectException>() {
+                    @Override
+                    public void onResult(List<AggregateRecordsGroupedByPeriodResponse<Long>> periods) {
+                        long total = 0;
+                        for (AggregateRecordsGroupedByPeriodResponse<Long> period : periods) {
+                            Long steps = period.get(StepsRecord.STEPS_COUNT_TOTAL);
+                            if (steps == null || steps <= 0) continue;
+                            total += steps;
+                            ZoneId zone = ZoneId.systemDefault();
+                            Instant dayStart = period.getStartTime().atZone(zone).toInstant();
+                            Instant dayEnd = period.getEndTime().atZone(zone).toInstant();
+                            synchronized (daily) {
+                                daily.put(sample("steps", steps, "count", dayStart, dayEnd,
+                                    "health-connect",
+                                    "day-" + period.getStartTime().toLocalDate()));
+                            }
+                        }
+                        put(diagnostics, "stepDays", daily.length());
+                        put(diagnostics, "stepTotal", total);
+                        stepSources(manager, filter, executor, diagnostics, after);
+                    }
+
+                    @Override
+                    public void onError(HealthConnectException error) {
+                        synchronized (errors) {
+                            errors.put("Daily steps: " + error.getMessage());
+                        }
+                        after.run();
+                    }
+                });
+        } catch (RuntimeException error) {
+            synchronized (errors) {
+                errors.put("Daily steps: " + error.getMessage());
+            }
+            after.run();
+        }
+    }
+
+    /** Which apps the step totals came from (for the diagnostics only). */
+    private static void stepSources(
+        HealthConnectManager manager,
+        LocalTimeRangeFilter filter,
+        Executor executor,
+        JSONObject diagnostics,
+        Runnable after
+    ) {
+        AggregateRecordsRequest<Long> request = new AggregateRecordsRequest.Builder<Long>(filter)
+            .addAggregationType(StepsRecord.STEPS_COUNT_TOTAL)
+            .build();
+        try {
+            manager.aggregate(request, executor,
+                new OutcomeReceiver<android.health.connect.AggregateRecordsResponse<Long>, HealthConnectException>() {
+                    @Override
+                    public void onResult(android.health.connect.AggregateRecordsResponse<Long> response) {
+                        Set<String> origins = new TreeSet<>();
+                        for (DataOrigin origin : response.getDataOrigins(StepsRecord.STEPS_COUNT_TOTAL)) {
+                            origins.add(origin.getPackageName());
+                        }
+                        put(diagnostics, "stepSources", new JSONArray(origins));
+                        after.run();
+                    }
+
+                    @Override
+                    public void onError(HealthConnectException error) {
+                        put(diagnostics, "stepSources", "error: " + error.getMessage());
+                        after.run();
+                    }
+                });
+        } catch (RuntimeException error) {
+            put(diagnostics, "stepSources", "error: " + error.getMessage());
+            after.run();
+        }
+    }
+
+    /** Device and Health Connect facts, for working out why nothing arrives. */
+    private static JSONObject diagnostics(Context context, List<String> missing) {
+        JSONObject json = new JSONObject();
+        put(json, "android", Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")");
+        put(json, "device", Build.MANUFACTURER + " " + Build.MODEL);
+        String[] modules = {
+            "com.google.android.healthconnect.controller",
+            "com.android.healthconnect.controller",
+            "com.google.android.apps.healthdata",
+            "com.sec.android.app.shealth",
+        };
+        JSONObject versions = new JSONObject();
+        for (String name : modules) {
+            try {
+                PackageInfo info = context.getPackageManager().getPackageInfo(name, 0);
+                put(versions, name, info.versionName == null ? "installed" : info.versionName);
+            } catch (Exception notInstalled) {
+                // Not on this device.
+            }
+        }
+        put(json, "packages", versions);
+        JSONArray granted = new JSONArray();
+        for (String permission : PERMISSIONS) {
+            if (!missing.contains(permission)) granted.put(permission.substring(permission.lastIndexOf('.') + 1));
+        }
+        put(json, "granted", granted);
+        return json;
     }
 
     private static <T extends Record> void readType(

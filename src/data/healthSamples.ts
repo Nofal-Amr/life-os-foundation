@@ -46,6 +46,7 @@ type NativeResult = {
   missing?: string[];
   errors?: string[];
   error?: string;
+  diagnostics?: Record<string, unknown>;
 };
 
 const LAST_SYNC_KEY = "life-os-health-last-sync";
@@ -70,6 +71,8 @@ export type HealthSyncReport = {
   missing: string[];
   /** Errors Health Connect returned per data type. */
   errors: string[];
+  /** Device, Health Connect and per-type facts, for troubleshooting. */
+  diagnostics: Record<string, unknown>;
 };
 
 export async function syncHealthFromPhone(days = 30): Promise<HealthSyncReport> {
@@ -96,6 +99,7 @@ export async function syncHealthFromPhone(days = 30): Promise<HealthSyncReport> 
     sources: [...new Set(rows.map((row) => row.source).filter((s): s is string => !!s))],
     missing: result.missing ?? [],
     errors: result.errors ?? [],
+    diagnostics: result.diagnostics ?? {},
   };
 }
 

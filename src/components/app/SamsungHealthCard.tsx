@@ -226,7 +226,6 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
     (permission) => PERMISSION_LABELS[permission.split(".").pop() ?? ""] ?? permission,
   );
   const kinds = Object.entries(report.byKind);
-  const fromSamsung = report.sources.includes(SAMSUNG_HEALTH);
   return (
     <div className="space-y-3 rounded-xl border border-border p-4 text-sm">
       <p className="font-medium">Last sync</p>
@@ -258,7 +257,15 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
           ))}
         </ul>
       ) : null}
-      {!kinds.length || !fromSamsung ? (
+      <details className="rounded-lg bg-secondary px-3 py-2 text-xs">
+        <summary className="cursor-pointer font-medium">
+          Details (send this screenshot if it's stuck)
+        </summary>
+        <pre className="mt-2 whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
+          {JSON.stringify(report.diagnostics, null, 1)}
+        </pre>
+      </details>
+      {!kinds.length ? (
         <div className="space-y-2 text-muted-foreground">
           <p>
             Samsung Health only shares what it's told to. Open{" "}
