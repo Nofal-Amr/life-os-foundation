@@ -9,7 +9,7 @@ import { HEALTH_KIND_LABELS, healthSampleKeys } from "@/data/healthSamples";
 import { parseSamsungExport, type ImportResult } from "@/data/samsungExport";
 import { supabase } from "@/integrations/supabase/client";
 import { track } from "@/lib/analytics";
-import { currentUserId } from "@/lib/supabase-helpers";
+import { currentUserId, toError } from "@/lib/supabase-helpers";
 import { readZip } from "@/lib/zip";
 
 /**
@@ -77,7 +77,7 @@ export function SamsungImport() {
       setResult(null);
       void queryClient.invalidateQueries({ queryKey: healthSampleKeys.all });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Couldn't save the import.");
+      toast.error(`Couldn't save the import: ${toError(error).message}`);
     } finally {
       setSaving(false);
     }

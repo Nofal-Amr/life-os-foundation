@@ -95,6 +95,10 @@ export function parseSamsungExport(files: { name: string; text: string }[]): Imp
   const samples: ImportedSample[] = [];
   const used: string[] = [];
   const base = (name: string) => name.split(/[\\/]/).pop() ?? name;
+  // Some downloads hold both step files; they describe the same days, so use one.
+  const hasTrend = files.some((file) =>
+    base(file.name).startsWith("com.samsung.shealth.step_daily_trend"),
+  );
 
   for (const file of files) {
     const name = base(file.name);
@@ -102,7 +106,7 @@ export function parseSamsungExport(files: { name: string; text: string }[]): Imp
 
     if (
       name.startsWith("com.samsung.shealth.step_daily_trend") ||
-      name.startsWith("com.samsung.shealth.tracker.pedometer_day_summary")
+      (!hasTrend && name.startsWith("com.samsung.shealth.tracker.pedometer_day_summary"))
     ) {
       // One row per device per day. In step_daily_trend, source_type -2 is
       // Samsung's merged total; newer versions use pedometer_day_summary.
@@ -221,6 +225,16 @@ export function parseSamsungExport(files: { name: string; text: string }[]): Imp
       used.push(name);
     }
   }
+
+  // One row per (kind, id): a single save can't touch the same row twice.
+  const unique = new Map<string, ImportedSample>();
+  for (const sample of samples) {
+    const key = `${sample.kind}|${sample.external_id}`;
+    const existing = unique.get(key);
+    if (!existing || sample.value > existing.value) unique.set(key, sample);
+  }
+  samples.length = 0;
+  samples.push(...unique.values());
 
   const counts: Partial<Record<HealthKind, number>> = {};
   for (const sample of samples) counts[sample.kind] = (counts[sample.kind] ?? 0) + 1;

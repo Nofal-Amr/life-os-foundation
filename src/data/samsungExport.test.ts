@@ -91,3 +91,26 @@ describe("newer Samsung Health versions", () => {
     expect(result.samples[0]!.value).toBe(8938);
   });
 });
+
+describe("downloads with both step files", () => {
+  it("uses step_daily_trend and never repeats a day", () => {
+    const trend = [
+      "com.samsung.shealth.step_daily_trend,1,1",
+      "source_type,count,day_time,datauuid",
+      "-2,6500,1789948800000,a",
+      "0,4000,1789948800000,b",
+    ].join("\n");
+    const summary = [
+      "com.samsung.shealth.tracker.pedometer_day_summary,1,1",
+      "step_count,day_time,datauuid",
+      "6400,1789862400000,c",
+    ].join("\n");
+    const result = parseSamsungExport([
+      { name: "com.samsung.shealth.step_daily_trend.1.csv", text: trend },
+      { name: "com.samsung.shealth.tracker.pedometer_day_summary.1.csv", text: summary },
+    ]);
+    expect(result.counts.steps).toBe(1);
+    const keys = result.samples.map((s) => `${s.kind}|${s.external_id}`);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
