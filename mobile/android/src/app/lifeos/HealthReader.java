@@ -124,6 +124,26 @@ final class HealthReader {
     ) {
         ReadRecordsRequestUsingFilters<T> request =
             new ReadRecordsRequestUsingFilters.Builder<>(type).setTimeRangeFilter(range).setPageSize(5000).build();
+        try {
+            readRecords(manager, type, request, executor, samples, errors, after);
+        } catch (RuntimeException error) {
+            // e.g. SecurityException thrown straight away: report it instead of never answering.
+            synchronized (errors) {
+                errors.put(type.getSimpleName() + ": " + error.getMessage());
+            }
+            after.run();
+        }
+    }
+
+    private static <T extends Record> void readRecords(
+        HealthConnectManager manager,
+        Class<T> type,
+        ReadRecordsRequestUsingFilters<T> request,
+        Executor executor,
+        JSONArray samples,
+        JSONArray errors,
+        Runnable after
+    ) {
         manager.readRecords(request, executor, new OutcomeReceiver<ReadRecordsResponse<T>, HealthConnectException>() {
             @Override
             public void onResult(ReadRecordsResponse<T> response) {

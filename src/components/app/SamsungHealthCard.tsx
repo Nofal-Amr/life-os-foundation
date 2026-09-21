@@ -13,10 +13,17 @@ import {
   lastHealthSync,
   syncHealthFromPhone,
   type HealthKind,
+  type HealthSyncReport,
 } from "@/data/healthSamples";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
-import { healthStatus, isAndroidApp, requestHealthAccess, type HealthStatus } from "@/lib/native";
+import {
+  healthStatus,
+  isAndroidApp,
+  openHealthSettings,
+  requestHealthAccess,
+  type HealthStatus,
+} from "@/lib/native";
 import { cn } from "@/lib/utils";
 
 const AUTO_SYNC_AFTER_MS = 30 * 60_000;
@@ -36,11 +43,12 @@ export function SamsungHealthCard() {
   const android = isAndroidApp();
   const today = todayISO();
 
+  const [report, setReport] = useState<HealthSyncReport | null>(null);
   const sync = useMutation({
     mutationFn: () => syncHealthFromPhone(30),
-    onSuccess: ({ saved }) => {
+    onSuccess: (result) => {
+      setReport(result);
       void queryClient.invalidateQueries({ queryKey: healthSampleKeys.all });
-      if (saved === 0) toast.message("Connected, but Samsung Health hasn't shared anything yet.");
     },
     onError: (error) =>
       toast.error(error instanceof Error ? error.message : "Couldn't read Samsung Health."),
@@ -154,6 +162,8 @@ export function SamsungHealthCard() {
         </p>
       ) : null}
 
+      {android && report ? <SyncReport report={report} /> : null}
+
       {hasData ? (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -197,5 +207,75 @@ export function SamsungHealthCard() {
         </>
       ) : null}
     </section>
+  );
+}
+
+const PERMISSION_LABELS: Record<string, string> = {
+  READ_STEPS: "steps",
+  READ_SLEEP: "sleep",
+  READ_HEART_RATE: "heart rate",
+  READ_WEIGHT: "weight",
+  READ_EXERCISE: "exercise",
+  READ_ACTIVE_CALORIES_BURNED: "active calories",
+};
+const SAMSUNG_HEALTH = "com.sec.android.app.shealth";
+
+/** What the last sync actually got from the phone, and what is in the way. */
+function SyncReport({ report }: { report: HealthSyncReport }) {
+  const missing = report.missing.map(
+    (permission) => PERMISSION_LABELS[permission.split(".").pop() ?? ""] ?? permission,
+  );
+  const kinds = Object.entries(report.byKind);
+  const fromSamsung = report.sources.includes(SAMSUNG_HEALTH);
+  return (
+    <div className="space-y-3 rounded-xl border border-border p-4 text-sm">
+      <p className="font-medium">Last sync</p>
+      {kinds.length ? (
+        <p className="text-muted-foreground">
+          Read {kinds.map(([kind, count]) => `${count} ${kind.replace(/_/g, " ")}`).join(", ")}
+          {report.sources.length
+            ? ` from ${report.sources.map((s) => (s === SAMSUNG_HEALTH ? "Samsung Health" : s)).join(", ")}`
+            : ""}
+          .
+        </p>
+      ) : (
+        <p className="text-muted-foreground">
+          Health Connect returned nothing for the last 30 days.
+        </p>
+      )}
+      {missing.length ? (
+        <div className="space-y-2">
+          <p>Life OS isn't allowed to read: {missing.join(", ")}.</p>
+          <Button type="button" size="sm" onClick={() => openHealthSettings("app")}>
+            Allow in Health Connect
+          </Button>
+        </div>
+      ) : null}
+      {report.errors.length ? (
+        <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+          {report.errors.map((error) => (
+            <li key={error}>{error}</li>
+          ))}
+        </ul>
+      ) : null}
+      {!kinds.length || !fromSamsung ? (
+        <div className="space-y-2 text-muted-foreground">
+          <p>
+            Samsung Health only shares what it's told to. Open{" "}
+            <span className="text-foreground">Samsung Health → Settings → Health Connect</span>,
+            turn on sharing for steps, sleep, heart rate, exercise and weight, then tap Sync now.
+            Samsung Health may take a few minutes to copy its data over.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => openHealthSettings("home")}
+          >
+            Open Health Connect
+          </Button>
+        </div>
+      ) : null}
+    </div>
   );
 }

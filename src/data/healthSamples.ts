@@ -60,9 +60,19 @@ export function lastHealthSync(): Date | null {
 }
 
 /** Reads the last `days` days from the phone and saves them. Returns rows saved. */
-export async function syncHealthFromPhone(
-  days = 30,
-): Promise<{ saved: number; missing: string[] }> {
+export type HealthSyncReport = {
+  saved: number;
+  /** Records read per kind, e.g. { steps: 120 }. */
+  byKind: Record<string, number>;
+  /** Apps the records came from (Samsung Health is com.sec.android.app.shealth). */
+  sources: string[];
+  /** Health Connect read permissions Life OS doesn't have. */
+  missing: string[];
+  /** Errors Health Connect returned per data type. */
+  errors: string[];
+};
+
+export async function syncHealthFromPhone(days = 30): Promise<HealthSyncReport> {
   const result = JSON.parse(await nativeRequest("readHealth", { days })) as NativeResult;
   if (result.error) throw new Error(result.error);
   const user_id = await currentUserId();
@@ -78,7 +88,15 @@ export async function syncHealthFromPhone(
   } catch {
     // Not remembered; the next sync simply runs again.
   }
-  return { saved: rows.length, missing: result.missing ?? [] };
+  const byKind: Record<string, number> = {};
+  for (const row of rows) byKind[row.kind] = (byKind[row.kind] ?? 0) + 1;
+  return {
+    saved: rows.length,
+    byKind,
+    sources: [...new Set(rows.map((row) => row.source).filter((s): s is string => !!s))],
+    missing: result.missing ?? [],
+    errors: result.errors ?? [],
+  };
 }
 
 /** The local calendar day a sample belongs to (sleep counts for the day it ends). */

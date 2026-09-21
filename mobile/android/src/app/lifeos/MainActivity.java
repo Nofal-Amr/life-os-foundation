@@ -301,6 +301,23 @@ public class MainActivity extends Activity {
             return HealthReader.status(MainActivity.this);
         }
 
+        /** Opens Health Connect: "home" for its main screen, "app" for Life OS's permissions. */
+        @JavascriptInterface
+        public void openHealthSettings(String which) {
+            if (!trusted() || !HealthReader.supported()) return;
+            Intent intent = "app".equals(which)
+                ? new Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS")
+                    .putExtra(Intent.EXTRA_PACKAGE_NAME, getPackageName())
+                : new Intent("android.health.connect.action.HEALTH_HOME_SETTINGS");
+            runOnUiThread(() -> {
+                try {
+                    startActivity(intent);
+                } catch (Exception missing) {
+                    startActivity(new Intent("android.health.connect.action.HEALTH_HOME_SETTINGS"));
+                }
+            });
+        }
+
         @JavascriptInterface
         public void requestHealth() {
             if (!trusted() || !HealthReader.supported()) return;

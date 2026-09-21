@@ -10,6 +10,7 @@ type NativeBridge = {
   readHealth?(json: string): void;
   healthStatus?(): string;
   requestHealth?(): void;
+  openHealthSettings?(which: string): void;
 };
 
 declare global {
@@ -105,4 +106,9 @@ export function healthStatus(): HealthStatus {
 
 export function requestHealthAccess(): void {
   bridge()?.requestHealth?.();
+}
+
+/** Opens Health Connect: its main screen, or the page with Life OS's permissions. */
+export function openHealthSettings(which: "home" | "app"): void {
+  bridge()?.openHealthSettings?.(which);
 }
