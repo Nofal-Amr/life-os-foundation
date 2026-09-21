@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { transactionsQuery } from "@/data/finance";
 import { habitLogsQuery, habitsQuery } from "@/data/habits";
 import { medicationLogsQuery, medicationsQuery } from "@/data/health";
+import { healthSamplesQuery } from "@/data/healthSamples";
 import { buildHub, levelFor, statFor, type Dimension, type DimensionLine } from "@/data/hub";
 import type { ModuleKey } from "@/data/modules";
 import { prayerLogsQuery } from "@/data/spirit";
@@ -46,6 +47,7 @@ export function HubCard() {
   const habits = useQuery(habitsQuery());
   const habitLogs = useQuery(habitLogsQuery());
   const transactions = useQuery(transactionsQuery());
+  const healthSamples = useQuery(healthSamplesQuery(365));
 
   const hub = buildHub({
     today: todayISO(),
@@ -56,6 +58,7 @@ export function HubCard() {
     habits: habits.data ?? [],
     habitLogs: habitLogs.data ?? [],
     transactions: transactions.data ?? [],
+    healthSamples: healthSamples.data ?? [],
     enabled: (dimension) => enabled.includes(META[dimension].module),
   });
   if (!hub.lines.length) return null;

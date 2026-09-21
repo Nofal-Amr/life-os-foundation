@@ -118,17 +118,48 @@ final class HealthReader {
         AtomicInteger left = new AtomicInteger(types.size() + (stepsAllowed ? 1 : 0));
         Runnable after = () -> {
             if (left.decrementAndGet() != 0) return;
-            // Daily totals (phone + watch, deduplicated by Health Connect) replace raw step records.
+            // Steps per day: the higher of Health Connect's daily total and the
+            // biggest single-device total (phone or watch), since the daily total
+            // can leave out a device that isn't top of Health Connect's priority list.
             JSONArray out = new JSONArray();
             JSONObject counts = new JSONObject();
+            java.util.Map<String, java.util.Map<Integer, Long>> byDevice = new java.util.HashMap<>();
+            ZoneId zone = ZoneId.systemDefault();
             for (int i = 0; i < samples.length(); i++) {
                 JSONObject sample = samples.optJSONObject(i);
                 String kind = sample.optString("kind");
                 put(counts, kind, counts.optInt(kind) + 1);
-                if (daily.length() > 0 && "steps".equals(kind)) continue;
+                if ("steps".equals(kind)) {
+                    String day = Instant.parse(sample.optString("start_at")).atZone(zone).toLocalDate().toString();
+                    int device = sample.optInt("_device");
+                    byDevice.computeIfAbsent(day, k -> new java.util.HashMap<>())
+                        .merge(device, sample.optLong("value"), Long::sum);
+                    continue;
+                }
                 out.put(sample);
             }
-            for (int i = 0; i < daily.length(); i++) out.put(daily.opt(i));
+            java.util.Map<String, JSONObject> dayTotals = new java.util.TreeMap<>();
+            for (int i = 0; i < daily.length(); i++) {
+                JSONObject day = daily.optJSONObject(i);
+                dayTotals.put(day.optString("external_id").replace("day-", ""), day);
+            }
+            JSONObject deviceTotals = new JSONObject();
+            for (java.util.Map.Entry<String, java.util.Map<Integer, Long>> entry : byDevice.entrySet()) {
+                long best = 0;
+                for (long total : entry.getValue().values()) best = Math.max(best, total);
+                put(deviceTotals, entry.getKey(), new JSONObject(entry.getValue()).toString());
+                JSONObject day = dayTotals.get(entry.getKey());
+                if (day == null) {
+                    LocalDate date = LocalDate.parse(entry.getKey());
+                    dayTotals.put(entry.getKey(), sample("steps", best, "count",
+                        date.atStartOfDay(zone).toInstant(), date.plusDays(1).atStartOfDay(zone).toInstant(),
+                        "health-connect", "day-" + entry.getKey()));
+                } else if (best > day.optLong("value")) {
+                    put(day, "value", best);
+                }
+            }
+            for (JSONObject day : dayTotals.values()) out.put(day);
+            put(diagnostics, "stepsByDevice", deviceTotals);
             put(diagnostics, "records30d", counts);
             put(result, "samples", out);
             put(result, "errors", errors);
@@ -317,7 +348,9 @@ final class HealthReader {
         String source = record.getMetadata().getDataOrigin().getPackageName();
         if (record instanceof StepsRecord) {
             StepsRecord r = (StepsRecord) record;
-            samples.put(sample("steps", r.getCount(), "count", r.getStartTime(), r.getEndTime(), source, id));
+            JSONObject steps = sample("steps", r.getCount(), "count", r.getStartTime(), r.getEndTime(), source, id);
+            put(steps, "_device", r.getMetadata().getDevice().getType());
+            samples.put(steps);
         } else if (record instanceof SleepSessionRecord) {
             SleepSessionRecord r = (SleepSessionRecord) record;
             long minutes = Duration.between(r.getStartTime(), r.getEndTime()).toMinutes();

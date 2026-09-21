@@ -9,6 +9,7 @@ import { DateNav } from "@/components/app/DateNav";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SamsungHealthCard } from "@/components/app/SamsungHealthCard";
+import { healthSamplesQuery, withSampleDays } from "@/data/healthSamples";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import {
   GlanceSection,
@@ -267,6 +268,8 @@ function HealthPage() {
   const queryClient = useQueryClient();
   const body = useQuery(bodyStatsQuery());
   const logs = useQuery(healthLogsQuery());
+  // Samsung Health nights fill in days you didn't log by hand.
+  const samples = useQuery(healthSamplesQuery(365));
   const medications = useQuery(medicationsQuery());
   const doses = useQuery(medicationLogsQuery());
   const { prefs, fmtDate, fmtLongDate, fmtSlot, fmtHeight, fmtShortDate, fmtWeight, weightUnit } =
@@ -470,8 +473,20 @@ function HealthPage() {
   const dayDoses = (doses.data ?? []).filter((dose) => dose.log_date === date);
   const activeMeds = (medications.data ?? []).filter((medication) => medication.active);
   const medRing = dosesOn(medications.data ?? [], doses.data ?? [], date);
-  const sleepHours = healthSeries(logs.data ?? [], "sleep_hours", sleepDays);
-  const sleepScores = healthSeries(logs.data ?? [], "sleep_score", sleepDays);
+  const sleepHours = withSampleDays(
+    healthSeries(logs.data ?? [], "sleep_hours", sleepDays),
+    samples.data ?? [],
+    "sleep",
+    sleepDays,
+    (minutes) => Math.round((minutes / 60) * 10) / 10,
+  );
+  const sleepScores = withSampleDays(
+    healthSeries(logs.data ?? [], "sleep_score", sleepDays),
+    samples.data ?? [],
+    "sleep_score",
+    sleepDays,
+    Math.round,
+  );
   const hoursText = (value: number) => `${Math.round(value * 10) / 10} h`;
 
   return (

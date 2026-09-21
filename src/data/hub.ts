@@ -14,6 +14,7 @@ import { addDays, format, parseISO } from "date-fns";
 import type { Transaction } from "./finance";
 import type { HabitLog, Habit } from "./habits";
 import type { Medication, MedicationLog } from "./health";
+import { dailyValues, lastDays, type HealthSample } from "./healthSamples";
 import type { PrayerLog } from "./spirit";
 import { statusOf } from "./spirit";
 import type { Task } from "./tasks";
@@ -42,6 +43,10 @@ export const XP = {
   dose: 5,
   habit: 5,
   transaction: 2,
+  /** Per 1,000 steps. */
+  steps: 1,
+  workout: 10,
+  night: 5,
 } as const;
 
 /** Level from XP: 50 XP to reach level 2, each level a little further. */
@@ -91,6 +96,8 @@ export function buildHub(args: {
   habits: Habit[];
   habitLogs: HabitLog[];
   transactions: Transaction[];
+  /** Samsung Health (steps, sleep, workouts); optional. */
+  healthSamples?: HealthSample[];
   enabled: (dimension: Dimension) => boolean;
 }): Hub {
   const from = format(addDays(parseISO(args.today), -6), "yyyy-MM-dd");
@@ -103,16 +110,53 @@ export function buildHub(args: {
       .reduce((sum, m) => sum + new Set(m.schedule_times ?? []).size, 0);
     const taken = args.medicationLogs.filter((log) => log.taken && inWeek(log.log_date)).length;
     const allTaken = args.medicationLogs.filter((log) => log.taken).length;
+
+    const samples = args.healthSamples ?? [];
+    const week = lastDays(7, args.today);
+    const steps = dailyValues(samples, "steps", week).filter(
+      (v): v is number => v != null && v > 0,
+    );
+    const nights = dailyValues(samples, "sleep", week).filter(
+      (v): v is number => v != null && v > 0,
+    );
+    const workouts = samples.filter(
+      (s) => s.kind === "exercise" && inWeek(s.start_at.slice(0, 10)),
+    ).length;
+    const avg = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length;
+
+    const parts: string[] = [];
+    if (steps.length) parts.push(`${Math.round(avg(steps)).toLocaleString()} steps a day`);
+    if (nights.length) {
+      const minutes = avg(nights);
+      parts.push(`${Math.floor(minutes / 60)} h ${Math.round(minutes % 60)} min sleep`);
+    }
+    if (workouts) parts.push(`${workouts} ${workouts === 1 ? "workout" : "workouts"}`);
+    if (slots) parts.push(`${taken} of ${slots * 7} doses`);
+
+    const allSteps = samples.filter((s) => s.kind === "steps").reduce((sum, s) => sum + s.value, 0);
+    const allWorkouts = samples.filter((s) => s.kind === "exercise").length;
+    const allNights = samples.filter((s) => s.kind === "sleep").length;
     lines.push({
       key: "body",
       label: "Body",
       maslow: "Physiological",
-      count: slots ? `${taken} of ${slots * 7} doses taken` : "No doses scheduled",
-      ratio: slots ? { done: taken, total: slots * 7 } : null,
-      xp: allTaken * XP.dose,
+      count: parts.length ? parts.join(" · ") : "Nothing logged",
+      // Doses when scheduled; otherwise nights with sleep recorded.
+      ratio: slots
+        ? { done: taken, total: slots * 7 }
+        : nights.length || steps.length
+          ? { done: nights.length, total: 7 }
+          : null,
+      xp:
+        allTaken * XP.dose +
+        Math.floor(allSteps / 1000) * XP.steps +
+        allWorkouts * XP.workout +
+        allNights * XP.night,
       explain: [
-        `${XP.dose} XP for every dose marked taken (${allTaken} so far).`,
-        "Stat: doses taken in the last 7 days out of doses scheduled.",
+        `${XP.dose} XP per dose taken, ${XP.steps} XP per 1,000 steps, ${XP.workout} XP per workout, ${XP.night} XP per night of sleep recorded.`,
+        slots
+          ? "Stat: doses taken in the last 7 days out of doses scheduled."
+          : "Stat: nights with sleep recorded in the last 7 days.",
       ],
     });
   }

@@ -13,11 +13,12 @@ import { currentUserId, unwrap } from "@/lib/supabase-helpers";
 
 export type HealthSample = Database["public"]["Tables"]["health_samples"]["Row"];
 export type HealthKind =
-  "steps" | "sleep" | "heart_rate" | "weight" | "exercise" | "active_calories";
+  "steps" | "sleep" | "sleep_score" | "heart_rate" | "weight" | "exercise" | "active_calories";
 
 export const HEALTH_KIND_LABELS: Record<HealthKind, string> = {
   steps: "Steps",
   sleep: "Sleep",
+  sleep_score: "Sleep score",
   heart_rate: "Heart rate",
   weight: "Weight",
   exercise: "Exercise",
@@ -80,6 +81,20 @@ export async function syncHealthFromPhone(days = 30): Promise<HealthSyncReport> 
   if (result.error) throw new Error(result.error);
   const user_id = await currentUserId();
   const rows = (result.samples ?? []).map((sample) => ({ ...sample, user_id }));
+  // A day's steps never go down: an import (phone + watch) may already hold a
+  // higher total than what Health Connect has for that day.
+  const stepIds = rows.filter((row) => row.kind === "steps").map((row) => row.external_id);
+  if (stepIds.length) {
+    const { data: existing } = await supabase
+      .from("health_samples")
+      .select("external_id, value")
+      .eq("kind", "steps")
+      .in("external_id", stepIds);
+    const saved = new Map((existing ?? []).map((row) => [row.external_id, Number(row.value)]));
+    for (const row of rows) {
+      if (row.kind === "steps") row.value = Math.max(row.value, saved.get(row.external_id) ?? 0);
+    }
+  }
   for (let index = 0; index < rows.length; index += 500) {
     const { error } = await supabase
       .from("health_samples")
@@ -105,7 +120,8 @@ export async function syncHealthFromPhone(days = 30): Promise<HealthSyncReport> 
 
 /** The local calendar day a sample belongs to (sleep counts for the day it ends). */
 function dayOf(sample: HealthSample): string {
-  const at = sample.kind === "sleep" && sample.end_at ? sample.end_at : sample.start_at;
+  const night = sample.kind === "sleep" || sample.kind === "sleep_score";
+  const at = night && sample.end_at ? sample.end_at : sample.start_at;
   return format(new Date(at), "yyyy-MM-dd");
 }
 
@@ -127,7 +143,9 @@ export function dailyValues(
   return days.map((day) => {
     const list = byDay.get(day);
     if (!list?.length) return null;
-    if (kind === "heart_rate") return list.reduce((sum, s) => sum + s.value, 0) / list.length;
+    if (kind === "heart_rate" || kind === "sleep_score") {
+      return list.reduce((sum, s) => sum + s.value, 0) / list.length;
+    }
     if (kind === "weight") {
       return [...list].sort((a, b) => b.start_at.localeCompare(a.start_at))[0]!.value;
     }
@@ -139,4 +157,26 @@ export function lastDays(count: number, today: string): string[] {
   return Array.from({ length: count }, (_, index) =>
     format(addDays(parseISO(today), index - count + 1), "yyyy-MM-dd"),
   );
+}
+
+/**
+ * Adds Samsung Health days to a hand-logged series (e.g. sleep hours on the
+ * Health page). A day logged by hand wins; Samsung fills the other days.
+ */
+export function withSampleDays(
+  manual: { date: string; value: number }[],
+  samples: HealthSample[],
+  kind: HealthKind,
+  days: number,
+  toValue: (value: number) => number = (value) => value,
+  today: Date = new Date(),
+): { date: string; value: number }[] {
+  const range = lastDays(days, format(today, "yyyy-MM-dd"));
+  const logged = new Set(manual.map((point) => point.date));
+  const extra = dailyValues(samples, kind, range)
+    .map((value, index) => ({ date: range[index]!, value }))
+    .filter((point): point is { date: string; value: number } => point.value != null)
+    .filter((point) => !logged.has(point.date))
+    .map((point) => ({ date: point.date, value: toValue(point.value) }));
+  return [...manual, ...extra].sort((a, b) => a.date.localeCompare(b.date));
 }

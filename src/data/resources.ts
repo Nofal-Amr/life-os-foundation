@@ -188,7 +188,7 @@ export function tierUsage(
   const list = [
     ...readingsFor(resource, readings),
     ...(pending ? [{ reading: pending.reading, reading_at: pending.at } as ResourceReading] : []),
-  ];
+  ].sort((a, b) => a.reading_at.localeCompare(b.reading_at));
   // The last reading before the period counts as its starting point.
   const before = list.filter((r) => r.reading_at.slice(0, 10) < periodStart).at(-1);
   const inPeriod = list.filter((r) => r.reading_at.slice(0, 10) >= periodStart);

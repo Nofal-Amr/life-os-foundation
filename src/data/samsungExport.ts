@@ -158,6 +158,19 @@ export function parseSamsungExport(files: { name: string; text: string }[]): Imp
           source: SOURCE,
           external_id: `sleep-${row["datauuid"] || start}`,
         });
+        // Newer downloads include Samsung's own sleep score (0-100).
+        const score = num(row["sleep_score"]);
+        if (score > 0 && score <= 100) {
+          samples.push({
+            kind: "sleep_score",
+            value: score,
+            unit: "score",
+            start_at: start,
+            end_at: end,
+            source: SOURCE,
+            external_id: `sleep-score-${row["datauuid"] || start}`,
+          });
+        }
       }
       used.push(name);
     } else if (name.startsWith("com.samsung.shealth.tracker.heart_rate")) {

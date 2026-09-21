@@ -62,3 +62,25 @@ describe("hub", () => {
     expect(hub.lines[1]!.xp).toBe(15 * 2 + 5);
   });
 });
+
+describe("body from Samsung Health", () => {
+  it("counts steps, sleep and workouts, not only medication", () => {
+    const at = (day: string, h = 12) =>
+      new Date(`${day}T${String(h).padStart(2, "0")}:00:00`).toISOString();
+    const hub = buildHub({
+      ...none,
+      today: "2026-09-21",
+      healthSamples: [
+        { kind: "steps", value: 8000, start_at: at("2026-09-20"), end_at: null },
+        { kind: "steps", value: 6000, start_at: at("2026-09-21"), end_at: null },
+        { kind: "sleep", value: 420, start_at: at("2026-09-20", 1), end_at: at("2026-09-20", 8) },
+        { kind: "exercise", value: 45, start_at: at("2026-09-19"), end_at: null },
+      ] as never,
+      enabled: (d) => d === "body",
+    });
+    const body = hub.lines[0]!;
+    expect(body.count).toBe("7,000 steps a day · 7 h 0 min sleep · 1 workout");
+    expect(body.ratio).toEqual({ done: 1, total: 7 });
+    expect(body.xp).toBe(14 + 10 + 5);
+  });
+});

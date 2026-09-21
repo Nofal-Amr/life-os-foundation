@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { Activity, Footprints, HeartPulse, Moon, RefreshCw, Scale, Flame } from "lucide-react";
+import { Activity, Flame, Footprints, HeartPulse, Moon, RefreshCw, Scale } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { SamsungImport } from "@/components/app/SamsungImport";
+import { RangeToggle } from "@/components/app/StatCards";
 import { Button } from "@/components/ui/button";
 import {
   dailyValues,
@@ -13,7 +14,7 @@ import {
   lastDays,
   lastHealthSync,
   syncHealthFromPhone,
-  type HealthKind,
+  type HealthSample,
   type HealthSyncReport,
 } from "@/data/healthSamples";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -28,6 +29,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const AUTO_SYNC_AFTER_MS = 30 * 60_000;
+type Range = 7 | 30 | 90;
 
 function minutesLabel(minutes: number) {
   const h = Math.floor(minutes / 60);
@@ -35,16 +37,24 @@ function minutesLabel(minutes: number) {
   return h ? `${h} h ${m} min` : `${m} min`;
 }
 
-/** Samsung Health figures on the Body page, synced from the phone. */
+/** The newest sample of a kind, or null. */
+function latest(samples: HealthSample[], kind: string): HealthSample | null {
+  return samples.find((sample) => sample.kind === kind) ?? null;
+}
+
+const dayLabel = (iso: string) => format(new Date(iso), "EEE d MMM");
+
+/** Samsung Health figures on the Body page, synced from the phone or imported. */
 export function SamsungHealthCard() {
   const queryClient = useQueryClient();
-  const samples = useQuery(healthSamplesQuery(30));
+  const samples = useQuery(healthSamplesQuery(365));
   const { fmtWeight } = usePreferences();
   const [status, setStatus] = useState<HealthStatus>("unavailable");
+  const [range, setRange] = useState<Range>(7);
+  const [report, setReport] = useState<HealthSyncReport | null>(null);
   const android = isAndroidApp();
   const today = todayISO();
 
-  const [report, setReport] = useState<HealthSyncReport | null>(null);
   const sync = useMutation({
     mutationFn: () => syncHealthFromPhone(30),
     onSuccess: (result) => {
@@ -70,46 +80,56 @@ export function SamsungHealthCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
+  // Newest first, as the query orders them.
   const rows = samples.data ?? [];
-  const week = lastDays(7, today);
-  const on = (kind: HealthKind) => dailyValues(rows, kind, [today])[0] ?? null;
-  const latestWeight = rows.find((sample) => sample.kind === "weight");
-  const steps7 = dailyValues(rows, "steps", week);
-  const maxSteps = Math.max(0, ...steps7.map((v) => v ?? 0));
   const hasData = rows.length > 0;
+  const days = lastDays(range, today);
+  const steps = dailyValues(rows, "steps", days);
+  const sleep = dailyValues(rows, "sleep", days);
+  const stepsToday = dailyValues(rows, "steps", [today])[0];
+  const lastSleep = latest(rows, "sleep");
+  const lastHeart = latest(rows, "heart_rate");
+  const lastWeight = latest(rows, "weight");
+  const week = lastDays(7, today);
+  const exerciseWeek = dailyValues(rows, "exercise", week).reduce<number>(
+    (sum, v) => sum + (v ?? 0),
+    0,
+  );
+  const activeToday = dailyValues(rows, "active_calories", [today])[0];
+  // Only worth showing when something needs attention.
+  const problem =
+    report && (!Object.keys(report.byKind).length || report.missing.length || report.errors.length);
 
   const tiles: { icon: typeof Footprints; label: string; value: string | null }[] = [
     {
       icon: Footprints,
       label: "Steps today",
-      value: on("steps") == null ? null : Math.round(on("steps")!).toLocaleString(),
+      value: stepsToday == null ? null : Math.round(stepsToday).toLocaleString(),
     },
     {
       icon: Moon,
-      label: "Sleep last night",
-      value: on("sleep") == null ? null : minutesLabel(on("sleep")!),
+      label: lastSleep ? `Sleep · ${dayLabel(lastSleep.end_at ?? lastSleep.start_at)}` : "Sleep",
+      value: lastSleep ? minutesLabel(lastSleep.value) : null,
     },
     {
       icon: HeartPulse,
-      label: "Heart rate today",
-      value: on("heart_rate") == null ? null : `${Math.round(on("heart_rate")!)} bpm avg`,
+      label: lastHeart ? `Heart rate · ${dayLabel(lastHeart.start_at)}` : "Heart rate",
+      value: lastHeart ? `${Math.round(lastHeart.value)} bpm avg` : null,
     },
     {
       icon: Activity,
-      label: "Exercise today",
-      value: on("exercise") == null ? null : minutesLabel(on("exercise")!),
+      label: "Exercise · last 7 days",
+      value: exerciseWeek ? minutesLabel(exerciseWeek) : null,
     },
     {
       icon: Flame,
       label: "Active today",
-      value: on("active_calories") == null ? null : `${Math.round(on("active_calories")!)} kcal`,
+      value: activeToday == null ? null : `${Math.round(activeToday)} kcal`,
     },
     {
       icon: Scale,
-      label: latestWeight
-        ? `Weight · ${format(new Date(latestWeight.start_at), "d MMM")}`
-        : "Weight",
-      value: latestWeight ? fmtWeight(latestWeight.value) : null,
+      label: lastWeight ? `Weight · ${dayLabel(lastWeight.start_at)}` : "Weight",
+      value: lastWeight ? fmtWeight(lastWeight.value) : null,
     },
   ];
 
@@ -120,7 +140,7 @@ export function SamsungHealthCard() {
           <p className="text-sm font-semibold">Samsung Health</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {hasData
-              ? `From your phone${lastHealthSync() ? ` · synced ${format(lastHealthSync()!, "d MMM, HH:mm")}` : ""}`
+              ? `From your phone and watch${lastHealthSync() ? ` · synced ${format(lastHealthSync()!, "d MMM, HH:mm")}` : ""}`
               : "Steps, sleep, heart rate, workouts and weight from your phone."}
           </p>
         </div>
@@ -157,13 +177,8 @@ export function SamsungHealthCard() {
           Reading Samsung Health needs Android 14 or later on this phone.
         </p>
       ) : null}
-      {!android && !hasData ? (
-        <p className="text-sm text-muted-foreground">
-          Connect it once from the Life OS Android app; the figures then show here too.
-        </p>
-      ) : null}
 
-      {android && report ? <SyncReport report={report} /> : null}
+      {android && problem && report ? <SyncReport report={report} /> : null}
 
       {hasData ? (
         <>
@@ -171,8 +186,8 @@ export function SamsungHealthCard() {
             {tiles.map(({ icon: Icon, label, value }) => (
               <div key={label} className="rounded-xl bg-secondary p-3">
                 <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Icon className="size-3.5" aria-hidden="true" />
-                  {label}
+                  <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{label}</span>
                 </p>
                 <p className="mt-1 text-lg font-semibold tabular-nums">
                   {value ?? <span className="text-sm font-normal text-muted-foreground">—</span>}
@@ -180,35 +195,110 @@ export function SamsungHealthCard() {
               </div>
             ))}
           </div>
-          {maxSteps > 0 ? (
-            <div>
-              <p className="mb-2 text-xs text-muted-foreground">Steps, last 7 days</p>
-              <div className="grid grid-cols-7 items-end gap-1.5" style={{ height: 88 }}>
-                {week.map((day, index) => {
-                  const value = steps7[index] ?? 0;
-                  return (
-                    <div key={day} className="flex h-full flex-col items-center justify-end gap-1">
-                      <span
-                        className="w-full max-w-7 rounded-md"
-                        title={`${format(parseISO(day), "EEE d MMM")}: ${Math.round(value).toLocaleString()} steps`}
-                        style={{
-                          height: Math.max(4, (value / maxSteps) * 64),
-                          background: value ? "var(--chart-2)" : "var(--color-border)",
-                        }}
-                      />
-                      <span className="text-[10px] uppercase text-muted-foreground">
-                        {format(parseISO(day), "EEEEE")}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
+
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium">History</p>
+            <RangeToggle
+              label="History range"
+              value={range}
+              onChange={setRange}
+              options={[
+                { value: 7, label: "7 days" },
+                { value: 30, label: "30 days" },
+                { value: 90, label: "90 days" },
+              ]}
+            />
+          </div>
+          <DayChart
+            title="Steps"
+            days={days}
+            values={steps}
+            color="var(--chart-2)"
+            format={(v) => `${Math.round(v).toLocaleString()} steps`}
+          />
+          <DayChart
+            title="Sleep"
+            days={days}
+            values={sleep}
+            color="var(--chart-5)"
+            format={(v) => minutesLabel(v)}
+          />
         </>
+      ) : !android ? (
+        <p className="text-sm text-muted-foreground">
+          Connect it from the Life OS Android app, or import a Samsung Health download below.
+        </p>
       ) : null}
       <SamsungImport />
     </section>
+  );
+}
+
+/** Bars per day with the average of the days that have data. */
+function DayChart({
+  title,
+  days,
+  values,
+  color,
+  format: formatValue,
+}: {
+  title: string;
+  days: string[];
+  values: (number | null)[];
+  color: string;
+  format: (value: number) => string;
+}) {
+  const logged = values.filter((v): v is number => v != null && v > 0);
+  if (!logged.length) {
+    return <p className="text-xs text-muted-foreground">{title}: nothing in this range.</p>;
+  }
+  const max = Math.max(...logged);
+  const average = logged.reduce((a, b) => a + b, 0) / logged.length;
+  const dense = days.length > 14;
+  return (
+    <div>
+      <p className="mb-2 flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">{title}</span>
+        <span className="tabular-nums">
+          {formatValue(average)} a day on average · {logged.length} of {days.length} days
+        </span>
+      </p>
+      <div
+        className="grid items-end"
+        style={{
+          height: 88,
+          gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`,
+          gap: dense ? 2 : 6,
+        }}
+      >
+        {days.map((day, index) => {
+          const value = values[index] ?? 0;
+          return (
+            <div key={day} className="flex h-full flex-col items-center justify-end gap-1">
+              <span
+                className={cn("w-full rounded-sm", !dense && "max-w-7 rounded-md")}
+                title={`${format(parseISO(day), "EEE d MMM")}: ${value ? formatValue(value) : "nothing logged"}`}
+                style={{
+                  height: Math.max(3, (value / max) * 64),
+                  background: value ? color : "var(--color-border)",
+                }}
+              />
+              {!dense ? (
+                <span className="text-[10px] uppercase text-muted-foreground">
+                  {format(parseISO(day), "EEEEE")}
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+      {dense ? (
+        <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+          <span>{format(parseISO(days[0]!), "d MMM")}</span>
+          <span>{format(parseISO(days.at(-1)!), "d MMM")}</span>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -260,9 +350,7 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
         </ul>
       ) : null}
       <details className="rounded-lg bg-secondary px-3 py-2 text-xs">
-        <summary className="cursor-pointer font-medium">
-          Details (send this screenshot if it's stuck)
-        </summary>
+        <summary className="cursor-pointer font-medium">Technical details</summary>
         <pre className="mt-2 whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
           {JSON.stringify(report.diagnostics, null, 1)}
         </pre>

@@ -62,7 +62,7 @@ import {
   untilNextTier,
   type Tariff,
 } from "@/data/tariff";
-import { todayISO } from "@/lib/date";
+import { isoToLocalInput, localInputToISO, todayISO } from "@/lib/date";
 
 const STARTER_RESOURCES: { name: string; kind: ResourceKind; unit: string }[] = [
   { name: "Electricity", kind: "meter", unit: "kWh" },
@@ -127,6 +127,8 @@ function ResourcesPage() {
   const [toDelete, setToDelete] = useState<Resource | null>(null);
   const [readingFor, setReadingFor] = useState<Resource | null>(null);
   const [readingValue, setReadingValue] = useState("");
+  /** When the reading was taken ("yyyy-MM-ddTHH:mm", local); defaults to now. */
+  const [readingAt, setReadingAt] = useState("");
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
@@ -186,7 +188,7 @@ function ResourcesPage() {
       return addReading({
         resource_id: readingFor.id,
         reading: value,
-        reading_at: new Date().toISOString(),
+        reading_at: readingAt ? localInputToISO(readingAt) : new Date().toISOString(),
         note: null,
       });
     },
@@ -254,6 +256,7 @@ function ResourcesPage() {
   function openReading(resource: Resource) {
     setReadingFor(resource);
     setReadingValue("");
+    setReadingAt(isoToLocalInput(new Date().toISOString()));
   }
 
   const list = resources.data ?? [];
@@ -819,6 +822,20 @@ function ResourcesPage() {
               value={readingValue}
               onChange={(event) => setReadingValue(event.target.value)}
             />
+            <div className="space-y-1.5 pt-1">
+              <Label htmlFor="reading-at">Taken on</Label>
+              <Input
+                id="reading-at"
+                type="datetime-local"
+                className="h-11 tabular-nums"
+                value={readingAt}
+                max={isoToLocalInput(new Date().toISOString())}
+                onChange={(event) => setReadingAt(event.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Change this to add a reading from earlier.
+              </p>
+            </div>
             {(() => {
               const own = readingsFor(readingFor, readings.data ?? []);
               const last = own[own.length - 1];
@@ -836,7 +853,7 @@ function ResourcesPage() {
               if (readingValue === "" || Number.isNaN(value)) return null;
               const usage = tierUsage(readingFor, readings.data ?? [], {
                 reading: value,
-                at: new Date().toISOString(),
+                at: readingAt ? localInputToISO(readingAt) : new Date().toISOString(),
               });
               if (!usage) return null;
               return (
