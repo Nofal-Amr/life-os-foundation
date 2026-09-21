@@ -366,9 +366,75 @@ async function applyToCache(write: Write): Promise<Row[]> {
 
 /* ------------------------------------------------------------ Fetch handlers */
 
+function cachedResponse(cached: CachedResponse): Response {
+  return new Response(cached.body || null, { status: cached.status, headers: cached.headers });
+}
+
+async function readCached(key: string): Promise<CachedResponse | undefined> {
+  try {
+    return (await done((await store(RESPONSES)).get(key))) as CachedResponse | undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+let refreshTimer: number | null = null;
+/** After background refreshes change something, re-render once. */
+function scheduleRefresh() {
+  if (refreshTimer) window.clearTimeout(refreshTimer);
+  refreshTimer = window.setTimeout(() => {
+    refreshTimer = null;
+    onSynced?.();
+  }, 250);
+}
+
+/** Fetches in the background and updates the device copy if it changed. */
+async function revalidate(
+  request: Request,
+  key: string,
+  table: string,
+  url: URL,
+  previous: string,
+) {
+  try {
+    const response = await nativeFetch(request);
+    if (!response.ok) return;
+    const headers: Record<string, string> = {};
+    CACHED_HEADERS.forEach((name) => {
+      const value = response.headers.get(name);
+      if (value) headers[name] = value;
+    });
+    const body = await response.text();
+    if (body === previous) return;
+    const entry: CachedResponse = {
+      key,
+      table,
+      url: url.href,
+      status: response.status,
+      headers,
+      body,
+    };
+    await done((await store(RESPONSES, "readwrite")).put(entry));
+    scheduleRefresh();
+  } catch (error) {
+    if (isNetworkError(error)) setStatus({ online: false });
+  }
+}
+
 async function handleRead(request: Request, url: URL, table: string): Promise<Response> {
   const key = cacheKey(request.method, url.href, request.headers.get("accept") ?? "");
   const pending = status.pending > 0;
+
+  // Open instantly: answer from the device copy, then refresh it in the
+  // background (stale-while-revalidate). Pages never wait on the network
+  // for data they have already shown once.
+  if (navigator.onLine && !pending && request.method === "GET") {
+    const cached = await readCached(key);
+    if (cached && cached.status >= 200 && cached.status < 300) {
+      void revalidate(request.clone(), key, table, url, cached.body);
+      return cachedResponse(cached);
+    }
+  }
 
   if (navigator.onLine && !pending) {
     try {
@@ -402,13 +468,8 @@ async function handleRead(request: Request, url: URL, table: string): Promise<Re
 
   // Offline, or local changes are still waiting to sync: serve the device copy
   // (which already includes those changes).
-  try {
-    const cached = (await done((await store(RESPONSES)).get(key))) as CachedResponse | undefined;
-    if (cached)
-      return new Response(cached.body || null, { status: cached.status, headers: cached.headers });
-  } catch {
-    // Fall through.
-  }
+  const cached = await readCached(key);
+  if (cached) return cachedResponse(cached);
   if (pending && navigator.onLine) return nativeFetch(request);
   return offlineError();
 }

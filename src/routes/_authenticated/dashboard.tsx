@@ -890,9 +890,6 @@ function DashboardPage() {
           <ErrorState error={error} onRetry={() => queries.forEach((query) => query.refetch())} />
         ) : (
           <main className="flex min-w-0 flex-col gap-10">
-            {/* Zone 0 — the life snapshot (Serious counts or RPG sheet). */}
-            <HubCard />
-
             {/* Zone 1 — the one thing to do. */}
             {isEnabled("do") ? (
               <section className="min-w-0">
@@ -937,6 +934,10 @@ function DashboardPage() {
                 ) : null}
               </section>
             ) : null}
+
+            {/* The life snapshot comes after the one thing to do, so opening the
+                app shows what to do first (ADHD: one clear focus). */}
+            <HubCard />
 
             {/* Zone 2 — one block for everything today, each row acting on itself. */}
             <section className="min-w-0">

@@ -2,7 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { LogOut, Menu, Moon, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { MigrationNotice } from "./MigrationNotice";
-import { TimerBar } from "./Timer";
+import { TimerBar, useTimer } from "./Timer";
+import { QuickAdd } from "./QuickAdd";
 import { useReminderSync } from "./PrayerReminders";
 import { trackScreen } from "@/lib/analytics";
 import { useEffect, useState, type ReactNode } from "react";
@@ -149,11 +150,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
             className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-200"
           >
             {children}
+            <TimerSpacer />
           </div>
         </div>
       </main>
 
+      <QuickAdd />
+
       <BottomNav />
     </div>
   );
+}
+
+/** Room at the bottom of a page while the timer bar is showing (phones). */
+function TimerSpacer() {
+  const { running } = useTimer();
+  return running ? <div className="h-20 md:hidden" aria-hidden="true" /> : null;
 }

@@ -25,9 +25,7 @@ export const foodsQuery = () =>
   queryOptions({
     queryKey: foodKeys.foods,
     queryFn: async () =>
-      unwrap(
-        await supabase.from("foods").select("*").order("name", { ascending: true }),
-      ) as Food[],
+      unwrap(await supabase.from("foods").select("*").order("name", { ascending: true })) as Food[],
   });
 
 export const foodLogsQuery = () =>
@@ -58,14 +56,16 @@ export type FoodInput = {
 export async function createFood(input: FoodInput): Promise<Food> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("foods").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("foods")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as Food;
 }
 
 export async function updateFood(id: string, input: Partial<FoodInput>): Promise<Food> {
-  return unwrap(
-    await supabase.from("foods").update(input).eq("id", id).select().single(),
-  ) as Food;
+  return unwrap(await supabase.from("foods").update(input).eq("id", id).select().single()) as Food;
 }
 
 export async function deleteFood(id: string): Promise<void> {
@@ -85,7 +85,12 @@ export type FoodLogInput = {
 };
 
 /** Log a library food: the macro numbers are copied from the food row itself. */
-export function logFromFood(food: Food, servings: number, log_date: string, meal: string | null): FoodLogInput {
+export function logFromFood(
+  food: Food,
+  servings: number,
+  log_date: string,
+  meal: string | null,
+): FoodLogInput {
   const scale = (value: number | null) => (value == null ? null : Number(value) * servings);
   return {
     food_id: food.id,
@@ -103,7 +108,11 @@ export function logFromFood(food: Food, servings: number, log_date: string, meal
 export async function createFoodLog(input: FoodLogInput): Promise<FoodLog> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("food_logs").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("food_logs")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as FoodLog;
 }
 
@@ -140,4 +149,30 @@ export function suggestedFoods(foods: Food[], logs: FoodLog[], limit = 8): Food[
   return [...foods]
     .sort((a, b) => (score.get(b.id) ?? 0) - (score.get(a.id) ?? 0) || a.name.localeCompare(b.name))
     .slice(0, limit);
+}
+
+/** The meal that fits the time of day, so logging needs no extra tap. */
+export function mealForTime(date = new Date()): Meal {
+  const hour = date.getHours();
+  if (hour >= 4 && hour < 11) return "breakfast";
+  if (hour >= 11 && hour < 16) return "lunch";
+  if (hour >= 17 && hour < 22) return "dinner";
+  return "snack";
+}
+
+/**
+ * One-off entries (typed names, no library food) logged before, newest
+ * first and de-duplicated by name, so they can be repeated in one tap.
+ */
+export function recentOneOffs(logs: FoodLog[], limit = 6): FoodLog[] {
+  const seen = new Set<string>();
+  const out: FoodLog[] = [];
+  for (const log of [...logs].sort((a, b) => b.created_at.localeCompare(a.created_at))) {
+    const name = log.name?.trim().toLowerCase();
+    if (log.food_id || !name || seen.has(name)) continue;
+    seen.add(name);
+    out.push(log);
+    if (out.length >= limit) break;
+  }
+  return out;
 }

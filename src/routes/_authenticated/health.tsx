@@ -9,6 +9,7 @@ import { DateNav } from "@/components/app/DateNav";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SamsungHealthCard } from "@/components/app/SamsungHealthCard";
+import { QuickMeals } from "@/components/app/QuickMeals";
 import { healthSamplesQuery, withSampleDays } from "@/data/healthSamples";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import {
@@ -215,6 +216,13 @@ function NumberField({
   );
 }
 
+/** What 1 and 5 mean, in your own terms. */
+const SCALE_ENDS: Record<"stress" | "mood" | "food", [string, string]> = {
+  stress: ["1 · calm", "5 · very stressed"],
+  mood: ["1 · low", "5 · great"],
+  food: ["1 · didn't eat well", "5 · ate well"],
+};
+
 function ScaleRow({
   label,
   kind,
@@ -259,6 +267,10 @@ function ScaleRow({
             {level}
           </button>
         ))}
+      </div>
+      <div className="flex justify-between text-[11px] text-muted-foreground">
+        <span>{SCALE_ENDS[kind][0]}</span>
+        <span>{SCALE_ENDS[kind][1]}</span>
       </div>
     </div>
   );
@@ -688,6 +700,18 @@ function HealthPage() {
           </CardContent>
         </Card>
 
+        <Card id="meals" className="system-card scroll-mt-20">
+          <CardHeader>
+            <CardTitle className="text-base">Meals</CardTitle>
+            <CardDescription>
+              Tap what you had. The meal is picked from the time of day; type anything else.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <QuickMeals date={date} showLink />
+          </CardContent>
+        </Card>
+
         <Card id="daily-log" className="system-card scroll-mt-20">
           <CardHeader>
             <CardTitle className="text-base">
@@ -864,30 +888,6 @@ function HealthPage() {
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-
-              <div className="space-y-2">
-                <Label>Food categories</Label>
-                <div className="flex flex-wrap gap-2">
-                  {FOOD_CATEGORIES.map((category) => {
-                    const selected = (logForm.food_categories ?? []).includes(category);
-                    return (
-                      <button
-                        key={category}
-                        type="button"
-                        aria-pressed={selected}
-                        className={`min-h-11 rounded-full border px-4 text-sm capitalize transition-colors ${
-                          selected
-                            ? "tone-info"
-                            : "border-border text-muted-foreground hover:bg-accent/50"
-                        }`}
-                        onClick={() => toggleCategory(category)}
-                      >
-                        {category}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="log-note">Note</Label>

@@ -127,6 +127,15 @@ function NotesPage() {
     [queryClient],
   );
 
+  // Quick add → Note lands here with ?new, straight into a blank note.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("new")) {
+      startNote(false);
+      window.history.replaceState(null, "", "/notes");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function startNote(checklist = false) {
     const now = new Date().toISOString();
     setEditing({

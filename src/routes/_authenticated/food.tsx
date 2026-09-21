@@ -9,6 +9,7 @@ import { DateNav } from "@/components/app/DateNav";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
+import { QuickMeals } from "@/components/app/QuickMeals";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +46,10 @@ export const Route = createFileRoute("/_authenticated/food")({
       { title: "Food — Life OS" },
       { name: "description", content: "A record of what you ate, with your own food library." },
       { property: "og:title", content: "Food — Life OS" },
-      { property: "og:description", content: "A record of what you ate, with your own food library." },
+      {
+        property: "og:description",
+        content: "A record of what you ate, with your own food library.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -178,7 +182,13 @@ function FoodPage() {
         title="Food"
         description="What you logged, exactly as you logged it."
         actions={
-          <Button variant="outline" onClick={() => { setFoodForm(emptyFood); setFoodDialog(true); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setFoodForm(emptyFood);
+              setFoodDialog(true);
+            }}
+          >
             <Plus className="size-4" />
             New food
           </Button>
@@ -221,66 +231,12 @@ function FoodPage() {
               </dl>
             </section>
 
-            <section className="rounded-xl border border-border bg-card p-4">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0 space-y-2">
-                  <Label>Meal</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {MEALS.map((option) => (
-                      <Button
-                        key={option.value}
-                        type="button"
-                        variant="outline"
-                        aria-pressed={meal === option.value}
-                        className={cn(
-                          "min-h-11 rounded-full px-4 text-sm",
-                          meal === option.value ? "border-primary bg-primary text-primary-foreground" : "",
-                        )}
-                        onClick={() => setMeal(option.value)}
-                      >
-                        {option.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                <Button type="button" variant="outline" onClick={() => setQuickOpen(true)}>
-                  One-off entry
+            <section className="stat-card p-4">
+              <QuickMeals date={date} showDay={false} />
+              <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
+                <Button type="button" size="sm" variant="ghost" onClick={() => setQuickOpen(true)}>
+                  One-off with calories and macros
                 </Button>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <Label>Your foods</Label>
-                {chips.length ? (
-                  <div className="flex flex-wrap gap-2">
-                    {chips.map((food) => (
-                      <Button
-                        key={food.id}
-                        type="button"
-                        variant="outline"
-                        className="min-h-11 rounded-full px-4 text-sm"
-                        onClick={() => {
-                          setPickFood(food);
-                          setServings("1");
-                        }}
-                      >
-                        <EntityIcon
-                          icon={food.icon}
-                          color={null}
-                          containerClassName="size-5 rounded border-0 bg-transparent"
-                          className="size-3"
-                        />
-                        {food.name}
-                        <span className="text-xs text-muted-foreground">
-                          {round(Number(food.calories))} kcal
-                        </span>
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Add a food once with its calories, then it is one tap after that.
-                  </p>
-                )}
               </div>
             </section>
 
@@ -289,7 +245,10 @@ function FoodPage() {
                 Entries
               </h2>
               {dayLogs.length === 0 ? (
-                <EmptyState title="Nothing logged yet today" description="Log what you ate and Life OS adds up the calories from your own entries." />
+                <EmptyState
+                  title="Nothing logged yet today"
+                  description="Log what you ate and Life OS adds up the calories from your own entries."
+                />
               ) : (
                 <div className="space-y-5">
                   {MEALS.filter((option) => dayLogs.some((log) => log.meal === option.value)).map(
@@ -311,7 +270,9 @@ function FoodPage() {
                                 className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-card p-3"
                               >
                                 <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium">{log.name ?? "Food"}</p>
+                                  <p className="truncate text-sm font-medium">
+                                    {log.name ?? "Food"}
+                                  </p>
                                   <p className="mt-1 text-xs text-muted-foreground">
                                     {round(Number(log.servings))}{" "}
                                     {Number(log.servings) === 1 ? "serving" : "servings"} ·{" "}
