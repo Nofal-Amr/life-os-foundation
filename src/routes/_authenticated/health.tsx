@@ -9,6 +9,15 @@ import { DateNav } from "@/components/app/DateNav";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
+import {
+  GlanceSection,
+  LatestValueCard,
+  NotEnoughData,
+  RangeToggle,
+  RingStat,
+  StatCard,
+  TrendLine,
+} from "@/components/app/StatCards";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +48,7 @@ import {
   type Medication,
   type MedicationInput,
 } from "@/data/health";
+import { dosesOn, hasEnoughPoints, healthSeries } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import {
@@ -262,10 +272,12 @@ function HealthPage() {
   const logs = useQuery(healthLogsQuery());
   const medications = useQuery(medicationsQuery());
   const doses = useQuery(medicationLogsQuery());
-  const { prefs, fmtDate, fmtLongDate, fmtSlot, fmtHeight, weightUnit } = usePreferences();
+  const { prefs, fmtDate, fmtLongDate, fmtSlot, fmtHeight, fmtShortDate, fmtWeight, weightUnit } =
+    usePreferences();
 
   const [date, setDate] = useState(todayISO());
   const [sleepDetail, setSleepDetail] = useState(false);
+  const [sleepDays, setSleepDays] = useState<14 | 30>(30);
 
   // Land on the named block when arriving from a link such as /health#medications.
   useEffect(() => {
@@ -460,6 +472,13 @@ function HealthPage() {
   const recent = (logs.data ?? []).filter((log) => log.log_date !== date).slice(0, 7);
   const dayDoses = (doses.data ?? []).filter((dose) => dose.log_date === date);
   const activeMeds = (medications.data ?? []).filter((medication) => medication.active);
+  const medRing = dosesOn(medications.data ?? [], doses.data ?? [], date);
+  const sleepHours = healthSeries(logs.data ?? [], "sleep_hours", sleepDays);
+  const sleepScores = healthSeries(logs.data ?? [], "sleep_score", sleepDays);
+  const hoursText = (value: number) => `${Math.round(value * 10) / 10} h`;
+  const latestOf = (points: { date: string; value: number }[]) => points[points.length - 1];
+  const latestHours = latestOf(sleepHours);
+  const latestScore = latestOf(sleepScores);
 
   return (
     <>
@@ -467,6 +486,92 @@ function HealthPage() {
 
       <div className="space-y-5">
         <DateNav value={date} onChange={setDate} />
+
+        <GlanceSection>
+          {medRing ? (
+            <RingStat
+              title={date === todayISO() ? "Medication today" : `Medication on ${fmtDate(date)}`}
+              done={medRing.done}
+              total={medRing.total}
+              center={`${medRing.done}/${medRing.total}`}
+              headline={`${medRing.done} of ${medRing.total}`}
+              detail={medRing.total === 1 ? "scheduled dose marked taken" : "scheduled doses marked taken"}
+              tone={3}
+              ringLabel={`${medRing.done} of ${medRing.total} scheduled doses taken`}
+            />
+          ) : (
+            <StatCard title="Medication today">
+              <p className="text-sm text-muted-foreground">
+                No doses are scheduled. Add times to a medication below to see this.
+              </p>
+            </StatCard>
+          )}
+
+          <LatestValueCard
+            title="Weight"
+            value={savedWeight == null ? "—" : fmtWeight(savedWeight)}
+            detail={
+              savedWeight == null
+                ? "No weight saved yet."
+                : `Saved ${fmtDate(savedWeightDate)}. Only the latest weight is stored, so there is no trend to draw.`
+            }
+          />
+
+          <div className="flex items-center justify-between gap-3 md:col-span-2">
+            <p className="text-sm font-medium">Sleep</p>
+            <RangeToggle
+              label="Sleep range"
+              value={sleepDays}
+              onChange={setSleepDays}
+              options={[
+                { value: 14, label: "14 days" },
+                { value: 30, label: "30 days" },
+              ]}
+            />
+          </div>
+
+          {hasEnoughPoints(sleepHours) ? (
+            <TrendLine
+              title="Sleep hours"
+              points={sleepHours}
+              tone={1}
+              seriesLabel="Sleep hours"
+              formatValue={hoursText}
+              formatDate={fmtDate}
+              formatAxisDate={fmtShortDate}
+              summary={
+                latestHours
+                  ? `Latest ${hoursText(latestHours.value)} on ${fmtDate(latestHours.date)} · ${sleepHours.length} entries in ${sleepDays} days`
+                  : undefined
+              }
+            />
+          ) : (
+            <StatCard title="Sleep hours">
+              <NotEnoughData hint="Log sleep hours on at least two days." />
+            </StatCard>
+          )}
+
+          {hasEnoughPoints(sleepScores) ? (
+            <TrendLine
+              title="Sleep score"
+              points={sleepScores}
+              tone={5}
+              seriesLabel="Sleep score"
+              formatValue={(value) => String(Math.round(value))}
+              formatDate={fmtDate}
+              formatAxisDate={fmtShortDate}
+              summary={
+                latestScore
+                  ? `Latest ${Math.round(latestScore.value)} on ${fmtDate(latestScore.date)} · ${sleepScores.length} entries in ${sleepDays} days`
+                  : undefined
+              }
+            />
+          ) : (
+            <StatCard title="Sleep score">
+              <NotEnoughData hint="Enter a sleep score on at least two days." />
+            </StatCard>
+          )}
+        </GlanceSection>
 
         <Card className="system-card">
           <CardHeader>

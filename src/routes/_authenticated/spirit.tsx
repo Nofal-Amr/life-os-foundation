@@ -2,10 +2,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useState } from "react";
+import { format } from "date-fns";
 import { toast } from "sonner";
 
 import { DateNav } from "@/components/app/DateNav";
 import { PageHeader } from "@/components/app/PageHeader";
+import { GlanceSection, RingStat } from "@/components/app/StatCards";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +21,7 @@ import {
   spiritKeys,
   type PrayerName,
 } from "@/data/spirit";
+import { prayersOn } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
@@ -49,7 +52,7 @@ function lastSevenDates(from: string): Set<string> {
   for (let index = 0; index < 7; index += 1) {
     const date = new Date(base);
     date.setDate(base.getDate() - index);
-    dates.add(date.toISOString().slice(0, 10));
+    dates.add(format(date, "yyyy-MM-dd"));
   }
   return dates;
 }
@@ -58,7 +61,7 @@ function SpiritPage() {
   const queryClient = useQueryClient();
   const settings = useQuery(prayerSettingsQuery());
   const logs = useQuery(prayerLogsQuery());
-  const { fmtTime } = usePreferences();
+  const { fmtTime, fmtDate } = usePreferences();
   const [date, setDate] = useState(todayISO());
 
   const onError = (e: unknown) =>
@@ -119,6 +122,7 @@ function SpiritPage() {
 
   const dayLogs = (logs.data ?? []).filter((log) => log.prayer_date === date);
   const doneCount = dayLogs.filter((log) => log.completed).length;
+  const prayers = prayersOn(logs.data ?? [], date);
   const weekDates = lastSevenDates(date);
   const weekLogged = (logs.data ?? []).filter(
     (log) => weekDates.has(log.prayer_date) && log.completed,
@@ -130,6 +134,19 @@ function SpiritPage() {
 
       <div className="space-y-5">
         <DateNav value={date} onChange={setDate} />
+
+        <GlanceSection>
+          <RingStat
+            title={date === todayISO() ? "Prayers today" : `Prayers on ${fmtDate(date)}`}
+            done={prayers.done}
+            total={prayers.total}
+            center={`${prayers.done}/${prayers.total}`}
+            headline={`${prayers.done} of ${prayers.total}`}
+            detail="prayers logged as completed"
+            tone={2}
+            ringLabel={`${prayers.done} of ${prayers.total} prayers logged`}
+          />
+        </GlanceSection>
 
         {!hasLocation ? (
           <Card className="system-card">

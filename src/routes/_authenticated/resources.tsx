@@ -9,6 +9,13 @@ import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
+import {
+  GlanceSection,
+  NotEnoughData,
+  RingStat,
+  StatCard,
+  TrendLine,
+} from "@/components/app/StatCards";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -43,6 +50,7 @@ import {
   type ResourceInput,
   type ResourceKind,
 } from "@/data/resources";
+import { hasEnoughPoints, meterCostPerDay, quotaRing } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 
@@ -101,7 +109,7 @@ function ResourcesPage() {
   const readings = useQuery(resourceReadingsQuery());
   const categories = useQuery(financeCategoriesQuery());
   const accounts = useQuery(accountsQuery());
-  const { fmtDate, fmtMoney } = usePreferences();
+  const { fmtDate, fmtMoney, fmtShortDate } = usePreferences();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Resource | null>(null);
@@ -238,6 +246,68 @@ function ResourcesPage() {
   }
 
   const list = resources.data ?? [];
+  const plain = (value: number) => String(Math.round(value * 100) / 100);
+  const glance = list
+    .filter((resource) => resource.active)
+    .map((resource) => {
+      if (resource.kind === "quota") {
+        const ring = quotaRing(resource, readings.data ?? []);
+        if (!ring) {
+          return (
+            <StatCard key={resource.id} title={`${resource.name} left`}>
+              <p className="text-sm text-muted-foreground">
+                Add a quota amount and a reading to see this.
+              </p>
+            </StatCard>
+          );
+        }
+        return (
+          <RingStat
+            key={resource.id}
+            title={`${resource.name} left`}
+            done={ring.remaining}
+            total={ring.quota}
+            center={plain(ring.remaining)}
+            headline={`${plain(ring.remaining)} of ${plain(ring.quota)} ${ring.unit}`}
+            detail={`From your reading on ${fmtDate(ring.readingAt.slice(0, 10))}.`}
+            tone={2}
+            ringLabel={`${plain(ring.remaining)} of ${plain(ring.quota)} ${ring.unit} left`}
+          />
+        );
+      }
+      if (resource.unit_cost == null) {
+        return (
+          <StatCard key={resource.id} title={`${resource.name} cost per day`}>
+            <p className="text-sm text-muted-foreground">Set a unit cost to see this.</p>
+          </StatCard>
+        );
+      }
+      const points = meterCostPerDay(resource, readings.data ?? []);
+      const latest = points[points.length - 1];
+      return hasEnoughPoints(points) ? (
+        <TrendLine
+          key={resource.id}
+          title={`${resource.name} cost per day`}
+          description="Worked out between each pair of your readings."
+          points={points}
+          tone={4}
+          seriesLabel="Cost per day"
+          formatValue={fmtMoney}
+          formatTick={plain}
+          formatDate={fmtDate}
+          formatAxisDate={fmtShortDate}
+          summary={
+            latest
+              ? `Latest ${fmtMoney(latest.value)} per day on ${fmtDate(latest.date)} · ${points.length} intervals`
+              : undefined
+          }
+        />
+      ) : (
+        <StatCard key={resource.id} title={`${resource.name} cost per day`}>
+          <NotEnoughData hint="Needs readings on at least three different days." />
+        </StatCard>
+      );
+    });
 
   return (
     <>
@@ -286,6 +356,8 @@ function ResourcesPage() {
           }
         />
       ) : (
+        <>
+        {glance.length ? <GlanceSection>{glance}</GlanceSection> : null}
         <ul className="space-y-4">
           {list.map((resource) => {
             const own = readingsFor(resource, readings.data ?? []);
@@ -427,6 +499,7 @@ function ResourcesPage() {
             );
           })}
         </ul>
+        </>
       )}
 
       <FormDialog

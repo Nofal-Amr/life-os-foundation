@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { isToday, parseISO } from "date-fns";
+import { addDays, format, isToday, parseISO } from "date-fns";
 import {
   Check,
   Gauge,
@@ -228,7 +228,8 @@ function MoneySplitBar({
   );
 }
 
-const iso = (date: Date) => date.toISOString().slice(0, 10);
+/** Local calendar date; toISOString() would shift it by the UTC offset. */
+const iso = (date: Date) => format(date, "yyyy-MM-dd");
 
 /** Elapsed time between the user's own two paydays. No score, just the dates. */
 function PaydayLine({
@@ -474,7 +475,7 @@ function DashboardPage() {
   const dimensionRank = new Map(dimensionOrder.map((dimension, index) => [dimension, index]));
 
   const comingUp: ComingUpItem[] = [];
-  const nextWeek = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
+  const nextWeek = iso(addDays(new Date(), 7));
 
   for (const task of topLevelTasks(allTasks)) {
     if (!isOpen(task)) continue;

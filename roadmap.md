@@ -133,3 +133,14 @@
 - [x] Something not started yet stays out of the next action but still shows in Coming up with its start date
 - [x] Duplicate copies a task and its steps, all incomplete, with a clean history and no dates, and opens it for editing
 - [x] Resource cycles can be every N months (real calendar months, clamped when a month is short) or every N days
+
+## At a glance
+
+- [x] Rings and trend charts on the destinations they belong to; Today is unchanged
+- [x] Every ring uses a stored denominator: prayers out of 5, doses taken out of doses scheduled, task steps done out of steps, quota left out of the quota amount, days since payday out of the days in the cycle
+- [x] Trends plot only logged history: meter cost per day between readings, sleep hours and score for 14 or 30 days, weekly spending by category, tasks completed per week
+- [x] Weight shows the latest saved value only, because no weight history is stored
+- [x] A series with fewer than two real points shows "Not enough data yet" instead of a chart
+- [x] No scores, targets, streaks or good/bad colours; colours only tell series apart and every figure is also written out
+- [x] Payday dates on Money and in the money breakdown no longer show a day early in timezones ahead of UTC
+- [x] `npm test` runs the unit tests

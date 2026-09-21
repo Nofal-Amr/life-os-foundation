@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import type { ReactNode } from "react";
 
 import {
@@ -73,7 +74,7 @@ export function MoneyBreakdownDialog({ trigger }: { trigger: ReactNode }) {
           <DialogTitle>How this figure is worked out</DialogTitle>
           <DialogDescription>
             {paydayDate
-              ? `Up to your next payday on ${fmtDate(paydayDate.toISOString().slice(0, 10))}${
+              ? `Up to your next payday on ${fmtDate(format(paydayDate, "yyyy-MM-dd"))}${
                   days == null ? "" : days === 0 ? " · today" : ` · in ${days} ${days === 1 ? "day" : "days"}`
                 }.`
               : "Add your payday in Settings to include upcoming costs."}

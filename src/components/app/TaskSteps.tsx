@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { Ring } from "@/components/app/StatCards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -125,7 +126,15 @@ export function TaskStepsEditor({ parent }: { parent: Task }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Label>Steps</Label>
         {steps.length ? (
-          <span className="text-xs text-muted-foreground">
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Ring
+              done={progress.done}
+              total={progress.total}
+              tone={4}
+              size={22}
+              stroke={4}
+              label={`${progress.done} of ${progress.total} steps done`}
+            />
             {stepsLine(progress.done, progress.total)}
           </span>
         ) : null}

@@ -51,7 +51,9 @@ import {
   type TaskInput,
 } from "@/data/tasks";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
+import { GlanceSection, NotEnoughData, Ring, StatCard, WeeklyBars } from "@/components/app/StatCards";
 import { TaskStepsEditor, minutesLabel, stepsLine } from "@/components/app/TaskSteps";
+import { hasEnoughPoints, tasksCompletedPerWeek } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { priorityLabel, priorityTone, taskStatusLabel, taskStatusTone } from "@/lib/semantics";
@@ -339,6 +341,8 @@ function TasksPage() {
 
   const allTasks = tasks.data ?? [];
   const visible = filterTasks(topLevelTasks(allTasks), filter);
+  const weekly = tasksCompletedPerWeek(allTasks);
+  const weeklyTotal = weekly.reduce((sum, week) => sum + week.total, 0);
   const projectName = (id: string | null) =>
     (projects.data ?? []).find((p) => p.id === id)?.name;
 
@@ -349,6 +353,24 @@ function TasksPage() {
         description="One list, filtered by when it matters."
         actions={<Button onClick={openCreate}>New task</Button>}
       />
+
+      {tasks.isLoading || tasks.error ? null : (
+        <GlanceSection>
+          {hasEnoughPoints(weekly) ? (
+            <WeeklyBars
+              title="Tasks completed per week"
+              rows={weekly}
+              series={[{ key: "total", label: "Tasks completed", total: weeklyTotal }]}
+              formatValue={(value) => String(Math.round(value))}
+              summary={`${weeklyTotal} completed in the last 8 weeks. Steps are not counted.`}
+            />
+          ) : (
+            <StatCard title="Tasks completed per week">
+              <NotEnoughData hint="Complete tasks in at least two different weeks." />
+            </StatCard>
+          )}
+        </GlanceSection>
+      )}
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as TaskFilter)} className="mb-6">
         <TabsList className="flex-wrap">
@@ -427,7 +449,17 @@ function TasksPage() {
                           setExpanded((current) => ({ ...current, [task.id]: !current[task.id] }))
                         }
                       >
-                        {stepsLine(progress.done, progress.total)} · {isExpanded ? "Hide steps" : "Show steps"}
+                        <Ring
+                          done={progress.done}
+                          total={progress.total}
+                          tone={4}
+                          size={22}
+                          stroke={4}
+                          label={`${progress.done} of ${progress.total} steps done`}
+                        />
+                        <span className="ml-2">
+                          {stepsLine(progress.done, progress.total)} · {isExpanded ? "Hide steps" : "Show steps"}
+                        </span>
                       </Button>
                     ) : null}
                     {(task.postponed_count ?? 0) >= 3 ? (

@@ -92,6 +92,20 @@ export function formatDatePref(value: string | null | undefined, prefs: DisplayP
   }
 }
 
+/** Day and month only, for chart axes where the year would not fit. */
+export function formatShortDatePref(
+  value: string | null | undefined,
+  prefs: DisplayPreferences,
+): string {
+  if (!value) return "—";
+  try {
+    const pattern = prefs.date_format === "iso" ? "MM-dd" : prefs.date_format === "mdy" ? "MMM d" : "d MMM";
+    return format(parseISO(value), pattern);
+  } catch {
+    return value;
+  }
+}
+
 export function formatLongDatePref(date: Date, prefs: DisplayPreferences): string {
   return prefs.date_format === "iso"
     ? format(date, "EEEE yyyy-MM-dd")

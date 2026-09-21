@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { format } from "date-fns";
 import { Info, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,6 +10,13 @@ import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentit
 import { FormDialog } from "@/components/app/FormDialog";
 import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
 import { PageHeader } from "@/components/app/PageHeader";
+import {
+  GlanceSection,
+  NotEnoughData,
+  RingStat,
+  StatCard,
+  WeeklyBars,
+} from "@/components/app/StatCards";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -33,6 +41,7 @@ import {
   daysUntil,
   deleteAccount,
   deletePocket,
+  financeCategoriesQuery,
   financeKeys,
   hasPaydaySetup,
   nextPayday,
@@ -46,6 +55,7 @@ import {
   type Account,
   type AccountInput,
 } from "@/data/finance";
+import { hasEnoughPoints, paydayCycle, weeklySpendByCategory } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
 import { availabilityTone } from "@/lib/semantics";
 import { RecurringList } from "./finance.recurring";
@@ -87,6 +97,7 @@ function FinanceOverview() {
   const pockets = useQuery(accountPocketsQuery());
   const costs = useQuery(recurringCostsQuery());
   const payday = useQuery(paydayConfigQuery());
+  const categories = useQuery(financeCategoriesQuery());
   const { fmtDate, fmtMoney } = usePreferences();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -177,6 +188,9 @@ function FinanceOverview() {
     accounts.error ?? transactions.error ?? pockets.error ?? costs.error ?? payday.error;
 
   const config = payday.data ?? null;
+  const cycle = paydayCycle(config);
+  const spend = weeklySpendByCategory(transactions.data ?? [], categories.data ?? []);
+  const spendTotal = spend.rows.reduce((sum, week) => sum + week.total, 0);
   const setup = hasPaydaySetup(config);
   const nextDate = nextPayday(config);
   const days = nextDate ? daysUntil(nextDate) : null;
@@ -284,7 +298,7 @@ function FinanceOverview() {
                       <dt className="text-muted-foreground">Next payday</dt>
                       <dd className="tabular-nums">
                         {nextDate
-                          ? `${fmtDate(nextDate.toISOString().slice(0, 10))} · ${
+                          ? `${fmtDate(format(nextDate, "yyyy-MM-dd"))} · ${
                               days === 0 ? "today" : `${days} ${days === 1 ? "day" : "days"}`
                             }`
                           : "—"}
@@ -325,6 +339,52 @@ function FinanceOverview() {
               </>
             )}
           </section>
+
+          <GlanceSection>
+            {cycle ? (
+              <RingStat
+                title="Payday cycle"
+                done={cycle.elapsed}
+                total={cycle.total}
+                center={`${cycle.elapsed}/${cycle.total}`}
+                headline={`${cycle.elapsed} of ${cycle.total} days`}
+                detail={`Since payday on ${fmtDate(cycle.start)}. Next payday ${fmtDate(cycle.end)}.`}
+                tone={1}
+                ringLabel={`${cycle.elapsed} of ${cycle.total} days of the payday cycle have passed`}
+              />
+            ) : (
+              <StatCard title="Payday cycle">
+                <p className="text-sm text-muted-foreground">
+                  Set your payday in{" "}
+                  <Link to="/settings" className="text-foreground underline underline-offset-4">
+                    Settings
+                  </Link>{" "}
+                  to see how far through the cycle you are.
+                </p>
+              </StatCard>
+            )}
+
+            {categories.error ? (
+              <StatCard title="Spending per week">
+                <p className="text-sm text-muted-foreground">
+                  Categories could not be loaded, so this chart is paused.
+                </p>
+              </StatCard>
+            ) : categories.data && hasEnoughPoints(spend.rows) ? (
+              <WeeklyBars
+                title="Spending per week"
+                description="Money out, by category, over the last 8 weeks."
+                rows={spend.rows}
+                series={spend.series}
+                formatValue={fmtMoney}
+                summary={`${fmtMoney(spendTotal)} logged across ${spend.rows.length} weeks.`}
+              />
+            ) : categories.data ? (
+              <StatCard title="Spending per week">
+                <NotEnoughData hint="Log spending in at least two different weeks." />
+              </StatCard>
+            ) : null}
+          </GlanceSection>
 
           {/* Accounts */}
           <section>
