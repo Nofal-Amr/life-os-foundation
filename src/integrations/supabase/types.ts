@@ -59,6 +59,7 @@ export type Database = {
         Row: {
           active: boolean
           color: string | null
+          counts_toward_spendable: boolean
           created_at: string
           currency: string | null
           icon: string | null
@@ -72,6 +73,7 @@ export type Database = {
         Insert: {
           active?: boolean
           color?: string | null
+          counts_toward_spendable?: boolean
           created_at?: string
           currency?: string | null
           icon?: string | null
@@ -85,6 +87,7 @@ export type Database = {
         Update: {
           active?: boolean
           color?: string | null
+          counts_toward_spendable?: boolean
           created_at?: string
           currency?: string | null
           icon?: string | null

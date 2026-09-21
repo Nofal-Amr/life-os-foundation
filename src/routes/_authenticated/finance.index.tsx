@@ -1,7 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { CalendarDays, Info, Plus, Trash2, Wallet } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CalendarDays,
+  Info,
+  Plus,
+  Trash2,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -10,6 +18,7 @@ import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentit
 import { FormDialog } from "@/components/app/FormDialog";
 import { MoneyBreakdownDialog } from "@/components/app/MoneyBreakdown";
 import { PageHeader } from "@/components/app/PageHeader";
+import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import {
   GlanceSection,
   NotEnoughData,
@@ -36,6 +45,7 @@ import {
   accountPocketsQuery,
   accountsQuery,
   availableBeforePayday,
+  countsTowardSpendable,
   createAccount,
   createPocket,
   daysUntil,
@@ -52,6 +62,7 @@ import {
   transactionsQuery,
   updateAccount,
   savePaydayConfig,
+  separateBalance,
   type Account,
   type AccountInput,
 } from "@/data/finance";
@@ -88,6 +99,7 @@ const emptyAccount: AccountInput = {
   active: true,
   icon: null,
   color: null,
+  counts_toward_spendable: true,
 };
 
 function FinanceOverview() {
@@ -110,6 +122,7 @@ function FinanceOverview() {
   const [pocketName, setPocketName] = useState("");
   const [pocketKind, setPocketKind] = useState("cash");
   const [pocketOpening, setPocketOpening] = useState("");
+  const [quickAdd, setQuickAdd] = useState<"expense" | "income" | null>(null);
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
@@ -166,10 +179,11 @@ function FinanceOverview() {
   });
 
   const saveMoneySetup = useMutation({
-    mutationFn: () => savePaydayConfig({
-      expected_net_amount: expectedNet === "" ? null : Number(expectedNet),
-      safety_buffer: safetyBuffer === "" ? null : Number(safetyBuffer),
-    }),
+    mutationFn: () =>
+      savePaydayConfig({
+        expected_net_amount: expectedNet === "" ? null : Number(expectedNet),
+        safety_buffer: safetyBuffer === "" ? null : Number(safetyBuffer),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: financeKeys.payday });
       setEditingPayday(false);
@@ -205,6 +219,20 @@ function FinanceOverview() {
   });
 
   const hasAccounts = (accounts.data ?? []).length > 0;
+  const separateAccounts = (accounts.data ?? []).filter(
+    (account) => account.active && !countsTowardSpendable(account),
+  );
+  const keptSeparate = separateBalance(
+    accounts.data ?? [],
+    transactions.data ?? [],
+    pockets.data ?? [],
+  );
+  const untilPayday =
+    days === null
+      ? null
+      : days === 0
+        ? "Payday is today"
+        : `${days} ${days === 1 ? "day" : "days"} until payday`;
   const shortfall = totals.available < 0;
   const editingPockets = editing
     ? (pockets.data ?? []).filter((pocket) => pocket.account_id === editing.id)
@@ -226,6 +254,7 @@ function FinanceOverview() {
       active: account.active,
       icon: account.icon,
       color: account.color,
+      counts_toward_spendable: countsTowardSpendable(account),
     });
     setPocketName("");
     setPocketKind("cash");
@@ -257,18 +286,20 @@ function FinanceOverview() {
       ) : (
         <div className="space-y-6">
           {/* The one glanceable number */}
-          <section className="rounded-2xl border border-border bg-card p-6">
+          <section className="stat-card p-6 sm:p-8">
             {setup && hasAccounts ? (
               <>
-                <p className="text-sm text-muted-foreground">
-                  Estimated money left to spend before payday
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Left to spend before payday
                 </p>
-                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
+                <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
                   {fmtMoney(totals.available)}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  After upcoming recurring costs and your safety buffer.
+                  {untilPayday ? `${untilPayday} · ` : ""}After upcoming recurring costs and your
+                  safety buffer.
                 </p>
+                <MoneyActions onAdd={setQuickAdd} />
                 <div className="mt-4 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <SemanticBadge tone={availabilityTone(totals.available)}>
@@ -305,23 +336,94 @@ function FinanceOverview() {
                       </dd>
                     </div>
                   </dl>
+                  {separateAccounts.length ? (
+                    <KeptSeparate
+                      amount={fmtMoney(keptSeparate)}
+                      names={separateAccounts.map((account) => account.name)}
+                    />
+                  ) : null}
                   {editingPayday ? (
-                    <form className="grid min-w-0 gap-3 rounded-lg border border-border p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end" onSubmit={(event) => { event.preventDefault(); saveMoneySetup.mutate(); }}>
-                      <div className="min-w-0 space-y-2"><Label htmlFor="overview-expected">Expected net pay</Label><Input id="overview-expected" type="number" min="0" step="0.01" value={expectedNet} onChange={(event) => setExpectedNet(event.target.value)} /></div>
-                      <div className="min-w-0 space-y-2"><Label htmlFor="overview-buffer">Safety buffer</Label><Input id="overview-buffer" type="number" min="0" step="0.01" value={safetyBuffer} onChange={(event) => setSafetyBuffer(event.target.value)} /></div>
-                      <div className="flex gap-2"><Button type="submit" disabled={saveMoneySetup.isPending}>Save</Button><Button type="button" variant="ghost" onClick={() => setEditingPayday(false)}>Cancel</Button></div>
+                    <form
+                      className="grid min-w-0 gap-3 rounded-lg border border-border p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        saveMoneySetup.mutate();
+                      }}
+                    >
+                      <div className="min-w-0 space-y-2">
+                        <Label htmlFor="overview-expected">Expected net pay</Label>
+                        <Input
+                          id="overview-expected"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={expectedNet}
+                          onChange={(event) => setExpectedNet(event.target.value)}
+                        />
+                      </div>
+                      <div className="min-w-0 space-y-2">
+                        <Label htmlFor="overview-buffer">Safety buffer</Label>
+                        <Input
+                          id="overview-buffer"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={safetyBuffer}
+                          onChange={(event) => setSafetyBuffer(event.target.value)}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="submit" disabled={saveMoneySetup.isPending}>
+                          Save
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setEditingPayday(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </form>
                   ) : (
-                    <Button type="button" size="sm" variant="outline" onClick={() => { setExpectedNet(config?.expected_net_amount == null ? "" : String(config.expected_net_amount)); setSafetyBuffer(config?.safety_buffer == null ? "" : String(config.safety_buffer)); setEditingPayday(true); }}>Edit pay and buffer</Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setExpectedNet(
+                          config?.expected_net_amount == null
+                            ? ""
+                            : String(config.expected_net_amount),
+                        );
+                        setSafetyBuffer(
+                          config?.safety_buffer == null ? "" : String(config.safety_buffer),
+                        );
+                        setEditingPayday(true);
+                      }}
+                    >
+                      Edit pay and buffer
+                    </Button>
                   )}
                 </div>
               </>
             ) : (
               <>
-                <p className="text-sm text-muted-foreground">Total liquid balance</p>
-                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Balance you can spend
+                </p>
+                <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
                   {hasAccounts ? fmtMoney(totals.liquid) : "—"}
                 </p>
+                {hasAccounts ? <MoneyActions onAdd={setQuickAdd} /> : null}
+                {separateAccounts.length ? (
+                  <div className="mt-3">
+                    <KeptSeparate
+                      amount={fmtMoney(keptSeparate)}
+                      names={separateAccounts.map((account) => account.name)}
+                    />
+                  </div>
+                ) : null}
                 {!hasAccounts ? (
                   <p className="mt-3 text-sm text-muted-foreground">
                     Nothing logged yet. Add an account with its opening balance to see your figure.
@@ -329,7 +431,8 @@ function FinanceOverview() {
                 ) : (
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <p className="text-sm text-muted-foreground">
-                      Tell Life OS when you are paid and it can show what is free to spend before then.
+                      Tell Life OS when you are paid and it can show what is free to spend before
+                      then.
                     </p>
                     <Button asChild size="sm" variant="outline">
                       <Link to="/settings">Set up payday</Link>
@@ -421,7 +524,12 @@ function FinanceOverview() {
                               <SemanticBadge tone={account.type === "credit" ? "info" : "neutral"}>
                                 {ACCOUNT_TYPES.find((t) => t.value === account.type)?.label}
                               </SemanticBadge>
-                              {!account.active ? <SemanticBadge tone="quiet">Inactive</SemanticBadge> : null}
+                              {!account.active ? (
+                                <SemanticBadge tone="quiet">Inactive</SemanticBadge>
+                              ) : null}
+                              {!countsTowardSpendable(account) ? (
+                                <SemanticBadge tone="quiet">Kept separate</SemanticBadge>
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -498,7 +606,10 @@ function FinanceOverview() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
-        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
+        <EntityIdentityPicker
+          value={{ icon: form.icon, color: form.color }}
+          onChange={(identity) => setForm({ ...form, ...identity })}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Type</Label>
@@ -544,7 +655,28 @@ function FinanceOverview() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Left to spend</Label>
+            <Select
+              value={form.counts_toward_spendable ? "counts" : "separate"}
+              onValueChange={(v) => setForm({ ...form, counts_toward_spendable: v === "counts" })}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="counts">Counts toward it</SelectItem>
+                <SelectItem value="separate">Kept separate</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+        {!form.counts_toward_spendable ? (
+          <p className="text-xs text-muted-foreground">
+            Still tracked with its own balance and history, but left out of left to spend. Useful
+            for a home fund or money you look after for someone else.
+          </p>
+        ) : null}
 
         {editing ? (
           <div className="space-y-3 rounded-lg border border-border p-3">
@@ -557,7 +689,10 @@ function FinanceOverview() {
             {editingPockets.length ? (
               <ul className="space-y-1.5">
                 {editingPockets.map((pocket) => (
-                  <li key={pocket.id} className="flex min-w-0 items-center justify-between gap-2 text-sm">
+                  <li
+                    key={pocket.id}
+                    className="flex min-w-0 items-center justify-between gap-2 text-sm"
+                  >
                     <span className="min-w-0 truncate">
                       {pocket.name}
                       <span className="ml-2 text-xs text-muted-foreground">
@@ -627,6 +762,12 @@ function FinanceOverview() {
         ) : null}
       </FormDialog>
 
+      <QuickAddTransactionDialog
+        open={quickAdd !== null}
+        onOpenChange={(open) => !open && setQuickAdd(null)}
+        {...(quickAdd ? { initialKind: quickAdd } : {})}
+      />
+
       <ConfirmDialog
         open={!!toDelete}
         onOpenChange={(open) => !open && setToDelete(null)}
@@ -641,7 +782,35 @@ function FinanceOverview() {
         })()}
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
-
     </>
+  );
+}
+
+/** Log money right from the overview. */
+function MoneyActions({ onAdd }: { onAdd: (kind: "expense" | "income") => void }) {
+  return (
+    <div className="mt-5 flex flex-wrap gap-2">
+      <Button type="button" onClick={() => onAdd("expense")}>
+        <ArrowUpRight className="size-4" aria-hidden="true" />
+        Add spending
+      </Button>
+      <Button type="button" variant="outline" onClick={() => onAdd("income")}>
+        <ArrowDownLeft className="size-4" aria-hidden="true" />
+        Add income
+      </Button>
+      <Button asChild variant="ghost">
+        <Link to="/finance/transactions">All transactions</Link>
+      </Button>
+    </div>
+  );
+}
+
+/** Accounts tracked apart from left to spend, such as a home fund. */
+function KeptSeparate({ amount, names }: { amount: string; names: string[] }) {
+  return (
+    <p className="text-sm text-muted-foreground">
+      Kept separate, not in this figure:{" "}
+      <span className="tabular-nums text-foreground">{amount}</span> in {names.join(", ")}.
+    </p>
   );
 }

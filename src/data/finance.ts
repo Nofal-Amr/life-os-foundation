@@ -1,5 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
-import { addDays, addMonths, addWeeks, addYears, differenceInCalendarDays, format, parseISO } from "date-fns";
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  addYears,
+  differenceInCalendarDays,
+  format,
+  parseISO,
+} from "date-fns";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -65,7 +73,6 @@ export const financeKeys = {
   pockets: ["account_pockets"] as const,
 };
 
-
 /* ------------------------------- queries ------------------------------- */
 
 export const accountsQuery = () =>
@@ -128,19 +135,44 @@ export type AccountInput = {
   active: boolean;
   icon: string | null;
   color: string | null;
+  /** False keeps the account tracked but out of "left to spend" (e.g. a home fund). */
+  counts_toward_spendable: boolean;
 };
 
 export async function createAccount(input: AccountInput): Promise<Account> {
   const user_id = await currentUserId();
-  return unwrap(
-    await supabase.from("accounts").insert({ ...input, user_id }).select().single(),
-  ) as Account;
+  const insert = (row: Partial<AccountInput>) =>
+    supabase
+      .from("accounts")
+      .insert({ ...(row as AccountInput), user_id })
+      .select()
+      .single();
+  let result = await insert(input);
+  if (missingSpendableColumn(result.error)) result = await insert(withoutSpendableFlag(input));
+  return unwrap(result) as Account;
 }
 
 export async function updateAccount(id: string, input: Partial<AccountInput>): Promise<Account> {
-  return unwrap(
-    await supabase.from("accounts").update(input).eq("id", id).select().single(),
-  ) as Account;
+  const update = (row: Partial<AccountInput>) =>
+    supabase.from("accounts").update(row).eq("id", id).select().single();
+  let result = await update(input);
+  if (missingSpendableColumn(result.error)) result = await update(withoutSpendableFlag(input));
+  return unwrap(result) as Account;
+}
+
+/**
+ * Until migration 20260921130000 is applied the column doesn't exist; saving
+ * still works, and every account keeps counting toward left to spend.
+ */
+function missingSpendableColumn(error: { code?: string; message?: string } | null): boolean {
+  return (
+    !!error && error.code === "PGRST204" && !!error.message?.includes("counts_toward_spendable")
+  );
+}
+
+function withoutSpendableFlag(input: Partial<AccountInput>): Partial<AccountInput> {
+  const { counts_toward_spendable: _omit, ...rest } = input;
+  return rest;
 }
 
 export async function deleteAccount(id: string): Promise<void> {
@@ -160,7 +192,11 @@ export type CategoryInput = {
 export async function createCategory(input: CategoryInput): Promise<FinanceCategory> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("finance_categories").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("finance_categories")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as FinanceCategory;
 }
 
@@ -183,7 +219,15 @@ export async function addStarterCategories(): Promise<FinanceCategory[]> {
   return unwrap(
     await supabase
       .from("finance_categories")
-      .insert(STARTER_CATEGORIES.map((c) => ({ ...c, icon: null, color: null, monthly_budget: null, user_id })))
+      .insert(
+        STARTER_CATEGORIES.map((c) => ({
+          ...c,
+          icon: null,
+          color: null,
+          monthly_budget: null,
+          user_id,
+        })),
+      )
       .select(),
   ) as FinanceCategory[];
 }
@@ -201,11 +245,14 @@ export type TransactionInput = {
   pocket_id?: string | null;
 };
 
-
 export async function createTransaction(input: TransactionInput): Promise<Transaction> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("transactions").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("transactions")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as Transaction;
 }
 
@@ -247,7 +294,11 @@ export type RecurringCostInput = {
 export async function createRecurringCost(input: RecurringCostInput): Promise<RecurringCost> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("recurring_costs").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("recurring_costs")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as RecurringCost;
 }
 
@@ -274,7 +325,8 @@ export function legacyFrequency(unit: IntervalUnit, count: number): RecurrenceFr
 
 export function recurringInterval(cost: RecurringCost): { count: number; unit: IntervalUnit } {
   const count = Math.max(1, Number(cost.interval_count || 1));
-  if (cost.interval_unit && cost.interval_unit !== "hour") return { count, unit: cost.interval_unit };
+  if (cost.interval_unit && cost.interval_unit !== "hour")
+    return { count, unit: cost.interval_unit };
   if (cost.frequency === "daily") return { count: 1, unit: "day" };
   if (cost.frequency === "weekly") return { count: 1, unit: "week" };
   if (cost.frequency === "yearly") return { count: 1, unit: "year" };
@@ -424,7 +476,6 @@ export function daysUntil(date: Date, from: Date = new Date()): number {
   return differenceInCalendarDays(date, from);
 }
 
-
 /* ------------------------------ balances ------------------------------- */
 
 export function accountBalance(
@@ -449,22 +500,36 @@ export function pocketBalance(pocket: AccountPocket, transactions: Transaction[]
   return Number(pocket.opening_balance) + moved;
 }
 
-/** Spendable money: active accounts that are not credit. */
+/** Whether an account's money counts toward "left to spend". */
+export function countsTowardSpendable(account: Account): boolean {
+  // Missing column (migration not applied yet) means the old behaviour: counts.
+  return account.counts_toward_spendable !== false;
+}
+
+/** Spendable money: active, non-credit accounts that count toward left to spend. */
 export function liquidBalance(
   accounts: Account[],
   transactions: Transaction[],
   pockets: AccountPocket[] = [],
 ): number {
   return accounts
-    .filter((a) => a.active && a.type !== "credit")
+    .filter((a) => a.active && a.type !== "credit" && countsTowardSpendable(a))
+    .reduce((sum, a) => sum + accountBalance(a, transactions, pockets), 0);
+}
+
+/** Money tracked in accounts kept separate from left to spend (e.g. a home fund). */
+export function separateBalance(
+  accounts: Account[],
+  transactions: Transaction[],
+  pockets: AccountPocket[] = [],
+): number {
+  return accounts
+    .filter((a) => a.active && a.type !== "credit" && !countsTowardSpendable(a))
     .reduce((sum, a) => sum + accountBalance(a, transactions, pockets), 0);
 }
 
 /** Active recurring costs falling due on or before the given date. */
-export function upcomingCostsBefore(
-  costs: RecurringCost[],
-  before: Date | null,
-): RecurringCost[] {
+export function upcomingCostsBefore(costs: RecurringCost[], before: Date | null): RecurringCost[] {
   if (!before) return [];
   return costs
     .filter((c) => c.active && parseISO(c.next_due_date) <= before)
@@ -472,10 +537,7 @@ export function upcomingCostsBefore(
 }
 
 export function committedBefore(costs: RecurringCost[], before: Date | null): number {
-  return upcomingCostsBefore(costs, before).reduce(
-    (sum, c) => sum + Math.abs(Number(c.amount)),
-    0,
-  );
+  return upcomingCostsBefore(costs, before).reduce((sum, c) => sum + Math.abs(Number(c.amount)), 0);
 }
 
 export function availableBeforePayday(args: {
@@ -532,7 +594,11 @@ export type PocketInput = {
 export async function createPocket(input: PocketInput): Promise<AccountPocket> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("account_pockets").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("account_pockets")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as AccountPocket;
 }
 
@@ -548,4 +614,3 @@ export async function updatePocket(
 export async function deletePocket(id: string): Promise<void> {
   unwrap(await supabase.from("account_pockets").delete().eq("id", id).select());
 }
-

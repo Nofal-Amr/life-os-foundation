@@ -24,7 +24,6 @@ import {
 import {
   accountPocketsQuery,
   accountsQuery,
-
   createCategory,
   createTransaction,
   financeCategoriesQuery,
@@ -43,9 +42,12 @@ import { cn } from "@/lib/utils";
 export function QuickAddTransactionDialog({
   open,
   onOpenChange,
+  initialKind,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Start on spending or income; defaults to whatever was logged last. */
+  initialKind?: CategoryKind;
 }) {
   const queryClient = useQueryClient();
   const accounts = useQuery(accountsQuery());
@@ -78,9 +80,8 @@ export function QuickAddTransactionDialog({
     setAccountId(lastUsed?.account_id ?? fallback);
     setPocketId(lastUsed?.pocket_id ?? "");
 
-
     setCategoryId(lastUsed?.category_id ?? "");
-    setKind(lastUsed && Number(lastUsed.amount) > 0 ? "income" : "expense");
+    setKind(initialKind ?? (lastUsed && Number(lastUsed.amount) > 0 ? "income" : "expense"));
     setAmount("");
     setNote("");
     setShowNewCategory(false);
@@ -113,7 +114,6 @@ export function QuickAddTransactionDialog({
         date: todayISO(),
         pocket_id: pocketId || null,
       });
-
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: financeKeys.transactions });
@@ -124,7 +124,14 @@ export function QuickAddTransactionDialog({
   });
 
   const addCategory = useMutation({
-    mutationFn: () => createCategory({ name: newCategoryName.trim(), kind, color: null, icon: null, monthly_budget: null }),
+    mutationFn: () =>
+      createCategory({
+        name: newCategoryName.trim(),
+        kind,
+        color: null,
+        icon: null,
+        monthly_budget: null,
+      }),
     onSuccess: (category) => {
       queryClient.invalidateQueries({ queryKey: financeKeys.categories });
       setCategoryId(category.id);
@@ -201,7 +208,12 @@ export function QuickAddTransactionDialog({
                         : "",
                     )}
                   >
-                    <EntityIcon icon={category.icon} color={categoryId === category.id ? null : category.color} containerClassName="size-5 rounded border-0 bg-transparent" className="size-3" />
+                    <EntityIcon
+                      icon={category.icon}
+                      color={categoryId === category.id ? null : category.color}
+                      containerClassName="size-5 rounded border-0 bg-transparent"
+                      className="size-3"
+                    />
                     {category.name}
                     {categoryId === category.id ? <Check className="size-3" /> : null}
                   </Button>
@@ -211,13 +223,36 @@ export function QuickAddTransactionDialog({
           ) : null}
 
           <div className="space-y-2">
-            <Button type="button" variant="ghost" size="sm" className="px-0" onClick={() => setShowNewCategory((current) => !current)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="px-0"
+              onClick={() => setShowNewCategory((current) => !current)}
+            >
               <Plus className="size-4" /> New category
             </Button>
             {showNewCategory ? (
               <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                <Input aria-label="New category name" value={newCategoryName} placeholder="Category name" onChange={(event) => setNewCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); if (newCategoryName.trim()) addCategory.mutate(); } }} />
-                <Button type="button" disabled={!newCategoryName.trim() || addCategory.isPending} onClick={() => addCategory.mutate()}>Add</Button>
+                <Input
+                  aria-label="New category name"
+                  value={newCategoryName}
+                  placeholder="Category name"
+                  onChange={(event) => setNewCategoryName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      if (newCategoryName.trim()) addCategory.mutate();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  disabled={!newCategoryName.trim() || addCategory.isPending}
+                  onClick={() => addCategory.mutate()}
+                >
+                  Add
+                </Button>
               </div>
             ) : null}
           </div>
@@ -230,7 +265,10 @@ export function QuickAddTransactionDialog({
                   type="button"
                   variant="outline"
                   aria-pressed={pocketId === ""}
-                  className={cn("min-h-11 rounded-full px-4 text-sm", pocketId === "" ? "border-primary bg-primary text-primary-foreground" : "")}
+                  className={cn(
+                    "min-h-11 rounded-full px-4 text-sm",
+                    pocketId === "" ? "border-primary bg-primary text-primary-foreground" : "",
+                  )}
                   onClick={() => setPocketId("")}
                 >
                   No pocket
@@ -243,7 +281,12 @@ export function QuickAddTransactionDialog({
                       type="button"
                       variant="outline"
                       aria-pressed={pocketId === pocket.id}
-                      className={cn("min-h-11 rounded-full px-4 text-sm", pocketId === pocket.id ? "border-primary bg-primary text-primary-foreground" : "")}
+                      className={cn(
+                        "min-h-11 rounded-full px-4 text-sm",
+                        pocketId === pocket.id
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "",
+                      )}
                       onClick={() => setPocketId(pocket.id)}
                     >
                       {pocket.name}
@@ -254,7 +297,6 @@ export function QuickAddTransactionDialog({
           ) : null}
 
           {activeAccounts.length > 1 ? (
-
             <div className="space-y-2">
               <Label>Account</Label>
               <Select value={accountId} onValueChange={setAccountId}>
