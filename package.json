@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:android": "node mobile/android/build.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
