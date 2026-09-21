@@ -3,7 +3,8 @@ import { addDays, addMonths, differenceInCalendarDays, format, parseISO } from "
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { currentUserId, unwrap } from "@/lib/supabase-helpers";
+import { currentUserId, unwrap, writeWithColumnFallback } from "@/lib/supabase-helpers";
+import { billFor, parseTariff, untilNextTier, type Bill, type Tariff } from "./tariff";
 
 export type Resource = Database["public"]["Tables"]["resources"]["Row"];
 export type ResourceReading = Database["public"]["Tables"]["resource_readings"]["Row"];
@@ -55,21 +56,33 @@ export type ResourceInput = {
   icon: string | null;
   color: string | null;
   active: boolean;
+  /** Tiered pricing; when set it replaces unit_cost for bills. */
+  tariff?: Tariff | null;
 };
 
 export async function createResource(input: ResourceInput): Promise<Resource> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("resources").insert({ ...input, user_id }).select().single(),
+    await writeWithColumnFallback({ ...input, user_id } as Record<string, unknown>, (row) =>
+      supabase
+        .from("resources")
+        .insert(row as Database["public"]["Tables"]["resources"]["Insert"])
+        .select()
+        .single(),
+    ),
   ) as Resource;
 }
 
-export async function updateResource(
-  id: string,
-  input: Partial<ResourceInput>,
-): Promise<Resource> {
+export async function updateResource(id: string, input: Partial<ResourceInput>): Promise<Resource> {
   return unwrap(
-    await supabase.from("resources").update(input).eq("id", id).select().single(),
+    await writeWithColumnFallback(input as Record<string, unknown>, (row) =>
+      supabase
+        .from("resources")
+        .update(row as Database["public"]["Tables"]["resources"]["Update"])
+        .eq("id", id)
+        .select()
+        .single(),
+    ),
   ) as Resource;
 }
 
@@ -87,7 +100,11 @@ export type ReadingInput = {
 export async function addReading(input: ReadingInput): Promise<ResourceReading> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("resource_readings").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("resource_readings")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as ResourceReading;
 }
 
@@ -104,9 +121,7 @@ export function readingsFor(resource: Resource, readings: ResourceReading[]): Re
 }
 
 function daysBetween(a: string, b: string): number {
-  const diff = Math.abs(
-    (new Date(b).getTime() - new Date(a).getTime()) / (1000 * 60 * 60 * 24),
-  );
+  const diff = Math.abs((new Date(b).getTime() - new Date(a).getTime()) / (1000 * 60 * 60 * 24));
   return diff;
 }
 
@@ -123,6 +138,13 @@ export type MeterFacts = {
   projectedCycleCost: number | null;
   cycleStart: string | null;
   cycleEnd: string | null;
+  /** With a tariff: this cycle's tier and bill, and the projected ones. */
+  tier: {
+    tariff: Tariff;
+    current: Bill | null;
+    until: { next: number; kwh: number } | null;
+    projected: Bill | null;
+  } | null;
 };
 
 export type QuotaFacts = {
@@ -142,9 +164,10 @@ export type QuotaFacts = {
  * day that does not exist in the target month clamps to that month's last day.
  * Resources stored in days keep behaving exactly as before.
  */
-export function cycleWindow(resource: Resource, today = new Date()):
-  | { start: string; end: string }
-  | null {
+export function cycleWindow(
+  resource: Resource,
+  today = new Date(),
+): { start: string; end: string } | null {
   if (!resource.cycle_start_date) return null;
   const anchor = parseISO(resource.cycle_start_date);
 
@@ -187,7 +210,9 @@ export function meterFacts(
   const latest = list[list.length - 1];
   if (!latest) return null;
   const previous = list.length > 1 ? (list[list.length - 2] as ResourceReading) : null;
-  const unitCost = resource.unit_cost == null ? null : Number(resource.unit_cost);
+  const tariff = parseTariff(resource.tariff);
+  // A tiered bill can't be split per reading, so flat prices only apply without a tariff.
+  const unitCost = tariff || resource.unit_cost == null ? null : Number(resource.unit_cost);
 
   let lastConsumption: number | null = null;
   let perDay: number | null = null;
@@ -200,6 +225,7 @@ export function meterFacts(
   const window = cycleWindow(resource, today);
   let cycleConsumption: number | null = null;
   let projectedCycleCost: number | null = null;
+  let projectedConsumption: number | null = null;
   if (window) {
     const inCycle = list.filter((r) => r.reading_at.slice(0, 10) >= window.start);
     const first = inCycle[0];
@@ -209,8 +235,9 @@ export function meterFacts(
       const elapsed = daysBetween(first.reading_at, last.reading_at);
       const rate = elapsed > 0 ? cycleConsumption / elapsed : null;
       const cycleLength = Number(cycleLengthDays(resource, today) ?? 0);
-      if (rate != null && unitCost != null && cycleLength > 0) {
-        projectedCycleCost = rate * cycleLength * unitCost;
+      if (rate != null && cycleLength > 0) projectedConsumption = rate * cycleLength;
+      if (projectedConsumption != null && unitCost != null) {
+        projectedCycleCost = projectedConsumption * unitCost;
       }
     }
   }
@@ -223,11 +250,27 @@ export function meterFacts(
     lastCost: lastConsumption != null && unitCost != null ? lastConsumption * unitCost : null,
     perDay,
     cycleConsumption,
-    cycleCost:
-      cycleConsumption != null && unitCost != null ? cycleConsumption * unitCost : null,
-    projectedCycleCost,
+    cycleCost: tariff
+      ? cycleConsumption != null
+        ? billFor(tariff, cycleConsumption).total
+        : null
+      : cycleConsumption != null && unitCost != null
+        ? cycleConsumption * unitCost
+        : null,
+    projectedCycleCost:
+      tariff && projectedConsumption != null
+        ? billFor(tariff, projectedConsumption).total
+        : projectedCycleCost,
     cycleStart: window?.start ?? null,
     cycleEnd: window?.end ?? null,
+    tier: tariff
+      ? {
+          tariff,
+          current: cycleConsumption != null ? billFor(tariff, cycleConsumption) : null,
+          until: cycleConsumption != null ? untilNextTier(tariff, cycleConsumption) : null,
+          projected: projectedConsumption != null ? billFor(tariff, projectedConsumption) : null,
+        }
+      : null,
   };
 }
 
@@ -263,7 +306,6 @@ export function quotaFacts(
     daysLeft,
     runsOutOn,
     cycleEnd: window?.end ?? null,
-    runsOutBeforeCycleEnd:
-      runsOutOn && window ? runsOutOn < window.end : null,
+    runsOutBeforeCycleEnd: runsOutOn && window ? runsOutOn < window.end : null,
   };
 }

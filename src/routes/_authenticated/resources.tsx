@@ -52,6 +52,15 @@ import {
 } from "@/data/resources";
 import { hasEnoughPoints, meterCostPerDay, quotaRing } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
+
+import {
+  EGYPT_RESIDENTIAL_2026,
+  parseTariff,
+  tierFor,
+  tierRangeLabel,
+  untilNextTier,
+  type Tariff,
+} from "@/data/tariff";
 import { todayISO } from "@/lib/date";
 
 const STARTER_RESOURCES: { name: string; kind: ResourceKind; unit: string }[] = [
@@ -236,6 +245,7 @@ function ResourcesPage() {
       icon: resource.icon,
       color: resource.color,
       active: resource.active,
+      tariff: parseTariff(resource.tariff),
     });
     setDialogOpen(true);
   }
@@ -354,148 +364,162 @@ function ResourcesPage() {
         />
       ) : (
         <>
-        {glance.length ? <GlanceSection>{glance}</GlanceSection> : null}
-        <ul className="space-y-4">
-          {list.map((resource) => {
-            const own = readingsFor(resource, readings.data ?? []);
-            const latest = own[own.length - 1];
-            const meter = resource.kind === "meter" ? meterFacts(resource, readings.data ?? []) : null;
-            const quota = resource.kind === "quota" ? quotaFacts(resource, readings.data ?? []) : null;
-            const needsMore = own.length < 2;
+          {glance.length ? <GlanceSection>{glance}</GlanceSection> : null}
+          <ul className="space-y-4">
+            {list.map((resource) => {
+              const own = readingsFor(resource, readings.data ?? []);
+              const latest = own[own.length - 1];
+              const meter =
+                resource.kind === "meter" ? meterFacts(resource, readings.data ?? []) : null;
+              const quota =
+                resource.kind === "quota" ? quotaFacts(resource, readings.data ?? []) : null;
+              const needsMore = own.length < 2;
 
-            return (
-              <li key={resource.id} className="rounded-xl border border-border bg-card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <EntityIcon icon={resource.icon} color={resource.color} />
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{resource.name}</p>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        <SemanticBadge tone="neutral">
-                          {RESOURCE_KINDS.find((k) => k.value === resource.kind)?.label}
-                        </SemanticBadge>
-                        <span className="text-muted-foreground">{resource.unit}</span>
-                        {!resource.active ? <SemanticBadge tone="quiet">Inactive</SemanticBadge> : null}
+              return (
+                <li key={resource.id} className="rounded-xl border border-border bg-card p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <EntityIcon icon={resource.icon} color={resource.color} />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{resource.name}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                          <SemanticBadge tone="neutral">
+                            {RESOURCE_KINDS.find((k) => k.value === resource.kind)?.label}
+                          </SemanticBadge>
+                          <span className="text-muted-foreground">{resource.unit}</span>
+                          {!resource.active ? (
+                            <SemanticBadge tone="quiet">Inactive</SemanticBadge>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <Button size="sm" onClick={() => openReading(resource)}>
+                        <Plus className="size-4" />
+                        Add reading
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => openEdit(resource)}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setToDelete(resource)}>
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
-                    <Button size="sm" onClick={() => openReading(resource)}>
-                      <Plus className="size-4" />
-                      Add reading
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(resource)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setToDelete(resource)}>
-                      Delete
-                    </Button>
+
+                  <div className="mt-4 space-y-2 text-sm">
+                    {latest ? (
+                      <p className="text-muted-foreground">
+                        Last reading {round(Number(latest.reading))} {resource.unit} ·{" "}
+                        {fmtDate(latest.reading_at.slice(0, 10))}
+                      </p>
+                    ) : (
+                      <p className="text-muted-foreground">No readings yet.</p>
+                    )}
+
+                    {needsMore ? (
+                      <p className="text-muted-foreground">
+                        Add at least two readings and usage can be worked out.
+                      </p>
+                    ) : meter ? (
+                      <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
+                        <div>
+                          <dt className="text-muted-foreground">Used since last reading</dt>
+                          <dd className="tabular-nums">
+                            {meter.lastConsumption == null
+                              ? "—"
+                              : `${round(meter.lastConsumption)} ${resource.unit}`}
+                            {meter.lastCost == null ? "" : ` · ${fmtMoney(meter.lastCost)}`}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-muted-foreground">Average a day</dt>
+                          <dd className="tabular-nums">
+                            {meter.perDay == null ? "—" : `${round(meter.perDay)} ${resource.unit}`}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-muted-foreground">This cycle so far</dt>
+                          <dd className="tabular-nums">
+                            {meter.cycleConsumption == null
+                              ? "—"
+                              : `${round(meter.cycleConsumption)} ${resource.unit}`}
+                            {meter.cycleCost == null ? "" : ` · ${fmtMoney(meter.cycleCost)}`}
+                          </dd>
+                        </div>
+                        {meter.tier?.current ? (
+                          <div className="sm:col-span-3">
+                            <TierMeter
+                              tariff={meter.tier.tariff}
+                              kwh={meter.cycleConsumption ?? 0}
+                              unit={resource.unit}
+                              projectedTier={meter.tier.projected?.tier ?? null}
+                            />
+                          </div>
+                        ) : null}
+                        {meter.projectedCycleCost != null ? (
+                          <div className="sm:col-span-3">
+                            <dt className="text-muted-foreground">
+                              Projected cost for the full cycle
+                              {meter.cycleEnd ? ` to ${fmtDate(meter.cycleEnd)}` : ""}
+                            </dt>
+                            <dd className="tabular-nums">{fmtMoney(meter.projectedCycleCost)}</dd>
+                          </div>
+                        ) : null}
+                      </dl>
+                    ) : quota ? (
+                      <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
+                        <div>
+                          <dt className="text-muted-foreground">Left</dt>
+                          <dd className="tabular-nums">
+                            {round(quota.remaining)} {resource.unit}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-muted-foreground">Average a day</dt>
+                          <dd className="tabular-nums">
+                            {quota.perDay == null ? "—" : `${round(quota.perDay)} ${resource.unit}`}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-muted-foreground">At that rate</dt>
+                          <dd className="tabular-nums">
+                            {quota.daysLeft == null
+                              ? "—"
+                              : `about ${Math.floor(quota.daysLeft)} ${Math.floor(quota.daysLeft) === 1 ? "day" : "days"} left`}
+                          </dd>
+                        </div>
+                        {quota.runsOutOn && quota.cycleEnd ? (
+                          <div className="sm:col-span-3 text-muted-foreground">
+                            {quota.runsOutBeforeCycleEnd
+                              ? `At this rate it reaches zero around ${fmtDate(quota.runsOutOn)}, before the cycle ends on ${fmtDate(quota.cycleEnd)}.`
+                              : `At this rate it lasts past the cycle end on ${fmtDate(quota.cycleEnd)}.`}
+                          </div>
+                        ) : null}
+                      </dl>
+                    ) : null}
+
+                    {meter && meter.cycleCost != null && resource.category_id ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={logCost.isPending}
+                        onClick={() =>
+                          logCost.mutate({
+                            resource,
+                            amount: meter.cycleCost as number,
+                            label: `${resource.name} · ${round(meter.cycleConsumption ?? 0)} ${resource.unit}`,
+                          })
+                        }
+                      >
+                        Log {fmtMoney(meter.cycleCost)} as a transaction
+                      </Button>
+                    ) : null}
                   </div>
-                </div>
-
-                <div className="mt-4 space-y-2 text-sm">
-                  {latest ? (
-                    <p className="text-muted-foreground">
-                      Last reading {round(Number(latest.reading))} {resource.unit} ·{" "}
-                      {fmtDate(latest.reading_at.slice(0, 10))}
-                    </p>
-                  ) : (
-                    <p className="text-muted-foreground">No readings yet.</p>
-                  )}
-
-                  {needsMore ? (
-                    <p className="text-muted-foreground">
-                      Add at least two readings and usage can be worked out.
-                    </p>
-                  ) : meter ? (
-                    <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
-                      <div>
-                        <dt className="text-muted-foreground">Used since last reading</dt>
-                        <dd className="tabular-nums">
-                          {meter.lastConsumption == null
-                            ? "—"
-                            : `${round(meter.lastConsumption)} ${resource.unit}`}
-                          {meter.lastCost == null ? "" : ` · ${fmtMoney(meter.lastCost)}`}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Average a day</dt>
-                        <dd className="tabular-nums">
-                          {meter.perDay == null ? "—" : `${round(meter.perDay)} ${resource.unit}`}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">This cycle so far</dt>
-                        <dd className="tabular-nums">
-                          {meter.cycleConsumption == null
-                            ? "—"
-                            : `${round(meter.cycleConsumption)} ${resource.unit}`}
-                          {meter.cycleCost == null ? "" : ` · ${fmtMoney(meter.cycleCost)}`}
-                        </dd>
-                      </div>
-                      {meter.projectedCycleCost != null ? (
-                        <div className="sm:col-span-3">
-                          <dt className="text-muted-foreground">
-                            Projected cost for the full cycle
-                            {meter.cycleEnd ? ` to ${fmtDate(meter.cycleEnd)}` : ""}
-                          </dt>
-                          <dd className="tabular-nums">{fmtMoney(meter.projectedCycleCost)}</dd>
-                        </div>
-                      ) : null}
-                    </dl>
-                  ) : quota ? (
-                    <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
-                      <div>
-                        <dt className="text-muted-foreground">Left</dt>
-                        <dd className="tabular-nums">
-                          {round(quota.remaining)} {resource.unit}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Average a day</dt>
-                        <dd className="tabular-nums">
-                          {quota.perDay == null ? "—" : `${round(quota.perDay)} ${resource.unit}`}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">At that rate</dt>
-                        <dd className="tabular-nums">
-                          {quota.daysLeft == null
-                            ? "—"
-                            : `about ${Math.floor(quota.daysLeft)} ${Math.floor(quota.daysLeft) === 1 ? "day" : "days"} left`}
-                        </dd>
-                      </div>
-                      {quota.runsOutOn && quota.cycleEnd ? (
-                        <div className="sm:col-span-3 text-muted-foreground">
-                          {quota.runsOutBeforeCycleEnd
-                            ? `At this rate it reaches zero around ${fmtDate(quota.runsOutOn)}, before the cycle ends on ${fmtDate(quota.cycleEnd)}.`
-                            : `At this rate it lasts past the cycle end on ${fmtDate(quota.cycleEnd)}.`}
-                        </div>
-                      ) : null}
-                    </dl>
-                  ) : null}
-
-                  {meter && meter.cycleCost != null && resource.category_id ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={logCost.isPending}
-                      onClick={() =>
-                        logCost.mutate({
-                          resource,
-                          amount: meter.cycleCost as number,
-                          label: `${resource.name} · ${round(meter.cycleConsumption ?? 0)} ${resource.unit}`,
-                        })
-                      }
-                    >
-                      Log {fmtMoney(meter.cycleCost)} as a transaction
-                    </Button>
-                  ) : null}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
         </>
       )}
 
@@ -553,7 +577,32 @@ function ResourcesPage() {
               onChange={(e) => setForm({ ...form, unit: e.target.value })}
             />
           </div>
-          <div className="space-y-2">
+          {form.kind === "meter" ? (
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Pricing</Label>
+              <Select
+                value={form.tariff ? "tiered" : "flat"}
+                onValueChange={(value) =>
+                  setForm({ ...form, tariff: value === "tiered" ? EGYPT_RESIDENTIAL_2026 : null })
+                }
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flat">One price per unit</SelectItem>
+                  <SelectItem value="tiered">Tiers 1–7 (Egypt residential)</SelectItem>
+                </SelectContent>
+              </Select>
+              {form.tariff ? (
+                <TariffEditor
+                  tariff={form.tariff}
+                  onChange={(tariff) => setForm({ ...form, tariff })}
+                />
+              ) : null}
+            </div>
+          ) : null}
+          <div className={form.tariff && form.kind === "meter" ? "hidden" : "space-y-2"}>
             <Label htmlFor="resource-cost">Cost per unit</Label>
             <Input
               id="resource-cost"
@@ -564,7 +613,10 @@ function ResourcesPage() {
               className="h-12 tabular-nums"
               value={form.unit_cost ?? ""}
               onChange={(e) =>
-                setForm({ ...form, unit_cost: e.target.value === "" ? null : Number(e.target.value) })
+                setForm({
+                  ...form,
+                  unit_cost: e.target.value === "" ? null : Number(e.target.value),
+                })
               }
             />
           </div>
@@ -745,5 +797,139 @@ function ResourcesPage() {
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
     </>
+  );
+}
+
+/** Where this cycle's consumption sits across the tiers. */
+function TierMeter({
+  tariff,
+  kwh,
+  unit,
+  projectedTier,
+}: {
+  tariff: Tariff;
+  kwh: number;
+  unit: string;
+  projectedTier: number | null;
+}) {
+  const tier = tierFor(tariff, kwh);
+  const until = untilNextTier(tariff, kwh);
+  return (
+    <div className="space-y-2 rounded-lg bg-secondary p-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-medium">
+          Tier {tier} of {tariff.tiers.length}
+          <span className="ml-2 font-normal text-muted-foreground">
+            {tierRangeLabel(tariff, tier, unit)}
+          </span>
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {until ? `${Math.ceil(until.kwh)} ${unit} until tier ${until.next}` : "Highest tier"}
+          {projectedTier != null && projectedTier !== tier
+            ? ` · at this pace: tier ${projectedTier}`
+            : ""}
+        </p>
+      </div>
+      <div
+        className="grid gap-1"
+        style={{ gridTemplateColumns: `repeat(${tariff.tiers.length}, minmax(0, 1fr))` }}
+      >
+        {tariff.tiers.map((_, index) => (
+          <span
+            key={index}
+            title={`Tier ${index + 1}: ${tierRangeLabel(tariff, index + 1, unit)}`}
+            className="h-2 rounded-full"
+            style={{
+              background:
+                index + 1 < tier
+                  ? "color-mix(in oklch, var(--chart-4) 55%, transparent)"
+                  : index + 1 === tier
+                    ? "var(--chart-4)"
+                    : "var(--color-border)",
+            }}
+          />
+        ))}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {tariff.name} · {tariff.source}
+      </p>
+    </div>
+  );
+}
+
+/** Rates and fees per tier, editable when prices change. */
+function TariffEditor({
+  tariff,
+  onChange,
+}: {
+  tariff: Tariff;
+  onChange: (tariff: Tariff) => void;
+}) {
+  const set = (index: number, key: "rate" | "fee", value: string) =>
+    onChange({
+      ...tariff,
+      source: "Edited",
+      tiers: tariff.tiers.map((tier, i) =>
+        i === index ? { ...tier, [key]: Number(value) || 0 } : tier,
+      ),
+    });
+  return (
+    <div className="mt-2 overflow-hidden rounded-lg border border-border">
+      <table className="w-full text-sm">
+        <thead className="bg-secondary text-xs text-muted-foreground">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium">Tier</th>
+            <th className="px-3 py-2 text-left font-medium">Per kWh</th>
+            <th className="px-3 py-2 text-left font-medium">Monthly fee</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tariff.tiers.map((tier, index) => (
+            <tr key={index} className="border-t border-border">
+              <td className="px-3 py-1.5">
+                <span className="font-medium">{index + 1}</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                  {tierRangeLabel(tariff, index + 1)}
+                </span>
+              </td>
+              <td className="px-3 py-1.5">
+                <Input
+                  aria-label={`Tier ${index + 1} price per kWh`}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  inputMode="decimal"
+                  className="h-9 w-24 tabular-nums"
+                  value={tier.rate}
+                  onChange={(event) => set(index, "rate", event.target.value)}
+                />
+              </td>
+              <td className="px-3 py-1.5">
+                <Input
+                  aria-label={`Tier ${index + 1} monthly fee`}
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  inputMode="decimal"
+                  className="h-9 w-20 tabular-nums"
+                  value={tier.fee}
+                  onChange={(event) => set(index, "fee", event.target.value)}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+        <span>{tariff.source}</span>
+        <button
+          type="button"
+          className="underline underline-offset-4 hover:text-foreground"
+          onClick={() => onChange(EGYPT_RESIDENTIAL_2026)}
+        >
+          Reset to official rates
+        </button>
+      </div>
+    </div>
   );
 }
