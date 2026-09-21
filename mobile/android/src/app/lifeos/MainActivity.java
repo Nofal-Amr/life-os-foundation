@@ -10,6 +10,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
+import android.util.Log;
+import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -65,6 +67,13 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new AppClient());
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
+            public boolean onConsoleMessage(ConsoleMessage message) {
+                // Visible with: adb logcat -s LifeOS
+                Log.i("LifeOS", message.messageLevel() + " " + message.message());
+                return true;
+            }
+
+            @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 if (hasLocationPermission()) {
                     callback.invoke(origin, true, false);
@@ -76,6 +85,11 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Debug builds can be inspected from chrome://inspect on a PC.
+        if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+
         String callback = callbackUrl(getIntent());
         if (callback != null) webView.loadUrl(callback);
         else if (savedInstanceState != null) webView.restoreState(savedInstanceState);
@@ -86,7 +100,13 @@ public class MainActivity extends Activity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         String callback = callbackUrl(intent);
+        Log.i("LifeOS", "callback intent: " + (intent.getData() == null ? "none" : redact(intent.getData().toString())));
         if (callback != null) webView.loadUrl(callback);
+    }
+
+    /** Keeps tokens out of the log. */
+    private static String redact(String url) {
+        return url.replaceAll("(access_token|refresh_token|provider_token|provider_refresh_token|code)=[^&#]+", "$1=…");
     }
 
     /**
@@ -100,8 +120,11 @@ public class MainActivity extends Activity {
         if (!CALLBACK_SCHEME.equals(data.getScheme())) return null;
         String query = data.getEncodedQuery();
         String fragment = data.getEncodedFragment();
-        return APP_URL + "auth"
-            + (query != null ? "?" + query : "")
+        // A unique query forces a full page load. The app is usually already on
+        // /auth, and a URL that differs only in its #fragment would just scroll
+        // the page, so Supabase would never read the returned tokens.
+        return APP_URL + "auth?return=" + System.currentTimeMillis()
+            + (query != null ? "&" + query : "")
             + (fragment != null ? "#" + fragment : "");
     }
 

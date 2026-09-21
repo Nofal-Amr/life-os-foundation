@@ -52,9 +52,28 @@ function AuthPage() {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    // getSession works offline; it also picks up a session returned by Google.
-    supabase.auth.getSession().then(({ data }) => {
+    // A Google sign-in returns here with tokens (#access_token=…), a code
+    // (?code=…) or an error. Supabase reads them itself; we only surface
+    // failures, which it otherwise swallows silently.
+    const params = new URLSearchParams(
+      `${window.location.search.slice(1)}&${window.location.hash.slice(1)}`,
+    );
+    const returned = params.has("access_token") || params.has("code") || params.has("error");
+    if (returned) {
+      console.info(
+        `auth callback: token=${params.has("access_token")} code=${params.has("code")} error=${params.get("error") ?? "none"}`,
+      );
+    }
+    const urlError = params.get("error_description") ?? params.get("error");
+    if (urlError) toast.error(`Google sign-in didn't finish: ${urlError.replace(/\+/g, " ")}`);
+
+    // getSession works offline; it also waits for Supabase to read the callback.
+    supabase.auth.getSession().then(({ data, error }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
+      else if (returned && !urlError) {
+        console.warn(`auth callback: no session (${error?.message ?? "no error"})`);
+        toast.error("Google sign-in didn't finish. Please try again.");
+      }
     });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) navigate({ to: "/dashboard", replace: true });
