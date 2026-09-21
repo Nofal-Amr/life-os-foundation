@@ -47,6 +47,7 @@ import {
   spiritKeys,
 } from "@/data/spirit";
 import { MODULES } from "@/data/modules";
+import { WEEK_START_OPTIONS } from "@/data/week";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useTheme, type ThemePreference } from "@/hooks/useTheme";
@@ -103,7 +104,7 @@ function SettingsPage() {
   const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
   const { preference, setPreference } = useTheme();
-  const { prefs, weightUnit } = usePreferences();
+  const { prefs, weightUnit, weekStartsOn } = usePreferences();
   const { enabled: enabledModuleKeys, toggleModule, isSaving } = useModules();
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -449,6 +450,24 @@ function SettingsPage() {
                 <SelectContent>
                   {TIME_FORMATS.map((item) => (
                     <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Week starts on</Label>
+              <Select
+                value={String(weekStartsOn)}
+                onValueChange={(value) => savePrefs.mutate({ week_start: Number(value) })}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WEEK_START_OPTIONS.map((item) => (
+                    <SelectItem key={item.value} value={String(item.value)}>
                       {item.label}
                     </SelectItem>
                   ))}

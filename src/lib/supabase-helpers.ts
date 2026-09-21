@@ -44,3 +44,25 @@ export function toError(error: unknown): Error {
 function isNetworkMessage(message: string) {
   return /failed to fetch|networkerror|network request failed|load failed/i.test(message);
 }
+
+/**
+ * Runs a write, and if Supabase says a column doesn't exist yet (a migration
+ * not applied), retries without that column. New features then degrade to
+ * the old behaviour instead of breaking saves.
+ */
+export async function writeWithColumnFallback<
+  I extends Record<string, unknown>,
+  R extends { error: unknown },
+>(input: I, run: (row: I) => PromiseLike<R>): Promise<R> {
+  let row = input;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const result = await run(row);
+    const error = result.error as { code?: string; message?: string } | null;
+    const column =
+      error?.code === "PGRST204" ? /'([^']+)' column/.exec(error.message ?? "")?.[1] : undefined;
+    if (!column || !(column in row)) return result;
+    const { [column]: _dropped, ...rest } = row;
+    row = rest as I;
+  }
+  return run(row);
+}

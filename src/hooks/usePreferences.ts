@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { preferencesQuery } from "@/data/preferences";
+import { toWeekStartsOn } from "@/data/week";
 import {
   DEFAULT_DISPLAY_PREFERENCES,
   formatDatePref,
@@ -38,6 +39,9 @@ export function usePreferences() {
   return {
     prefs,
     isLoading: query.isLoading,
+    /** Which day weeks start on in the Week view and weekly charts. */
+    weekStartsOn: toWeekStartsOn(row?.week_start),
+    skin: row?.skin === "rpg" ? ("rpg" as const) : ("serious" as const),
     currency: prefs.currency,
     fmtDate: (value: string | null | undefined) => formatDatePref(value, prefs),
     fmtShortDate: (value: string | null | undefined) => formatShortDatePref(value, prefs),

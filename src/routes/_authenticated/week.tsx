@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format, parseISO } from "date-fns";
 import { Check, ChevronLeft, ChevronRight, ListChecks, Moon, Repeat, Wallet } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { SplitAcrossDaysDialog } from "@/components/app/SplitAcrossDays";
 import { Ring, type ChartTone } from "@/components/app/StatCards";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { completeTask, reopenTask, taskKeys, tasksQuery, type Task } from "@/dat
 import {
   buildWeek,
   isDone,
+  prayerCounts,
   shiftWeek,
   weekRecap,
   weekStart,
@@ -61,13 +63,17 @@ const MONEY_TONE: ChartTone = 4;
 
 function WeekPage() {
   const today = todayISO();
-  const [start, setStart] = useState(() => weekStart(today));
+  const { fmtMoney, weekStartsOn } = usePreferences();
+  const [start, setStart] = useState(() => weekStart(today, weekStartsOn));
   const [selected, setSelected] = useState(today);
+  // Preferences load after first render; realign when the week start changes.
+  useEffect(() => {
+    setStart((current) => weekStart(current, weekStartsOn));
+  }, [weekStartsOn]);
   const { enabled } = useModules();
   const trackPrayers = enabled.includes("spirit");
   const trackHabits = enabled.includes("habits");
   const trackMoney = enabled.includes("money");
-  const { fmtMoney } = usePreferences();
 
   const tasks = useQuery(tasksQuery());
   const projects = useQuery(projectsQuery());
@@ -136,7 +142,7 @@ function WeekPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setStart(weekStart(today));
+                  setStart(weekStart(today, weekStartsOn));
                   setSelected(today);
                 }}
               >
@@ -483,7 +489,11 @@ function DayDetail({
     onMutate: (task) =>
       taskToggle.begin((rows) =>
         rows.map((row) =>
-          row.id === task.id ? { ...row, status: isDone(task) ? "todo" : "completed" } : row,
+          row.id === task.id
+            ? isDone(task)
+              ? { ...row, status: "todo", completed_at: null }
+              : { ...row, status: "completed", completed_at: new Date().toISOString() }
+            : row,
         ),
       ),
     onError: (error, _task, previous) => {
@@ -564,8 +574,9 @@ function DayDetail({
     habitLogs.some((log) => log.habit_id === habitId && log.log_date === day.date);
   const prayed = (name: PrayerName) =>
     !!prayerLogs?.some(
-      (log) => log.prayer_date === day.date && log.prayer_name === name && log.completed,
+      (log) => log.prayer_date === day.date && log.prayer_name === name && prayerCounts(log),
     );
+  const [splitting, setSplitting] = useState<Task | null>(null);
 
   return (
     <section aria-live="polite" className="space-y-3">
@@ -622,6 +633,39 @@ function DayDetail({
             </Link>
           </div>
         )}
+
+        {day.dueLater.length ? (
+          <div className="stat-card space-y-2 p-4">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold">Due later this week</p>
+              <span className="ml-auto text-[11px] text-muted-foreground">can be done early</span>
+            </div>
+            <ul className="space-y-1.5">
+              {day.dueLater.map((task) => (
+                <li key={task.id} className="flex items-stretch gap-1.5">
+                  <div className="min-w-0 flex-1">
+                    <CheckRow
+                      checked={false}
+                      label={task.title}
+                      hint={task.due_date ? `Due ${format(parseISO(task.due_date), "EEEE")}` : null}
+                      onToggle={() => toggleTask.mutate(task)}
+                    />
+                  </div>
+                  {!task.parent_task_id ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-auto shrink-0 px-2.5 text-xs text-muted-foreground"
+                      onClick={() => setSplitting(task)}
+                    >
+                      Split
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {habits.length ? (
           <div className="stat-card space-y-2 p-4">
@@ -697,6 +741,12 @@ function DayDetail({
           </div>
         ) : null}
       </div>
+      <SplitAcrossDaysDialog
+        task={splitting}
+        from={day.date}
+        open={!!splitting}
+        onOpenChange={(open) => !open && setSplitting(null)}
+      />
     </section>
   );
 }

@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { currentUserId, unwrap } from "@/lib/supabase-helpers";
+import { currentUserId, unwrap, writeWithColumnFallback } from "@/lib/supabase-helpers";
 
 export type UserPreferences = Database["public"]["Tables"]["user_preferences"]["Row"];
 
@@ -39,16 +39,17 @@ export type PreferencesInput = {
   currency?: string | null;
   enabled_modules?: string[];
   onboarding_completed_at?: string | null;
+  /** 0 = Sunday, 1 = Monday, 6 = Saturday. */
+  week_start?: number;
+  skin?: "serious" | "rpg";
 };
 
 export async function savePreferences(input: PreferencesInput): Promise<UserPreferences> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase
-      .from("user_preferences")
-      .upsert({ user_id, ...input }, { onConflict: "user_id" })
-      .select()
-      .single(),
+    await writeWithColumnFallback({ user_id, ...input }, (row) =>
+      supabase.from("user_preferences").upsert(row, { onConflict: "user_id" }).select().single(),
+    ),
   ) as UserPreferences;
 }
 

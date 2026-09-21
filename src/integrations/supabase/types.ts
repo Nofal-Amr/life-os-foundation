@@ -669,6 +669,45 @@ export type Database = {
         }
         Relationships: []
       }
+      health_samples: {
+        Row: {
+          created_at: string
+          end_at: string | null
+          external_id: string
+          id: string
+          kind: string
+          source: string | null
+          start_at: string
+          unit: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          end_at?: string | null
+          external_id: string
+          id?: string
+          kind: string
+          source?: string | null
+          start_at: string
+          unit: string
+          user_id?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          end_at?: string | null
+          external_id?: string
+          id?: string
+          kind?: string
+          source?: string | null
+          start_at?: string
+          unit?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
+      }
       medication_logs: {
         Row: {
           created_at: string
@@ -748,27 +787,39 @@ export type Database = {
       }
       notes: {
         Row: {
+          archived: boolean
           body: string | null
+          checklist: Json | null
+          color: string | null
           created_at: string
           id: string
+          pinned: boolean
           tags: string[]
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          archived?: boolean
           body?: string | null
+          checklist?: Json | null
+          color?: string | null
           created_at?: string
           id?: string
+          pinned?: boolean
           tags?: string[]
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          archived?: boolean
           body?: string | null
+          checklist?: Json | null
+          color?: string | null
           created_at?: string
           id?: string
+          pinned?: boolean
           tags?: string[]
           title?: string
           updated_at?: string
@@ -823,6 +874,7 @@ export type Database = {
           on_time: boolean | null
           prayer_date: string
           prayer_name: string
+          status: string | null
           updated_at: string
           user_id: string
         }
@@ -833,6 +885,7 @@ export type Database = {
           on_time?: boolean | null
           prayer_date?: string
           prayer_name: string
+          status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -843,6 +896,7 @@ export type Database = {
           on_time?: boolean | null
           prayer_date?: string
           prayer_name?: string
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1079,8 +1133,9 @@ export type Database = {
           kind: Database["public"]["Enums"]["resource_kind"]
           name: string
           quota_amount: number | null
-          unit: string
+          tariff: Json | null
           unit_cost: number | null
+          unit: string
           updated_at: string
           user_id: string
         }
@@ -1099,8 +1154,9 @@ export type Database = {
           kind?: Database["public"]["Enums"]["resource_kind"]
           name: string
           quota_amount?: number | null
-          unit: string
+          tariff?: Json | null
           unit_cost?: number | null
+          unit: string
           updated_at?: string
           user_id: string
         }
@@ -1119,8 +1175,9 @@ export type Database = {
           kind?: Database["public"]["Enums"]["resource_kind"]
           name?: string
           quota_amount?: number | null
-          unit?: string
+          tariff?: Json | null
           unit_cost?: number | null
+          unit?: string
           updated_at?: string
           user_id?: string
         }
@@ -1255,6 +1312,7 @@ export type Database = {
           description: string | null
           id: string
           kind: Database["public"]["Enums"]["transaction_kind"]
+          occurred_time: string | null
           pocket_id: string | null
           updated_at: string
           user_id: string
@@ -1268,6 +1326,7 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["transaction_kind"]
+          occurred_time?: string | null
           pocket_id?: string | null
           updated_at?: string
           user_id: string
@@ -1281,6 +1340,7 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["transaction_kind"]
+          occurred_time?: string | null
           pocket_id?: string | null
           updated_at?: string
           user_id?: string
@@ -1318,10 +1378,12 @@ export type Database = {
           enabled_modules: string[]
           id: string
           onboarding_completed_at: string | null
+          skin: string
           time_format: string
           unit_system: string
           updated_at: string
           user_id: string
+          week_start: number
         }
         Insert: {
           created_at?: string
@@ -1331,10 +1393,12 @@ export type Database = {
           enabled_modules?: string[]
           id?: string
           onboarding_completed_at?: string | null
+          skin?: string
           time_format?: string
           unit_system?: string
           updated_at?: string
           user_id: string
+          week_start?: number
         }
         Update: {
           created_at?: string
@@ -1344,9 +1408,41 @@ export type Database = {
           enabled_modules?: string[]
           id?: string
           onboarding_completed_at?: string | null
+          skin?: string
           time_format?: string
           unit_system?: string
           updated_at?: string
+          user_id?: string
+          week_start?: number
+        }
+        Relationships: []
+      }
+      ux_events: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          path: string | null
+          platform: string | null
+          props: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          path?: string | null
+          platform?: string | null
+          props?: Json | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          path?: string | null
+          platform?: string | null
+          props?: Json | null
           user_id?: string
         }
         Relationships: []
