@@ -14,6 +14,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/app/AnimatedNumber";
 import { AreaHabits } from "@/components/app/AreaHabits";
+import { MoreSections, Section } from "@/components/app/MoreSections";
+import { ResourcesSummary } from "@/components/app/ResourcesSummary";
+import { todayISO } from "@/lib/date";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
@@ -211,6 +214,13 @@ function FinanceOverview() {
   const nextDate = nextPayday(config);
   const days = nextDate ? daysUntil(nextDate) : null;
 
+  // What today has cost so far, from logged expenses.
+  const todayExpenses = (transactions.data ?? []).filter(
+    (t) => t.kind === "expense" && t.date === todayISO(),
+  );
+  const spentToday = todayExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+  const todayCount = todayExpenses.length;
+
   const totals = availableBeforePayday({
     accounts: accounts.data ?? [],
     transactions: transactions.data ?? [],
@@ -301,6 +311,13 @@ function FinanceOverview() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   {untilPayday ? `${untilPayday} · ` : ""}After upcoming recurring costs and your
                   safety buffer.
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Spent today:{" "}
+                  <span className="font-medium tabular-nums text-foreground">
+                    {fmtMoney(spentToday)}
+                  </span>
+                  {todayCount ? ` · ${todayCount} ${todayCount === 1 ? "entry" : "entries"}` : ""}
                 </p>
                 <MoneyActions onAdd={setQuickAdd} />
                 <div className="mt-4 space-y-3">
@@ -446,6 +463,8 @@ function FinanceOverview() {
             )}
           </section>
 
+          <MoreSections id="money">
+          <Section id="money-glance" title="At a glance">
           <GlanceSection>
             {cycle ? (
               <RingStat
@@ -498,12 +517,10 @@ function FinanceOverview() {
               </StatCard>
             ) : null}
           </GlanceSection>
+          </Section>
 
           {/* Accounts */}
-          <section>
-            <h2 className="mb-3 section-title">
-              Accounts
-            </h2>
+          <Section id="money-accounts" title="Accounts">
             {!hasAccounts ? (
               <EmptyState
                 title="Nothing logged yet"
@@ -575,20 +592,18 @@ function FinanceOverview() {
                 })}
               </ul>
             )}
-          </section>
+          </Section>
 
-          {/* Upcoming recurring costs stay in sight */}
-          <section>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="section-title">
-                Coming up
-              </h2>
+          {/* What is due next stays one tap away. */}
+          <Section id="money-coming" title="Coming up">
+            <div className="mb-3 flex justify-end">
               <Button asChild size="sm" variant="ghost">
                 <Link to="/finance/recurring">Manage</Link>
               </Button>
             </div>
             <RecurringList compact />
-          </section>
+          </Section>
+          </MoreSections>
         </div>
       )}
 

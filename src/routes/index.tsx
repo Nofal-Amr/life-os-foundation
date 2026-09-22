@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { currentUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -31,8 +31,7 @@ export const Route = createFileRoute("/")({
   }),
   // Signed in already: straight to Today. getSession works offline too.
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/dashboard" });
+    if (await currentUser()) throw redirect({ to: "/dashboard" });
   },
   component: Intro,
 });

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { DatePicker } from "@/components/app/DatePicker";
+import { DaySummary } from "@/components/app/DaySummary";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +91,8 @@ function ReviewPage() {
         <Label htmlFor="review-date">Date</Label>
         <DatePicker id="review-date" value={date} disableFuture onChange={(value) => setDate(value || todayISO())} />
       </div>
+
+      <DaySummary date={date} className="mb-6" />
 
       {review.isLoading ? (
         <LoadingState rows={3} />

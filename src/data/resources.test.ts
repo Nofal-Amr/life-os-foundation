@@ -107,3 +107,32 @@ describe("tier usage for electricity", () => {
     expect(tierUsage({ ...prepaid, tariff: null } as Resource, [], undefined, today)).toBeNull();
   });
 });
+
+describe("quotaRate", () => {
+  const r = (reading: number, at: string) => ({ reading, reading_at: at }) as never;
+  it("averages every drop and skips top-ups", async () => {
+    const { quotaRate } = await import("./resources");
+    // 200 -> 150 (50 used), top-up to 300, -> 260 (40 used): 90 over 3 days.
+    expect(
+      quotaRate([
+        r(200, "2026-09-18T08:00:00Z"),
+        r(150, "2026-09-19T08:00:00Z"),
+        r(300, "2026-09-20T08:00:00Z"),
+        r(260, "2026-09-21T08:00:00Z"),
+      ]),
+    ).toBeCloseTo(30);
+  });
+  it("needs three readings over at least two days", async () => {
+    const { quotaRate } = await import("./resources");
+    expect(quotaRate([r(180, "2026-09-22T08:00:00Z"), r(150, "2026-09-22T12:00:00Z")])).toBeNull();
+    // Three readings, but only one day apart.
+    expect(
+      quotaRate([
+        r(200, "2026-09-21T08:00:00Z"),
+        r(180, "2026-09-21T20:00:00Z"),
+        r(150, "2026-09-22T08:00:00Z"),
+      ]),
+    ).toBeNull();
+    expect(quotaRate([r(150, "2026-09-22T12:00:00Z")])).toBeNull();
+  });
+});

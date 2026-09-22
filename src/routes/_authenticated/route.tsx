@@ -7,14 +7,16 @@ import { Onboarding } from "@/components/app/Onboarding";
 import { LoadingState } from "@/components/app/States";
 import { enabledModules, moduleForPath } from "@/data/modules";
 import { preferencesQuery } from "@/data/preferences";
-import { supabase } from "@/integrations/supabase/client";
+import { currentUser } from "@/lib/session";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    // Works offline: the stored session decides what to show; the server
+    // still checks every request with row-level security.
+    const user = await currentUser();
+    if (!user) throw redirect({ to: "/auth" });
+    return { user };
   },
   component: AuthenticatedShell,
 });

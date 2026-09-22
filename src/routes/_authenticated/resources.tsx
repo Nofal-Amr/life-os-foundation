@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Wifi, Zap } from "lucide-react";
+import { Plus, Wallet, Wifi, Zap } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
-import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
+import { EntityIcon, EntityIdentityPicker, entityIconOf } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import {
@@ -272,7 +272,7 @@ function ResourcesPage() {
           <RingStat
             key={resource.id}
             title={`${resource.name} this month`}
-            icon={Zap}
+            icon={entityIconOf(resource.icon)}
             done={usage.used}
             total={top ?? usage.used}
             center={`Tier ${tier}`}
@@ -294,9 +294,31 @@ function ResourcesPage() {
       }
       if (resource.kind === "quota") {
         const ring = quotaRing(resource, readings.data ?? []);
+        const facts = quotaFacts(resource, readings.data ?? []);
+        if (!ring && facts) {
+          return (
+            <StatCard key={resource.id} title={`${resource.name} left`} icon={entityIconOf(resource.icon)} tone={2}>
+              <p className="figure">
+                {plain(facts.remaining)} <span className="text-base font-medium text-muted-foreground">{resource.unit}</span>
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {facts.perDay != null && facts.daysLeft != null
+                  ? facts.daysLeft < 1
+                    ? `Less than a day left at ${plain(facts.perDay)} ${resource.unit} a day.`
+                    : `About ${Math.floor(facts.daysLeft)} ${Math.floor(facts.daysLeft) === 1 ? "day" : "days"} left at ${plain(facts.perDay)} ${resource.unit} a day.`
+                  : "Add readings on a few different days to see how long it lasts."}
+                {" "}From your reading on {fmtDate(facts.latest.reading_at.slice(0, 10))}.
+              </p>
+              <Button size="sm" variant="outline" className="mt-4" onClick={() => openReading(resource)}>
+                <Plus className="size-4" />
+                Add reading
+              </Button>
+            </StatCard>
+          );
+        }
         if (!ring) {
           return (
-            <StatCard key={resource.id} title={`${resource.name} left`} icon={Wifi}>
+            <StatCard key={resource.id} title={`${resource.name} left`} icon={entityIconOf(resource.icon)}>
               <p className="text-sm text-muted-foreground">
                 Add a quota amount and a reading to see this.
               </p>
@@ -307,7 +329,7 @@ function ResourcesPage() {
           <RingStat
             key={resource.id}
             title={`${resource.name} left`}
-            icon={Wifi}
+            icon={entityIconOf(resource.icon)}
             done={ring.remaining}
             total={ring.quota}
             center={plain(ring.remaining)}
@@ -325,7 +347,7 @@ function ResourcesPage() {
       }
       if (resource.unit_cost == null) {
         return (
-          <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={Zap}>
+          <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={entityIconOf(resource.icon)}>
             <p className="text-sm text-muted-foreground">Set a unit cost to see this.</p>
           </StatCard>
         );
@@ -335,7 +357,7 @@ function ResourcesPage() {
         <TrendLine
           key={resource.id}
           title={`${resource.name} cost per day`}
-          icon={Zap}
+          icon={entityIconOf(resource.icon)}
           description="Worked out between each pair of your readings."
           points={points}
           tone={4}
@@ -347,7 +369,7 @@ function ResourcesPage() {
           summary={`Per day, between readings · ${points.length} intervals`}
         />
       ) : (
-        <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={Zap}>
+        <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={entityIconOf(resource.icon)}>
           <NotEnoughData hint="Needs readings on at least three different days." />
         </StatCard>
       );

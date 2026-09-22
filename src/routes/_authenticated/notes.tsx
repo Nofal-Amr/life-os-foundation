@@ -16,7 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import { toast } from "sonner";
 
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -272,7 +272,7 @@ function NotesPage() {
           type="button"
           onClick={() => startNote(false)}
           aria-label="New note"
-          className="fixed bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5rem)] right-5 z-30 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 md:hidden"
+          className="fixed bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+6.75rem)] right-5 z-30 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 md:hidden"
         >
           <Plus className="size-6" />
         </button>
@@ -574,7 +574,7 @@ function NoteEditor({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+        <div data-note-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6">
           <AutoTextarea
             value={note.title}
             onChange={(title) => change({ title })}
@@ -697,11 +697,16 @@ function AutoTextarea({
   autoFocus?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
+  // Resize before paint, and hold the scroll position while the box is
+  // briefly collapsed to measure it; otherwise the page jumps on every key.
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.style.height = "auto";
+    const scroller = el.closest<HTMLElement>("[data-note-scroll]");
+    const top = scroller?.scrollTop ?? 0;
+    el.style.height = "0px";
     el.style.height = `${el.scrollHeight}px`;
+    if (scroller) scroller.scrollTop = top;
   }, [value]);
   return (
     <textarea

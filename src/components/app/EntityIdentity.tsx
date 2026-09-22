@@ -435,6 +435,11 @@ export const ENTITY_COLORS = [
 
 const ICON_MAP = new Map(ICONS.map((item) => [item.name, item.icon]));
 
+/** The lucide icon a stored name maps to, for places that need the component. */
+export function entityIconOf(icon?: string | null): LucideIcon {
+  return (icon && ICON_MAP.get(icon)) || Circle;
+}
+
 export function EntityIcon({
   icon,
   color,

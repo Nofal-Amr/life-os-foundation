@@ -18,6 +18,7 @@ import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
+import { DaySummary } from "@/components/app/DaySummary";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { HubCard } from "@/components/app/HubCard";
 import { TaskTimerButton } from "@/components/app/Timer";
@@ -990,20 +991,7 @@ function DashboardPage() {
                   )}
                 </div>
 
-                <div className="min-w-0">
-                  <h2 className="text-sm font-medium text-foreground">Today so far</h2>
-                  {todayCounts.length ? (
-                    <div className="mt-2 flex min-w-0 flex-wrap gap-2">
-                      {todayCounts.map((item) => (
-                        <SemanticBadge key={item.label} tone="positive" className="text-xs">
-                          {item.value} {item.label}
-                        </SemanticBadge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-1">Nothing logged yet today.</p>
-                  )}
-                </div>
+                <DaySummary className="min-w-0" />
               </div>
 
               <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">

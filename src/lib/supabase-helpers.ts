@@ -36,9 +36,20 @@ export function toError(error: unknown): Error {
     isNetworkMessage(message) ||
     (typeof navigator !== "undefined" && navigator.onLine === false)
   ) {
-    return new Error("You're offline. This will load again when you're back online.");
+    return offlineError();
   }
   return new Error(message || "Something went wrong. Please try again.");
+}
+
+/** An error the app can recognise as "no connection", so it stops retrying. */
+export function offlineError(): Error {
+  const error = new Error("You are offline. This will load again when you are back online.");
+  (error as Error & { code?: string }).code = "OFFLINE";
+  return error;
+}
+
+export function isOfflineError(error: unknown): boolean {
+  return (error as { code?: string } | null)?.code === "OFFLINE";
 }
 
 function isNetworkMessage(message: string) {
@@ -75,7 +86,7 @@ export async function writeWithColumnFallback<
 const missingColumns = new Set<string>();
 const missingListeners = new Set<() => void>();
 
-function reportMissingColumn(column: string) {
+export function reportMissingColumn(column: string) {
   if (missingColumns.has(column)) return;
   missingColumns.add(column);
   missingListeners.forEach((listener) => listener());

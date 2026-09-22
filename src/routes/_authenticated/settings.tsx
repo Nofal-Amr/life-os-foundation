@@ -52,6 +52,7 @@ import { MODULES } from "@/data/modules";
 import { WEEK_START_OPTIONS } from "@/data/week";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
+import { ACCENTS, TEXT_SIZES, useAppearance } from "@/hooks/useAppearance";
 import { useTheme, type ThemePreference } from "@/hooks/useTheme";
 import { requestDeviceLocation } from "@/lib/geolocation";
 import { financeKeys, hasPaydaySetup, paydayConfigQuery, savePaydayConfig } from "@/data/finance";
@@ -100,7 +101,8 @@ function SettingsPage() {
   const prayer = useQuery(prayerSettingsQuery());
   const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
-  const { preference, setPreference } = useTheme();
+  const { preference, setPreference, theme } = useTheme();
+  const { textSize, setTextSize, accent, setAccent, phoneAccents } = useAppearance();
   const { prefs, weightUnit, weekStartsOn, skin } = usePreferences();
   const { enabled: enabledModuleKeys, toggleModule, isSaving } = useModules();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -877,6 +879,70 @@ function SettingsPage() {
                   {label}
                 </button>
               ))}
+            </div>
+
+            <div className="mt-6 space-y-2">
+              <p className="text-sm font-medium">Text size</p>
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Text size">
+                {TEXT_SIZES.map((size) => (
+                  <button
+                    key={size.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={textSize === size.value}
+                    onClick={() => setTextSize(size.value)}
+                    className={`min-h-10 rounded-full border px-4 text-sm transition-colors ${textSize === size.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                  >
+                    {size.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Changes every screen at once, on this device.
+              </p>
+            </div>
+
+            <div className="mt-6 space-y-2">
+              <p className="text-sm font-medium">Accent colour</p>
+              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Accent colour">
+                {ACCENTS.filter(
+                  (item) =>
+                    (item.value !== "wallpaper" || phoneAccents.wallpaper) &&
+                    (item.value !== "system" || phoneAccents.system),
+                ).map(
+                  (item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={accent === item.value}
+                      onClick={() => setAccent(item.value)}
+                      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm transition-colors ${accent === item.value ? "border-primary text-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="size-3.5 rounded-full border border-border"
+                        style={{
+                          background:
+                            item.value === "wallpaper"
+                              ? (phoneAccents.wallpaper ?? "var(--primary)")
+                              : item.value === "system"
+                                ? (phoneAccents.system ?? "var(--primary)")
+                                : item.value === "default"
+                                ? "var(--primary)"
+                                : ((theme === "dark" ? item.dark : item.light) ?? "var(--primary)"),
+                        }}
+                      />
+                      {item.label}
+                    </button>
+                  ),
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {phoneAccents.wallpaper || phoneAccents.system
+                  ? "From wallpaper takes the colour from your picture; System palette follows Wallpaper and style."
+                  : "Open the Android app to use your wallpaper or system colours."}
+              </p>
             </div>
 
             <div className="mt-6 space-y-2">

@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DateNav } from "@/components/app/DateNav";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
+import { MoreSections, Section } from "@/components/app/MoreSections";
 import { SamsungHealthCard } from "@/components/app/SamsungHealthCard";
 import { QuickMeals } from "@/components/app/QuickMeals";
 import { healthSamplesQuery, withSampleDays } from "@/data/healthSamples";
@@ -640,68 +641,6 @@ function HealthPage() {
           )}
         </GlanceSection>
 
-        <SamsungHealthCard />
-
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Weight</CardTitle>
-            <CardDescription>
-              {heightCm != null
-                ? `Height ${fmtHeight(heightCm)}, set in Settings.`
-                : "Add your height in Settings to see your BMI here."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="flex flex-wrap items-end gap-3"
-              onSubmit={(event) => {
-                event.preventDefault();
-                saveWeight.mutate();
-              }}
-            >
-              <div className="space-y-2">
-                <Label htmlFor="weight">Current weight ({weightUnit})</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  className="h-12 w-40 text-base"
-                  value={weightInput ?? ""}
-                  onChange={(event) => setWeightInput(num(event.target.value))}
-                />
-              </div>
-              <Button type="submit" className="h-12" disabled={saveWeight.isPending}>
-                {saveWeight.isPending ? "Saving…" : "Save weight"}
-              </Button>
-              {!heightCm ? null : (
-                <Button asChild variant="ghost" className="h-12">
-                  <Link to="/settings">Body setup</Link>
-                </Button>
-              )}
-            </form>
-            <div className="mt-4 rounded-xl border border-border px-4 py-3">
-              {bmiValue != null ? (
-                <>
-                  <p className="text-sm font-medium tabular-nums text-foreground">
-                    BMI {bmiValue.toFixed(1)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Weight in kg ÷ height in m², from {fmtHeight(heightCm ?? 0)} and the weight
-                    saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}.
-                  </p>
-                </>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {heightCm == null
-                    ? "Add your height in Settings and save a weight to see your BMI here."
-                    : "Save a weight to see your BMI here."}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         <Card id="meals" className="system-card scroll-mt-20">
           <CardHeader>
             <CardTitle className="text-base">Meals</CardTitle>
@@ -746,13 +685,6 @@ function HealthPage() {
                     onCheckedChange={(value) => setLogForm({ ...logForm, water_ok: value })}
                   />
                 </div>
-                <NumberField
-                  id="sleep-score"
-                  label="Sleep score"
-                  value={logForm.sleep_score}
-                  onChange={(value) => setLogForm({ ...logForm, sleep_score: value })}
-                  suffix="of 100"
-                />
                 <DurationField
                   id="sleep-actual"
                   label="Sleep time"
@@ -760,31 +692,40 @@ function HealthPage() {
                   onChange={(value) => setLogForm({ ...logForm, actual_sleep_minutes: value })}
                 />
                 <ScaleRow
-                  label="Stress"
-                  kind="stress"
-                  value={logForm.stress_level}
-                  onChange={(value) => setLogForm({ ...logForm, stress_level: value })}
-                />
-                <ScaleRow
                   label="Mood"
                   kind="mood"
                   value={logForm.mood}
                   onChange={(value) => setLogForm({ ...logForm, mood: value })}
-                />
-                <ScaleRow
-                  label="Food quality"
-                  kind="food"
-                  value={logForm.food_quality}
-                  onChange={(value) => setLogForm({ ...logForm, food_quality: value })}
                 />
               </div>
 
               <Collapsible open={sleepDetail} onOpenChange={setSleepDetail}>
                 <CollapsibleTrigger asChild>
                   <Button type="button" variant="outline" className="h-11">
-                    {sleepDetail ? "Hide detail" : "More detail"}
+                    {sleepDetail ? "Fewer fields" : "More fields"}
                   </Button>
                 </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4 grid gap-5 sm:grid-cols-2">
+                  <NumberField
+                    id="sleep-score"
+                    label="Sleep score"
+                    value={logForm.sleep_score}
+                    onChange={(value) => setLogForm({ ...logForm, sleep_score: value })}
+                    suffix="of 100"
+                  />
+                  <ScaleRow
+                    label="Stress"
+                    kind="stress"
+                    value={logForm.stress_level}
+                    onChange={(value) => setLogForm({ ...logForm, stress_level: value })}
+                  />
+                  <ScaleRow
+                    label="Food quality"
+                    kind="food"
+                    value={logForm.food_quality}
+                    onChange={(value) => setLogForm({ ...logForm, food_quality: value })}
+                  />
+                </CollapsibleContent>
                 <CollapsibleContent className="mt-4 grid gap-5 sm:grid-cols-2">
                   <DurationField
                     id="time-in-bed"
@@ -907,65 +848,6 @@ function HealthPage() {
           </CardContent>
         </Card>
 
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Recent days</CardTitle>
-            <CardDescription>Your last entries, most recent first.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recent.length === 0 ? (
-              <EmptyState
-                title="No other entries yet"
-                description="A daily log keeps a record of how you felt and slept, in your own words and numbers."
-              />
-            ) : (
-              <ul className="divide-y divide-border">
-                {recent.map((log) => (
-                  <li
-                    key={log.id}
-                    className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
-                  >
-                    <button
-                      type="button"
-                      className="font-medium text-foreground hover:underline"
-                      onClick={() => setDate(log.log_date)}
-                    >
-                      {fmtDate(log.log_date)}
-                    </button>
-                    <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {log.trained ? <SemanticBadge tone="positive">Trained</SemanticBadge> : null}
-                      {log.actual_sleep_minutes != null || log.sleep_hours != null ? (
-                        <span className="tabular-nums">
-                          {formatDuration(
-                            log.actual_sleep_minutes ?? Math.round(Number(log.sleep_hours) * 60),
-                          )}{" "}
-                          sleep
-                        </span>
-                      ) : null}
-                      {log.sleep_score != null ? (
-                        <span className="tabular-nums">Sleep score {log.sleep_score}</span>
-                      ) : null}
-                      {log.mood != null ? (
-                        <SemanticBadge tone={scaleTone("mood", log.mood)}>
-                          Mood {log.mood} of 5
-                        </SemanticBadge>
-                      ) : null}
-                      {log.stress_level != null ? (
-                        <SemanticBadge
-                          tone={scaleTone("stress", log.stress_level)}
-                          className="hidden sm:inline-flex"
-                        >
-                          Stress {log.stress_level} of 5
-                        </SemanticBadge>
-                      ) : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
         <Card id="medications" className="system-card scroll-mt-20">
           <CardHeader className="gap-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1078,6 +960,136 @@ function HealthPage() {
             ) : null}
           </CardContent>
         </Card>
+
+        <MoreSections id="health">
+          <Section id="health-history" title="History and devices">
+          <div className="space-y-5">
+        <SamsungHealthCard />
+
+        <Card className="system-card">
+          <CardHeader>
+            <CardTitle className="text-base">Weight</CardTitle>
+            <CardDescription>
+              {heightCm != null
+                ? `Height ${fmtHeight(heightCm)}, set in Settings.`
+                : "Add your height in Settings to see your BMI here."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="flex flex-wrap items-end gap-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveWeight.mutate();
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="weight">Current weight ({weightUnit})</Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  inputMode="decimal"
+                  step="0.1"
+                  className="h-12 w-40 text-base"
+                  value={weightInput ?? ""}
+                  onChange={(event) => setWeightInput(num(event.target.value))}
+                />
+              </div>
+              <Button type="submit" className="h-12" disabled={saveWeight.isPending}>
+                {saveWeight.isPending ? "Saving…" : "Save weight"}
+              </Button>
+              {!heightCm ? null : (
+                <Button asChild variant="ghost" className="h-12">
+                  <Link to="/settings">Body setup</Link>
+                </Button>
+              )}
+            </form>
+            <div className="mt-4 rounded-xl border border-border px-4 py-3">
+              {bmiValue != null ? (
+                <>
+                  <p className="text-sm font-medium tabular-nums text-foreground">
+                    BMI {bmiValue.toFixed(1)}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Weight in kg ÷ height in m², from {fmtHeight(heightCm ?? 0)} and the weight
+                    saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}.
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {heightCm == null
+                    ? "Add your height in Settings and save a weight to see your BMI here."
+                    : "Save a weight to see your BMI here."}
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+          </div>
+          </Section>
+          <Section id="health-recent" title="Recent days">
+        <Card className="system-card">
+          <CardHeader>
+            <CardTitle className="text-base">Recent days</CardTitle>
+            <CardDescription>Your last entries, most recent first.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recent.length === 0 ? (
+              <EmptyState
+                title="No other entries yet"
+                description="A daily log keeps a record of how you felt and slept, in your own words and numbers."
+              />
+            ) : (
+              <ul className="divide-y divide-border">
+                {recent.map((log) => (
+                  <li
+                    key={log.id}
+                    className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+                  >
+                    <button
+                      type="button"
+                      className="font-medium text-foreground hover:underline"
+                      onClick={() => setDate(log.log_date)}
+                    >
+                      {fmtDate(log.log_date)}
+                    </button>
+                    <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {log.trained ? <SemanticBadge tone="positive">Trained</SemanticBadge> : null}
+                      {log.actual_sleep_minutes != null || log.sleep_hours != null ? (
+                        <span className="tabular-nums">
+                          {formatDuration(
+                            log.actual_sleep_minutes ?? Math.round(Number(log.sleep_hours) * 60),
+                          )}{" "}
+                          sleep
+                        </span>
+                      ) : null}
+                      {log.sleep_score != null ? (
+                        <span className="tabular-nums">Sleep score {log.sleep_score}</span>
+                      ) : null}
+                      {log.mood != null ? (
+                        <SemanticBadge tone={scaleTone("mood", log.mood)}>
+                          Mood {log.mood} of 5
+                        </SemanticBadge>
+                      ) : null}
+                      {log.stress_level != null ? (
+                        <SemanticBadge
+                          tone={scaleTone("stress", log.stress_level)}
+                          className="hidden sm:inline-flex"
+                        >
+                          Stress {log.stress_level} of 5
+                        </SemanticBadge>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+          </Section>
+        </MoreSections>
       </div>
 
       <FormDialog

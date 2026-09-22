@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/useAuth";
+import { AppearanceProvider, appearanceBootScript } from "@/hooks/useAppearance";
 import { ThemeProvider, themeBootScript } from "@/hooks/useTheme";
 
 import appCss from "../styles.css?url";
@@ -119,6 +120,7 @@ function RootShell({ children }: { children: ReactNode }) {
         {/* Sets the theme class before first paint; ScriptOnce removes itself so
             the page still hydrates cleanly. */}
         <ScriptOnce children={themeBootScript} />
+        <ScriptOnce children={appearanceBootScript} />
         <HeadContent />
       </head>
       <body>
@@ -135,11 +137,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <AppearanceProvider>
         <AuthProvider>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
           <Toaster />
         </AuthProvider>
+        </AppearanceProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

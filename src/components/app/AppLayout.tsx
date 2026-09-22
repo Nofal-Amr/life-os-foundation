@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Settings, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { MigrationNotice } from "./MigrationNotice";
 import { TimerBar, useTimer } from "./Timer";
@@ -73,14 +73,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <span className="truncate text-sm font-semibold tracking-tight">Life OS</span>
           <SyncIndicator />
         </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
-          onClick={toggleTheme}
-        >
-          {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
-        </Button>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            onClick={toggleTheme}
+          >
+            {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+          </Button>
+          <Button asChild variant="ghost" size="icon" aria-label="Settings">
+            <Link to="/settings">
+              <Settings className="size-5" />
+            </Link>
+          </Button>
+        </div>
       </header>
 
       <main className="min-w-0 overflow-x-clip px-4 pb-28 pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">

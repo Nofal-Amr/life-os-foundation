@@ -36,10 +36,10 @@ const DO_TABS: SectionTab[] = [
 
 const MONEY_TABS: SectionTab[] = [
   { to: "/finance", label: "Overview", exact: true },
+  { to: "/resources", label: "Home and bills", module: "resources" },
   { to: "/finance/transactions", label: "Transactions" },
   { to: "/finance/recurring", label: "Recurring" },
   { to: "/finance/categories", label: "Categories" },
-  { to: "/resources", label: "Resources", module: "resources" },
 ];
 
 const TODAY_TABS: SectionTab[] = [

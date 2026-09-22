@@ -1,0 +1,303 @@
+{
+  "nodes": [
+    {
+      "id": "g-principles",
+      "type": "group",
+      "label": "Principles",
+      "x": -40,
+      "y": -60,
+      "width": 1320,
+      "height": 200
+    },
+    {
+      "id": "rules",
+      "type": "file",
+      "file": "Principles/Product rules.md",
+      "x": 0,
+      "y": 0,
+      "width": 280,
+      "height": 80,
+      "color": "4"
+    },
+    {
+      "id": "skins",
+      "type": "file",
+      "file": "Principles/Skins - Serious and RPG.md",
+      "x": 320,
+      "y": 0,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "design",
+      "type": "file",
+      "file": "Principles/Design system.md",
+      "x": 640,
+      "y": 0,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "motion",
+      "type": "file",
+      "file": "Principles/Motion.md",
+      "x": 960,
+      "y": 0,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "g-features",
+      "type": "group",
+      "label": "Features",
+      "x": -40,
+      "y": 240,
+      "width": 1640,
+      "height": 540
+    },
+    {
+      "id": "today",
+      "type": "file",
+      "file": "Features/Today.md",
+      "x": 0,
+      "y": 330,
+      "width": 280,
+      "height": 80,
+      "color": "5"
+    },
+    {
+      "id": "tasks",
+      "type": "file",
+      "file": "Features/Tasks.md",
+      "x": 320,
+      "y": 330,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "projects",
+      "type": "file",
+      "file": "Features/Projects.md",
+      "x": 640,
+      "y": 330,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "goals",
+      "type": "file",
+      "file": "Features/Goals.md",
+      "x": 960,
+      "y": 330,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "habits",
+      "type": "file",
+      "file": "Features/Habits.md",
+      "x": 1280,
+      "y": 330,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "money",
+      "type": "file",
+      "file": "Features/Money.md",
+      "x": 0,
+      "y": 550,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "resources",
+      "type": "file",
+      "file": "Features/Resources and electricity.md",
+      "x": 320,
+      "y": 550,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "health",
+      "type": "file",
+      "file": "Features/Health.md",
+      "x": 640,
+      "y": 550,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "spirit",
+      "type": "file",
+      "file": "Features/Spirit and prayers.md",
+      "x": 960,
+      "y": 550,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "notes",
+      "type": "file",
+      "file": "Features/Notes.md",
+      "x": 1280,
+      "y": 550,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "quick",
+      "type": "file",
+      "file": "Features/Quick add.md",
+      "x": 640,
+      "y": 704,
+      "width": 280,
+      "height": 80,
+      "color": "6"
+    },
+    {
+      "id": "g-arch",
+      "type": "group",
+      "label": "Architecture",
+      "x": -40,
+      "y": 880,
+      "width": 1640,
+      "height": 200
+    },
+    {
+      "id": "stack",
+      "type": "file",
+      "file": "Architecture/Stack.md",
+      "x": 0,
+      "y": 924,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "offline",
+      "type": "file",
+      "file": "Architecture/Offline and sync.md",
+      "x": 320,
+      "y": 924,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "supabase",
+      "type": "file",
+      "file": "Architecture/Supabase and security.md",
+      "x": 640,
+      "y": 924,
+      "width": 280,
+      "height": 80,
+      "color": "1"
+    },
+    {
+      "id": "android",
+      "type": "file",
+      "file": "Architecture/Android app.md",
+      "x": 960,
+      "y": 924,
+      "width": 280,
+      "height": 80
+    },
+    {
+      "id": "deploy",
+      "type": "file",
+      "file": "Architecture/Hosting and deploy.md",
+      "x": 1280,
+      "y": 924,
+      "width": 280,
+      "height": 80
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "fromNode": "tasks",
+      "toNode": "projects",
+      "label": "belongs to"
+    },
+    {
+      "id": "e2",
+      "fromNode": "projects",
+      "toNode": "goals",
+      "label": "moves"
+    },
+    {
+      "id": "e3",
+      "fromNode": "tasks",
+      "toNode": "goals",
+      "label": "linked"
+    },
+    {
+      "id": "e4",
+      "fromNode": "habits",
+      "toNode": "health",
+      "label": "Health habits"
+    },
+    {
+      "id": "e5",
+      "fromNode": "habits",
+      "toNode": "money",
+      "label": "Money habits"
+    },
+    {
+      "id": "e6",
+      "fromNode": "habits",
+      "toNode": "spirit",
+      "label": "Spirit habits"
+    },
+    {
+      "id": "e7",
+      "fromNode": "today",
+      "toNode": "tasks",
+      "label": "next action"
+    },
+    {
+      "id": "e8",
+      "fromNode": "quick",
+      "toNode": "money"
+    },
+    {
+      "id": "e9",
+      "fromNode": "quick",
+      "toNode": "notes"
+    },
+    {
+      "id": "e10",
+      "fromNode": "quick",
+      "toNode": "spirit"
+    },
+    {
+      "id": "e11",
+      "fromNode": "resources",
+      "toNode": "money",
+      "label": "bills"
+    },
+    {
+      "id": "e12",
+      "fromNode": "skins",
+      "toNode": "today",
+      "label": "hub"
+    },
+    {
+      "id": "e13",
+      "fromNode": "offline",
+      "toNode": "supabase",
+      "label": "syncs"
+    },
+    {
+      "id": "e14",
+      "fromNode": "android",
+      "toNode": "offline",
+      "label": "same app"
+    },
+    {
+      "id": "e15",
+      "fromNode": "rules",
+      "toNode": "skins"
+    }
+  ]
+}

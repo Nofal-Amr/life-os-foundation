@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.app.NotificationManager;
+import android.app.WallpaperColors;
+import android.app.WallpaperManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.graphics.Color;
@@ -76,6 +78,12 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setMediaPlaybackRequiresUserGesture(true);
+        // An app, not a web page: no pinch or double-tap zoom. Text size is a
+        // setting inside the app instead.
+        settings.setSupportZoom(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
+        settings.setTextZoom(100);
         settings.setUserAgentString(settings.getUserAgentString() + " " + UA_MARKER);
 
         webView.setWebViewClient(new AppClient());
@@ -305,6 +313,46 @@ public class MainActivity extends Activity {
     private final class NativeBridge {
         private boolean trusted() {
             return APP_HOST.equals(currentHost);
+        }
+
+/**
+         * Two sets of phone colours as JSON: "wallpaper" (the picture own
+         * colours) and "system" (Android Material You palette). The web app
+         * picks the most colourful of each and fits it to the theme.
+         */
+        @JavascriptInterface
+        public String systemAccent() {
+            if (!trusted()) return "";
+            StringBuilder wallpaper = new StringBuilder();
+            StringBuilder system = new StringBuilder();
+            try {
+                if (Build.VERSION.SDK_INT >= 27) {
+                    WallpaperColors colors = WallpaperManager.getInstance(MainActivity.this)
+                        .getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+                    if (colors != null) {
+                        append(wallpaper, colors.getPrimaryColor());
+                        append(wallpaper, colors.getSecondaryColor());
+                        append(wallpaper, colors.getTertiaryColor());
+                    }
+                }
+                if (Build.VERSION.SDK_INT >= 31) {
+                    append(system, getColor(android.R.color.system_accent1_400));
+                    append(system, getColor(android.R.color.system_accent2_400));
+                    append(system, getColor(android.R.color.system_accent3_400));
+                }
+            } catch (Exception e) {
+                // Whatever was collected is still usable.
+            }
+            return "{\"wallpaper\":\"" + wallpaper + "\",\"system\":\"" + system + "\"}";
+        }
+
+        private void append(StringBuilder out, android.graphics.Color color) {
+            if (color != null) append(out, color.toArgb());
+        }
+
+        private void append(StringBuilder out, int color) {
+            if (out.length() > 0) out.append(",");
+            out.append(String.format("#%06X", 0xFFFFFF & color));
         }
 
         @JavascriptInterface

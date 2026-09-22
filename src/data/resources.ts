@@ -327,6 +327,29 @@ export function meterFacts(
   };
 }
 
+/**
+ * Average use per day of a balance (prepaid meter, data), from every drop
+ * between readings in the last 30 days. Rises are top-ups and are skipped.
+ * Needs readings at least a day apart, so two readings an hour apart can't
+ * produce a wild rate. Null when there isn't enough to say.
+ */
+export function quotaRate(sorted: ResourceReading[], windowDays = 30): number | null {
+  const latest = sorted[sorted.length - 1];
+  if (!latest) return null;
+  const from = new Date(latest.reading_at).getTime() - windowDays * 86_400_000;
+  const recent = sorted.filter((r) => new Date(r.reading_at).getTime() >= from);
+  // Three readings over at least two days, so a couple of entries minutes
+  // apart can never imply a wild daily rate.
+  if (recent.length < 3) return null;
+  let used = 0;
+  for (let i = 1; i < recent.length; i++) {
+    const drop = Number(recent[i - 1]!.reading) - Number(recent[i]!.reading);
+    if (drop > 0) used += drop;
+  }
+  const days = daysBetween(recent[0]!.reading_at, latest.reading_at);
+  return days >= 2 && used > 0 ? used / days : null;
+}
+
 export function quotaFacts(
   resource: Resource,
   readings: ResourceReading[],
@@ -337,12 +360,7 @@ export function quotaFacts(
   if (!latest) return null;
   const previous = list.length > 1 ? (list[list.length - 2] as ResourceReading) : null;
 
-  let perDay: number | null = null;
-  if (previous) {
-    const used = Number(previous.reading) - Number(latest.reading);
-    const days = daysBetween(previous.reading_at, latest.reading_at);
-    if (days > 0 && used > 0) perDay = used / days;
-  }
+  const perDay = quotaRate(list);
 
   const remaining = Number(latest.reading);
   const daysLeft = perDay && perDay > 0 ? remaining / perDay : null;

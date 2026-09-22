@@ -112,8 +112,8 @@ export function QuickAdd() {
         className={cn(
           "fixed right-4 z-40 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_color-mix(in_oklch,var(--color-primary)_55%,transparent)] transition-[scale,rotate] duration-150 ease-out active:scale-95 md:bottom-8 md:right-8",
           running
-            ? "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+9.5rem)]"
-            : "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5.25rem)]",
+            ? "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+11rem)]"
+            : "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+6.75rem)]",
         )}
       >
         <Plus className={cn("size-6 transition-transform duration-200 ease-out", open && "rotate-45")} />

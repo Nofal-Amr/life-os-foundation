@@ -13,6 +13,8 @@
  */
 import { useSyncExternalStore } from "react";
 
+import { reportMissingColumn } from "@/lib/supabase-helpers";
+
 type CachedResponse = {
   key: string;
   table: string;
@@ -491,15 +493,23 @@ async function queueWrite(
   if (method === "POST") {
     const parsed = bodyText ? (JSON.parse(bodyText) as Row | Row[]) : [];
     const conflict = params.get("on_conflict")?.split(",").filter(Boolean);
-    const rows = (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
+    // Client ids let the queued insert and the local copy agree once synced.
+    // Upserts match on their conflict columns instead, so they get no new id.
+    const sent = (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
       ...row,
-      // Client ids let the queued insert and the local copy agree once synced.
-      // Upserts match on their conflict columns instead, so they get no new id.
       ...(conflict?.length ? {} : { id: row["id"] ?? crypto.randomUUID() }),
-      created_at: row["created_at"] ?? now,
-      updated_at: row["updated_at"] ?? now,
     }));
-    body = JSON.stringify(Array.isArray(parsed) ? rows : rows[0]);
+    // Times are for the device copy only: some tables have no such column,
+    // and the server sets its own anyway.
+    const rows: Row[] = sent.map((row) => {
+      const source: Row = row;
+      return {
+        ...source,
+        created_at: source["created_at"] ?? now,
+        updated_at: source["updated_at"] ?? now,
+      };
+    });
+    body = JSON.stringify(Array.isArray(parsed) ? sent : sent[0]);
     result = await applyToCache({ kind: "insert", table, params, rows, patch: {}, conflict });
   } else if (method === "PATCH") {
     const patch = bodyText ? (JSON.parse(bodyText) as Row) : {};
@@ -620,11 +630,24 @@ async function flush() {
     if (response.status === 401 || response.status >= 500) break; // Try again later.
     if (!response.ok) {
       let message = `A change couldn't be saved (${response.status}).`;
+      let error: { message?: string } = {};
       try {
-        const error = (await response.json()) as { message?: string };
+        error = (await response.clone().json()) as { message?: string };
         if (error.message) message = `A change couldn't be saved: ${error.message}`;
       } catch {
         // Keep the generic message.
+      }
+      // The database is missing a column this build sends: drop it and retry,
+      // so the change still lands instead of being lost.
+      const retried = await retryWithoutMissingColumn(entry, headers, error.message);
+      if (retried === "ok") {
+        await done((await store(OUTBOX, "readwrite")).delete(entry.id!));
+        synced = true;
+        continue;
+      }
+      if (retried === "offline") {
+        setStatus({ online: false });
+        break;
       }
       setStatus({ lastRejected: message });
     }
@@ -636,6 +659,62 @@ async function flush() {
   setStatus({ syncing: false });
   // Refetch everything so server-side values (defaults, triggers) replace the local copies.
   if (synced && status.pending === 0) onSynced?.();
+}
+
+/** The column PostgREST says is missing ("Could not find the 'x' column"). */
+export function missingColumnOf(message: string | undefined): string | null {
+  const match = /Could not find the '([^']+)' column/.exec(message ?? "");
+  return match?.[1] ?? null;
+}
+
+/** Drops a column the database doesn't have from a queued body. */
+export function withoutColumn(body: string, column: string): string | null {
+  try {
+    const parsed = JSON.parse(body) as Row | Row[];
+    const drop = (row: Row) => {
+      if (!(column in row)) return null;
+      const { [column]: _dropped, ...rest } = row;
+      return rest;
+    };
+    if (Array.isArray(parsed)) {
+      const rows = parsed.map(drop);
+      return rows.every((row) => row == null) ? null : JSON.stringify(rows.map((row, i) => row ?? parsed[i]));
+    }
+    const row = drop(parsed);
+    return row ? JSON.stringify(row) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function retryWithoutMissingColumn(
+  entry: OutboxEntry,
+  headers: Record<string, string>,
+  message: string | undefined,
+): Promise<"ok" | "failed" | "offline"> {
+  let body = entry.body;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const column = missingColumnOf(message);
+    if (!column || !body) return "failed";
+    const next = withoutColumn(body, column);
+    if (!next) return "failed";
+    body = next;
+    reportMissingColumn(column);
+    let response: Response;
+    try {
+      response = await nativeFetch(entry.url, { method: entry.method, headers, body });
+    } catch {
+      return "offline";
+    }
+    if (response.ok) return "ok";
+    if (response.status === 401 || response.status >= 500) return "failed";
+    try {
+      message = ((await response.json()) as { message?: string }).message;
+    } catch {
+      return "failed";
+    }
+  }
+  return "failed";
 }
 
 export function dismissRejected() {

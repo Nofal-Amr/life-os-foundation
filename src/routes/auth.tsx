@@ -215,10 +215,17 @@ function AuthPage() {
                   type="password"
                   autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   required
-                  minLength={6}
+                  // Only new passwords need 8+; older accounts may use shorter ones.
+                  {...(mode === "signup" ? { minLength: 8 } : {})}
+                  aria-describedby={mode === "signup" ? "password-hint" : undefined}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                {mode === "signup" ? (
+                  <p id="password-hint" className="text-xs text-muted-foreground">
+                    At least 8 characters. A short phrase is easier to remember.
+                  </p>
+                ) : null}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">

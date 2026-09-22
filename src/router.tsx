@@ -3,6 +3,7 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { supabase } from "./integrations/supabase/client";
 import { installOffline } from "./lib/offline";
+import { isOfflineError } from "@/lib/supabase-helpers";
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
@@ -14,6 +15,9 @@ export const getRouter = () => {
         // Always run: the offline layer (src/lib/offline.ts) answers from the
         // device copy when there's no network.
         networkMode: "always",
+        // Offline with nothing cached fails straight away; retrying just
+        // leaves the page on skeletons.
+        retry: (count: number, error: unknown) => !isOfflineError(error) && count < 2,
       },
       mutations: { networkMode: "always" },
     },
