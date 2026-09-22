@@ -78,7 +78,11 @@ export async function uploadAvatar(file: File): Promise<Profile> {
   const { error } = await supabase.storage
     .from(AVATAR_BUCKET)
     .upload(path, file, { upsert: true, contentType: file.type });
-  if (error) throw error;
+  if (error) {
+    throw /bucket not found/i.test(error.message)
+      ? new Error("Picture storage isn't set up on this account yet, so the photo can't be saved.")
+      : error;
+  }
 
   return updateProfile({ avatar_url: path });
 }

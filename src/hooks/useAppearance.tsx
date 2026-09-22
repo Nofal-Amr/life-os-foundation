@@ -46,6 +46,8 @@ type AppearanceValue = {
   setAccent: (accent: Accent) => void;
   /** The colour each phone-based choice resolves to now, for the swatches. */
   phoneAccents: { wallpaper: string | null; system: string | null };
+  /** Running in the Android app, where phone colours exist at all. */
+  onPhone: boolean;
 };
 
 const AppearanceContext = createContext<AppearanceValue | null>(null);
@@ -155,6 +157,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       textSize,
       accent,
       phoneAccents,
+      onPhone: phone != null,
       setTextSize: (next) => {
         setSize(next);
         write(SIZE_KEY, next === "default" ? null : next);
@@ -164,7 +167,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
         write(ACCENT_KEY, next === "default" ? null : next);
       },
     }),
-    [textSize, accent, phoneAccents],
+    [textSize, accent, phoneAccents, phone],
   );
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;

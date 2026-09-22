@@ -36,7 +36,8 @@ export function toHsl({ r, g, b }: Rgb): { h: number; s: number; l: number } {
 
 /**
  * The accent to use, as a CSS colour, or null when the wallpaper has no
- * colour worth using (a grey or black picture).
+ * colour at all (a grey or black picture). A muted picture keeps its hue and
+ * is lifted to a saturation that reads as an accent.
  *
  * @param list "#rrggbb,#rrggbb,..." from the Android bridge
  * @param theme which theme it has to read on
@@ -50,7 +51,7 @@ export function accentFromWallpaper(list: string, theme: "light" | "dark"): stri
   if (!colors.length) return null;
   // The most colourful one; a near-grey wallpaper gives nothing usable.
   const best = colors.reduce((a, b) => (b.s > a.s ? b : a));
-  if (best.s < 0.18) return null;
+  if (best.s < 0.06) return null;
   const saturation = Math.min(0.9, Math.max(0.45, best.s));
   const lightness = theme === "dark" ? 0.72 : 0.48;
   return `hsl(${Math.round(best.h)} ${Math.round(saturation * 100)}% ${Math.round(lightness * 100)}%)`;

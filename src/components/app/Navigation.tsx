@@ -13,7 +13,6 @@ import {
   Wallet,
 } from "lucide-react";
 import { useState } from "react";
-import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useSignOut } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -137,7 +136,6 @@ export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const signOut = useSignOut();
   const { theme, toggleTheme } = useTheme();
-  const { displayName } = useDisplayName();
   // "More" is active on pages that only the side menu lists (tools, settings).
   const onMoreRoute =
     pathname.startsWith("/settings") || tools.some((item) => pathname.startsWith(item.to));
@@ -197,17 +195,6 @@ export function BottomNav() {
           className="max-h-[85vh] overflow-y-auto rounded-t-3xl px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5"
         >
           <SheetTitle className="sr-only">More</SheetTitle>
-          <Link
-            to="/settings"
-            onClick={() => setMoreOpen(false)}
-            className="mb-3 mr-10 flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-accent"
-          >
-            <UserAvatar size="sm" />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-medium">{displayName}</span>
-              <span className="block truncate text-xs text-muted-foreground">Settings</span>
-            </span>
-          </Link>
           {tools.length ? <ToolLinks onNavigate={() => setMoreOpen(false)} /> : null}
           <div className="mt-4 flex flex-col gap-0.5 border-t border-border pt-4">
             <button type="button" onClick={toggleTheme} className={itemClass(false)}>

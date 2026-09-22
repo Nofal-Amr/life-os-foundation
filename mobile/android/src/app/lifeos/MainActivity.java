@@ -327,8 +327,9 @@ public class MainActivity extends Activity {
             StringBuilder system = new StringBuilder();
             try {
                 if (Build.VERSION.SDK_INT >= 27) {
-                    WallpaperColors colors = WallpaperManager.getInstance(MainActivity.this)
-                        .getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+                    WallpaperManager manager = WallpaperManager.getInstance(MainActivity.this);
+                    WallpaperColors colors = manager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
+                    if (colors == null) colors = manager.getWallpaperColors(WallpaperManager.FLAG_LOCK);
                     if (colors != null) {
                         append(wallpaper, colors.getPrimaryColor());
                         append(wallpaper, colors.getSecondaryColor());

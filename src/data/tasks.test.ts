@@ -6,6 +6,7 @@ import {
   estimateLabel,
   estimateToMinutes,
   notStartedYet,
+  splitTaskLines,
   type Task,
 } from "./tasks";
 
@@ -47,5 +48,33 @@ describe("task dates", () => {
     expect(notStartedYet(task, "2026-05-01")).toBe(true);
     expect(notStartedYet(task, "2026-05-02")).toBe(false);
     expect(notStartedYet({ start_date: null } as Task, "2026-05-01")).toBe(false);
+  });
+});
+
+describe("splitTaskLines", () => {
+  it("makes one task per line", () => {
+    expect(splitTaskLines("Call mum\nBuy milk\n\nPay the bill")).toEqual([
+      "Call mum",
+      "Buy milk",
+      "Pay the bill",
+    ]);
+  });
+
+  it("drops bullets and numbering from a pasted list", () => {
+    expect(splitTaskLines("- Call mum\n2. Buy milk\n• Pay the bill")).toEqual([
+      "Call mum",
+      "Buy milk",
+      "Pay the bill",
+    ]);
+  });
+
+  it("keeps a dash that is part of the task", () => {
+    expect(splitTaskLines("Email Sam - about the flat")).toEqual(["Email Sam - about the flat"]);
+  });
+
+  it("is empty for nothing typed and stops at the limit", () => {
+    expect(splitTaskLines("   \n\n")).toEqual([]);
+    const many = Array.from({ length: 60 }, (_, i) => `Task ${i}`).join("\n");
+    expect(splitTaskLines(many).length).toBe(50);
   });
 });

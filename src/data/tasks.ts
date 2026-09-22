@@ -227,3 +227,15 @@ export async function deleteTask(id: string) {
   const { error } = await supabase.from("tasks").delete().eq("id", id);
   if (error) throw error;
 }
+
+/**
+ * Several tasks typed or pasted at once: one per line. Bullets and numbering
+ * from a copied list are dropped, so a pasted list arrives as plain titles.
+ */
+export function splitTaskLines(text: string, max = 50): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*(?:[-*•–—]|\d+[.)])\s+/, "").trim())
+    .filter((line) => line.length > 0)
+    .slice(0, max);
+}

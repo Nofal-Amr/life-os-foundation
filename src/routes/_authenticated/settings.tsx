@@ -102,7 +102,7 @@ function SettingsPage() {
   const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
   const { preference, setPreference, theme } = useTheme();
-  const { textSize, setTextSize, accent, setAccent, phoneAccents } = useAppearance();
+  const { textSize, setTextSize, accent, setAccent, phoneAccents, onPhone } = useAppearance();
   const { prefs, weightUnit, weekStartsOn, skin } = usePreferences();
   const { enabled: enabledModuleKeys, toggleModule, isSaving } = useModules();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -907,17 +907,23 @@ function SettingsPage() {
               <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Accent colour">
                 {ACCENTS.filter(
                   (item) =>
-                    (item.value !== "wallpaper" || phoneAccents.wallpaper) &&
-                    (item.value !== "system" || phoneAccents.system),
+                    (item.value !== "wallpaper" && item.value !== "system") ||
+                    onPhone ||
+                    phoneAccents[item.value],
                 ).map(
-                  (item) => (
+                  (item) => {
+                    const fromPhone = item.value === "wallpaper" || item.value === "system";
+                    const missing = fromPhone && !phoneAccents[item.value as "wallpaper" | "system"];
+                    return (
                     <button
                       key={item.value}
                       type="button"
                       role="radio"
                       aria-checked={accent === item.value}
+                      disabled={missing}
+                      title={missing ? "This phone doesn't report a colour for it." : undefined}
                       onClick={() => setAccent(item.value)}
-                      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm transition-colors ${accent === item.value ? "border-primary text-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm transition-colors ${missing ? "cursor-not-allowed border-border text-muted-foreground/60" : accent === item.value ? "border-primary text-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
                     >
                       <span
                         aria-hidden="true"
@@ -934,14 +940,18 @@ function SettingsPage() {
                         }}
                       />
                       {item.label}
+                      {missing ? " · none" : null}
                     </button>
-                  ),
+                    );
+                  },
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {phoneAccents.wallpaper || phoneAccents.system
-                  ? "From wallpaper takes the colour from your picture; System palette follows Wallpaper and style."
-                  : "Open the Android app to use your wallpaper or system colours."}
+                {!onPhone && !phoneAccents.wallpaper && !phoneAccents.system
+                  ? "Open the Android app to use your wallpaper or system colours."
+                  : phoneAccents.wallpaper
+                    ? "From wallpaper takes the colour from your picture; System palette follows Wallpaper and style."
+                    : "Your wallpaper doesn't hand out colours on this phone — a live wallpaper often doesn't. System palette follows Wallpaper and style instead."}
               </p>
             </div>
 

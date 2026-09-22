@@ -90,7 +90,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="min-w-0 overflow-x-clip px-4 pb-28 pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
+      <main className="min-w-0 overflow-x-clip px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom))+11.5rem)] pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
         <div className="mx-auto w-full min-w-0 max-w-6xl">
           <MigrationNotice />
           <TimerBar />

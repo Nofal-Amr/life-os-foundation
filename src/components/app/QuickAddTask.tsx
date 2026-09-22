@@ -11,11 +11,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createTask, taskKeys } from "@/data/tasks";
+import { Textarea } from "@/components/ui/textarea";
+import { createTask, splitTaskLines, taskKeys } from "@/data/tasks";
 
-/** One-step task capture: a title is the only thing required. */
+/**
+ * One-step task capture: a title is the only thing required, and a list can go
+ * in at once — one task per line, so ten things don't need ten trips.
+ */
 export function QuickAddTaskDialog({
   open,
   onOpenChange,
@@ -24,25 +27,30 @@ export function QuickAddTaskDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const queryClient = useQueryClient();
-  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const titles = splitTaskLines(text);
 
   const add = useMutation({
-    mutationFn: (value: string) =>
-      createTask({
-        title: value,
-        description: null,
-        status: "inbox",
-        priority: "medium",
-        due_date: null,
-        project_id: null,
-        capability_id: null,
-        goal_id: null,
-      }),
-    onSuccess: () => {
+    mutationFn: async (values: string[]) => {
+      for (const value of values) {
+        await createTask({
+          title: value,
+          description: null,
+          status: "inbox",
+          priority: "medium",
+          due_date: null,
+          project_id: null,
+          capability_id: null,
+          goal_id: null,
+        });
+      }
+      return values.length;
+    },
+    onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all });
-      setTitle("");
+      setText("");
       onOpenChange(false);
-      toast.success("Task added.");
+      toast.success(count === 1 ? "Task added." : `${count} tasks added.`);
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Something went wrong."),
   });
@@ -52,28 +60,47 @@ export function QuickAddTaskDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Quick add task</DialogTitle>
-          <DialogDescription>Just a title. You can fill in the rest later.</DialogDescription>
+          <DialogDescription>
+            Just a title. Put each task on its own line to add several at once.
+          </DialogDescription>
         </DialogHeader>
         <form
           className="space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
-            if (title.trim()) add.mutate(title.trim());
+            if (titles.length) add.mutate(titles);
           }}
         >
           <div className="space-y-2">
             <Label htmlFor="quick-task-title">What needs doing?</Label>
-            <Input
+            <Textarea
               id="quick-task-title"
               autoFocus
-              className="h-12 text-base"
-              value={title}
-              placeholder="e.g. Book the dentist"
-              onChange={(event) => setTitle(event.target.value)}
+              rows={3}
+              className="min-h-24 text-base"
+              value={text}
+              placeholder={"e.g. Book the dentist\nPay the electricity bill"}
+              onChange={(event) => setText(event.target.value)}
+              onKeyDown={(event) => {
+                // Enter adds; Shift+Enter starts the next task on a new line.
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  if (titles.length) add.mutate(titles);
+                }
+              }}
             />
+            {titles.length > 1 ? (
+              <p className="text-xs text-muted-foreground">
+                {titles.length} tasks, one per line. They go to your inbox.
+              </p>
+            ) : null}
           </div>
-          <Button type="submit" className="h-12 w-full" disabled={!title.trim() || add.isPending}>
-            {add.isPending ? "Adding…" : "Add task"}
+          <Button type="submit" className="h-12 w-full" disabled={!titles.length || add.isPending}>
+            {add.isPending
+              ? "Adding…"
+              : titles.length > 1
+                ? `Add ${titles.length} tasks`
+                : "Add task"}
           </Button>
         </form>
       </DialogContent>
