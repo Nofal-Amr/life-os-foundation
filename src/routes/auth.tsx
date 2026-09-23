@@ -1,5 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  ANDROID_CALLBACK,
+  GOOGLE_CLIENT_ID,
+  HANDOFF_PARAM,
+  WEB_ORIGIN,
+  handoffUrl,
+  loadGoogleIdentity,
+  makeNonce,
+} from "@/lib/googleIdentity";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -25,7 +35,6 @@ type Mode = "signin" | "signup" | "reset";
 
 /** Set by mobile/android MainActivity on its WebView user agent. */
 const ANDROID_APP_UA = "LifeOSAndroid";
-const ANDROID_CALLBACK = "lifeos://auth-callback";
 
 /** Asks Supabase whether a provider is enabled, so users never land on a raw error page. */
 async function providerEnabled(provider: "google"): Promise<boolean> {
@@ -52,6 +61,22 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
+  // Opened from the Android app: sign in here, then give the session back to it.
+  const [handoff] = useState(
+    () => new URLSearchParams(window.location.search).get(HANDOFF_PARAM) === "android",
+  );
+  const [handedOff, setHandedOff] = useState<string | null>(null);
+  const inApp = typeof navigator !== "undefined" && navigator.userAgent.includes(ANDROID_APP_UA);
+  const [gisFailed, setGisFailed] = useState(false);
+  const useGis = !!GOOGLE_CLIENT_ID && !inApp && !gisFailed;
+
+  /** Sends the session to the app and forgets it here, so only the app refreshes it. */
+  async function returnToApp(session: Session) {
+    const url = handoffUrl(session);
+    await supabase.auth.signOut({ scope: "local" });
+    setHandedOff(url);
+    window.location.href = url;
+  }
 
   useEffect(() => {
     // A Google sign-in returns here with tokens (#access_token=…), a code
@@ -69,6 +94,15 @@ function AuthPage() {
     const urlError = params.get("error_description") ?? params.get("error");
     if (urlError) toast.error(`Google sign-in didn't finish: ${urlError.replace(/\+/g, " ")}`);
 
+    if (handoff) {
+      // A session already in this browser stays here; the app gets a fresh one.
+      void supabase.auth.signOut({ scope: "local" });
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_IN" && session) void returnToApp(session);
+      });
+      return () => data.subscription.unsubscribe();
+    }
+
     // getSession works offline; it also waits for Supabase to read the callback.
     supabase.auth.getSession().then(({ data, error }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
@@ -81,7 +115,7 @@ function AuthPage() {
       if (event === "SIGNED_IN" && session) navigate({ to: "/dashboard", replace: true });
     });
     return () => data.subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, handoff]);
 
   async function signInWith(provider: "google") {
     setPending(true);
@@ -91,9 +125,15 @@ function AuthPage() {
         setPending(false);
         return;
       }
-      // The Android app can't show Google's sign-in inside its WebView, so the
-      // provider opens in the phone's browser and returns via lifeos://.
-      const inApp = navigator.userAgent.includes(ANDROID_APP_UA);
+      // The Android app can't show Google's sign-in inside its WebView. With
+      // Google's button set up, sign-in happens on the website in the phone's
+      // browser and comes back through lifeos://; otherwise Supabase's redirect
+      // flow opens in the browser and returns the same way.
+      if (inApp && GOOGLE_CLIENT_ID) {
+        window.location.href = `${WEB_ORIGIN}/auth?${HANDOFF_PARAM}=android`;
+        setPending(false);
+        return;
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo: inApp ? ANDROID_CALLBACK : `${window.location.origin}/auth` },
@@ -111,7 +151,8 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/dashboard", replace: true });
+        // For the app, the sign-in listener hands the session back instead.
+        if (!handoff) navigate({ to: "/dashboard", replace: true });
       } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
@@ -121,7 +162,7 @@ function AuthPage() {
         if (error) throw error;
         toast.success("Account created. Check your inbox if confirmation is required.");
         const { data } = await supabase.auth.getUser();
-        if (data.user) navigate({ to: "/dashboard", replace: true });
+        if (data.user && !handoff) navigate({ to: "/dashboard", replace: true });
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/update-password`,
@@ -151,6 +192,25 @@ function AuthPage() {
           </p>
         </div>
 
+        {handoff ? (
+          <div className="mb-4 rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+            {handedOff
+              ? "You're signed in. Life OS should open now."
+              : "Signing in for the Life OS app. You'll be taken back to it afterwards."}
+            {handedOff ? (
+              <Button
+                type="button"
+                className="mt-3 w-full"
+                onClick={() => {
+                  window.location.href = handedOff;
+                }}
+              >
+                Open Life OS
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="system-card p-6">
           <Tabs
             value={mode === "reset" ? "signin" : mode}
@@ -170,16 +230,25 @@ function AuthPage() {
 
           {mode !== "reset" && (
             <div className="mt-5 space-y-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                disabled={pending}
-                onClick={() => signInWith("google")}
-              >
-                <GoogleMark />
-                Continue with Google
-              </Button>
+              {useGis ? (
+                <GoogleIdentityButton
+                  onError={(error, unavailable) => {
+                    if (unavailable) setGisFailed(true);
+                    else toast.error(error.message);
+                  }}
+                />
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={pending}
+                  onClick={() => signInWith("google")}
+                >
+                  <GoogleMark />
+                  Continue with Google
+                </Button>
+              )}
               <div className="flex items-center gap-3 pt-2 text-xs text-muted-foreground">
                 <span className="h-px flex-1 bg-border" />
                 or with email
@@ -255,6 +324,89 @@ function AuthPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Google's own button (Google Identity Services). Each attempt gets a fresh
+ * nonce: Google signs its hash into the ID token, Supabase checks the raw
+ * value. `unavailable` means the script couldn't load, so the page falls
+ * back to the redirect flow.
+ */
+function GoogleIdentityButton({
+  onError,
+}: {
+  onError: (error: Error, unavailable?: boolean) => void;
+}) {
+  const slot = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+  const report = useRef(onError);
+  report.current = onError;
+
+  useEffect(() => {
+    let cancelled = false;
+    async function setup() {
+      const id = await loadGoogleIdentity();
+      const nonce = await makeNonce();
+      const parent = slot.current;
+      if (cancelled || !parent || !GOOGLE_CLIENT_ID) return;
+      id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        nonce: nonce.hashed,
+        use_fedcm_for_button: true,
+        callback: async ({ credential }) => {
+          if (!credential) {
+            report.current(new Error("Google didn't return a sign-in. Please try again."));
+            return;
+          }
+          const { error } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: credential,
+            nonce: nonce.raw,
+          });
+          if (error) {
+            report.current(new Error(`Google sign-in didn't finish: ${error.message}`));
+            // A nonce is good for one try; set up a fresh one.
+            if (!cancelled) void setup().catch(() => undefined);
+          }
+          // Success: onAuthStateChange on the page takes it from here.
+        },
+      });
+      parent.replaceChildren();
+      const dark = document.documentElement.classList.contains("dark");
+      id.renderButton(parent, {
+        type: "standard",
+        theme: dark ? "filled_black" : "outline",
+        size: "large",
+        shape: "pill",
+        text: "continue_with",
+        logo_alignment: "left",
+        // The page is in English; Google would otherwise follow the browser language.
+        locale: "en",
+        width: Math.min(400, Math.max(200, parent.offsetWidth || 320)),
+      });
+      setReady(true);
+    }
+    setup().catch((error: unknown) => {
+      if (!cancelled) {
+        report.current(error instanceof Error ? error : new Error(String(error)), true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="relative flex min-h-10 w-full justify-center">
+      <div ref={slot} className="flex w-full justify-center" />
+      {ready ? null : (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 animate-pulse rounded-full border border-border bg-muted/40"
+        />
+      )}
     </div>
   );
 }

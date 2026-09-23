@@ -94,6 +94,25 @@ Done on 23 Sep: multi-line task add (Enter = new line), daily log with medicatio
 
 Video direction from the competitor clip: talking head cut with top-down phone shots on a cutting mat, one-word captions, big sticker-style words, one large progress ring on Home.
 
+## Learned from the competitor app, developed further (after the reset)
+
+Take what works, keep our rule of real data only:
+
+| Their idea | Our version | Size |
+|---|---|---|
+| One big ring with a score (78) on Home | A Today ring split into segments per area (tasks, habits, prayers), each segment a real "done of planned" fraction; tap a segment to see the items. No single score. | M |
+| Habit rows of coloured dots | Last 14 days per habit: filled dot = logged, hollow = planned but not logged, nothing = not planned; count on the right is logged of planned | S-M |
+| Invite code to pair ("pods") | Share only chosen things (a shared calendar, a shopping list) with family by code; each person sees the same items, never the other person's scores | XL |
+| Big single number per card, pill actions, avatar circle | Already partly there; apply to Money (spendable) and Body (sleep) cards | S |
+
+## Widgets (after the reset)
+
+| Widget | Notes | Size |
+|---|---|---|
+| Quick add | + buttons for task, spending, meal that open the right sheet (lifeos://open/...) | S |
+| Today | next prayer, tasks due, spent today; shows what the app last synced (the app writes a small summary for the widget on each sync) | M |
+
+
 ## About the way we work (not the app)
 
 | Idea | Status | Notes |
