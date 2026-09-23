@@ -82,8 +82,8 @@ export function QuickAddTaskDialog({
               placeholder={"e.g. Book the dentist\nPay the electricity bill"}
               onChange={(event) => setText(event.target.value)}
               onKeyDown={(event) => {
-                // Enter adds; Shift+Enter starts the next task on a new line.
-                if (event.key === "Enter" && !event.shiftKey) {
+                // Enter starts the next task on a new line; Ctrl/Cmd+Enter adds them all.
+                if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
                   event.preventDefault();
                   if (titles.length) add.mutate(titles);
                 }

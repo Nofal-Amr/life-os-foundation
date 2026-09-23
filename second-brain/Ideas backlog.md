@@ -70,6 +70,30 @@ Every idea raised so far, from you, your friend and your Development Notes. Size
 | Sleep score, BMI method | new | S | from your notes |
 | Notes more like Obsidian (headings, links) | new | M | from your notes |
 
+## From the 23 Sep notes: after the weekly reset
+
+Done on 23 Sep: multi-line task add (Enter = new line), daily log with medication, meter readings, food and spending details, pick accent from a photo, Life OS favicon, any day as week start, travel icons, diary page per day, delete account.
+
+| Idea | Size | Notes |
+|---|---|---|
+| Accounts on their own Money tab | M | editing exists under Money › More › Accounts; move it to a tab |
+| Resource usage graph (per day / month) | M | readings are stored; needs a chart per resource |
+| Fuel as a resource: fill-ups with litres, price for 92/95, odometer | L | km per litre from real fill-ups, range left from your own usage (e.g. 300 km per tank) |
+| Food onboarding: cuisines and foods you eat, then suggestions per meal | M | breakfast shows ful, taameya, sandwiches first; editable later |
+| Most-used foods per meal in the log sheet | S | from your own logs, then search |
+| Reminders as their own item in + (not only tasks) | M | native notification scheduling exists for prayers and task digests |
+| Rant box that turns a paragraph into points | S | sentence split, no AI needed |
+| On-device AI to split tasks | L | or a server model; decide privacy first |
+| Receipts on spending with OCR | L | Storage bucket + OCR; note field already exists |
+| Brand-style logos with a black-and-white minimal fallback | M | licensing; lucide has plane, ticket, hotel, taxi now |
+| Friends or family: shared calendar, invite code "pods" | XL | competitor video pairs two people with a 6-letter code |
+| Modes for students, engineers | L | module presets; Classroom sync and OCR task input |
+| Google sync (Calendar, Keep) | L | Keep has no personal API |
+| Workday cost | ? | needs a definition |
+| Enterprise / accounting version, monetisation | XL | vision, not a feature |
+
+Video direction from the competitor clip: talking head cut with top-down phone shots on a cutting mat, one-word captions, big sticker-style words, one large progress ring on Home.
+
 ## About the way we work (not the app)
 
 | Idea | Status | Notes |

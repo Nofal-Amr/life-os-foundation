@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { transactionsQuery } from "@/data/finance";
+import { dayLines } from "@/data/daySummary";
+import { financeCategoriesQuery, transactionsQuery } from "@/data/finance";
+import { foodLogsQuery } from "@/data/food";
 import { habitLogsQuery } from "@/data/habits";
-import { healthLogsQuery } from "@/data/health";
+import { healthLogsQuery, medicationLogsQuery, medicationsQuery } from "@/data/health";
+import { resourceReadingsQuery, resourcesQuery } from "@/data/resources";
 import { prayerLogsQuery } from "@/data/spirit";
 import { prayerCounts } from "@/data/week";
 import { tasksQuery } from "@/data/tasks";
@@ -16,37 +19,48 @@ import { cn } from "@/lib/utils";
  * What changed today, in one card: only lines for things actually logged.
  * Nothing is scored or judged; it is a receipt of the day.
  */
-export function DaySummary({ date = todayISO(), className }: { date?: string; className?: string }) {
+export function DaySummary({
+  date = todayISO(),
+  className,
+}: {
+  date?: string;
+  className?: string;
+}) {
   const tasks = useQuery(tasksQuery());
   const transactions = useQuery(transactionsQuery());
+  const categories = useQuery(financeCategoriesQuery());
   const health = useQuery(healthLogsQuery());
   const prayers = useQuery(prayerLogsQuery());
   const habits = useQuery(habitLogsQuery());
   const entries = useQuery(timeEntriesQuery());
+  const food = useQuery(foodLogsQuery());
+  const medications = useQuery(medicationsQuery());
+  const medicationLogs = useQuery(medicationLogsQuery());
+  const resources = useQuery(resourcesQuery());
+  const readings = useQuery(resourceReadingsQuery());
   const { fmtMoney, fmtLongDate } = usePreferences();
 
-  const done = (tasks.data ?? []).filter(
-    (task) => task.status === "completed" && (task.completed_at ?? "").slice(0, 10) === date,
-  ).length;
-  const spent = (transactions.data ?? [])
-    .filter((row) => row.kind === "expense" && row.date === date)
-    .reduce((sum, row) => sum + Number(row.amount), 0);
   const log = (health.data ?? []).find((row) => row.log_date === date);
-  const sleep = log?.actual_sleep_minutes ?? (log?.sleep_hours ? log.sleep_hours * 60 : null);
-  const prayed = (prayers.data ?? []).filter(
-    (row) => row.prayer_date === date && prayerCounts(row),
-  ).length;
-  const ticked = (habits.data ?? []).filter((row) => row.log_date === date).length;
-  const minutes = minutesByDay(entries.data ?? [], [date])[0] ?? 0;
-
-  const lines = [
-    done ? `${done} ${done === 1 ? "task" : "tasks"} completed` : null,
-    spent > 0 ? `${fmtMoney(spent)} spent` : null,
-    sleep ? `${formatDuration(sleep)} sleep` : null,
-    prayed ? `${prayed} of 5 prayers logged` : null,
-    ticked ? `${ticked} ${ticked === 1 ? "habit" : "habits"} ticked` : null,
-    minutes ? `${formatDuration(minutes)} tracked` : null,
-  ].filter((line): line is string => line != null);
+  const lines = dayLines(
+    {
+      date,
+      tasks: tasks.data ?? [],
+      transactions: transactions.data ?? [],
+      categories: categories.data ?? [],
+      foodLogs: food.data ?? [],
+      medications: medications.data ?? [],
+      medicationLogs: medicationLogs.data ?? [],
+      resources: resources.data ?? [],
+      readings: readings.data ?? [],
+      sleepMinutes: log?.actual_sleep_minutes ?? (log?.sleep_hours ? log.sleep_hours * 60 : null),
+      prayersLogged: (prayers.data ?? []).filter(
+        (row) => row.prayer_date === date && prayerCounts(row),
+      ).length,
+      habitsTicked: (habits.data ?? []).filter((row) => row.log_date === date).length,
+      minutesTracked: minutesByDay(entries.data ?? [], [date])[0] ?? 0,
+    },
+    { money: fmtMoney, duration: formatDuration },
+  );
 
   return (
     <section className={cn("stat-card p-5", className)} aria-label="What changed today">
@@ -54,11 +68,19 @@ export function DaySummary({ date = todayISO(), className }: { date?: string; cl
         {date === todayISO() ? "Today so far" : fmtLongDate(new Date(`${date}T12:00:00`))}
       </h2>
       {lines.length ? (
-        <ul className="mt-3 space-y-1.5">
+        <ul className="mt-3 space-y-2">
           {lines.map((line) => (
-            <li key={line} className="flex items-baseline gap-2 text-sm">
-              <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-primary" />
-              {line}
+            <li key={line.key} className="flex items-baseline gap-2 text-sm">
+              <span
+                aria-hidden="true"
+                className="size-1.5 shrink-0 translate-y-[-1px] rounded-full bg-primary"
+              />
+              <span className="min-w-0">
+                {line.text}
+                {line.detail ? (
+                  <span className="text-muted-foreground"> · {line.detail}</span>
+                ) : null}
+              </span>
             </li>
           ))}
         </ul>

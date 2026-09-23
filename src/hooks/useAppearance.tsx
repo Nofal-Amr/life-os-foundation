@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { accentFromWallpaper } from "@/lib/accent";
+import { accentFromWallpaper, colorsFromPixels } from "@/lib/accent";
 
 /**
  * How the app looks, beyond light and dark: text size and accent colour.
@@ -33,6 +33,7 @@ export type Accent = (typeof ACCENTS)[number]["value"];
 const SIZE_KEY = "life-os-text-size";
 const ACCENT_KEY = "life-os-accent";
 const PHONE_KEY = "life-os-phone-colors";
+const PHOTO_KEY = "life-os-photo-colors";
 
 /** Applied before React hydrates, so text size and a fixed accent never flash. */
 export const appearanceBootScript = `(function(){try{var d=document.documentElement;var s=localStorage.getItem("${SIZE_KEY}");var m={small:0.9375,"default":1,large:1.125,larger:1.25};if(s&&m[s])d.style.fontSize=(m[s]*100)+"%";var a=localStorage.getItem("${ACCENT_KEY}");if(a&&a!=="wallpaper"&&a!=="system")d.dataset.accent=a}catch(e){}})()`;
@@ -48,6 +49,10 @@ type AppearanceValue = {
   phoneAccents: { wallpaper: string | null; system: string | null };
   /** Running in the Android app, where phone colours exist at all. */
   onPhone: boolean;
+  /** The "From wallpaper" colour comes from a picture the user chose. */
+  fromPhoto: boolean;
+  /** Take the accent from a picture (e.g. the wallpaper saved as a photo). */
+  takeColorsFromPhoto: (file: File) => Promise<boolean>;
 };
 
 const AppearanceContext = createContext<AppearanceValue | null>(null);
@@ -85,6 +90,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [textSize, setSize] = useState<TextSize>("default");
   const [accent, setAccentState] = useState<Accent>("default");
   const [phone, setPhone] = useState<PhoneColors | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -93,6 +99,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     const storedAccent = read(ACCENT_KEY);
     if (ACCENTS.some((item) => item.value === storedAccent)) setAccentState(storedAccent as Accent);
 
+    setPhoto(read(PHOTO_KEY));
     const fromPhone = nativeColors();
     if (fromPhone) {
       setPhone(fromPhone);
@@ -121,10 +128,14 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
 
   const phoneAccents = useMemo(
     () => ({
-      wallpaper: phone?.wallpaper ? accentFromWallpaper(phone.wallpaper, theme) : null,
+      wallpaper: phone?.wallpaper
+        ? accentFromWallpaper(phone.wallpaper, theme)
+        : photo
+          ? accentFromWallpaper(photo, theme)
+          : null,
       system: phone?.system ? accentFromWallpaper(phone.system, theme) : null,
     }),
-    [phone, theme],
+    [phone, photo, theme],
   );
 
   useEffect(() => {
@@ -139,7 +150,11 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     for (const name of names) root.style.removeProperty(name);
 
     const fromPhone =
-      accent === "wallpaper" ? phoneAccents.wallpaper : accent === "system" ? phoneAccents.system : null;
+      accent === "wallpaper"
+        ? phoneAccents.wallpaper
+        : accent === "system"
+          ? phoneAccents.system
+          : null;
     if (fromPhone) {
       for (const name of names) root.style.setProperty(name, fromPhone);
       delete root.dataset["accent"];
@@ -158,6 +173,16 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       accent,
       phoneAccents,
       onPhone: phone != null,
+      fromPhoto: !phone?.wallpaper && !!photo,
+      takeColorsFromPhoto: async (file) => {
+        const colors = await colorsOfImage(file);
+        if (!colors) return false;
+        setPhoto(colors);
+        write(PHOTO_KEY, colors);
+        setAccentState("wallpaper");
+        write(ACCENT_KEY, "wallpaper");
+        return true;
+      },
       setTextSize: (next) => {
         setSize(next);
         write(SIZE_KEY, next === "default" ? null : next);
@@ -167,7 +192,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
         write(ACCENT_KEY, next === "default" ? null : next);
       },
     }),
-    [textSize, accent, phoneAccents, phone],
+    [textSize, accent, phoneAccents, phone, photo],
   );
 
   return <AppearanceContext.Provider value={value}>{children}</AppearanceContext.Provider>;
@@ -177,4 +202,25 @@ export function useAppearance(): AppearanceValue {
   const value = useContext(AppearanceContext);
   if (!value) throw new Error("useAppearance must be used inside AppearanceProvider");
   return value;
+}
+
+/** The main colours of an image file, read from a small copy of it. */
+async function colorsOfImage(file: File): Promise<string | null> {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const context = canvas.getContext("2d");
+    if (!context) return null;
+    context.drawImage(image, 0, 0, 64, 64);
+    return colorsFromPixels(context.getImageData(0, 0, 64, 64).data) || null;
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }

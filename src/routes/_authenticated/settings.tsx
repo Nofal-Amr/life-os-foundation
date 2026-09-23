@@ -14,12 +14,16 @@ import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DeleteAccountCard } from "@/components/app/DeleteAccountCard";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -49,7 +53,7 @@ import {
   spiritKeys,
 } from "@/data/spirit";
 import { MODULES } from "@/data/modules";
-import { WEEK_START_OPTIONS } from "@/data/week";
+import { OTHER_WEEK_START_OPTIONS, WEEK_START_OPTIONS } from "@/data/week";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { ACCENTS, TEXT_SIZES, useAppearance } from "@/hooks/useAppearance";
@@ -102,7 +106,17 @@ function SettingsPage() {
   const payday = useQuery(paydayConfigQuery());
   const { email } = useDisplayName();
   const { preference, setPreference, theme } = useTheme();
-  const { textSize, setTextSize, accent, setAccent, phoneAccents, onPhone } = useAppearance();
+  const {
+    textSize,
+    setTextSize,
+    accent,
+    setAccent,
+    phoneAccents,
+    onPhone,
+    fromPhoto,
+    takeColorsFromPhoto,
+  } = useAppearance();
+  const photoInput = useRef<HTMLInputElement>(null);
   const { prefs, weightUnit, weekStartsOn, skin } = usePreferences();
   const { enabled: enabledModuleKeys, toggleModule, isSaving } = useModules();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -469,6 +483,15 @@ function SettingsPage() {
                       {item.label}
                     </SelectItem>
                   ))}
+                  <SelectSeparator />
+                  <SelectGroup>
+                    <SelectLabel>Other days</SelectLabel>
+                    {OTHER_WEEK_START_OPTIONS.map((item) => (
+                      <SelectItem key={item.value} value={String(item.value)}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
@@ -906,23 +929,21 @@ function SettingsPage() {
               <p className="text-sm font-medium">Accent colour</p>
               <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Accent colour">
                 {ACCENTS.filter(
-                  (item) =>
-                    (item.value !== "wallpaper" && item.value !== "system") ||
-                    onPhone ||
-                    phoneAccents[item.value],
-                ).map(
-                  (item) => {
-                    const fromPhone = item.value === "wallpaper" || item.value === "system";
-                    const missing = fromPhone && !phoneAccents[item.value as "wallpaper" | "system"];
-                    return (
+                  (item) => item.value !== "system" || onPhone || phoneAccents.system,
+                ).map((item) => {
+                  const missing = item.value === "system" && !phoneAccents.system;
+                  // No wallpaper colour yet: the chip asks for a picture instead.
+                  const needsPhoto = item.value === "wallpaper" && !phoneAccents.wallpaper;
+                  return (
                     <button
                       key={item.value}
                       type="button"
                       role="radio"
                       aria-checked={accent === item.value}
                       disabled={missing}
-                      title={missing ? "This phone doesn't report a colour for it." : undefined}
-                      onClick={() => setAccent(item.value)}
+                      onClick={() =>
+                        needsPhoto ? photoInput.current?.click() : setAccent(item.value)
+                      }
                       className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm transition-colors ${missing ? "cursor-not-allowed border-border text-muted-foreground/60" : accent === item.value ? "border-primary text-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
                     >
                       <span
@@ -931,27 +952,60 @@ function SettingsPage() {
                         style={{
                           background:
                             item.value === "wallpaper"
-                              ? (phoneAccents.wallpaper ?? "var(--primary)")
+                              ? (phoneAccents.wallpaper ??
+                                "conic-gradient(oklch(0.7 0.15 250), oklch(0.75 0.15 150), oklch(0.8 0.14 75), oklch(0.7 0.17 10), oklch(0.7 0.15 250))")
                               : item.value === "system"
                                 ? (phoneAccents.system ?? "var(--primary)")
                                 : item.value === "default"
-                                ? "var(--primary)"
-                                : ((theme === "dark" ? item.dark : item.light) ?? "var(--primary)"),
+                                  ? "var(--primary)"
+                                  : ((theme === "dark" ? item.dark : item.light) ??
+                                    "var(--primary)"),
                         }}
                       />
-                      {item.label}
-                      {missing ? " · none" : null}
+                      {item.value === "wallpaper"
+                        ? fromPhoto
+                          ? "From photo"
+                          : needsPhoto
+                            ? "From a photo…"
+                            : item.label
+                        : item.label}
                     </button>
-                    );
-                  },
-                )}
+                  );
+                })}
               </div>
+              <input
+                ref={photoInput}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                tabIndex={-1}
+                aria-hidden="true"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (!file) return;
+                  const ok = await takeColorsFromPhoto(file);
+                  if (ok) toast.success("Accent taken from your photo.");
+                  else toast.error("That picture has no clear colour. Try a more colourful one.");
+                }}
+              />
               <p className="text-xs text-muted-foreground">
-                {!onPhone && !phoneAccents.wallpaper && !phoneAccents.system
-                  ? "Open the Android app to use your wallpaper or system colours."
-                  : phoneAccents.wallpaper
-                    ? "From wallpaper takes the colour from your picture; System palette follows Wallpaper and style."
-                    : "Your wallpaper doesn't hand out colours on this phone — a live wallpaper often doesn't. System palette follows Wallpaper and style instead."}
+                {phoneAccents.wallpaper && !fromPhoto
+                  ? "From wallpaper takes the colour from your home-screen picture. System palette follows Wallpaper and style."
+                  : fromPhoto
+                    ? "The colour comes from the photo you picked."
+                    : onPhone
+                      ? "This phone doesn't share its wallpaper colours with apps. Pick your wallpaper image from the gallery instead, or use System palette."
+                      : "Pick a photo to take its colour. In the Android app, System palette follows your phone."}{" "}
+                {phoneAccents.wallpaper ? (
+                  <button
+                    type="button"
+                    className="font-medium text-foreground underline underline-offset-2"
+                    onClick={() => photoInput.current?.click()}
+                  >
+                    {fromPhoto ? "Pick another photo" : "Use a photo instead"}
+                  </button>
+                ) : null}
               </p>
             </div>
 
@@ -991,6 +1045,8 @@ function SettingsPage() {
         <ReminderSettingsCard />
 
         <UsageInsights />
+
+        <DeleteAccountCard />
       </div>
     </>
   );

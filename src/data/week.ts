@@ -18,16 +18,26 @@ import { PRAYER_NAMES } from "./spirit";
 import type { Task } from "./tasks";
 
 export type Fraction = { done: number; total: number };
-export type WeekStartsOn = 0 | 1 | 6;
+export type WeekStartsOn = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+/** The usual choices first; the rest are for shift work and other weeks. */
 export const WEEK_START_OPTIONS: { value: WeekStartsOn; label: string }[] = [
   { value: 6, label: "Saturday" },
   { value: 0, label: "Sunday" },
   { value: 1, label: "Monday" },
 ];
 
+export const OTHER_WEEK_START_OPTIONS: { value: WeekStartsOn; label: string }[] = [
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+];
+
 export function toWeekStartsOn(value: number | null | undefined): WeekStartsOn {
-  return value === 0 || value === 6 ? value : 1;
+  return value != null && Number.isInteger(value) && value >= 0 && value <= 6
+    ? (value as WeekStartsOn)
+    : 1;
 }
 
 export type WeekDay = {

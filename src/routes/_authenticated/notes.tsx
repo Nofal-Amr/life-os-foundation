@@ -1,10 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   Archive,
   ArchiveRestore,
   ArrowLeft,
+  BookOpen,
   Check,
   ListChecks,
   Palette,
@@ -40,6 +41,9 @@ import {
 } from "@/data/notes";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+
+/** Diary pages are ordinary notes with this label, so they show up under it. */
+const DIARY_TAG = "Diary";
 
 export const Route = createFileRoute("/_authenticated/notes")({
   head: () => ({
@@ -136,6 +140,35 @@ function NotesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** Today's diary page: opens it if it exists, otherwise starts it. */
+  function openDiary() {
+    const title = format(new Date(), "EEEE d MMMM yyyy");
+    const existing = (notes.data ?? []).find(
+      (note) => note.title === title && (note.tags ?? []).includes(DIARY_TAG),
+    );
+    if (existing) {
+      setEditing({ note: existing, isNew: false });
+      return;
+    }
+    const now = new Date().toISOString();
+    setEditing({
+      isNew: true,
+      note: {
+        id: newId(),
+        title,
+        body: "",
+        tags: [DIARY_TAG],
+        pinned: false,
+        archived: false,
+        color: null,
+        checklist: null,
+        created_at: now,
+        updated_at: now,
+        user_id: "",
+      },
+    });
+  }
+
   function startNote(checklist = false) {
     const now = new Date().toISOString();
     setEditing({
@@ -223,6 +256,16 @@ function NotesPage() {
           >
             Take a note…
           </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Today's diary"
+            title="Today's diary"
+            onClick={openDiary}
+          >
+            <BookOpen className="size-5" />
+          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -336,9 +379,7 @@ function NoteGrid({
   return (
     <section>
       {title ? (
-        <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
-          {title}
-        </p>
+        <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">{title}</p>
       ) : null}
       {/* Masonry: CSS columns keep each card its natural height. */}
       <div className="columns-2 gap-3 sm:columns-3 lg:columns-4">
@@ -574,7 +615,10 @@ function NoteEditor({
           </div>
         </div>
 
-        <div data-note-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6">
+        <div
+          data-note-scroll
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6"
+        >
           <AutoTextarea
             value={note.title}
             onChange={(title) => change({ title })}

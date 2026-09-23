@@ -53,7 +53,11 @@ export async function updateProfile(input: {
     ) as Profile;
   }
   return unwrap(
-    await supabase.from("profiles").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("profiles")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as Profile;
 }
 
@@ -91,4 +95,24 @@ export async function removeAvatar(): Promise<Profile> {
   const user_id = await currentUserId();
   await clearAvatarFiles(user_id);
   return updateProfile({ avatar_url: null });
+}
+
+/**
+ * Deletes the signed-in account and everything stored for it: profile
+ * pictures first (Storage isn't reachable from SQL), then every row and the
+ * login itself in one database transaction. Irreversible.
+ */
+export async function deleteMyAccount(): Promise<void> {
+  const user_id = await currentUserId();
+  try {
+    await clearAvatarFiles(user_id);
+  } catch {
+    // No bucket or no pictures: nothing to remove.
+  }
+  const { error } = await supabase.rpc("delete_my_account");
+  if (error) {
+    throw /could not find the function|PGRST202/i.test(`${error.message} ${error.code}`)
+      ? new Error("Account deletion isn't set up on the server yet, so nothing was deleted.")
+      : error;
+  }
 }

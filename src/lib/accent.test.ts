@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { accentFromWallpaper, parseHex, toHsl } from "./accent";
+import { accentFromWallpaper, colorsFromPixels, parseHex, toHsl } from "./accent";
 
 describe("toHsl", () => {
   it("reads hue and saturation", () => {
@@ -26,5 +26,22 @@ describe("accentFromWallpaper", () => {
   it("is null for a wallpaper with no real colour", () => {
     expect(accentFromWallpaper("#808080,#7a7a7a", "dark")).toBeNull();
     expect(accentFromWallpaper("", "dark")).toBeNull();
+  });
+});
+
+describe("colorsFromPixels", () => {
+  const pixels = (...colors: [number, number, number, number][]) => colors.flatMap((c) => c);
+
+  it("finds the colourful part of a mostly grey picture", () => {
+    const grey: [number, number, number, number] = [128, 128, 128, 255];
+    const blue: [number, number, number, number] = [30, 111, 217, 255];
+    const data = pixels(...Array(20).fill(grey), blue, blue);
+    expect(colorsFromPixels(data)).toBe("#1e6fd9");
+  });
+
+  it("is empty for a picture with no colour", () => {
+    expect(colorsFromPixels(pixels([0, 0, 0, 255], [255, 255, 255, 255], [90, 90, 90, 255]))).toBe(
+      "",
+    );
   });
 });
