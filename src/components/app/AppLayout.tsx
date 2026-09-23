@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOut, Moon, Settings, Sun } from "lucide-react";
+import { LogOut, Moon, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { MigrationNotice } from "./MigrationNotice";
 import { TimerBar, useTimer } from "./Timer";
@@ -82,11 +82,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
           </Button>
-          <Button asChild variant="ghost" size="icon" aria-label="Settings">
-            <Link to="/settings">
-              <Settings className="size-5" />
-            </Link>
-          </Button>
+          {/* Your picture opens Profile & Settings, as in most phone apps. */}
+          <Link
+            to="/settings"
+            aria-label="Profile and settings"
+            className="ml-1 flex size-10 items-center justify-center rounded-full transition-transform duration-150 ease-out active:scale-95"
+          >
+            <UserAvatar size="sm" />
+          </Link>
         </div>
       </header>
 
