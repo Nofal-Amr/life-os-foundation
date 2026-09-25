@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   dateOrderProblem,
+  energyCapacity,
   estimateInUnit,
   estimateLabel,
   estimateToMinutes,
+  fitsEnergy,
   nextRepeatDate,
   notStartedYet,
   splitTaskLines,
@@ -95,5 +97,19 @@ describe("nextRepeatDate", () => {
   it("skips Friday and Saturday for weekdays", () => {
     // 24 Sep 2026 is a Thursday.
     expect(nextRepeatDate("2026-09-24", "weekdays")).toBe("2026-09-27");
+  });
+});
+
+describe("energy matching", () => {
+  it("turns a check-in into what you can take on", () => {
+    expect([1, 2, 3, 4, 5].map((value) => energyCapacity(value))).toEqual([1, 1, 2, 3, 3]);
+    expect(energyCapacity(null)).toBeNull();
+  });
+
+  it("fits tasks at or under your energy, and tasks with none set", () => {
+    expect(fitsEnergy({ energy: 3 }, 1)).toBe(false);
+    expect(fitsEnergy({ energy: 1 }, 1)).toBe(true);
+    expect(fitsEnergy({ energy: null }, 1)).toBe(true);
+    expect(fitsEnergy({ energy: 3 }, null)).toBe(true);
   });
 });

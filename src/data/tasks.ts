@@ -24,7 +24,32 @@ export type TaskInput = {
   /** "HH:mm" on the due date, if the task has a time. */
   due_time?: string | null;
   repeat?: TaskRepeat | null;
+  /** Energy the task needs: 1 low, 2 medium, 3 high. */
+  energy?: TaskEnergy | null;
 };
+
+export type TaskEnergy = 1 | 2 | 3;
+
+export const TASK_ENERGY: { value: TaskEnergy; label: string; hint: string }[] = [
+  { value: 1, label: "Low", hint: "Fine on a tired day" },
+  { value: 2, label: "Medium", hint: "Needs some focus" },
+  { value: 3, label: "High", hint: "Needs you at your best" },
+];
+
+/**
+ * Your check-in energy (1 drained … 5 charged) as the task energy you can
+ * take on: drained or low → low tasks, steady → up to medium, strong or
+ * charged → anything.
+ */
+export function energyCapacity(checkIn: number | null | undefined): TaskEnergy | null {
+  if (!checkIn) return null;
+  return checkIn <= 2 ? 1 : checkIn === 3 ? 2 : 3;
+}
+
+/** Whether a task fits the energy you have; tasks with no energy set always fit. */
+export function fitsEnergy(task: { energy?: number | null }, capacity: TaskEnergy | null): boolean {
+  return capacity == null || task.energy == null || task.energy <= capacity;
+}
 
 export type TaskRepeat = "daily" | "weekdays" | "weekly" | "monthly";
 

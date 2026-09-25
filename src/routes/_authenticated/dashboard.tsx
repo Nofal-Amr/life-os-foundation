@@ -23,6 +23,7 @@ import { upcomingTimes, userRemindersQuery } from "@/data/userReminders";
 import { TodayCounts } from "@/components/app/TodayCounts";
 import { TodayFocus, type FocusRow } from "@/components/app/TodayFocus";
 import { focusGroup } from "@/data/focus";
+import { reviewByDateQuery } from "@/data/reviews";
 import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
 import { DaySummary } from "@/components/app/DaySummary";
@@ -76,7 +77,9 @@ import {
 import { prayerCounts } from "@/data/week";
 import {
   completeTask,
+  energyCapacity,
   estimateLabel,
+  fitsEnergy,
   isOpen,
   notStartedYet,
   stepsOf,
@@ -84,6 +87,7 @@ import {
   tasksQuery,
   topLevelTasks,
   type Task,
+  type TaskEnergy,
 } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -136,7 +140,11 @@ function urgencyRank(task: Task, today: string) {
  * Next actions come from open tasks. A task with open steps is represented by
  * its first open step, so the thing shown is always small enough to start.
  */
-function nextActions(tasks: Task[], today: string): NextAction[] {
+function nextActions(
+  tasks: Task[],
+  today: string,
+  capacity: TaskEnergy | null = null,
+): NextAction[] {
   const parents = topLevelTasks(tasks).filter(
     (task) => isOpen(task) && !notStartedYet(task, today),
   );
@@ -154,6 +162,10 @@ function nextActions(tasks: Task[], today: string): NextAction[] {
   return candidates.sort((a, b) => {
     const byUrgency = urgencyRank(a.parent, today) - urgencyRank(b.parent, today);
     if (byUrgency !== 0) return byUrgency;
+    // Within the same urgency, what fits today's energy comes first.
+    const byEnergy =
+      Number(!fitsEnergy(a.parent, capacity)) - Number(!fitsEnergy(b.parent, capacity));
+    if (byEnergy !== 0) return byEnergy;
     const byPriority = PRIORITY_WEIGHT[b.parent.priority] - PRIORITY_WEIGHT[a.parent.priority];
     if (byPriority !== 0) return byPriority;
     /* Unknown estimates are unknown, never treated as zero. */
@@ -444,7 +456,9 @@ function DashboardPage() {
   const error = queries.find((query) => query.error)?.error;
 
   const allTasks = tasks.data ?? [];
-  const actions = nextActions(allTasks, today);
+  const todayReview = useQuery(reviewByDateQuery(today));
+  const capacity = energyCapacity(todayReview.data?.energy);
+  const actions = nextActions(allTasks, today, capacity);
   const primary = actions[0];
   // Everything after the one next action, by when it's due (up to six).
   const projectById = new Map((projects.data ?? []).map((project) => [project.id, project]));
@@ -986,6 +1000,9 @@ function DashboardPage() {
                     {primary ? (
                       <div key={primary.item.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out">
                         <ActionBlock action={primary} large />
+                        {capacity != null && primary.parent.energy != null && fitsEnergy(primary.parent, capacity) ? (
+                          <p className="mt-3 text-xs text-muted-foreground">Picked to fit your energy right now.</p>
+                        ) : null}
                       </div>
                     ) : (
                       <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">

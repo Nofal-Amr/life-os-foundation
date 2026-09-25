@@ -52,6 +52,8 @@ import {
   type TaskInput,
   TASK_REPEATS,
   type TaskRepeat,
+  TASK_ENERGY,
+  type TaskEnergy,
 } from "@/data/tasks";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
 import { TaskTimerButton } from "@/components/app/Timer";
@@ -346,6 +348,7 @@ function TasksPage() {
       max_date: task.max_date,
       due_time: task.due_time ? task.due_time.slice(0, 5) : null,
       repeat: (task.repeat as TaskRepeat | null) ?? null,
+      energy: (task.energy as TaskEnergy | null) ?? null,
     });
     setShowNewProject(false);
     setShowNewCapability(false);
@@ -670,6 +673,29 @@ function TasksPage() {
               onChange={(event) => setForm({ ...form, due_time: event.target.value || null })}
             />
             <p className="text-xs text-muted-foreground">The Android app reminds you at this time.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Energy it needs</Label>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Energy it needs">
+              {TASK_ENERGY.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.energy === option.value}
+                  title={option.hint}
+                  onClick={() =>
+                    setForm({ ...form, energy: form.energy === option.value ? null : option.value })
+                  }
+                  className={`min-h-9 rounded-full border px-3 text-sm transition-colors ${form.energy === option.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent"}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Optional. On a low day, Today puts low-energy tasks first.
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Repeat</Label>
