@@ -1,15 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Search, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { MigrationNotice } from "./MigrationNotice";
 import { TimerBar, useTimer } from "./Timer";
 import { QuickAdd } from "./QuickAdd";
 import { useReminderSync } from "./PrayerReminders";
 import { trackScreen } from "@/lib/analytics";
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
 import { SectionTabs } from "@/components/app/SectionTabs";
+import { UniversalSearch, useSearchShortcut } from "@/components/app/UniversalSearch";
 import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useAuth, useSignOut } from "@/hooks/useAuth";
@@ -32,12 +33,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
   useReminderSync();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   useEffect(() => trackScreen(pathname), [pathname]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+  useSearchShortcut(openSearch);
 
   return (
     <div className="min-h-screen bg-background">
       <aside className="fixed inset-y-0 left-0 hidden w-60 min-w-0 flex-col justify-between overflow-y-auto border-r border-border bg-sidebar px-3 py-6 md:flex">
         <div className="space-y-6">
           <Brand />
+          <button
+            type="button"
+            onClick={openSearch}
+            className="flex h-10 w-full items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Search className="size-4" aria-hidden="true" />
+            Search
+            <kbd className="ml-auto rounded border border-border px-1.5 text-[0.6875rem]">Ctrl K</kbd>
+          </button>
           <SidebarNav />
         </div>
         <div className="space-y-2 px-1">
@@ -74,6 +87,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <SyncIndicator />
         </Link>
         <div className="flex items-center">
+          <Button variant="ghost" size="icon" aria-label="Search" onClick={openSearch}>
+            <Search className="size-5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -110,6 +126,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </main>
 
       <QuickAdd />
+      <UniversalSearch open={searchOpen} onOpenChange={setSearchOpen} />
 
       <BottomNav />
     </div>

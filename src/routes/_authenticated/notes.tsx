@@ -56,6 +56,9 @@ export const Route = createFileRoute("/_authenticated/notes")({
       { name: "description", content: "Quick notes and checklists that save as you type." },
     ],
   }),
+  // ?open=<id> opens that note (search results link here).
+  validateSearch: (search: Record<string, unknown>): { open?: string } =>
+    typeof search["open"] === "string" ? { open: search["open"] } : {},
   component: NotesPage,
 });
 
@@ -73,6 +76,14 @@ function NotesPage() {
   const [term, setTerm] = useState("");
   const [label, setLabel] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ note: Note; isNew: boolean } | null>(null);
+  const { open: openId } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    if (!openId || !notes.data) return;
+    const found = notes.data.find((note) => note.id === openId);
+    if (found) setEditing({ note: found, isNew: false });
+    void navigate({ search: {}, replace: true });
+  }, [openId, notes.data, navigate]);
 
   const all = notes.data ?? [];
   const labels = useMemo(

@@ -2,6 +2,7 @@ package app.lifeos;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -13,6 +14,9 @@ import android.provider.Settings;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.view.View;
 import android.view.Window;
 import android.util.Log;
@@ -27,8 +31,11 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -313,6 +320,56 @@ public class MainActivity extends Activity {
     private final class NativeBridge {
         private boolean trusted() {
             return APP_HOST.equals(currentHost);
+        }
+
+        /**
+         * Saves an export (Excel or CSV) the web app built into Downloads.
+         * Only the app's own pages may call it, only export file types, and
+         * at most 20 MB. Returns where it went, or "" if it couldn't.
+         */
+        @JavascriptInterface
+        public String saveFile(String name, String base64, String mime) {
+            if (!trusted() || name == null || base64 == null || mime == null) return "";
+            if (!mime.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                && !mime.equals("text/csv")) return "";
+            String safe = name.replaceAll("[^A-Za-z0-9._ -]", "_");
+            if (safe.isEmpty() || safe.length() > 100 || safe.startsWith(".")) safe = "life-os-export";
+            byte[] bytes;
+            try {
+                bytes = Base64.decode(base64, Base64.DEFAULT);
+            } catch (IllegalArgumentException e) {
+                return "";
+            }
+            if (bytes.length == 0 || bytes.length > 20 * 1024 * 1024) return "";
+            try {
+                if (Build.VERSION.SDK_INT >= 29) {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, safe);
+                    values.put(MediaStore.Downloads.MIME_TYPE, mime);
+                    values.put(MediaStore.Downloads.IS_PENDING, 1);
+                    Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                    if (uri == null) return "";
+                    try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                        if (out == null) return "";
+                        out.write(bytes);
+                    }
+                    values.clear();
+                    values.put(MediaStore.Downloads.IS_PENDING, 0);
+                    getContentResolver().update(uri, values, null, null);
+                    return "Downloads/" + safe;
+                }
+                // Android 8-9: the app's own Downloads folder needs no permission.
+                File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+                if (dir == null) return "";
+                File file = new File(dir, safe);
+                try (FileOutputStream out = new FileOutputStream(file)) {
+                    out.write(bytes);
+                }
+                return file.getAbsolutePath();
+            } catch (Exception e) {
+                Log.w("LifeOS", "saveFile failed", e);
+                return "";
+            }
         }
 
 /**

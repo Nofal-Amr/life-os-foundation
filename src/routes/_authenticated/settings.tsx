@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DeleteAccountCard } from "@/components/app/DeleteAccountCard";
+import { ExportDataCard } from "@/components/app/ExportDataCard";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -1045,6 +1046,8 @@ function SettingsPage() {
         <ReminderSettingsCard />
 
         <UsageInsights />
+
+        <ExportDataCard />
 
         <DeleteAccountCard />
       </div>

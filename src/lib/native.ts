@@ -12,6 +12,7 @@ type NativeBridge = {
   requestHealth?(): void;
   openHealthSettings?(which: string): void;
   showTimer?(title: string, startedAt: number): void;
+  saveFile?(name: string, base64: string, mime: string): string;
 };
 
 declare global {
@@ -119,4 +120,33 @@ export function openHealthSettings(which: "home" | "app"): void {
 /** Shows (or, with null, clears) the phone's ongoing "timer running" notification. */
 export function showTimerNotice(timer: { title: string; startedAt: number } | null): void {
   bridge()?.showTimer?.(timer?.title ?? "", timer?.startedAt ?? 0);
+}
+
+/**
+ * Saves a file the app made (an export). In the Android app it goes to
+ * Downloads through the shell, since a WebView can't save downloads itself;
+ * on the website it is an ordinary download. Returns where it went, or null.
+ */
+export function saveFile(name: string, bytes: Uint8Array, mime: string): string | null {
+  const native = bridge();
+  if (native?.saveFile) {
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    }
+    try {
+      return native.saveFile(name, btoa(binary), mime) || null;
+    } catch {
+      return null;
+    }
+  }
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: mime }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  return "your downloads";
 }
