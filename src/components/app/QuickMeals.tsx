@@ -51,8 +51,12 @@ export function QuickMeals({
   const all = logs.data ?? [];
   const today = all.filter((log) => log.log_date === date);
   const totals = dayTotals(today);
-  const suggestions = suggestedFoods(foods.data ?? [], all, 6);
-  const oneOffs = recentOneOffs(all, 4);
+  const suggestions = suggestedFoods(foods.data ?? [], all, 6, meal);
+  const usualAtMeal = all.some((log) => log.meal === meal && log.food_id);
+  // Typed-in foods from this meal first, then any meal.
+  const oneOffs = [...recentOneOffs(all.filter((log) => log.meal === meal), 4), ...recentOneOffs(all, 4)]
+    .filter((log, index, list) => list.findIndex((other) => other.name === log.name) === index)
+    .slice(0, 4);
   const matches = useMemo(() => {
     const q = text.trim().toLowerCase();
     if (!q) return [];
@@ -183,6 +187,11 @@ export function QuickMeals({
       </form>
 
       {/* Matches while typing, else your usual foods: one tap each. */}
+      {!matches.length && (suggestions.length || oneOffs.length) ? (
+        <p className="-mb-2 text-xs text-muted-foreground">
+          {usualAtMeal ? `Usually at ${meal}` : "Your foods"}
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-1.5">
         {(matches.length ? matches : suggestions).map((food) => (
           <button

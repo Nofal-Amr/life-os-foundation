@@ -15,6 +15,7 @@ type SectionTab = {
     | "/habits"
     | "/capabilities"
     | "/finance"
+    | "/finance/accounts"
     | "/finance/transactions"
     | "/finance/recurring"
     | "/finance/categories"
@@ -36,6 +37,7 @@ const DO_TABS: SectionTab[] = [
 
 const MONEY_TABS: SectionTab[] = [
   { to: "/finance", label: "Overview", exact: true },
+  { to: "/finance/accounts", label: "Accounts" },
   { to: "/resources", label: "Home and bills", module: "resources" },
   { to: "/finance/transactions", label: "Transactions" },
   { to: "/finance/recurring", label: "Recurring" },

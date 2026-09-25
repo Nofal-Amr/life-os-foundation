@@ -7,7 +7,9 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
+  List,
   ListChecks,
+  MessageSquareText,
   Palette,
   Pin,
   PinOff,
@@ -34,6 +36,7 @@ import {
   noteKeys,
   notesQuery,
   searchNotes,
+  toPoints,
   updateNote,
   type ChecklistItem,
   type Note,
@@ -44,6 +47,7 @@ import { cn } from "@/lib/utils";
 
 /** Diary pages are ordinary notes with this label, so they show up under it. */
 const DIARY_TAG = "Diary";
+const RANT_TAG = "Rant";
 
 export const Route = createFileRoute("/_authenticated/notes")({
   head: () => ({
@@ -139,6 +143,27 @@ function NotesPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** A blank page to vent on; "Into points" tidies it afterwards. */
+  function startRant() {
+    const now = new Date().toISOString();
+    setEditing({
+      isNew: true,
+      note: {
+        id: newId(),
+        title: "",
+        body: "",
+        tags: [RANT_TAG],
+        pinned: false,
+        archived: false,
+        color: null,
+        checklist: null,
+        created_at: now,
+        updated_at: now,
+        user_id: "",
+      },
+    });
+  }
 
   /** Today's diary page: opens it if it exists, otherwise starts it. */
   function openDiary() {
@@ -256,6 +281,16 @@ function NotesPage() {
           >
             Take a note…
           </button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Rant"
+            title="Rant: write freely, turn it into points after"
+            onClick={startRant}
+          >
+            <MessageSquareText className="size-5" />
+          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -567,6 +602,15 @@ function NoteEditor({
     }
   }
 
+  const points = items ? [] : toPoints(note.body ?? "");
+  function turnIntoPoints() {
+    const before = note.body;
+    change({ body: points.map((point) => `• ${point}`).join("\n") });
+    toast("Turned into points", {
+      action: { label: "Undo", onClick: () => change({ body: before }) },
+    });
+  }
+
   return (
     <Dialog open onOpenChange={(open) => !open && close()}>
       <DialogContent
@@ -676,6 +720,18 @@ function NoteEditor({
           >
             <ListChecks className="size-5" />
           </Button>
+          {points.length > 1 && !(note.body ?? "").trim().startsWith("•") ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              onClick={turnIntoPoints}
+            >
+              <List className="size-4" />
+              Into points
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"

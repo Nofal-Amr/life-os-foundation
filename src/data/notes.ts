@@ -114,3 +114,22 @@ export async function deleteNote(id: string) {
   const { error } = await supabase.from("notes").delete().eq("id", id);
   if (error) throw error;
 }
+
+/**
+ * A paragraph as separate points: one per sentence or line. Bullets and
+ * numbering already there are dropped, so running it twice changes nothing.
+ * Works on Arabic punctuation too (؟ ، ؛).
+ */
+export function toPoints(text: string): string[] {
+  return text
+    .replace(/\r/g, "")
+    .split(/\n+|(?<=[.!?؟…])\s+|(?<=[;؛])\s*/)
+    .map((part) =>
+      part
+        .replace(/^\s*(?:[-*•–—]|\d+[.)])\s*/, "")
+        .replace(/[.;؛]+$/, "")
+        .trim(),
+    )
+    .filter((part) => part.length > 1)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1));
+}

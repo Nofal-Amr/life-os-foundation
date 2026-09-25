@@ -6,6 +6,7 @@ import { useXp } from "@/hooks/useXp";
 import { HABIT_CATEGORIES, categoryLabel, guessHabitCategory, habitCategory } from "@/data/habitCategories";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
+import { HabitDots } from "@/components/app/HabitDots";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -211,11 +212,12 @@ function HabitsPage() {
                        <span>{habitLogs.length} {habitLogs.length === 1 ? "entry" : "entries"} logged</span>
                      </div>
                    </div>
-                    {habitLogs.length > 0 ? (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Recent: {habitLogs.slice(0, 5).map((l) => fmtDate(l.log_date)).join(" · ")}
-                      </p>
-                    ) : null}
+                    <HabitDots
+                      logs={habitLogs}
+                      today={today}
+                      color={habit.color}
+                      className="mt-3"
+                    />
                   </div>
                   <div className="flex gap-2">
                     <Button

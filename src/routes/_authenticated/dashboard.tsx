@@ -18,6 +18,7 @@ import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
+import { TodayRing, TodayRingLegend, useTodaySegments } from "@/components/app/TodayRing";
 import { DaySummary } from "@/components/app/DaySummary";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { HubCard } from "@/components/app/HubCard";
@@ -374,6 +375,7 @@ function DashboardPage() {
   const resources = useQuery(resourcesQuery());
   const resourceReadings = useQuery(resourceReadingsQuery());
 
+  const ringSegments = useTodaySegments();
   const [quickTask, setQuickTask] = useState(false);
   const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
 
@@ -879,11 +881,17 @@ function DashboardPage() {
     <div className="min-w-0">
       <div className="w-full min-w-0">
         <header className="pb-6">
-          <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
-          <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight tracking-[-0.025em] text-foreground">
-            {greeting()}
-            {firstName ? `, ${firstName}` : ""}
-          </h1>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
+              <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight tracking-[-0.025em] text-foreground">
+                {greeting()}
+                {firstName ? `, ${firstName}` : ""}
+              </h1>
+            </div>
+            {loading ? null : <TodayRing segments={ringSegments} />}
+          </div>
+          {loading ? null : <TodayRingLegend segments={ringSegments} />}
         </header>
 
         {loading ? (

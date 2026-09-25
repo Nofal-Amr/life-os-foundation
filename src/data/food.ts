@@ -139,12 +139,19 @@ export function dayTotals(logs: FoodLog[]): {
 }
 
 /** Recently and frequently logged foods, for one-tap chips. */
-export function suggestedFoods(foods: Food[], logs: FoodLog[], limit = 8): Food[] {
+export function suggestedFoods(
+  foods: Food[],
+  logs: FoodLog[],
+  limit = 8,
+  /** Foods you have at this meal count three times as much. */
+  meal?: Meal,
+): Food[] {
   const score = new Map<string, number>();
   logs.forEach((log, index) => {
     if (!log.food_id) return;
     const recency = Math.max(0, 200 - index) / 100;
-    score.set(log.food_id, (score.get(log.food_id) ?? 0) + 1 + recency);
+    const weight = meal && log.meal === meal ? 3 : 1;
+    score.set(log.food_id, (score.get(log.food_id) ?? 0) + (1 + recency) * weight);
   });
   return [...foods]
     .sort((a, b) => (score.get(b.id) ?? 0) - (score.get(a.id) ?? 0) || a.name.localeCompare(b.name))

@@ -361,7 +361,7 @@ export function QuickAddTransactionDialog({
 
           {activeAccounts.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Add an account on the Money page first, then you can log straight away.
+              Add an account under Money, Accounts first, then you can log straight away.
             </p>
           ) : null}
 

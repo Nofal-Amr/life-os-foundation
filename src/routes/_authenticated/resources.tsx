@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
+import { ResourceUsage } from "@/components/app/ResourceUsage";
 import { EntityIcon, EntityIdentityPicker, entityIconOf } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -587,6 +588,14 @@ function ResourcesPage() {
                       </Button>
                     ) : null}
                   </div>
+                  {own.length >= 2 ? (
+                    <ResourceUsage
+                      kind={resource.kind}
+                      unit={resource.unit}
+                      color={resource.color}
+                      readings={own}
+                    />
+                  ) : null}
                 </li>
               );
             })}

@@ -31,6 +31,7 @@ import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/t
 import { Route as AuthenticatedWeekRouteImport } from './routes/_authenticated/week'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance.index'
+import { Route as AuthenticatedFinanceAccountsRouteImport } from './routes/_authenticated/finance.accounts'
 import { Route as AuthenticatedFinanceCategoriesRouteImport } from './routes/_authenticated/finance.categories'
 import { Route as AuthenticatedFinanceRecurringRouteImport } from './routes/_authenticated/finance.recurring'
 import { Route as AuthenticatedFinanceTransactionsRouteImport } from './routes/_authenticated/finance.transactions'
@@ -146,6 +147,12 @@ const AuthenticatedFinanceIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedFinanceAccountsRoute =
+  AuthenticatedFinanceAccountsRouteImport.update({
+    id: '/accounts',
+    path: '/accounts',
+    getParentRoute: () => AuthenticatedFinanceRoute,
+  } as any)
 const AuthenticatedFinanceCategoriesRoute =
   AuthenticatedFinanceCategoriesRouteImport.update({
     id: '/categories',
@@ -186,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/time': typeof AuthenticatedTimeRoute
   '/week': typeof AuthenticatedWeekRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
@@ -211,6 +219,7 @@ export interface FileRoutesByTo {
   '/time': typeof AuthenticatedTimeRoute
   '/week': typeof AuthenticatedWeekRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
@@ -239,6 +248,7 @@ export interface FileRoutesById {
   '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/week': typeof AuthenticatedWeekRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
+  '/_authenticated/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/_authenticated/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/_authenticated/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/_authenticated/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/time'
     | '/week'
     | '/auth/update-password'
+    | '/finance/accounts'
     | '/finance/categories'
     | '/finance/recurring'
     | '/finance/transactions'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/time'
     | '/week'
     | '/auth/update-password'
+    | '/finance/accounts'
     | '/finance/categories'
     | '/finance/recurring'
     | '/finance/transactions'
@@ -319,6 +331,7 @@ export interface FileRouteTypes {
     | '/_authenticated/time'
     | '/_authenticated/week'
     | '/auth/update-password'
+    | '/_authenticated/finance/accounts'
     | '/_authenticated/finance/categories'
     | '/_authenticated/finance/recurring'
     | '/_authenticated/finance/transactions'
@@ -487,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceIndexRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/finance/accounts': {
+      id: '/_authenticated/finance/accounts'
+      path: '/accounts'
+      fullPath: '/finance/accounts'
+      preLoaderRoute: typeof AuthenticatedFinanceAccountsRouteImport
+      parentRoute: typeof AuthenticatedFinanceRoute
+    }
     '/_authenticated/finance/categories': {
       id: '/_authenticated/finance/categories'
       path: '/categories'
@@ -512,6 +532,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedFinanceRouteChildren {
+  AuthenticatedFinanceAccountsRoute: typeof AuthenticatedFinanceAccountsRoute
   AuthenticatedFinanceCategoriesRoute: typeof AuthenticatedFinanceCategoriesRoute
   AuthenticatedFinanceRecurringRoute: typeof AuthenticatedFinanceRecurringRoute
   AuthenticatedFinanceTransactionsRoute: typeof AuthenticatedFinanceTransactionsRoute
@@ -519,6 +540,7 @@ interface AuthenticatedFinanceRouteChildren {
 }
 
 const AuthenticatedFinanceRouteChildren: AuthenticatedFinanceRouteChildren = {
+  AuthenticatedFinanceAccountsRoute: AuthenticatedFinanceAccountsRoute,
   AuthenticatedFinanceCategoriesRoute: AuthenticatedFinanceCategoriesRoute,
   AuthenticatedFinanceRecurringRoute: AuthenticatedFinanceRecurringRoute,
   AuthenticatedFinanceTransactionsRoute: AuthenticatedFinanceTransactionsRoute,

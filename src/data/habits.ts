@@ -87,3 +87,24 @@ export async function unlogHabit(habit_id: string, log_date = todayISO()) {
   if (error) throw error;
 }
 
+
+export type DayDot = { date: string; logged: boolean };
+
+/**
+ * The last `days` days for one habit, oldest first, ending today. Only what
+ * was logged is marked; a day without a log is just empty, not "missed".
+ */
+export function dayDots(logs: { log_date: string }[], today: string, days = 14): DayDot[] {
+  const logged = new Set(logs.map((log) => log.log_date));
+  const end = new Date(`${today}T12:00:00`);
+  return Array.from({ length: days }, (_, index) => {
+    const day = new Date(end);
+    day.setDate(end.getDate() - (days - 1 - index));
+    const date = [
+      day.getFullYear(),
+      String(day.getMonth() + 1).padStart(2, "0"),
+      String(day.getDate()).padStart(2, "0"),
+    ].join("-");
+    return { date, logged: logged.has(date) };
+  });
+}
