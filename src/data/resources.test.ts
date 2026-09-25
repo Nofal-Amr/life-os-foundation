@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cycleWindow, tierUsage, type Resource, type ResourceReading } from "./resources";
+import { cycleWindow, tierUsage, topUpPlan, type Resource, type ResourceReading } from "./resources";
 import { EGYPT_RESIDENTIAL_2026 } from "./tariff";
 
 function withCycle(extra: Partial<Resource>): Resource {
@@ -134,5 +134,31 @@ describe("quotaRate", () => {
       ]),
     ).toBeNull();
     expect(quotaRate([r(150, "2026-09-22T12:00:00Z")])).toBeNull();
+  });
+});
+
+describe("topUpPlan", () => {
+  it("adds what was credited and names the fee for a money balance", () => {
+    expect(topUpPlan({ balance: 20, paid: 300, credited: 290, moneyUnit: true })).toEqual({
+      credited: 290,
+      balanceAfter: 310,
+      fees: 10,
+    });
+  });
+
+  it("pays back a negative balance first", () => {
+    expect(topUpPlan({ balance: -50, paid: 300, credited: 290, moneyUnit: true }).balanceAfter).toBe(240);
+  });
+
+  it("works from the balance shown after the top-up", () => {
+    expect(topUpPlan({ balance: -50, paid: 300, balanceAfter: 240, moneyUnit: true })).toEqual({
+      credited: 290,
+      balanceAfter: 240,
+      fees: 10,
+    });
+  });
+
+  it("has no fee when the balance isn't money (a data package)", () => {
+    expect(topUpPlan({ balance: 2, paid: 300, credited: 140, moneyUnit: false }).fees).toBeNull();
   });
 });

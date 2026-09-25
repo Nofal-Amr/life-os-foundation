@@ -164,6 +164,11 @@ export type QuotaFacts = {
   runsOutOn: string | null;
   cycleEnd: string | null;
   runsOutBeforeCycleEnd: boolean | null;
+  /**
+   * Below zero, e.g. a prepaid meter on emergency credit or after a tier
+   * change: this much is paid back first from the next top-up.
+   */
+  owed: number;
   /** With a tariff (e.g. a prepaid electricity meter): usage this month and its tier. */
   tier: TierUsage | null;
 };
@@ -370,7 +375,8 @@ export function quotaFacts(
   const perDay = quotaRate(list);
 
   const remaining = Number(latest.reading);
-  const daysLeft = perDay && perDay > 0 ? remaining / perDay : null;
+  // An empty or negative balance has no days left to count down.
+  const daysLeft = remaining <= 0 ? 0 : perDay && perDay > 0 ? remaining / perDay : null;
   const runsOutOn =
     daysLeft == null ? null : format(addDays(new Date(latest.reading_at), daysLeft), "yyyy-MM-dd");
   const window = cycleWindow(resource, today);
@@ -385,6 +391,37 @@ export function quotaFacts(
     runsOutOn,
     cycleEnd: window?.end ?? null,
     runsOutBeforeCycleEnd: runsOutOn && window ? runsOutOn < window.end : null,
+    owed: remaining < 0 ? -remaining : 0,
     tier: tierUsage(resource, readings, undefined, today),
   };
+}
+
+/** Units that are money, so paid minus credited is a fee. */
+const MONEY_UNITS = ["egp", "le", "l.e.", "ج", "جنيه", "usd", "$", "eur", "€", "sar", "aed"];
+
+export function isMoneyUnit(unit: string, currency?: string | null): boolean {
+  const value = unit.trim().toLowerCase();
+  return MONEY_UNITS.includes(value) || (!!currency && value === currency.trim().toLowerCase());
+}
+
+/**
+ * A top-up: what you paid and what the balance gained. Give either the
+ * amount credited or the balance shown afterwards; the other follows. When
+ * the balance is money, paid minus credited is the fee.
+ */
+export function topUpPlan(args: {
+  balance: number | null;
+  paid: number;
+  credited?: number | null;
+  balanceAfter?: number | null;
+  moneyUnit: boolean;
+}): { credited: number | null; balanceAfter: number | null; fees: number | null } {
+  const { balance, paid } = args;
+  let credited = args.credited ?? null;
+  let balanceAfter = args.balanceAfter ?? null;
+  if (credited == null && balanceAfter != null && balance != null) credited = balanceAfter - balance;
+  if (balanceAfter == null && credited != null) balanceAfter = (balance ?? 0) + credited;
+  const fees =
+    args.moneyUnit && credited != null ? Math.round((paid - credited) * 100) / 100 : null;
+  return { credited, balanceAfter, fees };
 }

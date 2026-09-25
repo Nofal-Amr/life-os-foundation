@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
 import { ResourceUsage } from "@/components/app/ResourceUsage";
 import { VehicleCard } from "@/components/app/VehicleCard";
+import { TopUpDialog } from "@/components/app/TopUpDialog";
 import { fuelFillupsQuery } from "@/data/fuel";
 import { EntityIcon, EntityIdentityPicker, entityIconOf } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
@@ -132,6 +133,7 @@ function ResourcesPage() {
   const [toDelete, setToDelete] = useState<Resource | null>(null);
   const [readingFor, setReadingFor] = useState<Resource | null>(null);
   const [readingValue, setReadingValue] = useState("");
+  const [topUpFor, setTopUpFor] = useState<Resource | null>(null);
   /** When the reading was taken ("yyyy-MM-ddTHH:mm", local); defaults to now. */
   const [readingAt, setReadingAt] = useState("");
 
@@ -308,7 +310,9 @@ function ResourcesPage() {
                 {plain(facts.remaining)} <span className="text-base font-medium text-muted-foreground">{resource.unit}</span>
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {facts.perDay != null && facts.daysLeft != null
+                {facts.owed > 0
+                  ? `${plain(facts.owed)} ${resource.unit} owed; your next top-up pays it back first.`
+                  : facts.perDay != null && facts.daysLeft != null
                   ? facts.daysLeft < 1
                     ? `Less than a day left at ${plain(facts.perDay)} ${resource.unit} a day.`
                     : `About ${Math.floor(facts.daysLeft)} ${Math.floor(facts.daysLeft) === 1 ? "day" : "days"} left at ${plain(facts.perDay)} ${resource.unit} a day.`
@@ -459,10 +463,20 @@ function ResourcesPage() {
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      {resource.kind !== "vehicle" ? (
-                        <Button size="sm" onClick={() => openReading(resource)}>
+                      {resource.kind === "quota" ? (
+                        <Button size="sm" onClick={() => setTopUpFor(resource)}>
                           <Plus className="size-4" />
-                          Add reading
+                          Top up
+                        </Button>
+                      ) : null}
+                      {resource.kind !== "vehicle" ? (
+                        <Button
+                          size="sm"
+                          variant={resource.kind === "quota" ? "outline" : "default"}
+                          onClick={() => openReading(resource)}
+                        >
+                          {resource.kind === "quota" ? null : <Plus className="size-4" />}
+                          {resource.kind === "quota" ? "Reading" : "Add reading"}
                         </Button>
                       ) : null}
                       <Button size="sm" variant="ghost" onClick={() => openEdit(resource)}>
@@ -554,10 +568,17 @@ function ResourcesPage() {
                         ) : null}
                         <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
                           <div>
-                            <dt className="text-muted-foreground">Left</dt>
+                            <dt className="text-muted-foreground">
+                              {quota.owed > 0 ? "Owed" : "Left"}
+                            </dt>
                             <dd className="tabular-nums">
                               {round(quota.remaining)} {resource.unit}
                             </dd>
+                            {quota.owed > 0 ? (
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                Paid back first from your next top-up.
+                              </p>
+                            ) : null}
                           </div>
                           <div>
                             <dt className="text-muted-foreground">Average a day</dt>
@@ -970,6 +991,18 @@ function ResourcesPage() {
         ) : null}
       </FormDialog>
 
+      {topUpFor ? (
+        <TopUpDialog
+          resource={topUpFor}
+          balance={(() => {
+            const own = readingsFor(topUpFor, readings.data ?? []);
+            const last = own[own.length - 1];
+            return last ? Number(last.reading) : null;
+          })()}
+          open={!!topUpFor}
+          onOpenChange={(open) => !open && setTopUpFor(null)}
+        />
+      ) : null}
       <ConfirmDialog
         open={!!toDelete}
         onOpenChange={(open) => !open && setToDelete(null)}
