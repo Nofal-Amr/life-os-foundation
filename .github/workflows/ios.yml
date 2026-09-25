@@ -1,0 +1,37 @@
+name: iOS app
+
+# Compiles the iPhone app on a GitHub-hosted Mac whenever its code changes,
+# so it's checked without a Mac of our own. Nothing is signed or uploaded.
+on:
+  push:
+    paths:
+      - "mobile/ios/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Xcode version
+        run: xcodebuild -version
+      - name: Generate the Xcode project
+        working-directory: mobile/ios
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build for the simulator
+        working-directory: mobile/ios
+        run: |
+          xcodebuild \
+            -project LifeOS.xcodeproj \
+            -scheme LifeOS \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build

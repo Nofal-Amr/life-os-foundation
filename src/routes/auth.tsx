@@ -35,6 +35,8 @@ type Mode = "signin" | "signup" | "reset";
 
 /** Set by mobile/android MainActivity on its WebView user agent. */
 const ANDROID_APP_UA = "LifeOSAndroid";
+/** Set by mobile/ios on its WKWebView (applicationNameForUserAgent). */
+const IOS_APP_UA = "LifeOSiOS";
 
 /** Asks Supabase whether a provider is enabled, so users never land on a raw error page. */
 async function providerEnabled(provider: "google"): Promise<boolean> {
@@ -66,7 +68,10 @@ function AuthPage() {
     () => new URLSearchParams(window.location.search).get(HANDOFF_PARAM) === "android",
   );
   const [handedOff, setHandedOff] = useState<string | null>(null);
-  const inApp = typeof navigator !== "undefined" && navigator.userAgent.includes(ANDROID_APP_UA);
+  const agent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const inAndroid = agent.includes(ANDROID_APP_UA);
+  // Either phone app: Google's own button can't run inside an app's web view.
+  const inApp = inAndroid || agent.includes(IOS_APP_UA);
   const [gisFailed, setGisFailed] = useState(false);
   const useGis = !!GOOGLE_CLIENT_ID && !inApp && !gisFailed;
 
@@ -129,7 +134,8 @@ function AuthPage() {
       // Google's button set up, sign-in happens on the website in the phone's
       // browser and comes back through lifeos://; otherwise Supabase's redirect
       // flow opens in the browser and returns the same way.
-      if (inApp && GOOGLE_CLIENT_ID) {
+      // The iPhone app runs Supabase's flow in the system sign-in sheet itself.
+      if (inAndroid && GOOGLE_CLIENT_ID) {
         window.location.href = `${WEB_ORIGIN}/auth?${HANDOFF_PARAM}=android`;
         setPending(false);
         return;
