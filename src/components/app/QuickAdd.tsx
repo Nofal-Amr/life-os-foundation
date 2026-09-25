@@ -15,6 +15,7 @@ import { EntityIcon } from "@/components/app/EntityIdentity";
 import { PrayerTiles } from "@/components/app/PrayerLog";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { ReminderDialog } from "@/components/app/ReminderDialog";
+import { FocusDialog } from "@/components/app/FocusDialog";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { QuickMeals } from "@/components/app/QuickMeals";
 import { useTimer } from "@/components/app/Timer";
@@ -40,6 +41,7 @@ export function QuickAdd() {
   const [money, setMoney] = useState(false);
   const [task, setTask] = useState(false);
   const [reminder, setReminder] = useState(false);
+  const [focus, setFocus] = useState(false);
   const { activities, start, running } = useTimer();
   const prayerLogs = useQuery({ ...prayerLogsQuery(), enabled: open && panel === "prayer" });
 
@@ -173,6 +175,20 @@ export function QuickAdd() {
 
           {panel === "timer" ? (
             <Back onBack={() => setPanel("menu")}>
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  setFocus(true);
+                }}
+                className="stat-card mb-2 flex min-h-14 w-full items-center gap-3 p-3 text-left transition-[scale,background-color] duration-150 ease-out hover:bg-accent active:scale-[0.97]"
+              >
+                <Timer className="size-5 text-primary" aria-hidden="true" />
+                <span>
+                  <span className="block text-sm font-medium">Focus session</span>
+                  <span className="block text-xs text-muted-foreground">25 minutes on one thing, with a chime at the end</span>
+                </span>
+              </button>
               <div className="grid grid-cols-2 gap-2">
                 {(activities.data ?? [])
                   .filter((a) => !a.archived)
@@ -221,6 +237,7 @@ export function QuickAdd() {
       <QuickAddTransactionDialog open={money} onOpenChange={setMoney} />
       <QuickAddTaskDialog open={task} onOpenChange={setTask} />
       <ReminderDialog open={reminder} onOpenChange={setReminder} />
+      <FocusDialog open={focus} onOpenChange={setFocus} />
     </>
   );
 }

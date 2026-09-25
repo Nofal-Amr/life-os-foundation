@@ -21,6 +21,7 @@ import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app
 import { TodayRing, TodayRingLegend, useTodaySegments } from "@/components/app/TodayRing";
 import { upcomingTimes, userRemindersQuery } from "@/data/userReminders";
 import { TodayCounts } from "@/components/app/TodayCounts";
+import { FocusDialog } from "@/components/app/FocusDialog";
 import { TodayFocus, type FocusRow } from "@/components/app/TodayFocus";
 import { focusGroup } from "@/data/focus";
 import { reviewByDateQuery } from "@/data/reviews";
@@ -396,6 +397,7 @@ function DashboardPage() {
 
   const ringSegments = useTodaySegments();
   const [quickTask, setQuickTask] = useState(false);
+  const [focusTask, setFocusTask] = useState<{ id: string; title: string } | null>(null);
   const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
 
   const onError = (error: unknown) =>
@@ -930,6 +932,15 @@ function DashboardPage() {
             <Check className="size-4" />
             Done
           </Button>
+          {large ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFocusTask({ id: action.item.id, title: action.item.title })}
+            >
+              Focus
+            </Button>
+          ) : null}
           <TaskTimerButton task={action.item} withLabel size={large ? "default" : "sm"} />
           <ShrinkItButton
             size={large ? "default" : "sm"}
@@ -1126,6 +1137,11 @@ function DashboardPage() {
       </div>
 
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
+      <FocusDialog
+        open={!!focusTask}
+        task={focusTask}
+        onOpenChange={(open) => !open && setFocusTask(null)}
+      />
       <ShrinkItDialog
         task={shrinkTask}
         existingSteps={shrinkTask ? stepsOf(allTasks, shrinkTask.id).length : 0}

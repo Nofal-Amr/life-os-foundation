@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Play, Square } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { EntityIcon } from "@/components/app/EntityIdentity";
@@ -18,7 +18,17 @@ import {
   type TimeEntry,
   type TimerTarget,
 } from "@/data/time";
+import { habitKeys, logHabit } from "@/data/habits";
 import { track } from "@/lib/analytics";
+import {
+  focusEndISO,
+  focusMatches,
+  focusRemaining,
+  playChime,
+  readFocus,
+  writeFocus,
+  type FocusSession,
+} from "@/lib/focus";
 import { showTimerNotice } from "@/lib/native";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
@@ -108,8 +118,61 @@ export function useTimer() {
  * Stop. Also keeps the phone's ongoing notification in step.
  */
 export function TimerBar() {
-  const { running, label, activity, stop } = useTimer();
+  const queryClient = useQueryClient();
+  const { running, label, activity, stop, entries } = useTimer();
   const elapsed = useClock(running?.started_at ?? null);
+
+  // A focus session is a timer with a planned length (kept on this device).
+  const [focus, setFocus] = useState<FocusSession | null>(() =>
+    typeof window === "undefined" ? null : readFocus(),
+  );
+  useEffect(() => {
+    const update = () => setFocus(readFocus());
+    window.addEventListener("life-os-focus", update);
+    window.addEventListener("storage", update);
+    return () => {
+      window.removeEventListener("life-os-focus", update);
+      window.removeEventListener("storage", update);
+    };
+  }, []);
+  const focused = focusMatches(focus, running?.started_at ?? null) ? focus : null;
+  const remaining = focused ? focusRemaining(focused, Date.now()) : null;
+
+  // A plan whose timer was stopped by hand is forgotten.
+  useEffect(() => {
+    if (focus && entries.data && !focusMatches(focus, running?.started_at ?? null)) {
+      writeFocus(null);
+    }
+  }, [focus, running?.started_at, entries.data]);
+
+  // Done: chime, log exactly the planned minutes, tick the habit.
+  const finishing = useRef(false);
+  useEffect(() => {
+    if (!focused || !running || remaining !== 0 || finishing.current) return;
+    finishing.current = true;
+    playChime();
+    try {
+      navigator.vibrate?.([180, 90, 180]);
+    } catch {
+      // No vibration here.
+    }
+    void (async () => {
+      try {
+        await stopTimer(running.id, focusEndISO(focused));
+        if (focused.habitId) await logHabit(focused.habitId).catch(() => undefined);
+        toast.success(
+          `Focus done: ${focused.minutes} min.${focused.habitName ? ` ${focused.habitName} ticked for today.` : ""}`,
+        );
+      } catch (error) {
+        toast.error(toError(error).message);
+      } finally {
+        writeFocus(null);
+        finishing.current = false;
+        void queryClient.invalidateQueries({ queryKey: timeKeys.entries });
+        void queryClient.invalidateQueries({ queryKey: habitKeys.logs });
+      }
+    })();
+  }, [focused, running, remaining, queryClient]);
 
   useEffect(() => {
     showTimerNotice(
@@ -121,12 +184,23 @@ export function TimerBar() {
   return (
     <div
       className={cn(
-        "system-dock fixed inset-x-3 z-40 flex items-center gap-3 px-3 py-2 md:static md:mb-5 md:rounded-2xl",
+        "system-dock fixed inset-x-3 z-40 flex items-center gap-3 overflow-hidden px-3 py-2 md:relative md:mb-5 md:rounded-2xl",
         "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+4.75rem)]",
         "motion-safe:animate-in motion-safe:slide-in-from-bottom-2 motion-safe:fade-in",
       )}
       role="status"
     >
+      {focused && remaining != null ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-x-3 top-0 h-0.5 overflow-hidden rounded-full bg-muted"
+        >
+          <span
+            className="block h-full bg-primary transition-[width] duration-1000 ease-linear"
+            style={{ width: `${100 - (remaining / (focused.minutes * 60_000)) * 100}%` }}
+          />
+        </span>
+      ) : null}
       <Link to="/time" className="flex min-w-0 flex-1 items-center gap-3">
         {activity ? (
           <EntityIcon icon={activity.icon} color={activity.color} />
@@ -138,7 +212,9 @@ export function TimerBar() {
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium">{label}</span>
           <span className="block font-mono text-xs tabular-nums text-muted-foreground">
-            {formatClock(elapsed)}
+            {focused && remaining != null
+              ? `${formatClock(remaining)} left of ${focused.minutes} min`
+              : formatClock(elapsed)}
           </span>
         </span>
       </Link>
