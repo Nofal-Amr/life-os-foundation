@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { DEFAULT_REMINDERS, taskReminders, type ReminderSettings } from "@/data/reminders";
+import { reminderNotifications, userRemindersQuery } from "@/data/userReminders";
 import {
   prayerLabel,
   prayerWindowEnds,
@@ -87,6 +88,7 @@ export function useReminderSync() {
   const prayerSettings = useQuery({ ...prayerSettingsQuery(), enabled: android });
   const logs = useQuery({ ...prayerLogsQuery(), enabled: android });
   const tasks = useQuery({ ...tasksQuery(), enabled: android });
+  const userReminders = useQuery({ ...userRemindersQuery(), enabled: android });
   const { fmtTime } = usePreferences();
   const [settings] = useReminderSettings();
 
@@ -192,10 +194,13 @@ export function useReminderSync() {
       );
     }
 
+    // Your own reminders ring whatever the prayer settings are.
+    reminders.push(...reminderNotifications(userReminders.data ?? [], now));
+
     scheduleReminders(reminders);
     // fmtTime changes identity every render; the time format lives in preferences anyway.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [android, prayerSettings.data, logs.data, tasks.data, settings, modules]);
+  }, [android, prayerSettings.data, logs.data, tasks.data, userReminders.data, settings, modules]);
 }
 
 function useNotificationsAllowed() {

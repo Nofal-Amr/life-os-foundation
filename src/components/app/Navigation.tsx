@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
+import { Bell,
   CalendarDays,
   CheckSquare,
   HeartPulse,
@@ -30,6 +30,7 @@ export const NAV_ITEMS = [
 const TOOLS = [
   { to: "/calendar" as const, label: "Calendar", icon: CalendarDays, module: "calendar" as const },
   { to: "/notes" as const, label: "Notes", icon: NotebookPen, module: "notes" as const },
+  { to: "/reminders" as const, label: "Reminders", icon: Bell, module: null },
   { to: "/review" as const, label: "Daily review", icon: Sunset, module: null },
 ];
 

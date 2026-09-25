@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { TodayRing, TodayRingLegend, useTodaySegments } from "@/components/app/TodayRing";
+import { upcomingTimes, userRemindersQuery } from "@/data/userReminders";
 import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
 import { DaySummary } from "@/components/app/DaySummary";
@@ -174,7 +175,7 @@ type ComingUpItem = {
   title: string;
   detail: string;
   kind: "commitment" | "projection";
-  to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources";
+  to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources" | "/reminders";
 };
 
 function SectionHeading({ title, detail }: { title: string; detail?: string | undefined }) {
@@ -376,6 +377,7 @@ function DashboardPage() {
   const foodLogs = useQuery(foodLogsQuery());
   const resources = useQuery(resourcesQuery());
   const resourceReadings = useQuery(resourceReadingsQuery());
+  const userReminders = useQuery(userRemindersQuery());
 
   const ringSegments = useTodaySegments();
   const [quickTask, setQuickTask] = useState(false);
@@ -557,6 +559,20 @@ function DashboardPage() {
         to: "/finance/recurring",
       });
     }
+  }
+
+  for (const reminder of userReminders.data ?? []) {
+    const next = upcomingTimes(reminder, new Date(), 1, addDays(new Date(), 7))[0];
+    if (!next) continue;
+    comingUp.push({
+      id: `reminder-${reminder.id}`,
+      dimension: "discipline",
+      sortValue: iso(next),
+      title: reminder.title,
+      detail: `Reminder · ${fmtDate(iso(next))} · ${fmtTime(next)}`,
+      kind: "commitment",
+      to: "/reminders",
+    });
   }
 
   for (const { resource, facts } of quotaAlerts) {

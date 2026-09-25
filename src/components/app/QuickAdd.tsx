@@ -1,5 +1,5 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import {
+import { Bell,
   ArrowLeft,
   CheckSquare,
   Moon,
@@ -14,6 +14,7 @@ import { useState, type ReactNode } from "react";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { PrayerTiles } from "@/components/app/PrayerLog";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
+import { ReminderDialog } from "@/components/app/ReminderDialog";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
 import { QuickMeals } from "@/components/app/QuickMeals";
 import { useTimer } from "@/components/app/Timer";
@@ -38,6 +39,7 @@ export function QuickAdd() {
   const [panel, setPanel] = useState<Panel>("menu");
   const [money, setMoney] = useState(false);
   const [task, setTask] = useState(false);
+  const [reminder, setReminder] = useState(false);
   const { activities, start, running } = useTimer();
   const prayerLogs = useQuery({ ...prayerLogsQuery(), enabled: open && panel === "prayer" });
 
@@ -82,6 +84,16 @@ export function QuickAdd() {
       run: () => {
         close();
         setTask(true);
+      },
+    },
+    {
+      key: "reminder",
+      label: "Reminder",
+      icon: Bell,
+      show: true,
+      run: () => {
+        close();
+        setReminder(true);
       },
     },
     {
@@ -208,6 +220,7 @@ export function QuickAdd() {
 
       <QuickAddTransactionDialog open={money} onOpenChange={setMoney} />
       <QuickAddTaskDialog open={task} onOpenChange={setTask} />
+      <ReminderDialog open={reminder} onOpenChange={setReminder} />
     </>
   );
 }
