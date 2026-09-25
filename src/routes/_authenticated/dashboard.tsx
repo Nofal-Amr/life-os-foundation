@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { TodayRing, TodayRingLegend, useTodaySegments } from "@/components/app/TodayRing";
 import { upcomingTimes, userRemindersQuery } from "@/data/userReminders";
+import { TodayCounts } from "@/components/app/TodayCounts";
 import { TodayFocus, type FocusRow } from "@/components/app/TodayFocus";
 import { focusGroup } from "@/data/focus";
 import { CheckIn } from "@/components/app/CheckIn";
@@ -461,10 +462,7 @@ function DashboardPage() {
       due: action.parent.due_date,
       group,
       project: project ? { name: project.name, color: project.color } : null,
-      priority:
-        action.parent.priority === "critical" || action.parent.priority === "high"
-          ? action.parent.priority
-          : null,
+      priority: action.parent.priority === "low" ? null : action.parent.priority,
       estimate: action.minutes ? action.estimate : null,
     });
     if (focusRows.length >= 6) break;
@@ -947,6 +945,20 @@ function DashboardPage() {
             {loading ? null : <TodayRing segments={ringSegments} />}
           </div>
           {loading ? null : <TodayRingLegend segments={ringSegments} />}
+          {loading || !isEnabled("do") ? null : (
+            <TodayCounts
+              className="mt-4"
+              counts={{
+                inbox: topLevelTasks(allTasks).filter((task) => task.status === "inbox").length,
+                dueToday: topLevelTasks(allTasks).filter(
+                  (task) => isOpen(task) && task.due_date === today,
+                ).length,
+                fromEarlier: overdueTasks,
+                activeProjects: (projects.data ?? []).filter((project) => project.status === "active")
+                  .length,
+              }}
+            />
+          )}
         </header>
 
         {loading ? (

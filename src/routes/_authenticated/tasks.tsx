@@ -65,7 +65,8 @@ import { TaskStepsEditor, minutesLabel, stepsLine } from "@/components/app/TaskS
 import { hasEnoughPoints, tasksCompletedPerWeek } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
-import { priorityLabel, priorityTone, taskStatusLabel, taskStatusTone } from "@/lib/semantics";
+import { PriorityBadge } from "@/components/app/PriorityBadge";
+import { taskStatusLabel, taskStatusTone } from "@/lib/semantics";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
@@ -446,11 +447,9 @@ function TasksPage() {
                       <SemanticBadge tone={taskStatusTone(task.status)}>
                         {taskStatusLabel(task.status)}
                       </SemanticBadge>
-                      <SemanticBadge tone={priorityTone(task.priority)}>
-                        {priorityLabel(task.priority)} priority
-                      </SemanticBadge>
+                      <PriorityBadge priority={task.priority} />
                       {!completed && task.due_date && task.due_date < todayISO() ? (
-                        <SemanticBadge tone="danger">Overdue</SemanticBadge>
+                        <SemanticBadge tone="neutral">From earlier</SemanticBadge>
                       ) : null}
                       {task.due_date ? <span>Due {fmtDate(task.due_date)}</span> : null}
                       {task.project_id

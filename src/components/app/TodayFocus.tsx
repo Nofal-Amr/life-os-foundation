@@ -1,8 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Check, FolderKanban, Wallet } from "lucide-react";
 
-import { FOCUS_GROUP_LABELS, relativeDay, type FocusGroup } from "@/data/focus";
-import { cn } from "@/lib/utils";
+import { PriorityBadge } from "@/components/app/PriorityBadge";
+import {
+  FOCUS_GROUP_LABELS,
+  PRIORITY_STYLE,
+  relativeDay,
+  type FocusGroup,
+  type Priority,
+} from "@/data/focus";
 
 export type FocusRow =
   | {
@@ -16,7 +22,7 @@ export type FocusRow =
       due: string | null;
       group: FocusGroup;
       project?: { name: string; color: string | null } | null;
-      priority?: "high" | "critical" | null;
+      priority?: Priority | null;
       estimate?: string | null;
     }
   | {
@@ -50,7 +56,14 @@ export function TodayFocus({
   return (
     <div className="space-y-4">
       {GROUP_ORDER.map((group) => {
-        const list = rows.filter((row) => row.group === group);
+        // Soonest first; rows without a date keep their order at the end.
+        const list = rows
+          .filter((row) => row.group === group)
+          .map((row, index) => ({ row, index }))
+          .sort(
+            (a, b) => (a.row.due ?? "9999").localeCompare(b.row.due ?? "9999") || a.index - b.index,
+          )
+          .map(({ row }) => row);
         if (!list.length) return null;
         return (
           <section key={group} aria-label={FOCUS_GROUP_LABELS[group]}>
@@ -61,8 +74,15 @@ export function TodayFocus({
               {list.map((row) => (
                 <li
                   key={`${row.kind}-${row.id}`}
-                  className="flex min-w-0 items-start gap-3 rounded-xl border border-border bg-card px-3 py-3"
+                  className="relative flex min-w-0 items-start gap-3 overflow-hidden rounded-xl border border-border bg-card py-3 pr-3 pl-4"
                 >
+                  {row.kind === "task" && row.priority ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-y-2 left-0 w-1 rounded-r-full"
+                      style={{ background: PRIORITY_STYLE[row.priority].color }}
+                    />
+                  ) : null}
                   {row.kind === "task" ? (
                     <button
                       type="button"
@@ -116,15 +136,7 @@ export function TodayFocus({
                       ) : null}
                     </div>
                   </div>
-                  {row.kind === "task" && row.priority ? (
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-md border border-border px-1.5 py-0.5 text-[0.6875rem] font-medium uppercase tracking-wide text-muted-foreground",
-                      )}
-                    >
-                      {row.priority === "critical" ? "Urgent" : "High"}
-                    </span>
-                  ) : null}
+                  {row.kind === "task" ? <PriorityBadge priority={row.priority} /> : null}
                 </li>
               ))}
             </ul>

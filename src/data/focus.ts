@@ -30,3 +30,12 @@ export function focusGroup(due: string | null, today: string, soonDays = 3): Foc
   if (due === today) return "today";
   return differenceInCalendarDays(parseISO(due), parseISO(today)) <= soonDays ? "soon" : null;
 }
+
+export type Priority = "critical" | "high" | "medium";
+
+/** Priority wears a colour and always a word, so colour is never the only signal. */
+export const PRIORITY_STYLE: Record<Priority, { label: string; color: string }> = {
+  critical: { label: "Urgent", color: "var(--entity-rose)" },
+  high: { label: "High", color: "var(--entity-coral)" },
+  medium: { label: "Medium", color: "var(--entity-amber)" },
+};
