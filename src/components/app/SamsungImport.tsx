@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { HEALTH_KIND_LABELS, healthSampleKeys } from "@/data/healthSamples";
 import { parseSamsungExport, type ImportResult } from "@/data/samsungExport";
+import { looksLikeZepp, parseZeppExport } from "@/data/zeppExport";
 import { supabase } from "@/integrations/supabase/client";
 import { track } from "@/lib/analytics";
 import { currentUserId, toError } from "@/lib/supabase-helpers";
@@ -23,6 +24,8 @@ export function SamsungImport() {
   const [reading, setReading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
+  /** Which app the picked files came from, for the messages. */
+  const [app, setApp] = useState<"Samsung Health" | "Zepp Life">("Samsung Health");
   /** When nothing could be read: the file names that were picked, to show what arrived. */
   const [unread, setUnread] = useState<string[] | null>(null);
 
@@ -46,7 +49,9 @@ export function SamsungImport() {
       }
       if (!texts.length)
         throw new Error("No CSV files found. Pick the .zip or the CSV files inside it.");
-      const parsed = parseSamsungExport(texts);
+      const zepp = looksLikeZepp(texts);
+      setApp(zepp ? "Zepp Life" : "Samsung Health");
+      const parsed = zepp ? parseZeppExport(texts) : parseSamsungExport(texts);
       if (!parsed.samples.length) {
         setUnread(texts.map((file) => file.name.split("/").pop() ?? file.name));
         return;
@@ -72,8 +77,8 @@ export function SamsungImport() {
           .upsert(rows.slice(index, index + 500), { onConflict: "user_id,kind,external_id" });
         if (error) throw error;
       }
-      track("samsung_import", { rows: rows.length });
-      toast.success(`Imported ${rows.length.toLocaleString()} entries from Samsung Health.`);
+      track("samsung_import", { rows: rows.length, app });
+      toast.success(`Imported ${rows.length.toLocaleString()} entries from ${app}.`);
       setResult(null);
       void queryClient.invalidateQueries({ queryKey: healthSampleKeys.all });
     } catch (error) {
@@ -85,12 +90,32 @@ export function SamsungImport() {
 
   return (
     <div className="space-y-3 rounded-xl border border-dashed border-border p-4 text-sm">
+      <details className="rounded-lg bg-secondary px-3 py-2 text-xs">
+        <summary className="min-h-8 cursor-pointer py-1 font-medium">Which health apps work, and how</summary>
+        <ul className="mt-2 space-y-2 text-muted-foreground">
+          <li>
+            <span className="text-foreground">Samsung Health, Mi Fitness (Xiaomi), Fitbit, Google Fit and others</span>{" "}
+            that write to Health Connect: turn on sharing in that app's Health Connect settings,
+            and the Android app reads it with Sync.
+          </li>
+          <li>
+            <span className="text-foreground">Zepp Life (Mi Band 1 to 7)</span>: it syncs to Google Fit
+            rather than Health Connect, so import its data export here.
+          </li>
+          <li>
+            <span className="text-foreground">Huawei Health</span>: it doesn't share with Health
+            Connect. The separate Health Sync app can copy it into Health Connect, and then Life OS
+            reads it like any other.
+          </li>
+        </ul>
+      </details>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-medium">Import your Samsung Health history</p>
+          <p className="font-medium">Import your history</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            From Samsung Health → Settings → Download personal data. Pick the .zip, or select all
-            the CSV files in the folder. JSON files and pictures are skipped.
+            From Samsung Health (Settings → Download personal data: pick the .zip or its CSV files)
+            or Zepp Life (Profile → Settings → Export data: it arrives as a zip with a password by
+            email; unzip it, then pick the CSV files). Life OS works out which one it is.
           </p>
         </div>
         <Button

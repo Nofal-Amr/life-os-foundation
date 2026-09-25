@@ -44,7 +44,7 @@ function latest(samples: HealthSample[], kind: string): HealthSample | null {
 
 const dayLabel = (iso: string) => format(new Date(iso), "EEE d MMM");
 
-/** Samsung Health figures on the Body page, synced from the phone or imported. */
+/** Health figures on the Body page, synced through Health Connect or imported. */
 export function SamsungHealthCard() {
   const queryClient = useQueryClient();
   const samples = useQuery(healthSamplesQuery(365));
@@ -63,7 +63,7 @@ export function SamsungHealthCard() {
     },
     onError: (error, manual) => {
       if (manual)
-        toast.error(error instanceof Error ? error.message : "Couldn't read Samsung Health.");
+        toast.error(error instanceof Error ? error.message : "Couldn't read Health Connect.");
     },
   });
 
@@ -139,7 +139,7 @@ export function SamsungHealthCard() {
     <section className="stat-card space-y-4 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">Samsung Health</p>
+          <p className="text-sm font-semibold">Health apps</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {hasData
               ? `From your phone and watch${lastHealthSync() ? ` · synced ${format(lastHealthSync()!, "d MMM, HH:mm")}` : ""}`
@@ -164,19 +164,19 @@ export function SamsungHealthCard() {
         <div className="space-y-3 rounded-xl bg-secondary p-4 text-sm">
           <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
             <li>
-              In <span className="text-foreground">Samsung Health</span>, open Settings → Health
-              Connect and allow it to share your data.
+              In your health app (<span className="text-foreground">Samsung Health</span>, Mi
+              Fitness, Fitbit…), open its Health Connect settings and allow it to share your data.
             </li>
             <li>Then connect Life OS here and pick what it may read.</li>
           </ol>
           <Button type="button" onClick={requestHealthAccess}>
-            Connect Samsung Health
+            Connect health data
           </Button>
         </div>
       ) : null}
       {android && status === "unsupported" ? (
         <p className="text-sm text-muted-foreground">
-          Reading Samsung Health needs Android 14 or later on this phone.
+          Reading Health Connect needs Android 14 or later on this phone.
         </p>
       ) : null}
 
@@ -228,7 +228,7 @@ export function SamsungHealthCard() {
         </>
       ) : !android ? (
         <p className="text-sm text-muted-foreground">
-          Connect it from the Life OS Android app, or import a Samsung Health download below.
+          Connect it from the Life OS Android app, or import a Samsung Health or Zepp Life download below.
         </p>
       ) : null}
       <SamsungImport />
