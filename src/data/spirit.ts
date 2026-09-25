@@ -18,6 +18,32 @@ export const PRAYER_LABELS: Record<PrayerName, string> = {
   isha: "Isha",
 };
 
+/** A prayer's name on a given day: Dhuhr on a Friday is Jumu'ah. */
+export function prayerLabel(name: PrayerName, date?: string | Date | null): string {
+  if (name === "dhuhr" && date) {
+    const day = typeof date === "string" ? new Date(`${date.slice(0, 10)}T12:00:00`) : date;
+    if (day.getDay() === 5) return "Jumu'ah";
+  }
+  return PRAYER_LABELS[name];
+}
+
+/**
+ * When each prayer's time runs out: Fajr at sunrise, Dhuhr at Asr, Asr at
+ * Maghrib, Maghrib at Isha, and Isha at the next day's Fajr.
+ */
+export function prayerWindowEnds(
+  times: Record<PrayerName | "sunrise", Date>,
+  nextFajr: Date,
+): Record<PrayerName, Date> {
+  return {
+    fajr: times.sunrise,
+    dhuhr: times.asr,
+    asr: times.maghrib,
+    maghrib: times.isha,
+    isha: nextFajr,
+  };
+}
+
 export const CALC_METHODS = [
   { value: "MuslimWorldLeague", label: "Muslim World League" },
   { value: "Egyptian", label: "Egyptian General Authority" },
@@ -152,12 +178,14 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
 
 /* ------------------------------- statuses ------------------------------ */
 
-export const PRAYER_STATUSES = ["jamaah", "on_time", "late", "missed"] as const;
+/** "clutch": prayed in the last minutes before the prayer's time ran out. */
+export const PRAYER_STATUSES = ["jamaah", "on_time", "clutch", "late", "missed"] as const;
 export type PrayerStatus = (typeof PRAYER_STATUSES)[number];
 
 export const PRAYER_STATUS_LABELS: Record<PrayerStatus, string> = {
   jamaah: "In jamaah",
   on_time: "On time",
+  clutch: "Clutch",
   late: "Late",
   missed: "Missed",
 };
@@ -206,7 +234,7 @@ export function prayerStatusCounts(
   from: string,
   to: string,
 ): Record<PrayerStatus, number> & { logged: number } {
-  const counts = { jamaah: 0, on_time: 0, late: 0, missed: 0, logged: 0 };
+  const counts = { jamaah: 0, on_time: 0, clutch: 0, late: 0, missed: 0, logged: 0 };
   for (const log of logs) {
     if (log.prayer_date < from || log.prayer_date > to) continue;
     const status = statusOf(log);

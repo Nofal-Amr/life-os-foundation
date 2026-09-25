@@ -74,7 +74,7 @@ const SECTIONS = [
     label: "Spirit",
     icon: Moon,
     title: "Prayers, logged the way they happened",
-    body: "Mark each prayer as in jamaah, on time, late or missed. Prayer times come from your location, and a reminder can arrive before and at the time itself.",
+    body: "Mark each prayer as in jamaah, on time, clutch (just before the time ran out), late or missed. Prayer times come from your location, and a reminder can arrive before and at the time itself.",
     points: ["Four prayer statuses", "Prayer-time reminders", "History you can read"],
   },
 ] as const;

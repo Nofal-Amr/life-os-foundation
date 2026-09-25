@@ -13,6 +13,11 @@ export type ReminderSettings = {
   leadMinutes: number;
   /** A second notification exactly at the prayer time ("Maghrib is now"). */
   atTime: boolean;
+  /**
+   * "Clutch": if a prayer still isn't logged 5 minutes before its time runs
+   * out (sunrise for Fajr, the next prayer for the rest), one last nudge.
+   */
+  clutch: boolean;
   /** A daily summary of tasks due that day. */
   tasksEnabled: boolean;
   /** "HH:mm", local time. */
@@ -23,6 +28,7 @@ export const DEFAULT_REMINDERS: ReminderSettings = {
   enabled: true,
   leadMinutes: 10,
   atTime: true,
+  clutch: true,
   tasksEnabled: true,
   taskTime: "09:00",
 };

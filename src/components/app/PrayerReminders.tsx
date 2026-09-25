@@ -16,7 +16,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { DEFAULT_REMINDERS, taskReminders, type ReminderSettings } from "@/data/reminders";
 import {
-  PRAYER_LABELS,
+  prayerLabel,
+  prayerWindowEnds,
   PRAYER_NAMES,
   prayerLogsQuery,
   prayerSettingsQuery,
@@ -122,8 +123,18 @@ export function useReminderSync() {
           config.asr_school,
           date,
         );
+        const nextDay = format(addDays(new Date(), offset + 1), "yyyy-MM-dd");
+        const nextFajr = prayerTimesFor(
+          Number(config.latitude),
+          Number(config.longitude),
+          config.calc_method,
+          config.asr_school,
+          nextDay,
+        ).fajr;
+        const ends = prayerWindowEnds(times as never, nextFajr);
         for (const name of PRAYER_NAMES) {
           const time = times[name] as Date;
+          const label = prayerLabel(name, date);
           const logged = (logs.data ?? []).some(
             (log) => log.prayer_date === date && log.prayer_name === name && statusOf(log),
           );
@@ -134,8 +145,8 @@ export function useReminderSync() {
             reminders.push({
               id: `${date}-${name}`,
               at: early,
-              title: `${PRAYER_LABELS[name]} in ${settings.leadMinutes} minutes`,
-              body: `${PRAYER_LABELS[name]} at ${fmtTime(time)}.`,
+              title: `${label} in ${settings.leadMinutes} minutes`,
+              body: `${label} at ${fmtTime(time)}.`,
               path: "/spirit",
               channel: "prayers",
             });
@@ -145,8 +156,23 @@ export function useReminderSync() {
             reminders.push({
               id: `${date}-${name}-now`,
               at: time.getTime(),
-              title: `It's time for ${PRAYER_LABELS[name]}`,
-              body: `${PRAYER_LABELS[name]} · ${fmtTime(time)}. Tap to log it.`,
+              title: `It's time for ${label}`,
+              body: `${label} · ${fmtTime(time)}. Tap to log it.`,
+              path: "/spirit",
+              channel: "prayers",
+            });
+          }
+          // Clutch: the last minutes before this prayer's time runs out.
+          const clutch = ends[name].getTime() - 5 * 60_000;
+          if (settings.clutch && clutch > now && clutch > time.getTime()) {
+            reminders.push({
+              id: `${date}-${name}-clutch`,
+              at: clutch,
+              title: `Clutch time: ${label} isn't logged yet`,
+              body:
+                name === "fajr"
+                  ? `Sunrise is in 5 minutes. Pray ${label} now and log it as Clutch.`
+                  : `${label}'s time ends in 5 minutes. Pray it now and log it as Clutch.`,
               path: "/spirit",
               channel: "prayers",
             });
@@ -221,6 +247,21 @@ function PrayerControls({
             id="prayer-at-time"
             checked={settings.atTime}
             onCheckedChange={(atTime) => update({ atTime })}
+          />
+        </div>
+      ) : null}
+      {settings.enabled ? (
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor="prayer-clutch" className="block">
+            Clutch reminder
+            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+              5 minutes before a prayer's time runs out, if it isn't logged yet.
+            </span>
+          </Label>
+          <Switch
+            id="prayer-clutch"
+            checked={settings.clutch}
+            onCheckedChange={(clutch) => update({ clutch })}
           />
         </div>
       ) : null}

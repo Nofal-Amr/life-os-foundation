@@ -39,7 +39,7 @@ export type Hub = { lines: DimensionLine[]; totalXp: number; prayerStreak: numbe
 
 export const XP = {
   task: 10,
-  prayer: { jamaah: 15, on_time: 10, late: 5, missed: 0 },
+  prayer: { jamaah: 15, on_time: 10, clutch: 8, late: 5, missed: 0 },
   dose: 5,
   habit: 5,
   transaction: 2,
@@ -218,7 +218,7 @@ export function buildHub(args: {
       ratio: { done: prayed, total: 35 },
       xp,
       explain: [
-        `XP per prayer: in jamaah ${XP.prayer.jamaah}, on time ${XP.prayer.on_time}, late ${XP.prayer.late}.`,
+        `XP per prayer: in jamaah ${XP.prayer.jamaah}, on time ${XP.prayer.on_time}, clutch ${XP.prayer.clutch}, late ${XP.prayer.late}.`,
         "Stat: prayers prayed in the last 7 days out of 35.",
       ],
     });

@@ -27,7 +27,7 @@ export function hasEnoughPoints(points: readonly unknown[]): boolean {
 export type Fraction = { done: number; total: number };
 
 /** Prayers logged as completed on a date, out of the five daily prayers. */
-/** Prayed in any way (jamaah, on time or late); missed and unlogged don't count. */
+/** Prayed in any way (jamaah, on time, clutch or late); missed and unlogged don't count. */
 function prayed(log: PrayerLog): boolean {
   return log.status ? log.status !== "missed" : log.completed;
 }

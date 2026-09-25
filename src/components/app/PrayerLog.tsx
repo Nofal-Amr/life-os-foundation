@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
-import { Check, Clock, Users, X, type LucideIcon } from "lucide-react";
+import { Check, Clock, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useXp } from "@/hooks/useXp";
@@ -8,6 +8,7 @@ import { useXp } from "@/hooks/useXp";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   PRAYER_LABELS,
+  prayerLabel,
   PRAYER_NAMES,
   PRAYER_STATUSES,
   PRAYER_STATUS_LABELS,
@@ -29,6 +30,7 @@ import { cn } from "@/lib/utils";
 export const STATUS_STYLE: Record<PrayerStatus, { icon: LucideIcon; color: string }> = {
   jamaah: { icon: Users, color: "var(--chart-2)" },
   on_time: { icon: Check, color: "var(--chart-1)" },
+  clutch: { icon: Zap, color: "var(--chart-3)" },
   late: { icon: Clock, color: "var(--chart-4)" },
   missed: { icon: X, color: "var(--color-muted-foreground)" },
 };
@@ -183,7 +185,7 @@ export function PrayerDayList({
             <StatusPicker
               current={status}
               disabled={disabled}
-              label={`How was ${PRAYER_LABELS[name]} prayed?`}
+              label={`How was ${prayerLabel(name, date)} prayed?`}
               onPick={(value) => setStatus.mutate({ date, name, status: value })}
             >
               <button
@@ -191,7 +193,7 @@ export function PrayerDayList({
                 className="stat-card flex min-h-16 w-full items-center gap-3 overflow-hidden p-0 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
               >
                 <span className="flex min-w-0 flex-1 items-baseline gap-3 px-4 py-3">
-                  <span className="w-20 text-sm font-semibold">{PRAYER_LABELS[name]}</span>
+                  <span className="w-20 text-sm font-semibold">{prayerLabel(name, date)}</span>
                   <span className="text-sm tabular-nums text-muted-foreground">
                     {time ? formatTime(time) : "—"}
                   </span>
@@ -262,19 +264,19 @@ export function PrayerTiles({
             key={name}
             current={status}
             disabled={disabled}
-            label={`How was ${PRAYER_LABELS[name]} prayed?`}
+            label={`How was ${prayerLabel(name, date)} prayed?`}
             onPick={(value) => setStatus.mutate({ date, name, status: value })}
           >
             <button
               type="button"
-              aria-label={`${PRAYER_LABELS[name]}: ${status ? PRAYER_STATUS_LABELS[status] : "not logged"}`}
+              aria-label={`${prayerLabel(name, date)}: ${status ? PRAYER_STATUS_LABELS[status] : "not logged"}`}
               className={cn(
                 "flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-2 text-center transition-transform active:scale-[0.97] disabled:opacity-40",
                 status ? "border-transparent text-white" : "border-border",
               )}
               style={status ? { background: STATUS_STYLE[status].color } : undefined}
             >
-              <span className="w-full truncate text-xs font-medium">{PRAYER_LABELS[name]}</span>
+              <span className="w-full truncate text-xs font-medium">{prayerLabel(name, date)}</span>
               {time && formatTime ? (
                 <span className="w-full truncate text-2xs tabular-nums opacity-80">
                   {formatTime(time)}
@@ -422,7 +424,7 @@ function PrayerHeatRow({
         return (
           <span
             key={date}
-            title={`${PRAYER_LABELS[name]}, ${format(parseISO(date), "d MMM")}: ${status ? PRAYER_STATUS_LABELS[status] : "not logged"}`}
+            title={`${prayerLabel(name, date)}, ${format(parseISO(date), "d MMM")}: ${status ? PRAYER_STATUS_LABELS[status] : "not logged"}`}
             className="rounded-[3px]"
             style={{
               width: cell,
