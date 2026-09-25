@@ -460,6 +460,7 @@ function DashboardPage() {
       title: action.item.title,
       parentTitle: action.item.id !== action.parent.id ? action.parent.title : null,
       due: action.parent.due_date,
+      dueTime: action.parent.due_time ? action.parent.due_time.slice(0, 5) : null,
       group,
       project: project ? { name: project.name, color: project.color } : null,
       priority: action.parent.priority === "low" ? null : action.parent.priority,

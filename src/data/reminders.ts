@@ -77,3 +77,24 @@ export function taskReminders(args: {
   }
   return reminders;
 }
+
+/** A reminder at the exact time of each open task that has one, for the next `days` days. */
+export function timedTaskReminders(args: { tasks: Task[]; now: number; days?: number }): Reminder[] {
+  const until = args.now + (args.days ?? 7) * 86_400_000;
+  return args.tasks.flatMap((task) => {
+    if (!task.due_date || !task.due_time) return [];
+    if (task.status === "completed" || task.status === "cancelled") return [];
+    const at = new Date(`${task.due_date}T${task.due_time.slice(0, 5)}:00`).getTime();
+    if (!(at > args.now && at <= until)) return [];
+    return [
+      {
+        id: `task-${task.id}-${at}`,
+        at,
+        title: task.title,
+        body: "Task · now",
+        path: "/tasks",
+        channel: "tasks" as const,
+      },
+    ];
+  });
+}

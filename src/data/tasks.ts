@@ -21,7 +21,38 @@ export type TaskInput = {
   max_date?: string | null;
   parent_task_id?: string | null;
   position?: number;
+  /** "HH:mm" on the due date, if the task has a time. */
+  due_time?: string | null;
+  repeat?: TaskRepeat | null;
 };
+
+export type TaskRepeat = "daily" | "weekdays" | "weekly" | "monthly";
+
+export const TASK_REPEATS: { value: TaskRepeat; label: string }[] = [
+  { value: "daily", label: "Every day" },
+  { value: "weekdays", label: "Weekdays" },
+  { value: "weekly", label: "Every week" },
+  { value: "monthly", label: "Every month" },
+];
+
+/** The next due date of a repeating task; weekdays skip Friday and Saturday. */
+export function nextRepeatDate(from: string, repeat: TaskRepeat): string {
+  const date = new Date(`${from}T12:00:00`);
+  if (repeat === "daily") date.setDate(date.getDate() + 1);
+  else if (repeat === "weekly") date.setDate(date.getDate() + 7);
+  else if (repeat === "monthly") {
+    const day = date.getDate();
+    date.setDate(1);
+    date.setMonth(date.getMonth() + 1);
+    // 31 Jan -> 28/29 Feb, not 3 March.
+    const last = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    date.setDate(Math.min(day, last));
+  } else {
+    do date.setDate(date.getDate() + 1);
+    while (date.getDay() === 5 || date.getDay() === 6);
+  }
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+}
 
 export type EstimateUnit = "minutes" | "hours" | "days";
 
@@ -180,7 +211,31 @@ export async function updateTask(id: string, input: Partial<TaskInput>, previous
     patch["completed_at"] = input.status === "completed" ? new Date().toISOString() : null;
   }
   if (previous) Object.assign(patch, postponementPatch(previous, input.due_date));
-  return unwrap(await supabase.from("tasks").update(patch).eq("id", id).select().single());
+  const saved = unwrap(
+    await supabase.from("tasks").update(patch).eq("id", id).select().single(),
+  ) as Task;
+  // Finishing a repeating task puts the next one on its next date; the
+  // finished one keeps its history and hands the repeat on.
+  if (input.status === "completed" && saved?.repeat && !saved.parent_task_id) {
+    const repeat = saved.repeat as TaskRepeat;
+    const base = saved.due_date ?? new Date().toISOString().slice(0, 10);
+    await createTask({
+      title: saved.title,
+      description: saved.description,
+      status: "todo",
+      priority: saved.priority,
+      due_date: nextRepeatDate(base, repeat),
+      due_time: saved.due_time,
+      repeat,
+      project_id: saved.project_id,
+      capability_id: saved.capability_id,
+      goal_id: saved.goal_id,
+      estimated_minutes: saved.estimated_minutes,
+      ...(saved.estimate_unit ? { estimate_unit: saved.estimate_unit as EstimateUnit } : {}),
+    });
+    await supabase.from("tasks").update({ repeat: null }).eq("id", id);
+  }
+  return saved;
 }
 
 /** One step, one level deep. Position defaults to the front of the list. */

@@ -14,7 +14,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { DEFAULT_REMINDERS, taskReminders, type ReminderSettings } from "@/data/reminders";
+import {
+  DEFAULT_REMINDERS,
+  taskReminders,
+  timedTaskReminders,
+  type ReminderSettings,
+} from "@/data/reminders";
 import { reminderNotifications, userRemindersQuery } from "@/data/userReminders";
 import {
   prayerLabel,
@@ -192,6 +197,11 @@ export function useReminderSync() {
           now,
         }),
       );
+    }
+
+    // Tasks with a time ring at that time.
+    if (settings.tasksEnabled && modules.includes("do")) {
+      reminders.push(...timedTaskReminders({ tasks: tasks.data ?? [], now }));
     }
 
     // Your own reminders ring whatever the prayer settings are.

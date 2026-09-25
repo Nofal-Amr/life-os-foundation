@@ -20,6 +20,8 @@ export type FocusRow =
       /** The task a step belongs to. */
       parentTitle?: string | null;
       due: string | null;
+      /** "HH:mm", when the task has a time. */
+      dueTime?: string | null;
       group: FocusGroup;
       project?: { name: string; color: string | null } | null;
       priority?: Priority | null;
@@ -116,6 +118,7 @@ export function TodayFocus({
                       {row.due ? (
                         <span className="rounded-md bg-muted px-1.5 py-0.5 tabular-nums">
                           {relativeDay(row.due, today)}
+                          {row.kind === "task" && row.dueTime ? ` · ${row.dueTime}` : ""}
                         </span>
                       ) : null}
                       {row.kind === "task" && row.project ? (

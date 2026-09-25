@@ -50,6 +50,8 @@ import {
   type Task,
   type TaskFilter,
   type TaskInput,
+  TASK_REPEATS,
+  type TaskRepeat,
 } from "@/data/tasks";
 import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
 import { TaskTimerButton } from "@/components/app/Timer";
@@ -342,6 +344,8 @@ function TasksPage() {
       estimate_unit: (task.estimate_unit as EstimateUnit | null) ?? "minutes",
       start_date: task.start_date,
       max_date: task.max_date,
+      due_time: task.due_time ? task.due_time.slice(0, 5) : null,
+      repeat: (task.repeat as TaskRepeat | null) ?? null,
     });
     setShowNewProject(false);
     setShowNewCapability(false);
@@ -451,7 +455,15 @@ function TasksPage() {
                       {!completed && task.due_date && task.due_date < todayISO() ? (
                         <SemanticBadge tone="neutral">From earlier</SemanticBadge>
                       ) : null}
-                      {task.due_date ? <span>Due {fmtDate(task.due_date)}</span> : null}
+                      {task.due_date ? (
+                        <span>
+                          Due {fmtDate(task.due_date)}
+                          {task.due_time ? ` · ${task.due_time.slice(0, 5)}` : ""}
+                        </span>
+                      ) : null}
+                      {task.repeat ? (
+                        <span>{TASK_REPEATS.find((option) => option.value === task.repeat)?.label}</span>
+                      ) : null}
                       {task.project_id
                         ? (() => {
                             const project = (projects.data ?? []).find(
@@ -647,6 +659,43 @@ function TasksPage() {
               value={form.due_date}
               onChange={(value) => setForm({ ...form, due_date: value || null })}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="task-time">Time (optional)</Label>
+            <Input
+              id="task-time"
+              type="time"
+              className="h-12 tabular-nums"
+              value={form.due_time ?? ""}
+              onChange={(event) => setForm({ ...form, due_time: event.target.value || null })}
+            />
+            <p className="text-xs text-muted-foreground">The Android app reminds you at this time.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Repeat</Label>
+            <Select
+              value={form.repeat ?? "none"}
+              onValueChange={(value) =>
+                setForm({ ...form, repeat: value === "none" ? null : (value as TaskRepeat) })
+              }
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Doesn't repeat</SelectItem>
+                {TASK_REPEATS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {form.repeat ? (
+              <p className="text-xs text-muted-foreground">
+                When you tick it off, the next one appears on its next date.
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label htmlFor="task-max">Max date (optional)</Label>

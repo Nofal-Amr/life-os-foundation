@@ -5,6 +5,7 @@ import {
   estimateInUnit,
   estimateLabel,
   estimateToMinutes,
+  nextRepeatDate,
   notStartedYet,
   splitTaskLines,
   type Task,
@@ -76,5 +77,23 @@ describe("splitTaskLines", () => {
     expect(splitTaskLines("   \n\n")).toEqual([]);
     const many = Array.from({ length: 60 }, (_, i) => `Task ${i}`).join("\n");
     expect(splitTaskLines(many).length).toBe(50);
+  });
+});
+
+describe("nextRepeatDate", () => {
+  it("moves by day, week and month", () => {
+    expect(nextRepeatDate("2026-09-25", "daily")).toBe("2026-09-26");
+    expect(nextRepeatDate("2026-09-25", "weekly")).toBe("2026-10-02");
+    expect(nextRepeatDate("2026-09-25", "monthly")).toBe("2026-10-25");
+  });
+
+  it("keeps month ends in range", () => {
+    expect(nextRepeatDate("2026-01-31", "monthly")).toBe("2026-02-28");
+    expect(nextRepeatDate("2028-01-31", "monthly")).toBe("2028-02-29");
+  });
+
+  it("skips Friday and Saturday for weekdays", () => {
+    // 24 Sep 2026 is a Thursday.
+    expect(nextRepeatDate("2026-09-24", "weekdays")).toBe("2026-09-27");
   });
 });
