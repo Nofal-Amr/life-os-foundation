@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { TodayRing, TodayRingLegend, useTodaySegments } from "@/components/app/TodayRing";
 import { upcomingTimes, userRemindersQuery } from "@/data/userReminders";
+import { TodayFocus, type FocusRow } from "@/components/app/TodayFocus";
+import { focusGroup } from "@/data/focus";
 import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
 import { DaySummary } from "@/components/app/DaySummary";
@@ -443,7 +445,42 @@ function DashboardPage() {
   const allTasks = tasks.data ?? [];
   const actions = nextActions(allTasks, today);
   const primary = actions[0];
-  const alsoToday = actions.slice(1, 3);
+  // Everything after the one next action, by when it's due (up to six).
+  const projectById = new Map((projects.data ?? []).map((project) => [project.id, project]));
+  const focusRows: FocusRow[] = [];
+  for (const action of actions.slice(1)) {
+    const group = focusGroup(action.parent.due_date, today);
+    if (!group) continue;
+    const project = action.parent.project_id ? projectById.get(action.parent.project_id) : null;
+    focusRows.push({
+      kind: "task",
+      id: action.parent.id,
+      doneId: action.item.id,
+      title: action.item.title,
+      parentTitle: action.item.id !== action.parent.id ? action.parent.title : null,
+      due: action.parent.due_date,
+      group,
+      project: project ? { name: project.name, color: project.color } : null,
+      priority:
+        action.parent.priority === "critical" || action.parent.priority === "high"
+          ? action.parent.priority
+          : null,
+      estimate: action.minutes ? action.estimate : null,
+    });
+    if (focusRows.length >= 6) break;
+  }
+  for (const cost of recurring.data ?? []) {
+    const group = cost.active ? focusGroup(cost.next_due_date, today) : null;
+    if (!group) continue;
+    focusRows.push({
+      kind: "bill",
+      id: cost.id,
+      title: cost.name,
+      due: cost.next_due_date,
+      group,
+      amount: fmtMoney(Number(cost.amount)),
+    });
+  }
   const overdueTasks = topLevelTasks(allTasks).filter(
     (task) => isOpen(task) && Boolean(task.due_date) && String(task.due_date) < today,
   ).length;
@@ -950,16 +987,20 @@ function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                {alsoToday.length ? (
-                  <div className="mt-4 min-w-0 rounded-lg border border-border/60 px-4 py-3">
-                    <h2 className="text-sm font-medium text-muted-foreground">Also today</h2>
-                    <div className="mt-1 divide-y divide-border/60">
-                      {alsoToday.map((action) => (
-                        <div key={action.item.id} className="py-3 first:pt-1 last:pb-1">
-                          <ActionBlock action={action} />
-                        </div>
-                      ))}
+                {focusRows.length ? (
+                  <div className="mt-5 min-w-0">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h2 className="text-sm font-semibold text-foreground">Today's focus</h2>
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setQuickTask(true)}>
+                        Add task
+                      </Button>
                     </div>
+                    <TodayFocus
+                      rows={focusRows}
+                      today={today}
+                      onDone={(id) => finish.mutate(id)}
+                      pendingId={finish.isPending ? (finish.variables ?? null) : null}
+                    />
                   </div>
                 ) : null}
               </section>
