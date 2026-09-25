@@ -71,12 +71,12 @@ Status: ✅ done · 🔨 building · ⏳ planned
 
 | Their idea | Our better version | Size | Status |
 |---|---|---|---|
-| Energy on every item | Energy on tasks **and a "match my energy" switch on Today**: say how you feel (low / medium / high) and Today shows what fits. No guilt for low days | M | ⏳ |
-| Mood check-in | Two taps on Today (mood 1–5 + energy 1–5), stored in the daily review, trend in Insights next to sleep, so patterns are visible without judgement | S | 🔨 |
-| Sanctuary breathing | "Reset" button anywhere: 1 minute of breathing (4-4-6-2), haptic on the phone, no content to read | S | 🔨 |
-| On this day | Diary pages and reviews from the same date in earlier years, on Today | S | 🔨 |
-| Reflection nudge | "Last review 5 days ago" as a quiet line, never a red alert | S | 🔨 |
-| Pomodoro + habit auto-log | Our Time tracker gains Focus mode (25/5/15 or custom). Finishing ticks the linked habit **and** logs the minutes to the task, so time and habits agree | M | ⏳ |
+| Energy on every item | Energy on tasks **and a "match my energy" switch on Today**: say how you feel (low / medium / high) and Today shows what fits. No guilt for low days | M | ✅ |
+| Mood check-in | Two taps on Today (mood 1–5 + energy 1–5), stored in the daily review, trend in Insights next to sleep, so patterns are visible without judgement | S | ✅ |
+| Sanctuary breathing | "Reset" button anywhere: 1 minute of breathing (4-4-6-2), haptic on the phone, no content to read | S | ✅ |
+| On this day | Diary pages and reviews from the same date in earlier years, on Today | S | ✅ |
+| Reflection nudge | "Last review 5 days ago" as a quiet line, never a red alert | S | ✅ |
+| Pomodoro + habit auto-log | Our Time tracker gains Focus mode (25/5/15 or custom). Finishing ticks the linked habit **and** logs the minutes to the task, so time and habits agree | M | ✅ |
 | Inbox-first capture | One capture box that understands what you typed: "120 lunch" → spending, "remind me 5pm call bank" → reminder, "- a - b - c" → several tasks, anything else → inbox. Process later in an Inbox view | M | ⏳ |
 | Weekly review | Weekly review with a maintenance checklist computed from real data: inbox left, overdue tasks, bills due before payday, projects with no open task; then 3 priorities for next week | M | ⏳ |
 | Master calendar layers | Layers for tasks, recurring bills, reminders, prayer times, events, meter/quota run-out dates | M | ⏳ |
@@ -87,7 +87,7 @@ Status: ✅ done · 🔨 building · ⏳ planned
 | Backup / restore | Excel export done; add a restore from our own export | L | ⏳ |
 | Smart inbox AI | Only after a privacy decision; if yes, on-device first, else a per-user server call with explicit consent | L | ⏳ decision |
 | Reading / bucket / idea / shopping lists | Note templates with a label (no new tables) | S | ⏳ |
-| Subscriptions overview | Monthly total of recurring costs on Money | S | 🔨 |
+| Subscriptions overview | Monthly total of recurring costs on Money | S | ✅ |
 | Symptoms | Symptom log with severity next to medication | M | ⏳ |
 
 ## What we deliberately don't take
