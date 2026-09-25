@@ -22,6 +22,8 @@ import {
   type FoodLogInput,
   type Meal,
 } from "@/data/food";
+import { FoodSetup } from "@/components/app/FoodSetup";
+import { preferencesQuery, readFoodPrefs } from "@/data/preferences";
 import { track } from "@/lib/analytics";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
@@ -51,7 +53,20 @@ export function QuickMeals({
   const all = logs.data ?? [];
   const today = all.filter((log) => log.log_date === date);
   const totals = dayTotals(today);
-  const suggestions = suggestedFoods(foods.data ?? [], all, 6, meal);
+  const prefs = useQuery(preferencesQuery());
+  const usual = readFoodPrefs(prefs.data?.food_prefs);
+  const [setupOpen, setSetupOpen] = useState(false);
+  // Your usual foods for this meal come first, in the order you picked them.
+  const chosenNames = (usual?.meals[meal] ?? []).map((name) => name.toLowerCase());
+  const chosenFoods = chosenNames
+    .map((name) => (foods.data ?? []).find((food) => food.name.toLowerCase() === name))
+    .filter((food): food is Food => !!food);
+  const suggestions = [
+    ...chosenFoods,
+    ...suggestedFoods(foods.data ?? [], all, 8, meal).filter(
+      (food) => !chosenFoods.some((chosen) => chosen.id === food.id),
+    ),
+  ].slice(0, 8);
   const usualAtMeal = all.some((log) => log.meal === meal && log.food_id);
   // Typed-in foods from this meal first, then any meal.
   const oneOffs = [...recentOneOffs(all.filter((log) => log.meal === meal), 4), ...recentOneOffs(all, 4)]
@@ -189,7 +204,7 @@ export function QuickMeals({
       {/* Matches while typing, else your usual foods: one tap each. */}
       {!matches.length && (suggestions.length || oneOffs.length) ? (
         <p className="-mb-2 text-xs text-muted-foreground">
-          {usualAtMeal ? `Usually at ${meal}` : "Your foods"}
+          {chosenFoods.length || usualAtMeal ? `Usually at ${meal}` : "Your foods"}
         </p>
       ) : null}
       <div className="flex flex-wrap gap-1.5">
@@ -280,6 +295,16 @@ export function QuickMeals({
         <p className="text-xs text-muted-foreground">Nothing logged for this day yet.</p>
       )}
 
+      {!usual && !prefs.isLoading ? (
+        <button
+          type="button"
+          onClick={() => setSetupOpen(true)}
+          className="block text-left text-xs text-muted-foreground underline underline-offset-4"
+        >
+          Tell Life OS what you usually eat, and it offers those first
+        </button>
+      ) : null}
+      <FoodSetup open={setupOpen} onOpenChange={setSetupOpen} />
       {showLink ? (
         <Link
           to="/food"

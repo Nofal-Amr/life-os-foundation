@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { FOOD_LIBRARY, libraryNotYetAdded, toFoodInput } from "./foodLibrary";
+import {
+  FOOD_LIBRARY,
+  libraryNotYetAdded,
+  suggestionsFor,
+  toFoodInput,
+  untaggedFoods,
+} from "./foodLibrary";
 
 describe("food library", () => {
   it("has sane figures for every entry", () => {
@@ -32,5 +38,20 @@ describe("food library", () => {
     const input = toFoodInput(FOOD_LIBRARY[0]!);
     expect(input.name).toBe(FOOD_LIBRARY[0]!.name);
     expect(input.icon).toBeNull();
+  });
+});
+
+describe("food suggestions by meal and cuisine", () => {
+  it("tags every library food", () => {
+    expect(untaggedFoods()).toEqual([]);
+  });
+
+  it("suggests Egyptian breakfasts to someone who picked Egyptian", () => {
+    const names = suggestionsFor("breakfast", ["egyptian"]).map((food) => food.name);
+    expect(names).toContain("Ful sandwich");
+    expect(names).toContain("Taameya sandwich");
+    expect(names).toContain("Egg, boiled");
+    expect(names).not.toContain("Oats, dry");
+    expect(names).not.toContain("Fattah");
   });
 });

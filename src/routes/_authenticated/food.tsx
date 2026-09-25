@@ -9,6 +9,7 @@ import { DateNav } from "@/components/app/DateNav";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { FoodLibraryDialog } from "@/components/app/FoodLibraryDialog";
+import { FoodSetup } from "@/components/app/FoodSetup";
 import { PageHeader } from "@/components/app/PageHeader";
 import { QuickMeals } from "@/components/app/QuickMeals";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
@@ -84,6 +85,7 @@ function FoodPage() {
   const [servings, setServings] = useState("1");
   const [foodDialog, setFoodDialog] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
   const [foodForm, setFoodForm] = useState<FoodInput>(emptyFood);
   const [quickOpen, setQuickOpen] = useState(false);
   const [quickName, setQuickName] = useState("");
@@ -181,11 +183,15 @@ function FoodPage() {
   return (
     <>
       <FoodLibraryDialog open={libraryOpen} onOpenChange={setLibraryOpen} />
+      <FoodSetup open={setupOpen} onOpenChange={setSetupOpen} />
       <PageHeader
         title="Food"
         description="What you logged, exactly as you logged it."
         actions={
           <>
+            <Button variant="outline" onClick={() => setSetupOpen(true)}>
+              Your usual foods
+            </Button>
             <Button variant="outline" onClick={() => setLibraryOpen(true)}>
               Common foods
             </Button>

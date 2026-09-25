@@ -42,6 +42,14 @@ export type PreferencesInput = {
   /** 0 = Sunday, 1 = Monday, 6 = Saturday. */
   week_start?: number;
   skin?: "serious" | "rpg";
+  /** Cuisines and usual foods per meal, chosen in Food setup. */
+  food_prefs?: FoodPrefs | null;
+};
+
+export type FoodPrefs = {
+  cuisines: string[];
+  /** Food names you usually have at each meal. */
+  meals: Partial<Record<"breakfast" | "lunch" | "dinner" | "snack", string[]>>;
 };
 
 export async function savePreferences(input: PreferencesInput): Promise<UserPreferences> {
@@ -55,4 +63,11 @@ export async function savePreferences(input: PreferencesInput): Promise<UserPref
 
 export async function saveDimensionOrder(dimension_order: string[]): Promise<UserPreferences> {
   return savePreferences({ dimension_order });
+}
+
+/** Food prefs as stored, tolerating a missing or partial value. */
+export function readFoodPrefs(value: unknown): FoodPrefs | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Partial<FoodPrefs>;
+  return { cuisines: Array.isArray(raw.cuisines) ? raw.cuisines : [], meals: raw.meals ?? {} };
 }
