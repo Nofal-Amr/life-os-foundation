@@ -81,7 +81,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Phones: one menu, under "More" in the bottom bar. The header only orients. */}
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/90 px-4 py-2 backdrop-blur-md md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/90 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md md:hidden">
         <Link to="/dashboard" className="flex min-w-0 flex-col py-1">
           <span className="truncate text-sm font-semibold tracking-tight">Life OS</span>
           <SyncIndicator />

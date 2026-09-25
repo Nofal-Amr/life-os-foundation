@@ -99,6 +99,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: "/icon-512.png" },
       { name: "twitter:card", content: "summary" },
       { name: "theme-color", content: "#0A0C10" },
+      // Installed on an iPhone home screen: full screen, its own name.
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Life OS" },
     ],
     links: [
       {
@@ -108,6 +113,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   shellComponent: RootShell,
@@ -136,6 +142,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // The installed web app (iPhone home screen, desktop install) opens offline
+  // thanks to a small service worker. The Android app serves its own files.
+  useEffect(() => {
+    if (!import.meta.env.PROD || !("serviceWorker" in navigator)) return;
+    if (navigator.userAgent.includes("LifeOSAndroid")) return;
+    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
