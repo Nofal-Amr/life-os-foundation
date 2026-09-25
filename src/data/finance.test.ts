@@ -5,6 +5,7 @@ import {
   countsTowardSpendable,
   legacyFrequency,
   liquidBalance,
+  monthlyEquivalent,
   recurringInterval,
   separateBalance,
   type Account,
@@ -47,5 +48,21 @@ describe("accounts kept separate from left to spend", () => {
     delete (legacy as Partial<Account>).counts_toward_spendable;
     expect(countsTowardSpendable(legacy)).toBe(true);
     expect(liquidBalance([legacy], [])).toBe(1000);
+  });
+});
+
+describe("monthlyEquivalent", () => {
+  const cost = (over: Record<string, unknown>) =>
+    ({ active: true, amount: 100, frequency: "monthly", interval_count: 1, interval_unit: "month", ...over }) as never;
+
+  it("turns any schedule into an average month", () => {
+    expect(monthlyEquivalent(cost({}))).toBeCloseTo(100);
+    expect(monthlyEquivalent(cost({ interval_unit: "year", amount: 1200 }))).toBeCloseTo(100);
+    expect(monthlyEquivalent(cost({ interval_unit: "week" }))).toBeCloseTo(434.82, 1);
+    expect(monthlyEquivalent(cost({ interval_unit: "month", interval_count: 3, amount: 300 }))).toBeCloseTo(100);
+  });
+
+  it("counts inactive costs as nothing", () => {
+    expect(monthlyEquivalent(cost({ active: false }))).toBe(0);
   });
 });

@@ -42,6 +42,7 @@ import {
   financeCategoriesQuery,
   financeKeys,
   hasPaydaySetup,
+  monthlyEquivalent,
   nextPayday,
   paydayConfigQuery,
   recurringCostsQuery,
@@ -142,6 +143,7 @@ function FinanceOverview() {
   });
 
   const hasAccounts = (accounts.data ?? []).length > 0;
+  const monthlyRecurring = (costs.data ?? []).reduce((sum, cost) => sum + monthlyEquivalent(cost), 0);
   const separateAccounts = (accounts.data ?? []).filter(
     (account) => account.active && !countsTowardSpendable(account),
   );
@@ -419,7 +421,18 @@ function FinanceOverview() {
 
           {/* What is due next stays one tap away. */}
           <Section id="money-coming" title="Coming up">
-            <div className="mb-3 flex justify-end">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">
+                {monthlyRecurring > 0 ? (
+                  <>
+                    Recurring costs come to about{" "}
+                    <span className="tabular-nums text-foreground">{fmtMoney(monthlyRecurring)}</span>{" "}
+                    a month.
+                  </>
+                ) : (
+                  "No recurring costs yet."
+                )}
+              </p>
               <Button asChild size="sm" variant="ghost">
                 <Link to="/finance/recurring">Manage</Link>
               </Button>

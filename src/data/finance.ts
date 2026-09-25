@@ -628,3 +628,22 @@ export async function updatePocket(
 export async function deletePocket(id: string): Promise<void> {
   unwrap(await supabase.from("account_pockets").delete().eq("id", id).select());
 }
+
+/** Average days in each unit, for turning any schedule into a monthly figure. */
+const DAYS_PER_UNIT: Record<IntervalUnit, number> = {
+  day: 1,
+  week: 7,
+  month: 365.25 / 12,
+  year: 365.25,
+};
+
+/**
+ * What a recurring cost comes to per month on average: a weekly 100 is about
+ * 435 a month, a yearly 1,200 is 100. Inactive costs count as zero.
+ */
+export function monthlyEquivalent(cost: RecurringCost): number {
+  if (!cost.active) return 0;
+  const { count, unit } = recurringInterval(cost);
+  const days = DAYS_PER_UNIT[unit] * count;
+  return days > 0 ? (Number(cost.amount) * (365.25 / 12)) / days : 0;
+}

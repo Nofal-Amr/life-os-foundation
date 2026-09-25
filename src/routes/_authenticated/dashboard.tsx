@@ -19,6 +19,8 @@ import { toast } from "sonner";
 
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { TodayRing, TodayRingLegend, useTodaySegments } from "@/components/app/TodayRing";
+import { CheckIn } from "@/components/app/CheckIn";
+import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
 import { DaySummary } from "@/components/app/DaySummary";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { HubCard } from "@/components/app/HubCard";
@@ -951,6 +953,9 @@ function DashboardPage() {
                 app shows what to do first (ADHD: one clear focus). */}
             <HubCard />
 
+            {/* How you feel, in two taps, with a one-minute reset beside it. */}
+            <CheckIn />
+
             {/* Zone 2 — one block for everything today, each row acting on itself. */}
             <section className="min-w-0">
               <h2 className="text-base font-semibold text-foreground">Today</h2>
@@ -999,8 +1004,12 @@ function DashboardPage() {
                   )}
                 </div>
 
-                <DaySummary className="min-w-0" />
+                <div className="min-w-0 space-y-4">
+                  <DaySummary className="min-w-0" />
+                  <OnThisDay className="min-w-0" />
+                </div>
               </div>
+              <ReflectionNudge className="mt-4" />
 
               <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">
                 {isEnabled("calendar") ? (

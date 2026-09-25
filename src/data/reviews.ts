@@ -11,6 +11,7 @@ export type ReviewInput = {
   challenges: string | null;
   gratitude: string | null;
   mood: number | null;
+  energy?: number | null;
   tomorrow_focus: string | null;
 };
 
@@ -52,3 +53,47 @@ export async function saveReview(input: ReviewInput) {
       .single(),
   );
 }
+
+export type CheckIn = { mood?: number | null; energy?: number | null };
+
+/**
+ * A two-tap check-in: saves only mood and/or energy for the day, so a written
+ * review for the same date is never overwritten.
+ */
+export async function saveCheckIn(review_date: string, input: CheckIn) {
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase
+      .from("daily_reviews")
+      .upsert({ review_date, user_id, ...input }, { onConflict: "user_id,review_date" })
+      .select()
+      .single(),
+  ) as DailyReview;
+}
+
+/** The same calendar day in each of the previous `years` years. */
+export function sameDayPreviousYears(date: string, years = 5): string[] {
+  const [y, m, d] = date.split("-").map(Number) as [number, number, number];
+  return Array.from({ length: years }, (_, i) => {
+    const year = y - 1 - i;
+    // 29 Feb falls back to 28 Feb in years without it.
+    const day = m === 2 && d === 29 && !(year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 28 : d;
+    return `${year}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  });
+}
+
+export const onThisDayReviewsQuery = (date: string) =>
+  queryOptions({
+    queryKey: [...reviewKeys.all, "on-this-day", date] as const,
+    queryFn: async () =>
+      unwrap(
+        await supabase
+          .from("daily_reviews")
+          .select("*")
+          .in("review_date", sameDayPreviousYears(date))
+          .order("review_date", { ascending: false }),
+      ) as DailyReview[],
+  });
+
+export const MOOD_LABELS = ["Low", "Meh", "Okay", "Good", "Great"] as const;
+export const ENERGY_LABELS = ["Drained", "Low", "Steady", "Strong", "Charged"] as const;

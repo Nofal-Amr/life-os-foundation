@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  ENERGY_LABELS,
+  MOOD_LABELS,
   reviewByDateQuery,
   reviewKeys,
   reviewsQuery,
@@ -55,6 +57,7 @@ function ReviewPage() {
     challenges: null,
     gratitude: null,
     mood: null,
+    energy: null,
     tomorrow_focus: null,
   });
 
@@ -66,6 +69,7 @@ function ReviewPage() {
       challenges: r?.challenges ?? null,
       gratitude: r?.gratitude ?? null,
       mood: r?.mood ?? null,
+      energy: r?.energy ?? null,
       tomorrow_focus: r?.tomorrow_focus ?? null,
     });
   }, [review.data, date]);
@@ -146,7 +150,25 @@ function ReviewPage() {
                 <SelectContent>
                   {MOODS.map((m) => (
                     <SelectItem key={m} value={String(m)}>
-                      {m} / 5
+                      {m} · {MOOD_LABELS[m - 1]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Energy</Label>
+              <Select
+                value={form.energy ? String(form.energy) : ""}
+                onValueChange={(v) => setForm({ ...form, energy: Number(v) })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Not set" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MOODS.map((m) => (
+                    <SelectItem key={m} value={String(m)}>
+                      {m} · {ENERGY_LABELS[m - 1]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -187,7 +209,12 @@ function ReviewPage() {
                   {fmtDate(r.review_date)}
                 </button>
                 <span className="text-xs text-muted-foreground">
-                  {r.mood ? `Mood ${r.mood}/5` : "—"}
+                  {[
+                    r.mood ? MOOD_LABELS[r.mood - 1] : null,
+                    r.energy ? `${ENERGY_LABELS[r.energy - 1]} energy` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
                 </span>
               </li>
             ))}
