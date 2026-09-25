@@ -212,6 +212,7 @@ export type Database = {
         Row: {
           challenges: string | null
           created_at: string
+          energy: number | null
           gratitude: string | null
           id: string
           mood: number | null
@@ -224,6 +225,7 @@ export type Database = {
         Insert: {
           challenges?: string | null
           created_at?: string
+          energy?: number | null
           gratitude?: string | null
           id?: string
           mood?: number | null
@@ -236,6 +238,7 @@ export type Database = {
         Update: {
           challenges?: string | null
           created_at?: string
+          energy?: number | null
           gratitude?: string | null
           id?: string
           mood?: number | null
@@ -481,6 +484,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      fuel_fillups: {
+        Row: {
+          created_at: string
+          filled_at: string
+          full_tank: boolean
+          grade: string | null
+          id: string
+          litres: number | null
+          note: string | null
+          odometer_km: number
+          price_per_litre: number | null
+          resource_id: string
+          total_cost: number | null
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filled_at?: string
+          full_tank?: boolean
+          grade?: string | null
+          id?: string
+          litres?: number | null
+          note?: string | null
+          odometer_km: number
+          price_per_litre?: number | null
+          resource_id: string
+          total_cost?: number | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          filled_at?: string
+          full_tank?: boolean
+          grade?: string | null
+          id?: string
+          litres?: number | null
+          note?: string | null
+          odometer_km?: number
+          price_per_litre?: number | null
+          resource_id?: string
+          total_cost?: number | null
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_fillups_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_fillups_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       goals: {
         Row: {
@@ -1118,6 +1187,42 @@ export type Database = {
           },
         ]
       }
+      reminders: {
+        Row: {
+          created_at: string
+          done_at: string | null
+          id: string
+          note: string | null
+          remind_at: string
+          repeat: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          remind_at: string
+          repeat?: string
+          title: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          remind_at?: string
+          repeat?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       resource_readings: {
         Row: {
           created_at: string
@@ -1173,8 +1278,8 @@ export type Database = {
           name: string
           quota_amount: number | null
           tariff: Json | null
-          unit_cost: number | null
           unit: string
+          unit_cost: number | null
           updated_at: string
           user_id: string
         }
@@ -1194,8 +1299,8 @@ export type Database = {
           name: string
           quota_amount?: number | null
           tariff?: Json | null
-          unit_cost?: number | null
           unit: string
+          unit_cost?: number | null
           updated_at?: string
           user_id: string
         }
@@ -1215,8 +1320,8 @@ export type Database = {
           name?: string
           quota_amount?: number | null
           tariff?: Json | null
-          unit_cost?: number | null
           unit?: string
+          unit_cost?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -1244,6 +1349,7 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          due_time: string | null
           estimate_unit: string | null
           estimated_minutes: number | null
           goal_id: string | null
@@ -1256,6 +1362,7 @@ export type Database = {
           postponed_count: number
           priority: Database["public"]["Enums"]["priority_level"]
           project_id: string | null
+          repeat: string | null
           start_date: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
@@ -1268,6 +1375,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           estimate_unit?: string | null
           estimated_minutes?: number | null
           goal_id?: string | null
@@ -1280,6 +1388,7 @@ export type Database = {
           postponed_count?: number
           priority?: Database["public"]["Enums"]["priority_level"]
           project_id?: string | null
+          repeat?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
@@ -1292,6 +1401,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          due_time?: string | null
           estimate_unit?: string | null
           estimated_minutes?: number | null
           goal_id?: string | null
@@ -1304,6 +1414,7 @@ export type Database = {
           postponed_count?: number
           priority?: Database["public"]["Enums"]["priority_level"]
           project_id?: string | null
+          repeat?: string | null
           start_date?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
@@ -1378,7 +1489,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {
@@ -1454,6 +1580,7 @@ export type Database = {
           date_format: string
           dimension_order: string[] | null
           enabled_modules: string[]
+          food_prefs: Json | null
           id: string
           onboarding_completed_at: string | null
           skin: string
@@ -1469,6 +1596,7 @@ export type Database = {
           date_format?: string
           dimension_order?: string[] | null
           enabled_modules?: string[]
+          food_prefs?: Json | null
           id?: string
           onboarding_completed_at?: string | null
           skin?: string
@@ -1484,6 +1612,7 @@ export type Database = {
           date_format?: string
           dimension_order?: string[] | null
           enabled_modules?: string[]
+          food_prefs?: Json | null
           id?: string
           onboarding_completed_at?: string | null
           skin?: string
@@ -1530,10 +1659,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      delete_my_account: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      delete_my_account: { Args: never; Returns: undefined }
     }
     Enums: {
       account_type: "checking" | "savings" | "cash" | "credit"
@@ -1556,7 +1682,7 @@ export type Database = {
         | "daily"
         | "hourly"
         | "custom"
-      resource_kind: "meter" | "quota"
+      resource_kind: "meter" | "quota" | "vehicle"
       task_status:
         | "inbox"
         | "todo"
@@ -1714,7 +1840,7 @@ export const Constants = {
         "hourly",
         "custom",
       ],
-      resource_kind: ["meter", "quota"],
+      resource_kind: ["meter", "quota", "vehicle"],
       task_status: [
         "inbox",
         "todo",

@@ -588,7 +588,7 @@ function ResourcesPage() {
                       </Button>
                     ) : null}
                   </div>
-                  {own.length >= 2 ? (
+                  {own.length >= 2 && resource.kind !== "vehicle" ? (
                     <ResourceUsage
                       kind={resource.kind}
                       unit={resource.unit}
