@@ -20,7 +20,8 @@ type Tile = {
 
 /** Each tile wears its own identity colour; the word says what it counts. */
 const TILES: Tile[] = [
-  { key: "inbox", label: "In inbox", icon: Inbox, color: "var(--entity-amber)", to: "/tasks" },
+  // Tasks added quickly, with no day or project yet (status "inbox").
+  { key: "inbox", label: "Unsorted", icon: Inbox, color: "var(--entity-amber)", to: "/tasks" },
   {
     key: "dueToday",
     label: "Due today",

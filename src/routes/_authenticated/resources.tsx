@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Wallet, Wifi, Zap } from "lucide-react";
@@ -54,6 +55,9 @@ import {
   type Resource,
   type ResourceInput,
   type ResourceKind,
+  deleteReading,
+  updateReading,
+  type ResourceReading,
 } from "@/data/resources";
 import { hasEnoughPoints, meterCostPerDay, quotaRing } from "@/data/stats";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -132,6 +136,8 @@ function ResourcesPage() {
   const [form, setForm] = useState<ResourceInput>(emptyResource);
   const [toDelete, setToDelete] = useState<Resource | null>(null);
   const [readingFor, setReadingFor] = useState<Resource | null>(null);
+  /** Set when the reading dialog is fixing an existing reading. */
+  const [editingReading, setEditingReading] = useState<ResourceReading | null>(null);
   const [readingValue, setReadingValue] = useState("");
   const [topUpFor, setTopUpFor] = useState<Resource | null>(null);
   /** When the reading was taken ("yyyy-MM-ddTHH:mm", local); defaults to now. */
@@ -187,23 +193,41 @@ function ResourcesPage() {
     onError,
   });
 
+  const removeReading = useMutation({
+    mutationFn: (reading: ResourceReading) => deleteReading(reading.id).then(() => reading),
+    onSuccess: (reading) => {
+      queryClient.invalidateQueries({ queryKey: resourceKeys.readings });
+      toast("Reading deleted.", {
+        action: {
+          label: "Undo",
+          onClick: () =>
+            void addReading({
+              resource_id: reading.resource_id,
+              reading: Number(reading.reading),
+              reading_at: reading.reading_at,
+              note: reading.note,
+            }).then(() => queryClient.invalidateQueries({ queryKey: resourceKeys.readings })),
+        },
+      });
+    },
+    onError,
+  });
+
   const logReading = useMutation({
     mutationFn: () => {
       if (!readingFor) throw new Error("Choose a resource.");
       const value = Number(readingValue);
       if (readingValue === "" || Number.isNaN(value)) throw new Error("Enter the reading.");
-      return addReading({
-        resource_id: readingFor.id,
-        reading: value,
-        reading_at: readingAt ? localInputToISO(readingAt) : new Date().toISOString(),
-        note: null,
-      });
+      const at = readingAt ? localInputToISO(readingAt) : new Date().toISOString();
+      if (editingReading) return updateReading(editingReading.id, { reading: value, reading_at: at });
+      return addReading({ resource_id: readingFor.id, reading: value, reading_at: at, note: null });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: resourceKeys.readings });
+      toast.success(editingReading ? "Reading updated." : "Reading added.");
       setReadingFor(null);
+      setEditingReading(null);
       setReadingValue("");
-      toast.success("Reading added.");
     },
     onError,
   });
@@ -261,7 +285,15 @@ function ResourcesPage() {
     setDialogOpen(true);
   }
 
+  function openEditReading(resource: Resource, reading: ResourceReading) {
+    setReadingFor(resource);
+    setEditingReading(reading);
+    setReadingValue(String(Number(reading.reading)));
+    setReadingAt(isoToLocalInput(reading.reading_at));
+  }
+
   function openReading(resource: Resource) {
+    setEditingReading(null);
     setReadingFor(resource);
     setReadingValue("");
     setReadingAt(isoToLocalInput(new Date().toISOString()));
@@ -633,6 +665,60 @@ function ResourcesPage() {
                       readings={own}
                     />
                   ) : null}
+                  {own.length ? (
+                    <details className="mt-3 text-sm">
+                      <summary className="min-h-9 cursor-pointer select-none py-1.5 text-xs text-muted-foreground">
+                        {resource.kind === "vehicle" ? "Odometer readings" : "Readings"} (
+                        {own.length}) · edit or delete
+                      </summary>
+                      <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
+                        {[...own]
+                          .reverse()
+                          .slice(0, 60)
+                          .map((reading) => (
+                            <li
+                              key={reading.id}
+                              className="flex items-center justify-between gap-2 px-3 py-2"
+                            >
+                              <span className="min-w-0 tabular-nums">
+                                {fmtDate(reading.reading_at.slice(0, 10))}{" "}
+                                <span className="text-muted-foreground">
+                                  {format(new Date(reading.reading_at), "HH:mm")}
+                                </span>
+                                {" · "}
+                                <span className="font-medium">
+                                  {round(Number(reading.reading))} {resource.unit}
+                                </span>
+                                {reading.note ? (
+                                  <span className="block truncate text-xs text-muted-foreground">
+                                    {reading.note}
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className="flex shrink-0 gap-1">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => openEditReading(resource, reading)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  disabled={removeReading.isPending}
+                                  onClick={() => removeReading.mutate(reading)}
+                                >
+                                  Delete
+                                </Button>
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </details>
+                  ) : null}
                 </li>
               );
             })}
@@ -916,7 +1002,11 @@ function ResourcesPage() {
       <FormDialog
         open={!!readingFor}
         onOpenChange={(open) => !open && setReadingFor(null)}
-        title={readingFor ? `Add reading · ${readingFor.name}` : "Add reading"}
+        title={
+          readingFor
+            ? `${editingReading ? "Edit reading" : "Add reading"} · ${readingFor.name}`
+            : "Add reading"
+        }
         submitLabel="Add reading"
         pending={logReading.isPending}
         onSubmit={() => logReading.mutate()}

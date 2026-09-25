@@ -115,6 +115,16 @@ export async function addReading(input: ReadingInput): Promise<ResourceReading> 
   ) as ResourceReading;
 }
 
+/** Fix a reading: its value, when it was taken, or its note. */
+export async function updateReading(
+  id: string,
+  input: Partial<Pick<ReadingInput, "reading" | "reading_at" | "note">>,
+): Promise<ResourceReading> {
+  return unwrap(
+    await supabase.from("resource_readings").update(input).eq("id", id).select().single(),
+  ) as ResourceReading;
+}
+
 export async function deleteReading(id: string): Promise<void> {
   unwrap(await supabase.from("resource_readings").delete().eq("id", id).select());
 }

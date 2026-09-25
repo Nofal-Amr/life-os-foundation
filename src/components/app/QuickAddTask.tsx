@@ -91,7 +91,7 @@ export function QuickAddTaskDialog({
             />
             {titles.length > 1 ? (
               <p className="text-xs text-muted-foreground">
-                {titles.length} tasks, one per line. They go to your inbox.
+                {titles.length} tasks, one per line. They go to Unsorted until you give them a day.
               </p>
             ) : null}
           </div>
