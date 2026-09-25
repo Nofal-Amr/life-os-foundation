@@ -1272,6 +1272,7 @@ export type Database = {
           cycle_days: number | null
           cycle_start_date: string | null
           cycle_unit: string | null
+          full_tank_km: number | null
           icon: string | null
           id: string
           kind: Database["public"]["Enums"]["resource_kind"]
@@ -1293,6 +1294,7 @@ export type Database = {
           cycle_days?: number | null
           cycle_start_date?: string | null
           cycle_unit?: string | null
+          full_tank_km?: number | null
           icon?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["resource_kind"]
@@ -1314,6 +1316,7 @@ export type Database = {
           cycle_days?: number | null
           cycle_start_date?: string | null
           cycle_unit?: string | null
+          full_tank_km?: number | null
           icon?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["resource_kind"]
@@ -1350,6 +1353,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           due_time: string | null
+          energy: number | null
           estimate_unit: string | null
           estimated_minutes: number | null
           goal_id: string | null
@@ -1376,6 +1380,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           due_time?: string | null
+          energy?: number | null
           estimate_unit?: string | null
           estimated_minutes?: number | null
           goal_id?: string | null
@@ -1402,6 +1407,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           due_time?: string | null
+          energy?: number | null
           estimate_unit?: string | null
           estimated_minutes?: number | null
           goal_id?: string | null

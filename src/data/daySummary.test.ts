@@ -44,14 +44,14 @@ describe("dayLines", () => {
           {
             kind: "expense",
             date: "2026-09-23",
-            amount: 100,
+            amount: -100,
             description: "Fuel 92",
             category_id: null,
           },
           {
             kind: "expense",
             date: "2026-09-23",
-            amount: "50",
+            amount: "-50",
             description: null,
             category_id: "c1",
           },

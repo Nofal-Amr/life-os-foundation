@@ -60,7 +60,8 @@ export function dayLines(input: DayInputs, fmt: Formatters): DayLine[] {
   const categoryName = new Map(input.categories.map((row) => [row.id, row.name]));
   const today = input.transactions.filter((row) => row.date === date);
   const spending = today.filter((row) => row.kind === "expense");
-  const spent = spending.reduce((sum, row) => sum + Number(row.amount), 0);
+  // Amounts are signed (money out is negative); the log shows sizes.
+  const spent = spending.reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
   if (spending.length) {
     lines.push({
       key: "spent",
@@ -77,7 +78,7 @@ export function dayLines(input: DayInputs, fmt: Formatters): DayLine[] {
   }
   const income = today
     .filter((row) => row.kind === "income")
-    .reduce((sum, row) => sum + Number(row.amount), 0);
+    .reduce((sum, row) => sum + Math.abs(Number(row.amount)), 0);
   if (income > 0) lines.push({ key: "income", text: `${fmt.money(income)} received` });
 
   const meals = input.foodLogs.filter((row) => row.log_date === date);

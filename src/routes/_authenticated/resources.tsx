@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
 import { ResourceUsage } from "@/components/app/ResourceUsage";
+import { VehicleCard } from "@/components/app/VehicleCard";
+import { fuelFillupsQuery } from "@/data/fuel";
 import { EntityIcon, EntityIdentityPicker, entityIconOf } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -69,6 +71,7 @@ const STARTER_RESOURCES: { name: string; kind: ResourceKind; unit: string }[] = 
   { name: "Electricity", kind: "meter", unit: "kWh" },
   { name: "Water", kind: "meter", unit: "m3" },
   { name: "Internet", kind: "quota", unit: "GB" },
+  { name: "Car", kind: "vehicle", unit: "km" },
 ];
 
 export const Route = createFileRoute("/_authenticated/resources")({
@@ -118,6 +121,7 @@ function ResourcesPage() {
   const queryClient = useQueryClient();
   const resources = useQuery(resourcesQuery());
   const readings = useQuery(resourceReadingsQuery());
+  const fuel = useQuery(fuelFillupsQuery());
   const categories = useQuery(financeCategoriesQuery());
   const accounts = useQuery(accountsQuery());
   const { fmtDate, fmtMoney, fmtShortDate } = usePreferences();
@@ -250,6 +254,7 @@ function ResourcesPage() {
       color: resource.color,
       active: resource.active,
       tariff: parseTariff(resource.tariff),
+      full_tank_km: resource.full_tank_km == null ? null : Number(resource.full_tank_km),
     });
     setDialogOpen(true);
   }
@@ -454,10 +459,12 @@ function ResourcesPage() {
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <Button size="sm" onClick={() => openReading(resource)}>
-                        <Plus className="size-4" />
-                        Add reading
-                      </Button>
+                      {resource.kind !== "vehicle" ? (
+                        <Button size="sm" onClick={() => openReading(resource)}>
+                          <Plus className="size-4" />
+                          Add reading
+                        </Button>
+                      ) : null}
                       <Button size="sm" variant="ghost" onClick={() => openEdit(resource)}>
                         Edit
                       </Button>
@@ -467,6 +474,14 @@ function ResourcesPage() {
                     </div>
                   </div>
 
+                  {resource.kind === "vehicle" ? (
+                    <VehicleCard
+                      vehicle={resource}
+                      fillups={fuel.data ?? []}
+                      readings={own}
+                      onUpdateKm={() => openReading(resource)}
+                    />
+                  ) : (
                   <div className="mt-4 space-y-2 text-sm">
                     {latest ? (
                       <p className="text-muted-foreground">
@@ -588,6 +603,7 @@ function ResourcesPage() {
                       </Button>
                     ) : null}
                   </div>
+                  )}
                   {own.length >= 2 && resource.kind !== "vehicle" ? (
                     <ResourceUsage
                       kind={resource.kind}
@@ -629,7 +645,13 @@ function ResourcesPage() {
             <Label>Kind</Label>
             <Select
               value={form.kind}
-              onValueChange={(v) => setForm({ ...form, kind: v as ResourceInput["kind"] })}
+              onValueChange={(v) =>
+                setForm({
+                  ...form,
+                  kind: v as ResourceInput["kind"],
+                  ...(v === "vehicle" ? { unit: "km", tariff: null, unit_cost: null } : {}),
+                })
+              }
             >
               <SelectTrigger className="h-12">
                 <SelectValue />
@@ -682,7 +704,49 @@ function ResourcesPage() {
               ) : null}
             </div>
           ) : null}
-          <div className={form.tariff ? "hidden" : "space-y-2"}>
+          {form.kind === "vehicle" ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="resource-tank">Tank size (litres)</Label>
+                <Input
+                  id="resource-tank"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  inputMode="decimal"
+                  className="h-12 tabular-nums"
+                  value={form.quota_amount ?? ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      quota_amount: e.target.value === "" ? null : Number(e.target.value),
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">Optional. With it, km left follows your real consumption.</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="resource-full-tank">A full tank lasts about (km)</Label>
+                <Input
+                  id="resource-full-tank"
+                  type="number"
+                  step="1"
+                  min="0"
+                  inputMode="numeric"
+                  className="h-12 tabular-nums"
+                  value={form.full_tank_km ?? ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      full_tank_km: e.target.value === "" ? null : Number(e.target.value),
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">Your own figure, used until two full-tank fill-ups give the real one.</p>
+              </div>
+            </>
+          ) : null}
+          <div className={form.tariff || form.kind === "vehicle" ? "hidden" : "space-y-2"}>
             <Label htmlFor="resource-cost">Cost per unit</Label>
             <Input
               id="resource-cost"
@@ -720,7 +784,7 @@ function ResourcesPage() {
               />
             </div>
           ) : null}
-          <div className="space-y-2">
+          <div className={form.kind === "vehicle" ? "hidden" : "space-y-2"}>
             <Label htmlFor="resource-cycle-start">Cycle starts</Label>
             <DatePicker
               id="resource-cycle-start"
@@ -728,7 +792,7 @@ function ResourcesPage() {
               onChange={(value) => setForm({ ...form, cycle_start_date: value || null })}
             />
           </div>
-          <div className="space-y-2">
+          <div className={form.kind === "vehicle" ? "hidden" : "space-y-2"}>
             <Label htmlFor="resource-cycle-count">Cycle length</Label>
             <div className="flex gap-2">
               <Input

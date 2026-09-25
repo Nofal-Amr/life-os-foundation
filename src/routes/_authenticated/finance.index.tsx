@@ -130,7 +130,8 @@ function FinanceOverview() {
   const todayExpenses = (transactions.data ?? []).filter(
     (t) => t.kind === "expense" && t.date === todayISO(),
   );
-  const spentToday = todayExpenses.reduce((sum, t) => sum + Number(t.amount), 0);
+  // Money out is stored negative; "spent" is its size.
+  const spentToday = todayExpenses.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
   const todayCount = todayExpenses.length;
 
   const totals = availableBeforePayday({

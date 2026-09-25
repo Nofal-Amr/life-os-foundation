@@ -13,6 +13,11 @@ export type ResourceKind = Database["public"]["Enums"]["resource_kind"];
 export const RESOURCE_KINDS: { value: ResourceKind; label: string; hint: string }[] = [
   { value: "meter", label: "Meter", hint: "Readings go up, like an electricity meter." },
   { value: "quota", label: "Quota", hint: "Readings are what is left, like internet data." },
+  {
+    value: "vehicle",
+    label: "Vehicle",
+    hint: "Fill-ups and odometer: your real km per litre, cost per km and km left.",
+  },
 ];
 
 export const resourceKeys = {
@@ -58,6 +63,8 @@ export type ResourceInput = {
   active: boolean;
   /** Tiered pricing; when set it replaces unit_cost for bills. */
   tariff?: Tariff | null;
+  /** Vehicles: "a full tank lasts about … km", until fill-ups say. */
+  full_tank_km?: number | null;
 };
 
 export async function createResource(input: ResourceInput): Promise<Resource> {
