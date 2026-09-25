@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, format } from "date-fns";
 import { Bell, BellOff, ListChecks, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,8 +28,13 @@ import {
   PRAYER_NAMES,
   prayerLogsQuery,
   prayerSettingsQuery,
+  setPrayerStatus,
+  spiritKeys,
   statusOf,
+  type PrayerName,
+  type PrayerStatus,
 } from "@/data/spirit";
+import { buildWidgetPayload } from "@/data/prayerWidget";
 import { tasksQuery } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -38,6 +44,8 @@ import {
   isAndroidApp,
   requestNotifications,
   scheduleReminders,
+  setWidgetData,
+  takePendingPrayerLogs,
   type Reminder,
 } from "@/lib/native";
 import { prayerTimesFor } from "@/lib/prayer";
@@ -87,6 +95,37 @@ function useReminderSettings() {
  * prayer not yet logged, and a daily summary of tasks due. Mounted once in
  * the app layout; reschedules whenever times, logs, tasks or settings change.
  */
+/** Prayers logged from a notification button, saved once the app is open. */
+function usePendingPrayerLogs(enabled: boolean) {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!enabled) return;
+    const flush = async () => {
+      const pending = takePendingPrayerLogs();
+      if (!pending.length) return;
+      for (const log of pending) {
+        try {
+          await setPrayerStatus(log.date, log.name as PrayerName, log.status as PrayerStatus);
+        } catch {
+          // Offline: the offline store queues it.
+        }
+      }
+      void queryClient.invalidateQueries({ queryKey: spiritKeys.logs });
+      toast.success(
+        pending.length === 1
+          ? `${prayerLabel(pending[0]!.name as PrayerName, pending[0]!.date)} logged from the notification.`
+          : `${pending.length} prayers logged from notifications.`,
+      );
+    };
+    void flush();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void flush();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [enabled, queryClient]);
+}
+
 export function useReminderSync() {
   const android = isAndroidApp();
   const { enabled: modules } = useModules();
@@ -96,6 +135,7 @@ export function useReminderSync() {
   const userReminders = useQuery({ ...userRemindersQuery(), enabled: android });
   const { fmtTime } = usePreferences();
   const [settings] = useReminderSettings();
+  usePendingPrayerLogs(android);
 
   // Ask for notification permission once, since reminders are on by default.
   useEffect(() => {
@@ -164,9 +204,10 @@ export function useReminderSync() {
               id: `${date}-${name}-now`,
               at: time.getTime(),
               title: `It's time for ${label}`,
-              body: `${label} · ${fmtTime(time)}. Tap to log it.`,
+              body: `${label} · ${fmtTime(time)}. Log it right here.`,
               path: "/spirit",
               channel: "prayers",
+              prayer: { date, name, actions: ["jamaah", "on_time"] },
             });
           }
           // Clutch: the last minutes before this prayer's time runs out.
@@ -182,6 +223,7 @@ export function useReminderSync() {
                   : `${label}'s time ends in 5 minutes. Pray it now and log it as Clutch.`,
               path: "/spirit",
               channel: "prayers",
+              prayer: { date, name, actions: ["clutch", "late"] },
             });
           }
         }
@@ -208,6 +250,25 @@ export function useReminderSync() {
     reminders.push(...reminderNotifications(userReminders.data ?? [], now));
 
     scheduleReminders(reminders);
+
+    // The home-screen widget gets today's times and what's logged.
+    if (config?.latitude != null && config.longitude != null && modules.includes("spirit")) {
+      setWidgetData(
+        buildWidgetPayload({
+          today: todayISO(),
+          place: config.city,
+          logs: logs.data ?? [],
+          timesFor: (day) =>
+            prayerTimesFor(
+              Number(config.latitude),
+              Number(config.longitude),
+              config.calc_method,
+              config.asr_school,
+              day,
+            ) as never,
+        }),
+      );
+    }
     // fmtTime changes identity every render; the time format lives in preferences anyway.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [android, prayerSettings.data, logs.data, tasks.data, userReminders.data, settings, modules]);

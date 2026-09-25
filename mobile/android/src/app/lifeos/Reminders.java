@@ -90,6 +90,18 @@ final class Reminders {
         intent.putExtra("body", item.optString("body"));
         intent.putExtra("path", item.optString("path", "/"));
         intent.putExtra("channel", item.optString("channel", CHANNEL_ID));
+        JSONObject prayer = item.optJSONObject("prayer");
+        if (prayer != null) {
+            intent.putExtra("prayer_date", prayer.optString("date"));
+            intent.putExtra("prayer_name", prayer.optString("name"));
+            JSONArray actions = prayer.optJSONArray("actions");
+            StringBuilder list = new StringBuilder();
+            for (int i = 0; actions != null && i < actions.length() && i < 3; i++) {
+                if (list.length() > 0) list.append(",");
+                list.append(actions.optString(i));
+            }
+            intent.putExtra("prayer_actions", list.toString());
+        }
         return PendingIntent.getBroadcast(
             context,
             item.optString("id").hashCode(),

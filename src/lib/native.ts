@@ -13,6 +13,8 @@ type NativeBridge = {
   openHealthSettings?(which: string): void;
   showTimer?(title: string, startedAt: number): void;
   saveFile?(name: string, base64: string, mime: string): string;
+  setWidgetData?(json: string): void;
+  takePendingPrayerLogs?(): string;
 };
 
 declare global {
@@ -54,6 +56,8 @@ export type Reminder = {
   path: string;
   /** Android notification channel: "prayers" (default) or "tasks". */
   channel?: "prayers" | "tasks";
+  /** Prayer reminders: buttons that log the prayer straight from the notification. */
+  prayer?: { date: string; name: string; actions: string[] };
 };
 
 /** Replaces every scheduled reminder with this list. */
@@ -149,4 +153,25 @@ export function saveFile(name: string, bytes: Uint8Array, mime: string): string 
   link.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
   return "your downloads";
+}
+
+/** Hands the home-screen prayer widget what to show. */
+export function setWidgetData(payload: unknown): void {
+  try {
+    bridge()?.setWidgetData?.(JSON.stringify(payload));
+  } catch {
+    // Older app without widgets.
+  }
+}
+
+export type PendingPrayerLog = { date: string; name: string; status: string; at: number };
+
+/** Prayers logged from notification buttons while the app was closed; taking them clears them. */
+export function takePendingPrayerLogs(): PendingPrayerLog[] {
+  try {
+    const raw = bridge()?.takePendingPrayerLogs?.();
+    return raw ? (JSON.parse(raw) as PendingPrayerLog[]) : [];
+  } catch {
+    return [];
+  }
 }

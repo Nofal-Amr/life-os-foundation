@@ -413,6 +413,22 @@ public class MainActivity extends Activity {
             out.append(String.format("#%06X", 0xFFFFFF & color));
         }
 
+        /** What the home-screen prayer widget shows (see src/data/prayerWidget.ts). */
+        @JavascriptInterface
+        public void setWidgetData(String json) {
+            if (!trusted() || json == null || json.length() > 200_000) return;
+            getSharedPreferences(PrayerWidget.PREFS, MODE_PRIVATE)
+                .edit().putString(PrayerWidget.KEY_DATA, json).apply();
+            PrayerWidget.refresh(MainActivity.this);
+        }
+
+        /** Prayers logged from notification buttons; handing them over clears them. */
+        @JavascriptInterface
+        public String takePendingPrayerLogs() {
+            if (!trusted()) return "[]";
+            return PrayerActionReceiver.take(MainActivity.this);
+        }
+
         @JavascriptInterface
         public boolean canNotify() {
             if (Build.VERSION.SDK_INT >= 33
