@@ -11,6 +11,9 @@
 
     <!-- Prayer reminders -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- The Qibla finder's camera view; asked for only when it's opened. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />

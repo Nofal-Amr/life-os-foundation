@@ -34,6 +34,7 @@ import {
   type PrayerName,
   type PrayerStatus,
 } from "@/data/spirit";
+import { azkarDone, dhikrKeys, dhikrLogsQuery, logDhikr } from "@/data/azkar";
 import { buildWidgetPayload } from "@/data/prayerWidget";
 import { tasksQuery } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
@@ -105,16 +106,29 @@ function usePendingPrayerLogs(enabled: boolean) {
       if (!pending.length) return;
       for (const log of pending) {
         try {
-          await setPrayerStatus(log.date, log.name as PrayerName, log.status as PrayerStatus);
+          if (log.name === "azkar_morning" || log.name === "azkar_evening") {
+            const kind = log.name === "azkar_morning" ? "morning" : "evening";
+            await logDhikr({ log_date: log.date, kind, count: 0 });
+          } else {
+            await setPrayerStatus(log.date, log.name as PrayerName, log.status as PrayerStatus);
+          }
         } catch {
           // Offline: the offline store queues it.
         }
       }
       void queryClient.invalidateQueries({ queryKey: spiritKeys.logs });
+      void queryClient.invalidateQueries({ queryKey: dhikrKeys.logs });
+      const first = pending[0]!;
+      const firstLabel =
+        first.name === "azkar_morning"
+          ? "Morning azkar"
+          : first.name === "azkar_evening"
+            ? "Evening azkar"
+            : prayerLabel(first.name as PrayerName, first.date);
       toast.success(
         pending.length === 1
-          ? `${prayerLabel(pending[0]!.name as PrayerName, pending[0]!.date)} logged from the notification.`
-          : `${pending.length} prayers logged from notifications.`,
+          ? `${firstLabel} logged from the notification.`
+          : `${pending.length} logged from notifications.`,
       );
     };
     void flush();
@@ -133,6 +147,7 @@ export function useReminderSync() {
   const logs = useQuery({ ...prayerLogsQuery(), enabled: android });
   const tasks = useQuery({ ...tasksQuery(), enabled: android });
   const userReminders = useQuery({ ...userRemindersQuery(), enabled: android });
+  const dhikrLogs = useQuery({ ...dhikrLogsQuery(), enabled: android });
   const { fmtTime } = usePreferences();
   const [settings] = useReminderSettings();
   usePendingPrayerLogs(android);
@@ -210,6 +225,22 @@ export function useReminderSync() {
               prayer: { date, name, actions: ["jamaah", "on_time"] },
             });
           }
+          // Azkar: morning after Fajr, evening after Asr, until read.
+          const azkarTime = name === "fajr" ? "morning" : name === "asr" ? "evening" : null;
+          if (settings.azkar && azkarTime && !azkarDone(dhikrLogs.data ?? [], date, azkarTime)) {
+            const at = time.getTime() + settings.azkarDelay * 60_000;
+            if (at > now) {
+              reminders.push({
+                id: `${date}-azkar-${azkarTime}`,
+                at,
+                title: azkarTime === "morning" ? "Morning azkar · أذكار الصباح" : "Evening azkar · أذكار المساء",
+                body: "Tap to read them, or log them here if you already have.",
+                path: `/spirit?tab=azkar&time=${azkarTime}`,
+                channel: "prayers",
+                prayer: { date, name: `azkar_${azkarTime}`, actions: ["read"] },
+              });
+            }
+          }
           // Clutch: the last minutes before this prayer's time runs out.
           const clutch = ends[name].getTime() - 5 * 60_000;
           if (settings.clutch && clutch > now && clutch > time.getTime()) {
@@ -271,7 +302,16 @@ export function useReminderSync() {
     }
     // fmtTime changes identity every render; the time format lives in preferences anyway.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [android, prayerSettings.data, logs.data, tasks.data, userReminders.data, settings, modules]);
+  }, [
+    android,
+    prayerSettings.data,
+    logs.data,
+    tasks.data,
+    userReminders.data,
+    dhikrLogs.data,
+    settings,
+    modules,
+  ]);
 }
 
 function useNotificationsAllowed() {
@@ -338,6 +378,22 @@ function PrayerControls({
             id="prayer-clutch"
             checked={settings.clutch}
             onCheckedChange={(clutch) => update({ clutch })}
+          />
+        </div>
+      ) : null}
+      {settings.enabled ? (
+        <div className="flex items-center justify-between gap-3">
+          <Label htmlFor="azkar-reminder" className="block">
+            Azkar reminders
+            <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+              Morning azkar {settings.azkarDelay} minutes after Fajr, evening azkar after Asr, until
+              you've read them.
+            </span>
+          </Label>
+          <Switch
+            id="azkar-reminder"
+            checked={settings.azkar}
+            onCheckedChange={(azkar) => update({ azkar })}
           />
         </div>
       ) : null}

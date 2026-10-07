@@ -1,10 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Moon } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { AreaHabits } from "@/components/app/AreaHabits";
+import { AzkarSession } from "@/components/app/AzkarSession";
+import { QiblaFinder } from "@/components/app/QiblaFinder";
+import { Tasbih } from "@/components/app/Tasbih";
 
 import { DateNav } from "@/components/app/DateNav";
 import { PrayerDayList, PrayerStats } from "@/components/app/PrayerLog";
@@ -24,6 +27,7 @@ import {
   spiritKeys,
   type PrayerName,
 } from "@/data/spirit";
+import { azkarDone, azkarTimeAt, dhikrLogsQuery, tasbihOn, type AzkarTime } from "@/data/azkar";
 import { prayersOn } from "@/data/stats";
 import { prayerCounts } from "@/data/week";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -47,8 +51,24 @@ export const Route = createFileRoute("/_authenticated/spirit")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { tab?: SpiritTab; time?: AzkarTime } => {
+    const tab = SPIRIT_TABS.find((option) => option.value === search["tab"])?.value;
+    const time = search["time"];
+    return {
+      ...(tab && tab !== "prayers" ? { tab } : {}),
+      ...(time === "morning" || time === "evening" ? { time } : {}),
+    };
+  },
   component: SpiritPage,
 });
+
+const SPIRIT_TABS = [
+  { value: "prayers", label: "Prayers" },
+  { value: "azkar", label: "Azkar" },
+  { value: "tasbih", label: "Tasbih" },
+  { value: "qibla", label: "Qibla" },
+] as const;
+type SpiritTab = (typeof SPIRIT_TABS)[number]["value"];
 
 function lastSevenDates(from: string): Set<string> {
   const dates = new Set<string>();
@@ -67,6 +87,17 @@ function SpiritPage() {
   const logs = useQuery(prayerLogsQuery());
   const { fmtTime, fmtDate } = usePreferences();
   const [date, setDate] = useState(todayISO());
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/spirit" });
+  const tab: SpiritTab = search.tab ?? "prayers";
+  const setTab = (next: SpiritTab) =>
+    void navigate({
+      search: (old) => {
+        const { tab: _previous, ...rest } = old;
+        return next === "prayers" ? rest : { ...rest, tab: next };
+      },
+      replace: true,
+    });
 
   if (settings.isLoading || logs.isLoading) {
     return (
@@ -115,8 +146,41 @@ function SpiritPage() {
 
   return (
     <>
-      <PageHeader title="Spirit" description="A simple record of the five daily prayers." />
+      <PageHeader title="Spirit" description="Prayers, azkar, tasbih and the Qibla." />
 
+      <div
+        className="mb-5 flex gap-1 overflow-x-auto rounded-lg bg-secondary p-1"
+        role="tablist"
+        aria-label="Spirit"
+      >
+        {SPIRIT_TABS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="tab"
+            aria-selected={tab === option.value}
+            onClick={() => setTab(option.value)}
+            className={
+              "min-h-10 flex-1 rounded-md px-3 text-sm font-medium transition-colors " +
+              (tab === option.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
+            }
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "azkar" ? (
+        <AzkarTab times={times} {...(search.time ? { initial: search.time } : {})} />
+      ) : tab === "tasbih" ? (
+        <TasbihTab />
+      ) : tab === "qibla" ? (
+        <QiblaFinder
+          latitude={hasLocation ? Number(config.latitude) : null}
+          longitude={hasLocation ? Number(config.longitude) : null}
+          place={config?.city ?? null}
+        />
+      ) : (
       <div className="space-y-5">
         <DateNav value={date} onChange={setDate} />
         <AreaHabits category="spirit" title="Spirit habits" date={date} />
@@ -175,8 +239,40 @@ function SpiritPage() {
         <PrayerStats logs={logs.data ?? []} today={todayISO()} />
         <PrayerReminderSettings />
       </div>
+      )}
     </>
   );
+}
+
+/** Morning or evening azkar for today, opening on the one that fits the hour. */
+function AzkarTab({
+  times,
+  initial,
+}: {
+  times: ReturnType<typeof prayerTimesFor> | null;
+  initial?: AzkarTime;
+}) {
+  const logs = useQuery(dhikrLogsQuery());
+  const today = todayISO();
+  const [time, setTime] = useState<AzkarTime>(
+    () => initial ?? azkarTimeAt(new Date(), times ? { fajr: times.fajr, dhuhr: times.dhuhr } : null),
+  );
+  if (logs.isLoading) return <LoadingState rows={3} />;
+  if (logs.error) return <ErrorState error={logs.error} onRetry={() => void logs.refetch()} />;
+  return (
+    <AzkarSession
+      date={today}
+      time={time}
+      onTimeChange={setTime}
+      done={azkarDone(logs.data ?? [], today, time)}
+    />
+  );
+}
+
+function TasbihTab() {
+  const logs = useQuery(dhikrLogsQuery());
+  const today = todayISO();
+  return <Tasbih date={today} todayTotal={tasbihOn(logs.data ?? [], today)} />;
 }
 
 /** The five prayer times as a plain record. */

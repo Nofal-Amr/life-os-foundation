@@ -12,6 +12,8 @@ import android.net.Uri;
 public class ReminderReceiver extends BroadcastReceiver {
     /** "Asr", or "Jumu'ah" for Dhuhr on a Friday, for the confirmation. */
     private static String prayerLabel(String name, String date) {
+        if ("azkar_morning".equals(name)) return "Morning azkar";
+        if ("azkar_evening".equals(name)) return "Evening azkar";
         try {
             java.time.LocalDate day = java.time.LocalDate.parse(date);
             if ("dhuhr".equals(name) && day.getDayOfWeek() == java.time.DayOfWeek.FRIDAY) return "Jumu'ah";

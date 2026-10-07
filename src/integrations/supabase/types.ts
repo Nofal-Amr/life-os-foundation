@@ -250,6 +250,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dhikr_logs: {
+        Row: {
+          count: number
+          created_at: string
+          id: string
+          kind: string
+          label: string | null
+          log_date: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          id?: string
+          kind: string
+          label?: string | null
+          log_date: string
+          user_id?: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string | null
+          log_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string

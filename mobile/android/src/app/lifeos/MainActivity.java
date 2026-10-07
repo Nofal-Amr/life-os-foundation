@@ -24,6 +24,7 @@ import android.webkit.ConsoleMessage;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
+import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -55,6 +56,7 @@ public class MainActivity extends Activity {
     private static final int NOTIFICATION_REQUEST = 2;
     private static final int HEALTH_REQUEST = 3;
     private static final int FILE_REQUEST = 4;
+    private static final int CAMERA_REQUEST = 5;
     /** Lets the web app know it runs inside this shell (see src/routes/auth.tsx). */
     private static final String UA_MARKER = "LifeOSAndroid";
     private static final String CALLBACK_SCHEME = "lifeos";
@@ -66,6 +68,8 @@ public class MainActivity extends Activity {
     private volatile String currentHost = APP_HOST;
     /** Pending <input type="file"> request from the page. */
     private ValueCallback<Uri[]> fileCallback;
+    /** A page asking for the camera (the Qibla finder), waiting on the Android prompt. */
+    private PermissionRequest pendingCamera;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +127,30 @@ public class MainActivity extends Activity {
                 return true;
             }
 
+            /**
+             * The camera for the app's own pages only (the Qibla finder's
+             * camera view). Microphone and anything else stay off.
+             */
+            @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                boolean own = request.getOrigin() != null && APP_HOST.equals(request.getOrigin().getHost());
+                boolean cameraOnly = true;
+                for (String resource : request.getResources()) {
+                    if (!PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) cameraOnly = false;
+                }
+                if (!own || !cameraOnly) {
+                    request.deny();
+                    return;
+                }
+                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                    request.grant(new String[] { PermissionRequest.RESOURCE_VIDEO_CAPTURE });
+                    return;
+                }
+                if (pendingCamera != null) pendingCamera.deny();
+                pendingCamera = request;
+                requestPermissions(new String[] { Manifest.permission.CAMERA }, CAMERA_REQUEST);
+            }
+
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 if (hasLocationPermission()) {
@@ -170,7 +198,9 @@ public class MainActivity extends Activity {
         if (!CALLBACK_SCHEME.equals(data.getScheme())) return null;
         if ("open".equals(data.getHost())) {
             String path = data.getEncodedPath();
-            return APP_URL + (path == null ? "" : path.replaceFirst("^/", ""));
+            String query = data.getEncodedQuery();
+            return APP_URL + (path == null ? "" : path.replaceFirst("^/", ""))
+                + (query == null ? "" : "?" + query);
         }
         String query = data.getEncodedQuery();
         String fragment = data.getEncodedFragment();
@@ -213,6 +243,16 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (requestCode == CAMERA_REQUEST) {
+            if (pendingCamera == null) return;
+            if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) {
+                pendingCamera.grant(new String[] { PermissionRequest.RESOURCE_VIDEO_CAPTURE });
+            } else {
+                pendingCamera.deny();
+            }
+            pendingCamera = null;
+            return;
+        }
         if (requestCode == NOTIFICATION_REQUEST || requestCode == HEALTH_REQUEST) {
             // Let the page re-check what it is now allowed to do.
             String event = requestCode == HEALTH_REQUEST ? "life-os-health-permissions" : "life-os-notification-permissions";

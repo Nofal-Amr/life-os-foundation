@@ -164,6 +164,7 @@ export function setWidgetData(payload: unknown): void {
   }
 }
 
+/** name is a prayer, or "azkar_morning" / "azkar_evening" (status "read"). */
 export type PendingPrayerLog = { date: string; name: string; status: string; at: number };
 
 /** Prayers logged from notification buttons while the app was closed; taking them clears them. */

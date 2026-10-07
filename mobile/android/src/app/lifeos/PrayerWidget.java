@@ -230,6 +230,7 @@ public class PrayerWidget extends AppWidgetProvider {
             case "on_time": return "On time";
             case "clutch": return "Clutch";
             case "late": return "Late";
+            case "read": return "Read them";
             default: return status.toLowerCase(Locale.ROOT);
         }
     }

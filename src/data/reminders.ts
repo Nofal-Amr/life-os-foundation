@@ -22,6 +22,10 @@ export type ReminderSettings = {
   tasksEnabled: boolean;
   /** "HH:mm", local time. */
   taskTime: string;
+  /** Morning azkar after Fajr and evening azkar after Asr, until they're read. */
+  azkar: boolean;
+  /** Minutes after Fajr / Asr. */
+  azkarDelay: number;
 };
 
 export const DEFAULT_REMINDERS: ReminderSettings = {
@@ -31,6 +35,8 @@ export const DEFAULT_REMINDERS: ReminderSettings = {
   clutch: true,
   tasksEnabled: true,
   taskTime: "09:00",
+  azkar: true,
+  azkarDelay: 20,
 };
 
 /** Tasks due (or, for today, overdue) and still open, top-level only. */

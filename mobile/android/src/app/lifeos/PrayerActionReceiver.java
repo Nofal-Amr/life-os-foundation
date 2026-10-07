@@ -27,7 +27,8 @@ public class PrayerActionReceiver extends BroadcastReceiver {
         String label = intent.getStringExtra("label");
         int notificationId = intent.getIntExtra("notification", 0);
         if (date == null || name == null || status == null) return;
-        if (!status.matches("jamaah|on_time|clutch|late|missed")) return;
+        if (!status.matches("jamaah|on_time|clutch|late|missed|read")) return;
+        if (!name.matches("fajr|dhuhr|asr|maghrib|isha|azkar_morning|azkar_evening")) return;
 
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         try {

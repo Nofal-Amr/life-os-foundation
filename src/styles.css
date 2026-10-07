@@ -2,6 +2,8 @@
 @source "../src";
 @import "tw-animate-css";
 @import "@fontsource-variable/hanken-grotesk";
+/* Arabic text (azkar, Quran): bundled, so it works offline; loads only when Arabic shows. */
+@import "@fontsource-variable/noto-naskh-arabic";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -21,6 +23,7 @@
 
 @theme inline {
   --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: "Noto Naskh Arabic Variable", "Noto Naskh Arabic", serif;
   /* One dense-data size below xs (heatmaps, chart axes); nothing smaller. */
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
