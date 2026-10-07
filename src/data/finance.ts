@@ -542,16 +542,34 @@ export function separateBalance(
     .reduce((sum, a) => sum + accountBalance(a, transactions, pockets), 0);
 }
 
-/** Active recurring costs falling due on or before the given date. */
-export function upcomingCostsBefore(costs: RecurringCost[], before: Date | null): RecurringCost[] {
+/** A recurring cost and every date it falls due before payday. */
+export type UpcomingCost = { cost: RecurringCost; dates: string[]; total: number };
+
+/**
+ * Active recurring costs falling due on or before the given date, each with
+ * every date it comes round: a weekly 600 due four times before payday
+ * counts as 2,400, not 600. Costs past their date that were never logged
+ * still count.
+ */
+export function upcomingCostsBefore(costs: RecurringCost[], before: Date | null): UpcomingCost[] {
   if (!before) return [];
-  return costs
-    .filter((c) => c.active && parseISO(c.next_due_date) <= before)
-    .sort((a, b) => a.next_due_date.localeCompare(b.next_due_date));
+  const last = format(before, "yyyy-MM-dd");
+  const out: UpcomingCost[] = [];
+  for (const cost of costs) {
+    if (!cost.active || cost.next_due_date > last) continue;
+    const { count, unit } = recurringInterval(cost);
+    const dates: string[] = [];
+    for (let date = cost.next_due_date; date <= last && dates.length < 400; ) {
+      dates.push(date);
+      date = advanceDate(date, count, unit);
+    }
+    out.push({ cost, dates, total: Math.abs(Number(cost.amount)) * dates.length });
+  }
+  return out.sort((a, b) => a.cost.next_due_date.localeCompare(b.cost.next_due_date));
 }
 
 export function committedBefore(costs: RecurringCost[], before: Date | null): number {
-  return upcomingCostsBefore(costs, before).reduce((sum, c) => sum + Math.abs(Number(c.amount)), 0);
+  return upcomingCostsBefore(costs, before).reduce((sum, item) => sum + item.total, 0);
 }
 
 export function availableBeforePayday(args: {
@@ -566,11 +584,11 @@ export function availableBeforePayday(args: {
   committed: number;
   buffer: number;
   available: number;
-  upcoming: RecurringCost[];
+  upcoming: UpcomingCost[];
 } {
   const liquid = liquidBalance(args.accounts, args.transactions, args.pockets ?? []);
   const upcoming = upcomingCostsBefore(args.costs, args.payday);
-  const committed = upcoming.reduce((sum, c) => sum + Math.abs(Number(c.amount)), 0);
+  const committed = upcoming.reduce((sum, item) => sum + item.total, 0);
   const buffer = Number(args.safetyBuffer ?? 0);
   return { liquid, committed, buffer, available: liquid - committed - buffer, upcoming };
 }

@@ -2,7 +2,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { supabase } from "./integrations/supabase/client";
-import { installOffline } from "./lib/offline";
+import { installOffline, isOffline } from "./lib/offline";
+import { installOfflineSession } from "./lib/session";
 import { isOfflineError } from "@/lib/supabase-helpers";
 
 export const getRouter = () => {
@@ -23,6 +24,7 @@ export const getRouter = () => {
     },
   });
 
+  if (typeof window !== "undefined") installOfflineSession(isOffline);
   installOffline({
     supabaseUrl: String((supabase as unknown as { supabaseUrl: string | URL }).supabaseUrl),
     getAccessToken: async () =>

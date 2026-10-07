@@ -52,12 +52,15 @@ export function TopUpDialog({
   const [mode, setMode] = useState<"credited" | "after">("credited");
   const [value, setValue] = useState("");
   const [accountId, setAccountId] = useState("none");
+  /** What the meter shows right before the top-up; starts at the last reading. */
+  const [before, setBefore] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setPaid("");
     setValue("");
     setMode("credited");
+    setBefore(balance == null ? "" : String(balance));
     setAccountId(
       resource.account_id ?? (accounts.data ?? []).find((account) => account.active)?.id ?? "none",
     );
@@ -66,10 +69,12 @@ export function TopUpDialog({
   }, [open]);
 
   const moneyUnit = isMoneyUnit(resource.unit, currency);
+  const current = num(before) ?? balance;
   const plan = topUpPlan({
-    balance,
+    balance: current,
     paid: num(paid) ?? 0,
-    credited: mode === "credited" ? num(value) : null,
+    // For a money balance, "Added" left empty means all of it went on (the hint shows it).
+    credited: mode === "credited" ? (num(value) ?? (moneyUnit ? num(paid) : null)) : null,
     balanceAfter: mode === "after" ? num(value) : null,
     moneyUnit,
   });
@@ -85,6 +90,16 @@ export function TopUpDialog({
       ]
         .filter(Boolean)
         .join(", ");
+      // The meter moved since the last reading: save where it was first, so
+      // the top-up lands on today's number and the usage in between counts.
+      if (current != null && current !== balance) {
+        await addReading({
+          resource_id: resource.id,
+          reading: current,
+          reading_at: new Date(Date.now() - 1000).toISOString(),
+          note: null,
+        });
+      }
       if (accountId !== "none") {
         await createTransaction({
           account_id: accountId,
@@ -119,11 +134,9 @@ export function TopUpDialog({
         <DialogHeader>
           <DialogTitle>Top up · {resource.name}</DialogTitle>
           <DialogDescription>
-            {balance == null
-              ? "No balance yet: enter what the meter shows after the top-up."
-              : balance < 0
-                ? `The balance is ${balance} ${resource.unit}; that is paid back first.`
-                : `Balance now ${balance} ${resource.unit}.`}
+            {current != null && current < 0
+              ? `The balance is ${current} ${resource.unit}; that is paid back first.`
+              : "What the meter shows, what you paid, and what it added."}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -133,6 +146,23 @@ export function TopUpDialog({
             if (ready) save.mutate();
           }}
         >
+          <div className="space-y-2">
+            <Label htmlFor="topup-before">Meter now, before the top-up ({resource.unit})</Label>
+            <Input
+              id="topup-before"
+              inputMode="decimal"
+              className="h-12 tabular-nums"
+              value={before}
+              placeholder="What it shows"
+              onChange={(event) => setBefore(event.target.value)}
+            />
+            {balance != null ? (
+              <p className="text-xs text-muted-foreground">
+                Last reading {balance} {resource.unit}. Change it if the meter shows something else now.
+              </p>
+            ) : null}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="topup-paid">You paid</Label>
             <Input

@@ -59,6 +59,11 @@ function setStatus(patch: Partial<SyncStatus>) {
   listeners.forEach((listener) => listener());
 }
 
+/** No network, as far as the browser or the last request can tell. */
+export function isOffline(): boolean {
+  return (typeof navigator !== "undefined" && !navigator.onLine) || !status.online;
+}
+
 export function useSyncStatus(): SyncStatus {
   return useSyncExternalStore(
     (listener) => {

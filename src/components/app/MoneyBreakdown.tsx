@@ -91,17 +91,17 @@ export function MoneyBreakdownDialog({ trigger }: { trigger: ReactNode }) {
             <dt className="text-muted-foreground">Recurring costs due before payday</dt>
             {upcoming.length ? (
               <ul className="space-y-1.5">
-                {upcoming.map((cost) => (
+                {upcoming.map(({ cost, dates, total }) => (
                   <li key={cost.id} className="flex items-baseline justify-between gap-3">
                     <span className="min-w-0 truncate">
                       {cost.name}
                       <span className="ml-2 text-xs text-muted-foreground">
-                        {fmtDate(cost.next_due_date)}
+                        {dates.length > 1
+                          ? `${dates.length} times from ${fmtDate(dates[0]!)} · ${fmtMoney(Math.abs(Number(cost.amount)))} each`
+                          : fmtDate(cost.next_due_date)}
                       </span>
                     </span>
-                    <span className="shrink-0 tabular-nums">
-                      −{fmtMoney(Math.abs(Number(cost.amount)))}
-                    </span>
+                    <span className="shrink-0 tabular-nums">−{fmtMoney(total)}</span>
                   </li>
                 ))}
               </ul>

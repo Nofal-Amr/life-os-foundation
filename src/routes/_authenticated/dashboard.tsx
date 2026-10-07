@@ -42,7 +42,6 @@ import {
   accountsQuery,
   daysUntil,
   hasPaydaySetup,
-  liquidBalance,
   nextPayday,
   paydayConfigQuery,
   previousPayday,
@@ -227,11 +226,13 @@ function Dots({ filled, total }: { filled: number; total: number }) {
  * is left. Every segment is also written out in text.
  */
 function MoneySplitBar({
+  liquid,
   committed,
   buffer,
   available,
   fmtMoney,
 }: {
+  liquid: number;
   committed: number;
   buffer: number;
   available: number;
@@ -252,10 +253,8 @@ function MoneySplitBar({
         <span style={{ width: pct(spendable) }} className="bg-primary/70" />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Committed {fmtMoney(committed)} · Buffer {fmtMoney(buffer)} ·{" "}
-        {available >= 0
-          ? `Left to spend ${fmtMoney(available)}`
-          : `Short by ${fmtMoney(Math.abs(available))}`}
+        Balance now {fmtMoney(liquid)} · Recurring before payday {fmtMoney(committed)} · Buffer{" "}
+        {fmtMoney(buffer)}
       </p>
     </div>
   );
@@ -516,7 +515,6 @@ function DashboardPage() {
     : null;
   const nextPrayer = prayerTimes ? String(prayerTimes.nextPrayer()).toLowerCase() : null;
 
-  const balance = liquidBalance(accounts.data ?? [], transactions.data ?? []);
   const payday = nextPayday(paydayConfig.data);
   const lastPayday = previousPayday(paydayConfig.data);
   const paydayReady = hasPaydaySetup(paydayConfig.data);
@@ -821,8 +819,8 @@ function DashboardPage() {
       label="Money"
       value={
         paydayReady && payday
-          ? `${fmtMoney(balance)} now · payday in ${daysUntil(payday)} ${daysUntil(payday) === 1 ? "day" : "days"}`
-          : `${fmtMoney(balance)} now · payday not set up yet`
+          ? `${money.available >= 0 ? `${fmtMoney(money.available)} left to spend` : `Short by ${fmtMoney(Math.abs(money.available))}`} · payday in ${daysUntil(payday)} ${daysUntil(payday) === 1 ? "day" : "days"}`
+          : `${fmtMoney(money.liquid)} now · payday not set up yet`
       }
       to="/finance"
       linkLabel="Open Money"
@@ -846,6 +844,7 @@ function DashboardPage() {
       {paydayReady && payday ? (
         <>
           <MoneySplitBar
+            liquid={money.liquid}
             committed={money.committed}
             buffer={money.buffer}
             available={money.available}

@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import {
   accountsQuery,
+  createCategory,
   createRecurringCost,
   deleteRecurringCost,
   financeCategoriesQuery,
@@ -175,6 +176,8 @@ function RecurringPage() {
   const [editing, setEditing] = useState<RecurringCost | null>(null);
   const [form, setForm] = useState<RecurringCostInput>(emptyForm);
   const [toDelete, setToDelete] = useState<RecurringCost | null>(null);
+  /** Name of a category being added from the form; null when not adding one. */
+  const [newCategory, setNewCategory] = useState<string | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: financeKeys.recurring });
   const onError = (e: unknown) =>
@@ -187,6 +190,17 @@ function RecurringPage() {
       invalidate();
       setDialogOpen(false);
       toast.success(editing ? "Cost updated." : "Cost added.");
+    },
+    onError,
+  });
+
+  const addCategory = useMutation({
+    mutationFn: (name: string) =>
+      createCategory({ name, kind: "expense", color: null, monthly_budget: null, icon: null }),
+    onSuccess: (category) => {
+      void queryClient.invalidateQueries({ queryKey: financeKeys.categories });
+      setForm((current) => ({ ...current, category_id: category.id }));
+      setNewCategory(null);
     },
     onError,
   });
@@ -204,6 +218,7 @@ function RecurringPage() {
   function openCreate() {
     setEditing(null);
     setForm({ ...emptyForm, account_id: accounts.data?.[0]?.id ?? null });
+    setNewCategory(null);
     setDialogOpen(true);
   }
 
@@ -221,6 +236,7 @@ function RecurringPage() {
       interval_unit: recurringInterval(cost).unit,
       next_due_at: cost.next_due_at,
     });
+    setNewCategory(null);
     setDialogOpen(true);
   }
 
@@ -323,7 +339,10 @@ function RecurringPage() {
             <Label>Category</Label>
             <Select
               value={form.category_id ?? "none"}
-              onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? null : v })}
+              onValueChange={(v) => {
+                if (v === "new") return setNewCategory("");
+                setForm({ ...form, category_id: v === "none" ? null : v });
+              }}
             >
               <SelectTrigger className="h-12">
                 <SelectValue />
@@ -335,8 +354,37 @@ function RecurringPage() {
                      <span className="flex items-center gap-2"><EntityIcon icon={category.icon} color={category.color} containerClassName="size-5 rounded" className="size-3" />{category.name}</span>
                   </SelectItem>
                 ))}
+                <SelectItem value="new">+ New category</SelectItem>
               </SelectContent>
             </Select>
+            {newCategory != null ? (
+              <div className="flex gap-2">
+                <Input
+                  autoFocus
+                  aria-label="New category name"
+                  placeholder="e.g. Medicine"
+                  className="h-11"
+                  value={newCategory}
+                  onChange={(event) => setNewCategory(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    if (newCategory.trim()) addCategory.mutate(newCategory.trim());
+                  }}
+                />
+                <Button
+                  type="button"
+                  className="h-11"
+                  disabled={!newCategory.trim() || addCategory.isPending}
+                  onClick={() => addCategory.mutate(newCategory.trim())}
+                >
+                  Add
+                </Button>
+                <Button type="button" variant="ghost" className="h-11" onClick={() => setNewCategory(null)}>
+                  Cancel
+                </Button>
+              </div>
+            ) : null}
           </div>
           <div className="space-y-2">
             <Label>Status</Label>

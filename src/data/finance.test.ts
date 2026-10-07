@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import {
   advanceDate,
+  availableBeforePayday,
   countsTowardSpendable,
   legacyFrequency,
   liquidBalance,
   monthlyEquivalent,
   recurringInterval,
   separateBalance,
+  upcomingCostsBefore,
   type Account,
   type RecurringCost,
   type Transaction,
@@ -29,6 +31,45 @@ describe("recurring intervals", () => {
     expect(recurringInterval(cost)).toEqual({ count: 1, unit: "week" });
   });
 });
+describe("recurring costs before payday", () => {
+  const cost = (fields: Partial<RecurringCost>) =>
+    ({ id: fields.name, active: true, interval_count: 1, frequency: "custom", ...fields }) as RecurringCost;
+  const costs = [
+    cost({ name: "Transport", amount: 600, next_due_date: "2026-10-11", interval_unit: "week" }),
+    cost({ name: "Pills", amount: 300, next_due_date: "2026-10-08", interval_unit: "day", interval_count: 15 }),
+    cost({ name: "Internet", amount: 560, next_due_date: "2026-10-14", interval_unit: "month" }),
+    cost({ name: "Later", amount: 99, next_due_date: "2026-11-20", interval_unit: "month" }),
+    cost({ name: "Paused", amount: 50, next_due_date: "2026-10-09", interval_unit: "month", active: false }),
+  ];
+  const payday = new Date(2026, 10, 5);
+
+  it("counts every time a cost comes round before payday", () => {
+    const upcoming = upcomingCostsBefore(costs, payday);
+    expect(upcoming.map((item) => [item.cost.name, item.dates.length, item.total])).toEqual([
+      ["Pills", 2, 600],
+      ["Transport", 4, 2400],
+      ["Internet", 1, 560],
+    ]);
+  });
+
+  it("takes them, and the buffer, off what you have", () => {
+    const account = { id: "a", active: true, type: "checking", opening_balance: 8000 } as Account;
+    const totals = availableBeforePayday({
+      accounts: [account],
+      transactions: [],
+      costs,
+      payday,
+      safetyBuffer: 1000,
+    });
+    expect(totals.committed).toBe(3560);
+    expect(totals.available).toBe(8000 - 3560 - 1000);
+  });
+
+  it("is nothing without a payday", () => {
+    expect(upcomingCostsBefore(costs, null)).toEqual([]);
+  });
+});
+
 describe("accounts kept separate from left to spend", () => {
   const account = (id: string, opening: number, extra: Partial<Account> = {}) =>
     ({ id, opening_balance: opening, active: true, type: "checking", ...extra }) as Account;
