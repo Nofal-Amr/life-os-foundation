@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/app/AnimatedNumber";
+import { SpendingReview } from "@/components/app/SpendingInbox";
 import { AreaHabits } from "@/components/app/AreaHabits";
 import { MoreSections, Section } from "@/components/app/MoreSections";
 import { ResourcesSummary } from "@/components/app/ResourcesSummary";
@@ -190,6 +191,7 @@ function FinanceOverview() {
         />
       ) : (
         <div className="space-y-6">
+          <SpendingReview />
           {/* The one glanceable number */}
           <section className="stat-card p-6 sm:p-8">
             {setup && hasAccounts ? (

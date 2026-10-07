@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { preferencesKeys, preferencesQuery, savePreferences } from "@/data/preferences";
 import { supabase } from "@/integrations/supabase/client";
 import { lifeConnect, type ConnectRole, type ConnectStatus } from "@/lib/native";
@@ -15,6 +16,8 @@ import { cn } from "@/lib/utils";
 /** Per phone: which role this phone plays, and what to call it. */
 const ROLE_KEY = "life-connect:role";
 const NAME_KEY = "life-connect:device";
+const SMS_KEY = "life-connect:sms";
+const CODES_KEY = "life-connect:codes";
 
 function readLocal(key: string, fallback: string): string {
   try {
@@ -51,12 +54,16 @@ export function LifeConnectCard() {
   const [role, setRole] = useState<ConnectRole>("off");
   const [device, setDevice] = useState("SIM phone");
   const [status, setStatus] = useState<ConnectStatus | null>(null);
+  const [sms, setSms] = useState(true);
+  const [codes, setCodes] = useState(true);
   const available = lifeConnect.available();
 
   useEffect(() => {
     const saved = readLocal(ROLE_KEY, "off");
     setRole(saved === "sim" || saved === "main" ? saved : "off");
     setDevice(readLocal(NAME_KEY, "SIM phone"));
+    setSms(readLocal(SMS_KEY, "1") === "1");
+    setCodes(readLocal(CODES_KEY, "1") === "1");
   }, []);
 
   // Keep the phone's native settings in step with the role and the account key.
@@ -69,9 +76,11 @@ export function LifeConnectCard() {
       url: String(client.supabaseUrl).replace(/\/$/, ""),
       anonKey: client.supabaseKey,
       device: device.trim() || "SIM phone",
+      sms,
+      codes,
     });
     setStatus(lifeConnect.status());
-  }, [available, role, secret, device, preferences.isLoading]);
+  }, [available, role, secret, device, sms, codes, preferences.isLoading]);
 
   useEffect(() => {
     if (!available) return;
@@ -141,6 +150,15 @@ export function LifeConnectCard() {
             ok: !!status?.contacts,
             fix: lifeConnect.requestPermissions,
           },
+          ...(sms
+            ? [
+                {
+                  label: "Pass on SMS and send replies",
+                  ok: !!status?.sms,
+                  fix: lifeConnect.requestPermissions,
+                },
+              ]
+            : []),
         ]
       : role === "main"
         ? [
@@ -148,6 +166,11 @@ export function LifeConnectCard() {
               label: "Notifications",
               ok: !!status?.notifications,
               fix: lifeConnect.requestPermissions,
+            },
+            {
+              label: "Call screen over the lock screen",
+              ok: !!status?.fullScreen,
+              fix: lifeConnect.openFullScreenSettings,
             },
           ]
         : [];
@@ -169,8 +192,9 @@ export function LifeConnectCard() {
           <PhoneCall className="size-4" /> Life Connect
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Calls to the phone with your SIM card ring on your main phone, with Decline and Mute. You
-          answer on the SIM phone. Set this up on both phones, signed in to this account.
+          Calls to the phone with your SIM card ring on your main phone (and your watch), with
+          Decline and Mute, and its SMS show up there with Reply. You answer calls on the SIM phone.
+          Set this up on both phones, signed in to this account.
         </p>
       </div>
 
@@ -218,7 +242,42 @@ export function LifeConnectCard() {
           <p className="text-xs text-muted-foreground">
             Shown on the main phone: "Calling {device || "SIM phone"}".
           </p>
+          <div className="flex items-center justify-between gap-3 pt-2">
+            <Label htmlFor="connect-sms">Pass SMS on to the main phone</Label>
+            <Switch
+              id="connect-sms"
+              checked={sms}
+              onCheckedChange={(value) => {
+                setSms(value);
+                writeLocal(SMS_KEY, value ? "1" : "0");
+              }}
+            />
+          </div>
+          {sms ? (
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="connect-codes" className="block">
+                Include one-time codes
+                <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
+                  Off keeps OTPs and verification codes on this phone only.
+                </span>
+              </Label>
+              <Switch
+                id="connect-codes"
+                checked={codes}
+                onCheckedChange={(value) => {
+                  setCodes(value);
+                  writeLocal(CODES_KEY, value ? "1" : "0");
+                }}
+              />
+            </div>
+          ) : null}
         </div>
+      ) : null}
+      {role === "main" ? (
+        <p className="text-xs text-muted-foreground">
+          For your watch: in Galaxy Wearable → Watch settings → Notifications, turn on Life OS.
+          Calls then show on the watch with Decline and Mute.
+        </p>
       ) : null}
 
       {checks.length ? (
@@ -258,8 +317,8 @@ export function LifeConnectCard() {
       ) : null}
 
       <p className="text-xs text-muted-foreground">
-        Only who's calling crosses the internet, encrypted with a key only your phones have. Nothing
-        about your calls is stored.
+        Only who's calling (and the SMS you pass on) crosses the internet, encrypted with a key only
+        your phones have. Nothing is stored.
       </p>
     </section>
   );

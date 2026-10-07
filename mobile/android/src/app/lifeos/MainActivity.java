@@ -352,6 +352,8 @@ public class MainActivity extends Activity {
                 Manifest.permission.READ_CALL_LOG,
                 Manifest.permission.ANSWER_PHONE_CALLS,
                 Manifest.permission.READ_CONTACTS,
+                Manifest.permission.RECEIVE_SMS,
+                Manifest.permission.SEND_SMS,
                 Manifest.permission.POST_NOTIFICATIONS,
             };
         }
@@ -401,6 +403,9 @@ public class MainActivity extends Activity {
                     .put("answer", granted(Manifest.permission.ANSWER_PHONE_CALLS))
                     .put("contacts", granted(Manifest.permission.READ_CONTACTS))
                     .put("notifications", granted(Manifest.permission.POST_NOTIFICATIONS))
+                    .put("sms", granted(Manifest.permission.RECEIVE_SMS) && granted(Manifest.permission.SEND_SMS))
+                    .put("fullScreen", android.os.Build.VERSION.SDK_INT < 34
+                        || getSystemService(android.app.NotificationManager.class).canUseFullScreenIntent())
                     .put("battery", getSystemService(android.os.PowerManager.class)
                         .isIgnoringBatteryOptimizations(getPackageName()));
                 return status.toString();
@@ -423,6 +428,66 @@ public class MainActivity extends Activity {
             } catch (Exception ignored) {
                 // Nothing sent.
             }
+        }
+
+        /* ----------------------------- spending from bank notifications */
+
+        @JavascriptInterface
+        public String spendingStatus() {
+            if (!trusted()) return "{}";
+            try {
+                String enabled = android.provider.Settings.Secure.getString(
+                    getContentResolver(), "enabled_notification_listeners");
+                boolean access = enabled != null && enabled.contains(getPackageName() + "/");
+                return new org.json.JSONObject()
+                    .put("access", access)
+                    .put("watch", SpendingStore.watch(MainActivity.this))
+                    .put("seen", SpendingStore.seen(MainActivity.this))
+                    .toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
+
+        @JavascriptInterface
+        public void setSpendingWatch(String json) {
+            if (!trusted() || json == null || json.length() > 20_000) return;
+            SpendingStore.setWatch(MainActivity.this, json);
+        }
+
+        @JavascriptInterface
+        public void openNotificationAccess() {
+            if (!trusted()) return;
+            runOnUiThread(() -> startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")));
+        }
+
+        /** Spending waiting for an answer or for the app to write it to Money. */
+        @JavascriptInterface
+        public String pendingSpending() {
+            return trusted() ? SpendingStore.pending(MainActivity.this) : "[]";
+        }
+
+        /** status: "log", "dismiss" or "done". */
+        @JavascriptInterface
+        public void resolveSpending(String id, String status) {
+            if (!trusted() || id == null || status == null) return;
+            if (!status.matches("log|dismiss|done")) return;
+            SpendingStore.resolve(MainActivity.this, id, status);
+        }
+
+        /** Android 14+: let the call screen show over the lock screen. */
+        @JavascriptInterface
+        public void openFullScreenSettings() {
+            if (!trusted()) return;
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent("android.settings.MANAGE_APP_USE_FULL_SCREEN_INTENT")
+                        .setData(Uri.parse("package:" + getPackageName())));
+                } catch (Exception e) {
+                    startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName()));
+                }
+            });
         }
 
         /** Lets Life Connect keep its connection while the phone sleeps. */

@@ -164,6 +164,7 @@ export function PrayerDayList({
   next,
   formatTime,
   disabled,
+  sunrise,
 }: {
   date: string;
   logs: PrayerLog[];
@@ -171,16 +172,27 @@ export function PrayerDayList({
   next: PrayerName | null;
   formatTime: (date: Date) => string;
   disabled?: boolean | undefined;
+  /** Shown after Fajr when given: when Fajr's time ends. Nothing to log. */
+  sunrise?: Date | null | undefined;
 }) {
   const setStatus = usePrayerStatus();
+  const sunriseRow = sunrise ? (
+    <li key="sunrise">
+      <div className="flex min-h-11 items-baseline gap-3 rounded-xl border border-dashed border-border px-4 py-2.5">
+        <span className="w-20 text-sm text-muted-foreground">Sunrise</span>
+        <span className="text-sm tabular-nums text-muted-foreground">{formatTime(sunrise)}</span>
+        <span className="text-xs text-muted-foreground">Fajr's time ends · الشروق</span>
+      </div>
+    </li>
+  ) : null;
   return (
     <ul className="space-y-2">
-      {PRAYER_NAMES.map((name) => {
+      {PRAYER_NAMES.flatMap((name) => {
         const status = statusOf(
           logs.find((log) => log.prayer_date === date && log.prayer_name === name),
         );
         const time = times?.[name];
-        return (
+        const row = (
           <li key={name}>
             <StatusPicker
               current={status}
@@ -230,6 +242,7 @@ export function PrayerDayList({
             </StatusPicker>
           </li>
         );
+        return name === "fajr" && sunriseRow ? [row, sunriseRow] : [row];
       })}
     </ul>
   );

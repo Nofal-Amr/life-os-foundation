@@ -24,6 +24,12 @@ type NativeBridge = {
   connectStatus?(): string;
   connectTest?(): void;
   openBatterySettings?(): void;
+  openFullScreenSettings?(): void;
+  spendingStatus?(): string;
+  setSpendingWatch?(json: string): void;
+  openNotificationAccess?(): void;
+  pendingSpending?(): string;
+  resolveSpending?(id: string, status: string): void;
 };
 
 declare global {
@@ -231,6 +237,10 @@ export type ConnectStatus = {
   contacts: boolean;
   notifications: boolean;
   battery: boolean;
+  /** SIM phone: can read incoming SMS and send replies. */
+  sms: boolean;
+  /** Main phone: the call screen may show over the lock screen. */
+  fullScreen: boolean;
 };
 
 /** Life Connect in the Android app; every call is a no-op on the website. */
@@ -244,6 +254,9 @@ export const lifeConnect = {
     url: string;
     anonKey: string;
     device: string;
+    /** SIM phone: forward SMS, and whether to include one-time codes. */
+    sms: boolean;
+    codes: boolean;
   }): boolean {
     try {
       return bridge()?.setConnect?.(JSON.stringify(settings)) ?? false;
@@ -265,7 +278,66 @@ export const lifeConnect = {
   test(): void {
     bridge()?.connectTest?.();
   },
+  openFullScreenSettings(): void {
+    bridge()?.openFullScreenSettings?.();
+  },
   openBatterySettings(): void {
     bridge()?.openBatterySettings?.();
+  },
+};
+
+/* ------------------------------------------ spending from notifications */
+
+export type SpendingWatch = { packages: string[]; senders: string[] };
+export type SpendingStatus = {
+  access: boolean;
+  watch: SpendingWatch;
+  /** Apps seen posting notifications: package → name. */
+  seen: Record<string, string>;
+};
+export type PendingSpend = {
+  id: string;
+  amount: number;
+  currency: string;
+  merchant: string;
+  source: string;
+  at: number;
+  /** "new" = not answered yet; "log" = you said yes. */
+  status: "new" | "log";
+};
+
+export const spendingInbox = {
+  available(): boolean {
+    return typeof bridge()?.spendingStatus === "function";
+  },
+  status(): SpendingStatus | null {
+    try {
+      const raw = bridge()?.spendingStatus?.();
+      if (!raw) return null;
+      const value = JSON.parse(raw) as Partial<SpendingStatus>;
+      return {
+        access: !!value.access,
+        watch: { packages: value.watch?.packages ?? [], senders: value.watch?.senders ?? [] },
+        seen: value.seen ?? {},
+      };
+    } catch {
+      return null;
+    }
+  },
+  setWatch(watch: SpendingWatch): void {
+    bridge()?.setSpendingWatch?.(JSON.stringify(watch));
+  },
+  openAccess(): void {
+    bridge()?.openNotificationAccess?.();
+  },
+  pending(): PendingSpend[] {
+    try {
+      return JSON.parse(bridge()?.pendingSpending?.() ?? "[]") as PendingSpend[];
+    } catch {
+      return [];
+    }
+  },
+  resolve(id: string, status: "log" | "dismiss" | "done"): void {
+    bridge()?.resolveSpending?.(id, status);
   },
 };

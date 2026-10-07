@@ -128,7 +128,7 @@ public class ConnectService extends Service {
         ConnectConfig current = config;
         if (current == null) return;
         JSONObject message = current.open(sealed);
-        if (message == null) return;
+        if (message == null || !fresh(message.optString("n"))) return;
         // Wake the CPU long enough to ring or act.
         PowerManager.WakeLock lock = getSystemService(PowerManager.class)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "lifeos:connect");
@@ -141,18 +141,35 @@ public class ConnectService extends Service {
                     case "answered": CallAlert.answered(this, message); break;
                     case "ended": CallAlert.ended(this, message); break;
                     case "test": CallAlert.test(this, message); break;
+                    case "sms": SmsAlert.show(this, message); break;
+                    case "spend":
+                        SpendingStore.add(this, message.optDouble("amount"), message.optString("currency"),
+                            message.optString("merchant"), message.optString("source"),
+                            message.optLong("spentAt", System.currentTimeMillis()));
+                        break;
                     default: break;
                 }
             } else {
                 switch (type) {
                     case "decline": CallControl.decline(this); break;
                     case "mute": CallControl.mute(this); break;
+                    case "reply": SmsAlert.send(this, message); break;
                     default: break;
                 }
             }
         } finally {
             if (lock.isHeld()) lock.release();
         }
+    }
+
+    /** Ids seen in the last few minutes; a repeat is a replay and is ignored. */
+    private final java.util.LinkedHashSet<String> seenIds = new java.util.LinkedHashSet<>();
+
+    private synchronized boolean fresh(String id) {
+        if (id == null || id.isEmpty()) return false;
+        if (!seenIds.add(id)) return false;
+        while (seenIds.size() > 200) seenIds.remove(seenIds.iterator().next());
+        return true;
     }
 
     @Override

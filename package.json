@@ -12,6 +12,7 @@
     "test": "vitest run",
     "format": "prettier --write .",
     "build:android": "node mobile/android/build.mjs",
+    "test:android": "node mobile/android/test.mjs",
     "test:e2e": "playwright test"
   },
   "overrides": {

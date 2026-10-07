@@ -33,14 +33,21 @@ final class ConnectConfig {
     final String url;
     final String anonKey;
     final String device;
+    /** SIM phone: send each SMS on to the main phone. */
+    final boolean forwardSms;
+    /** ...including one-time codes (off: those stay on the SIM phone). */
+    final boolean forwardCodes;
     private final String secret;
 
-    private ConnectConfig(String role, String secret, String url, String anonKey, String device) {
+    private ConnectConfig(String role, String secret, String url, String anonKey, String device,
+                          boolean forwardSms, boolean forwardCodes) {
         this.role = role;
         this.secret = secret;
         this.url = url;
         this.anonKey = anonKey;
         this.device = device;
+        this.forwardSms = forwardSms;
+        this.forwardCodes = forwardCodes;
     }
 
     /** Stores what the web app sent; returns false if it isn't usable. */
@@ -72,7 +79,9 @@ final class ConnectConfig {
                 value.getString("secret"),
                 value.getString("url").replaceAll("/+$", ""),
                 value.getString("anonKey"),
-                value.optString("device", "SIM phone"));
+                value.optString("device", "SIM phone"),
+                value.optBoolean("sms", true),
+                value.optBoolean("codes", true));
         } catch (Exception e) {
             return null;
         }

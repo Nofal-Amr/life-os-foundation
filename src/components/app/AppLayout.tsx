@@ -5,6 +5,7 @@ import { MigrationNotice } from "./MigrationNotice";
 import { TimerBar, useTimer } from "./Timer";
 import { QuickAdd } from "./QuickAdd";
 import { useReminderSync } from "./PrayerReminders";
+import { useSpendingInbox } from "@/components/app/SpendingInbox";
 import { trackScreen } from "@/lib/analytics";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
@@ -31,6 +32,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { displayName } = useDisplayName();
   const { theme, toggleTheme } = useTheme();
   useReminderSync();
+  useSpendingInbox();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   useEffect(() => trackScreen(pathname), [pathname]);
   const [searchOpen, setSearchOpen] = useState(false);

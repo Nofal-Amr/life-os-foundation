@@ -34,6 +34,8 @@ final class ConnectSender {
         HttpURLConnection connection = null;
         try {
             message.put("at", System.currentTimeMillis());
+            // A one-off id, so a copied message can't be played back.
+            message.put("n", java.util.UUID.randomUUID().toString());
             JSONObject payload = new JSONObject().put("d", config.seal(message));
             JSONObject item = new JSONObject()
                 .put("topic", config.topic())

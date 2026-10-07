@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/app/PageHeader";
 import { GlanceSection, RingStat } from "@/components/app/StatCards";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   PRAYER_LABELS,
@@ -87,6 +88,21 @@ function SpiritPage() {
   const logs = useQuery(prayerLogsQuery());
   const { fmtTime, fmtDate } = usePreferences();
   const [date, setDate] = useState(todayISO());
+  const [showSunrise, setShowSunrise] = useState(() => {
+    try {
+      return localStorage.getItem("spirit:sunrise") !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const toggleSunrise = (value: boolean) => {
+    setShowSunrise(value);
+    try {
+      localStorage.setItem("spirit:sunrise", value ? "1" : "0");
+    } catch {
+      // Not remembered.
+    }
+  };
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/spirit" });
   const tab: SpiritTab = search.tab ?? "prayers";
@@ -222,8 +238,16 @@ function SpiritPage() {
                   {weekLogged} of 35 over the last seven days
                 </span>
               </p>
-              <span className="text-xs text-muted-foreground">
+              <span className="flex items-center gap-3 text-xs text-muted-foreground">
                 {config?.city ? `Times for ${config.city}` : "Times for your saved location"}
+                <label className="flex items-center gap-1.5">
+                  <Switch
+                    checked={showSunrise}
+                    onCheckedChange={toggleSunrise}
+                    aria-label="Show sunrise"
+                  />
+                  Sunrise
+                </label>
               </span>
             </div>
             <PrayerDayList
@@ -232,6 +256,7 @@ function SpiritPage() {
               times={times ? prayerDates(times) : null}
               next={nextPrayer as PrayerName | null}
               formatTime={fmtTime}
+              sunrise={showSunrise && times ? times.sunrise : null}
             />
           </section>
         )}

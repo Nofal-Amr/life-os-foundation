@@ -63,6 +63,7 @@ final class CallAlert {
             .setAutoCancel(false)
             .setTimeoutAfter(90_000)
             .setContentIntent(open(context))
+            .setFullScreenIntent(callScreen(context, message), true)
             .addAction(action(context, "decline", "Decline", 1))
             .addAction(action(context, "mute", "Mute", 2));
         Notification notification = builder.build();
@@ -88,11 +89,13 @@ final class CallAlert {
 
     static void answered(Context context, JSONObject message) {
         context.getSystemService(NotificationManager.class).cancel(RING_ID);
+        IncomingCallActivity.close();
     }
 
     static void ended(Context context, JSONObject message) {
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         manager.cancel(RING_ID);
+        IncomingCallActivity.close();
         if (!message.optBoolean("missed")) return;
         ensureChannels(context);
         manager.notify(MISSED_ID, new Notification.Builder(context, CHANNEL_INFO)
@@ -114,6 +117,18 @@ final class CallAlert {
                 .setAutoCancel(true)
                 .setTimeoutAfter(15_000)
                 .build());
+    }
+
+    /** The full-screen call screen, over the lock screen too. */
+    private static PendingIntent callScreen(Context context, JSONObject message) {
+        String number = message.optString("number", "");
+        Intent intent = new Intent(context, IncomingCallActivity.class)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_USER_ACTION)
+            .putExtra("who", who(message))
+            .putExtra("number", number)
+            .putExtra("device", message.optString("device", "your SIM phone"));
+        return PendingIntent.getActivity(context, 7205, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private static PendingIntent open(Context context) {
