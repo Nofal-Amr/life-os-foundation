@@ -425,3 +425,19 @@
   background-color: var(--tone-quiet-bg);
   border-color: var(--tone-quiet-border);
 }
+
+/* Qibla finder: the figure-8 in the calibration prompt traces itself. */
+.qibla-eight {
+  stroke-dasharray: 120;
+  animation: qibla-eight 2.4s linear infinite;
+}
+@keyframes qibla-eight {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .qibla-eight {
+    animation: none;
+  }
+}

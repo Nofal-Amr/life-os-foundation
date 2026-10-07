@@ -56,7 +56,6 @@ public class MainActivity extends Activity {
     private static final int NOTIFICATION_REQUEST = 2;
     private static final int HEALTH_REQUEST = 3;
     private static final int FILE_REQUEST = 4;
-    private static final int CAMERA_REQUEST = 5;
     /** Lets the web app know it runs inside this shell (see src/routes/auth.tsx). */
     private static final String UA_MARKER = "LifeOSAndroid";
     private static final String CALLBACK_SCHEME = "lifeos";
@@ -68,8 +67,8 @@ public class MainActivity extends Activity {
     private volatile String currentHost = APP_HOST;
     /** Pending <input type="file"> request from the page. */
     private ValueCallback<Uri[]> fileCallback;
-    /** A page asking for the camera (the Qibla finder), waiting on the Android prompt. */
-    private PermissionRequest pendingCamera;
+    /** The Qibla finder's compass, while it's open. */
+    private Compass compass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,28 +126,10 @@ public class MainActivity extends Activity {
                 return true;
             }
 
-            /**
-             * The camera for the app's own pages only (the Qibla finder's
-             * camera view). Microphone and anything else stay off.
-             */
+            /** No camera or microphone for web pages. */
             @Override
             public void onPermissionRequest(PermissionRequest request) {
-                boolean own = request.getOrigin() != null && APP_HOST.equals(request.getOrigin().getHost());
-                boolean cameraOnly = true;
-                for (String resource : request.getResources()) {
-                    if (!PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)) cameraOnly = false;
-                }
-                if (!own || !cameraOnly) {
-                    request.deny();
-                    return;
-                }
-                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    request.grant(new String[] { PermissionRequest.RESOURCE_VIDEO_CAPTURE });
-                    return;
-                }
-                if (pendingCamera != null) pendingCamera.deny();
-                pendingCamera = request;
-                requestPermissions(new String[] { Manifest.permission.CAMERA }, CAMERA_REQUEST);
+                request.deny();
             }
 
             @Override
@@ -159,7 +140,11 @@ public class MainActivity extends Activity {
                 }
                 pendingGeoOrigin = origin;
                 pendingGeoCallback = callback;
-                requestPermissions(new String[] { Manifest.permission.ACCESS_COARSE_LOCATION }, LOCATION_REQUEST);
+                // Precise (GPS) works without internet, e.g. for the Qibla; the
+                // phone still lets you choose approximate instead.
+                requestPermissions(new String[] {
+                    Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
+                }, LOCATION_REQUEST);
             }
         });
 
@@ -243,16 +228,6 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
-        if (requestCode == CAMERA_REQUEST) {
-            if (pendingCamera == null) return;
-            if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) {
-                pendingCamera.grant(new String[] { PermissionRequest.RESOURCE_VIDEO_CAPTURE });
-            } else {
-                pendingCamera.deny();
-            }
-            pendingCamera = null;
-            return;
-        }
         if (requestCode == NOTIFICATION_REQUEST || requestCode == HEALTH_REQUEST) {
             // Let the page re-check what it is now allowed to do.
             String event = requestCode == HEALTH_REQUEST ? "life-os-health-permissions" : "life-os-notification-permissions";
@@ -260,7 +235,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (requestCode != LOCATION_REQUEST || pendingGeoCallback == null) return;
-        boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+        boolean granted = hasLocationPermission();
         pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
         pendingGeoCallback = null;
         pendingGeoOrigin = null;
@@ -357,7 +332,39 @@ public class MainActivity extends Activity {
     }
 
     /** Called from the web app via window.LifeOSNative (see src/lib/native.ts). */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // The compass only runs while the Qibla finder is on screen.
+        if (compass != null) compass.stop();
+    }
+
     private final class NativeBridge {
+        /** Qibla finder: true-north heading from the phone's sensors (see Compass). */
+        @JavascriptInterface
+        public boolean startCompass(double latitude, double longitude, String mode) {
+            if (!trusted()) return false;
+            if (Double.isNaN(latitude) || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return false;
+            if (compass == null) compass = new Compass(MainActivity.this, webView);
+            compass.setMode(mode);
+            return compass.start(latitude, longitude);
+        }
+
+        @JavascriptInterface
+        public void setCompassMode(String mode) {
+            if (trusted() && compass != null) compass.setMode(mode);
+        }
+
+        @JavascriptInterface
+        public float compassDeclination() {
+            return compass == null ? 0f : compass.declination();
+        }
+
+        @JavascriptInterface
+        public void stopCompass() {
+            if (compass != null) compass.stop();
+        }
+
         private boolean trusted() {
             return APP_HOST.equals(currentHost);
         }

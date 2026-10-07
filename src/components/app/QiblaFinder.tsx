@@ -1,7 +1,8 @@
-import { Camera, Compass, LocateFixed } from "lucide-react";
+import { ArrowUp, Check, Compass, Info, LocateFixed } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { nativeCompass } from "@/lib/native";
 import {
   distanceToKaabaKm,
   poseFromCompass,
@@ -9,18 +10,31 @@ import {
   qiblaBearing,
   smoothHeading,
   turnTo,
-  type Pose,
+  type HoldMode,
 } from "@/lib/qibla";
 import { cn } from "@/lib/utils";
 
-/** Rough horizontal field of view of a phone's main camera held upright. */
-const CAMERA_FOV = 60;
 /** Within this many degrees counts as facing the Qibla. */
 const ALIGNED = 4;
+/** Stop asking GPS once it's this precise, or after this long. */
+const GOOD_FIX_M = 30;
+const FIX_TIMEOUT_MS = 45_000;
+const MODE_KEY = "qibla:mode";
 
 type OrientationEventWithCompass = DeviceOrientationEvent & { webkitCompassHeading?: number };
 type PermissionedOrientation = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<"granted" | "denied">;
+};
+
+type Place = { latitude: number; longitude: number; accuracy: number | null; fresh: boolean };
+type Reading = {
+  heading: number;
+  hold: "flat" | "upright";
+  /** Degrees, from the sensor; null when it doesn't say. */
+  accuracy: number | null;
+  /** 0 unreliable … 3 high; null when the source doesn't say (website). */
+  calibration: number | null;
+  trueNorth: boolean;
 };
 
 /** size: drawing units, for use inside another SVG (CSS sizes don't apply there). */
@@ -40,35 +54,110 @@ function KaabaIcon({ className, size }: { className?: string; size?: number }) {
   );
 }
 
+function readMode(): HoldMode {
+  try {
+    const value = localStorage.getItem(MODE_KEY);
+    return value === "flat" || value === "upright" ? value : "auto";
+  } catch {
+    return "auto";
+  }
+}
+
+/** A fresh GPS fix each time the finder opens; GPS works without internet. */
+function useFreshLocation(saved: { latitude: number; longitude: number } | null) {
+  const [place, setPlace] = useState<Place | null>(
+    saved ? { ...saved, accuracy: null, fresh: false } : null,
+  );
+  const [searching, setSearching] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setSearching(false);
+      setFailed(true);
+      return;
+    }
+    setSearching(true);
+    setFailed(false);
+    let best: number | null = null;
+    const watch = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        if (best != null && accuracy >= best) return;
+        best = accuracy;
+        setPlace({ latitude, longitude, accuracy, fresh: true });
+        if (accuracy <= GOOD_FIX_M) {
+          navigator.geolocation.clearWatch(watch);
+          setSearching(false);
+        }
+      },
+      () => {
+        setSearching(false);
+        setFailed(true);
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: FIX_TIMEOUT_MS },
+    );
+    const stop = window.setTimeout(() => {
+      navigator.geolocation.clearWatch(watch);
+      setSearching(false);
+    }, FIX_TIMEOUT_MS);
+    return () => {
+      navigator.geolocation.clearWatch(watch);
+      window.clearTimeout(stop);
+    };
+  }, [attempt]);
+
+  return { place, searching, failed, retry: () => setAttempt((value) => value + 1) };
+}
+
 /**
- * Qibla finder. Lying flat it's a compass; held up, the camera shows the
- * Kaaba marker where it lies, the way Google's Qibla Finder does. The
- * direction comes from the saved prayer location (or your location now).
+ * Qibla finder. Lying flat it's a compass dial; held upright, an arrow
+ * points where the back of the phone should face. In the Android app the
+ * heading comes from the phone's own sensors, corrected from magnetic to true
+ * north for where you are, and it says when the compass needs calibrating.
  */
 export function QiblaFinder({
   latitude,
   longitude,
-  place,
+  place: placeName,
 }: {
   latitude: number | null;
   longitude: number | null;
   place: string | null;
 }) {
-  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(
-    latitude != null && longitude != null ? { latitude, longitude } : null,
-  );
-  const [pose, setPose] = useState<Pose | null>(null);
-  const [running, setRunning] = useState(false);
-  const [camera, setCamera] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const saved = latitude != null && longitude != null ? { latitude, longitude } : null;
+  const { place, searching, failed, retry } = useFreshLocation(saved);
+  const [mode, setModeState] = useState<HoldMode>(() => readMode());
+  const [reading, setReading] = useState<Reading | null>(null);
+  const [needsTap, setNeedsTap] = useState(false);
+  const [webRunning, setWebRunning] = useState(false);
+  const [silent, setSilent] = useState(false);
+  const [wasCalibrating, setWasCalibrating] = useState(false);
   const smoothed = useRef<number | null>(null);
   const wasAligned = useRef(false);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
-  const target = location ? qiblaBearing(location.latitude, location.longitude) : null;
-  const turn = pose && target != null ? turnTo(pose.heading, target) : null;
+  const native = nativeCompass.available();
+  const target = place ? qiblaBearing(place.latitude, place.longitude) : null;
+  const turn = reading && target != null ? turnTo(reading.heading, target) : null;
   const aligned = turn != null && Math.abs(turn) <= ALIGNED;
+  const needsCalibration =
+    reading != null &&
+    ((reading.calibration != null && reading.calibration <= 1) ||
+      (reading.accuracy != null && reading.accuracy > 20));
+
+  function setMode(next: HoldMode) {
+    setModeState(next);
+    smoothed.current = null;
+    nativeCompass.setMode(next);
+    try {
+      localStorage.setItem(MODE_KEY, next);
+    } catch {
+      // Not remembered in private mode.
+    }
+  }
 
   useEffect(() => {
     if (aligned && !wasAligned.current) {
@@ -81,105 +170,118 @@ export function QiblaFinder({
     wasAligned.current = aligned;
   }, [aligned]);
 
-  // Sensors run only while the finder is on.
   useEffect(() => {
-    if (!running) return;
+    if (needsCalibration) setWasCalibrating(true);
+  }, [needsCalibration]);
+
+  // Android app: the native, true-north compass. Restarts only when the place
+  // moves meaningfully (a better GPS fix nearby changes nothing visible).
+  const latKey = place ? place.latitude.toFixed(3) : null;
+  const lonKey = place ? place.longitude.toFixed(3) : null;
+  useEffect(() => {
+    if (!native || !place) return;
+    window.__lifeOSCompass = (heading, accuracy, calibration, upright) => {
+      smoothed.current = smoothHeading(smoothed.current, heading, 0.3);
+      setReading({
+        heading: smoothed.current,
+        hold: upright ? "upright" : "flat",
+        accuracy: accuracy >= 0 ? accuracy : null,
+        calibration,
+        trueNorth: true,
+      });
+    };
+    if (!nativeCompass.start(place.latitude, place.longitude, modeRef.current)) setSilent(true);
+    return () => {
+      nativeCompass.stop();
+      delete window.__lifeOSCompass;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [native, latKey, lonKey]);
+
+  // Website: orientation events (magnetic north, no calibration info).
+  useEffect(() => {
+    if (native) return;
+    const Orientation = window.DeviceOrientationEvent as PermissionedOrientation | undefined;
+    if (!Orientation) {
+      setSilent(true);
+      return;
+    }
+    if (typeof Orientation.requestPermission === "function" && !webRunning) {
+      setNeedsTap(true);
+      return;
+    }
     const absolute = "ondeviceorientationabsolute" in window;
     const handle = (event: Event) => {
-      const reading = event as OrientationEventWithCompass;
-      let next: Pose | null = null;
-      if (typeof reading.webkitCompassHeading === "number") {
-        // iOS: a ready compass heading; upright use falls back to the camera tilt below.
-        next =
-          reading.beta != null && Math.abs(reading.beta) > 55 && reading.alpha != null
-            ? { heading: reading.webkitCompassHeading, hold: "upright" }
-            : poseFromCompass(reading.webkitCompassHeading);
-      } else if (reading.alpha != null && reading.beta != null && reading.gamma != null) {
-        if (!absolute && !reading.absolute) return;
-        next = poseFromOrientation(reading.alpha, reading.beta, reading.gamma);
+      const value = event as OrientationEventWithCompass;
+      let pose = null;
+      if (typeof value.webkitCompassHeading === "number") {
+        pose = poseFromCompass(value.webkitCompassHeading);
+      } else if (value.alpha != null && value.beta != null && value.gamma != null) {
+        if (!absolute && !value.absolute) return;
+        pose = poseFromOrientation(value.alpha, value.beta, value.gamma, modeRef.current);
       }
-      if (!next) return;
-      smoothed.current = smoothHeading(smoothed.current, next.heading);
-      setPose({ heading: smoothed.current, hold: next.hold });
-      setProblem(null);
+      if (!pose) return;
+      smoothed.current = smoothHeading(smoothed.current, pose.heading);
+      setReading({
+        heading: smoothed.current,
+        hold: pose.hold,
+        accuracy: null,
+        calibration: null,
+        trueNorth: false,
+      });
+      setSilent(false);
     };
     const name = absolute ? "deviceorientationabsolute" : "deviceorientation";
     window.addEventListener(name, handle);
-    const silence = window.setTimeout(() => {
-      if (smoothed.current == null)
-        setProblem(
-          "No compass reading yet. Allow motion and orientation access, or try the Life OS app.",
-        );
+    const quiet = window.setTimeout(() => {
+      if (smoothed.current == null) setSilent(true);
     }, 3000);
     return () => {
       window.removeEventListener(name, handle);
-      window.clearTimeout(silence);
+      window.clearTimeout(quiet);
     };
-  }, [running]);
+  }, [native, webRunning]);
 
-  // Camera only while the camera view is on.
-  useEffect(() => {
-    if (!camera) return;
-    let cancelled = false;
-    navigator.mediaDevices
-      ?.getUserMedia({ video: { facingMode: "environment" }, audio: false })
-      .then((stream) => {
-        if (cancelled) return stream.getTracks().forEach((track) => track.stop());
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play().catch(() => {});
-        }
-      })
-      .catch(() => {
-        setProblem("The camera isn't available. The compass still works.");
-        setCamera(false);
-      });
-    return () => {
-      cancelled = true;
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    };
-  }, [camera]);
-
-  async function start(withCamera: boolean) {
-    setProblem(null);
+  async function allowWeb() {
     const Orientation = window.DeviceOrientationEvent as PermissionedOrientation | undefined;
-    if (!Orientation) {
-      setProblem("This device has no compass sensor.");
-      return;
+    try {
+      await Orientation?.requestPermission?.();
+    } catch {
+      // See whether readings arrive anyway.
     }
-    // iOS asks first. Some browsers answer "denied" yet still send readings,
-    // so listen anyway; the silence check below says so if nothing comes.
-    if (typeof Orientation.requestPermission === "function") {
-      try {
-        await Orientation.requestPermission();
-      } catch {
-        // Carry on and see whether readings arrive.
-      }
-    }
-    setRunning(true);
-    setCamera(withCamera);
+    setNeedsTap(false);
+    setWebRunning(true);
   }
 
-  function locate() {
-    setProblem(null);
-    navigator.geolocation?.getCurrentPosition(
-      (position) =>
-        setLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
-      () => setProblem("Couldn't get your location. You can set it in Settings."),
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
-    );
-  }
+  const notice = (
+    <p className="flex gap-2 rounded-lg border border-border bg-secondary/60 p-3 text-xs text-muted-foreground">
+      <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+      <span>
+        For reference only, and still in development. Phone compasses can be thrown off by metal,
+        magnets and cases; when it matters, check against a mosque or a known Qibla.
+      </span>
+    </p>
+  );
 
-  if (!location || target == null) {
+  if (!place || target == null) {
     return (
-      <section className="space-y-3 rounded-xl border border-border bg-card p-5">
-        <p className="text-sm">The Qibla is worked out from where you are.</p>
-        <Button type="button" onClick={locate}>
-          <LocateFixed className="size-4" /> Use my location
-        </Button>
-        {problem ? <p className="text-sm text-muted-foreground">{problem}</p> : null}
+      <section className="space-y-3">
+        {notice}
+        <div className="space-y-3 rounded-xl border border-border bg-card p-5">
+          <p className="text-sm">
+            {searching ? "Finding where you are…" : "The Qibla is worked out from where you are."}
+          </p>
+          {!searching ? (
+            <Button type="button" onClick={retry}>
+              <LocateFixed className="size-4" /> Try again
+            </Button>
+          ) : null}
+          {failed ? (
+            <p className="text-sm text-muted-foreground">
+              Couldn't get your location. Allow location for Life OS, or set it in Settings.
+            </p>
+          ) : null}
+        </div>
       </section>
     );
   }
@@ -190,67 +292,119 @@ export function QiblaFinder({
       : aligned
         ? "Facing the Qibla"
         : `Turn ${turn > 0 ? "right" : "left"} ${Math.round(Math.abs(turn))}°`;
+  const upright = reading?.hold === "upright" || (!reading && mode === "upright");
 
   return (
     <section className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {Math.round(target)}° from north ·{" "}
-        {Math.round(distanceToKaabaKm(location.latitude, location.longitude)).toLocaleString()} km
-        to Makkah
-        {place ? ` · from ${place}` : ""}
-      </p>
+      {notice}
 
-      {!running ? (
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" onClick={() => void start(true)}>
-            <Camera className="size-4" /> Find with the camera
-          </Button>
-          <Button type="button" variant="outline" onClick={() => void start(false)}>
-            <Compass className="size-4" /> Compass only
-          </Button>
-        </div>
+      <div className="space-y-1">
+        <p className="text-sm text-muted-foreground">
+          {Math.round(target)}° from true north ·{" "}
+          {Math.round(distanceToKaabaKm(place.latitude, place.longitude)).toLocaleString()} km to
+          Makkah
+        </p>
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <LocateFixed className="size-3.5" aria-hidden="true" />
+          {place.fresh
+            ? `Your location now${place.accuracy != null ? ` (±${Math.round(place.accuracy)} m)` : ""}`
+            : `Saved location${placeName ? ` (${placeName})` : ""}`}
+          {searching ? " · finding you…" : ""}
+          {!searching && !place.fresh ? (
+            <button type="button" className="underline underline-offset-2" onClick={retry}>
+              Try again
+            </button>
+          ) : null}
+        </p>
+      </div>
+
+      <div
+        className="flex gap-1 rounded-lg bg-secondary p-1"
+        role="radiogroup"
+        aria-label="How you hold the phone"
+      >
+        {(
+          [
+            { value: "auto", label: "Auto" },
+            { value: "flat", label: "Lying flat" },
+            { value: "upright", label: "Held upright" },
+          ] as const
+        ).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={mode === option.value}
+            onClick={() => setMode(option.value)}
+            className={cn(
+              "min-h-10 flex-1 rounded-md px-2 text-sm font-medium transition-colors",
+              mode === option.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      {needsTap ? (
+        <Button type="button" onClick={() => void allowWeb()}>
+          <Compass className="size-4" /> Start the compass
+        </Button>
       ) : null}
 
-      {running && camera ? (
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-black sm:max-w-md">
-          <video ref={videoRef} playsInline muted className="size-full object-cover" />
-          {pose?.hold === "upright" && turn != null ? (
-            Math.abs(turn) < CAMERA_FOV / 2 ? (
-              <div
-                className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 transition-[left] duration-100"
-                style={{ left: `${50 + (turn / CAMERA_FOV) * 100}%` }}
-              >
-                <KaabaIcon className={cn("size-20 drop-shadow-lg", aligned && "scale-110")} />
-              </div>
-            ) : (
-              <div
-                className={cn(
-                  "absolute top-1/2 -translate-y-1/2 rounded-full bg-black/60 px-3 py-2 text-sm text-white",
-                  turn > 0 ? "right-3" : "left-3",
-                )}
-              >
-                {turn > 0 ? "Turn right →" : "← Turn left"}
-              </div>
-            )
-          ) : (
-            <p className="absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-lg bg-black/60 p-3 text-center text-sm text-white">
-              Hold the phone up in front of you.
-            </p>
-          )}
-          <div className="absolute inset-y-0 left-1/2 w-px bg-white/40" aria-hidden="true" />
-          <p
+      {needsCalibration ? (
+        <div
+          className="tone-warning flex items-center gap-3 rounded-xl border p-3 text-sm"
+          role="status"
+        >
+          <svg viewBox="0 0 60 30" className="h-8 w-16 shrink-0" aria-hidden="true">
+            <path
+              d="M30 15C24 7 16 5 10 9s-4 14 4 14 10-4 16-8 10-12 18-12 10 8 4 12-14 2-22 0z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="qibla-eight"
+            />
+          </svg>
+          <span>
+            The compass needs calibrating. Move the phone in a figure 8 a few times, away from metal
+            and magnets.
+          </span>
+        </div>
+      ) : wasCalibrating && reading?.calibration === 3 ? (
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground" role="status">
+          <Check className="size-4" /> Compass calibrated.
+        </p>
+      ) : null}
+
+      {upright ? (
+        <div className="flex flex-col items-center gap-3 py-2">
+          <div
             className={cn(
-              "absolute inset-x-0 bottom-0 p-3 text-center text-base font-semibold text-white",
-              aligned ? "bg-primary/80" : "bg-black/50",
+              "grid size-64 max-w-[80vw] place-items-center rounded-full border-2 transition-colors",
+              aligned ? "border-primary" : "border-border",
             )}
-            aria-live="polite"
           >
+            {aligned ? (
+              <KaabaIcon className="size-28" />
+            ) : (
+              <ArrowUp
+                className="size-32 text-primary transition-transform duration-100"
+                style={{ transform: `rotate(${turn ?? 0}deg)` }}
+                strokeWidth={2.5}
+                aria-hidden="true"
+              />
+            )}
+          </div>
+          <p className={cn("text-lg font-semibold", aligned && "text-primary")} aria-live="polite">
             {guidance}
           </p>
+          <p className="text-center text-xs text-muted-foreground">
+            Hold the phone up in front of you, screen facing you. Turn until the arrow points
+            straight up.
+          </p>
         </div>
-      ) : null}
-
-      {running && !camera ? (
+      ) : (
         <div className="flex flex-col items-center gap-3">
           <div className="relative size-72 max-w-[85vw]">
             <div
@@ -260,7 +414,7 @@ export function QiblaFinder({
             <svg
               viewBox="0 0 200 200"
               className="size-full transition-transform duration-100"
-              style={{ transform: `rotate(${-(pose?.heading ?? 0)}deg)` }}
+              style={{ transform: `rotate(${-(reading?.heading ?? 0)}deg)` }}
               aria-hidden="true"
             >
               <circle
@@ -303,7 +457,7 @@ export function QiblaFinder({
                   x1="100"
                   y1="100"
                   x2="100"
-                  y2="44"
+                  y2="57"
                   strokeWidth="3"
                   strokeLinecap="round"
                   className="stroke-primary"
@@ -324,46 +478,24 @@ export function QiblaFinder({
           <p className={cn("text-lg font-semibold", aligned && "text-primary")} aria-live="polite">
             {guidance}
           </p>
-          {pose?.hold === "upright" ? (
-            <p className="text-xs text-muted-foreground">
-              Held up: the back of the phone points the way.
-            </p>
-          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Lay the phone flat; its top edge points the way.
+          </p>
         </div>
-      ) : null}
+      )}
 
-      {running ? (
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setCamera((value) => !value)}
-          >
-            {camera ? <Compass className="size-4" /> : <Camera className="size-4" />}
-            {camera ? "Compass" : "Camera"}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setRunning(false);
-              setCamera(false);
-              setPose(null);
-              smoothed.current = null;
-            }}
-          >
-            Stop
-          </Button>
-        </div>
+      {silent ? (
+        <p className="text-sm text-muted-foreground">
+          No compass reading. Allow motion and orientation access, or use the Life OS app.
+        </p>
       ) : null}
-
-      {problem ? <p className="text-sm text-muted-foreground">{problem}</p> : null}
-      <p className="text-xs text-muted-foreground">
-        Keep away from metal, magnets and other phones. If it drifts, move the phone in a figure 8
-        to calibrate.
-      </p>
+      {reading ? (
+        <p className="text-xs text-muted-foreground">
+          {reading.trueNorth
+            ? `Corrected from magnetic to true north for where you are (${nativeCompass.declination().toFixed(1)}°).`
+            : "On the website the compass reads magnetic north, so it can be a few degrees off. The Life OS app corrects for that."}
+        </p>
+      ) : null}
     </section>
   );
 }

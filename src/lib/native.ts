@@ -15,6 +15,10 @@ type NativeBridge = {
   saveFile?(name: string, base64: string, mime: string): string;
   setWidgetData?(json: string): void;
   takePendingPrayerLogs?(): string;
+  startCompass?(latitude: number, longitude: number, mode: string): boolean;
+  setCompassMode?(mode: string): void;
+  compassDeclination?(): number;
+  stopCompass?(): void;
 };
 
 declare global {
@@ -22,6 +26,13 @@ declare global {
     LifeOSNative?: NativeBridge;
     /** Called by the Android shell with results of async requests. */
     __lifeOSNativeCallback?: (id: string, payload: string) => void;
+    /** Native compass readings (see mobile/android Compass.java). */
+    __lifeOSCompass?: (
+      heading: number,
+      accuracy: number,
+      calibration: number,
+      upright: boolean,
+    ) => void;
   }
 }
 
@@ -176,3 +187,28 @@ export function takePendingPrayerLogs(): PendingPrayerLog[] {
     return [];
   }
 }
+
+/* ------------------------------------------------------------- compass */
+
+/** A true-north compass from the Android app; null on the website. */
+export const nativeCompass = {
+  available(): boolean {
+    return typeof bridge()?.startCompass === "function";
+  },
+  start(latitude: number, longitude: number, mode: string): boolean {
+    try {
+      return bridge()?.startCompass?.(latitude, longitude, mode) ?? false;
+    } catch {
+      return false;
+    }
+  },
+  setMode(mode: string): void {
+    bridge()?.setCompassMode?.(mode);
+  },
+  declination(): number {
+    return bridge()?.compassDeclination?.() ?? 0;
+  },
+  stop(): void {
+    bridge()?.stopCompass?.();
+  },
+};

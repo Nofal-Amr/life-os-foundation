@@ -37,6 +37,9 @@ export function distanceToKaabaKm(latitude: number, longitude: number): number {
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/** How the phone is held: worked out from the sensors, or chosen. */
+export type HoldMode = "auto" | "flat" | "upright";
+
 export type Pose = {
   /** Which way the phone points, clockwise from north. */
   heading: number;
@@ -49,7 +52,12 @@ export type Pose = {
  * (deviceorientationabsolute: alpha, beta, gamma in degrees).
  * Uses the rotation matrix from the W3C spec (Z-X'-Y'' intrinsic).
  */
-export function poseFromOrientation(alpha: number, beta: number, gamma: number): Pose {
+export function poseFromOrientation(
+  alpha: number,
+  beta: number,
+  gamma: number,
+  mode: HoldMode = "auto",
+): Pose {
   const cA = Math.cos(rad(alpha));
   const sA = Math.sin(rad(alpha));
   const cB = Math.cos(rad(beta));
@@ -63,7 +71,7 @@ export function poseFromOrientation(alpha: number, beta: number, gamma: number):
     z: -cB * cG,
   };
   // Held up: the back points mostly sideways, so it gives the heading.
-  if (Math.abs(back.z) < 0.6) {
+  if (mode === "upright" || (mode === "auto" && Math.abs(back.z) < 0.6)) {
     return { heading: normalise(deg(Math.atan2(back.x, back.y))), hold: "upright" };
   }
   // Lying flat: the top edge (+Y) gives it.
