@@ -11,6 +11,7 @@ import { Bell,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
+import { CaptureBox } from "@/components/app/CaptureBox";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { PrayerTiles } from "@/components/app/PrayerLog";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
@@ -148,6 +149,7 @@ export function QuickAdd() {
                   : "Prayers today"}
           </SheetTitle>
 
+          {panel === "menu" ? <CaptureBox onDone={close} /> : null}
           {panel === "menu" ? (
             <div className="grid grid-cols-3 gap-2">
               {actions

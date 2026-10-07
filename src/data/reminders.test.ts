@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { taskReminders, timedTaskReminders } from "./reminders";
+import { taskReminders, timedTaskReminders, waterReminders } from "./reminders";
 import type { Task } from "./tasks";
 
 const task = (title: string, due: string, extra: Partial<Task> = {}) =>
@@ -56,5 +56,19 @@ describe("timedTaskReminders", () => {
     expect(list).toHaveLength(1);
     expect(new Date(list[0]!.at).getHours()).toBe(15);
     expect(timedTaskReminders({ tasks: [timed({})], now: new Date("2026-09-25T16:00:00").getTime() })).toEqual([]);
+  });
+});
+
+describe("waterReminders", () => {
+  it("rings every N minutes in the window, only from now on", () => {
+    const now = new Date(2026, 9, 8, 13, 10).getTime();
+    const items = waterReminders({ every: 120, from: "09:00", to: "15:00", now, days: 1 });
+    expect(items.map((item) => new Date(item.at).getHours())).toEqual([15]);
+    const tomorrow = waterReminders({ every: 180, from: "09:00", to: "15:00", now, days: 2 });
+    expect(tomorrow.map((item) => new Date(item.at).getHours())).toEqual([15, 9, 12, 15]);
+  });
+
+  it("does nothing with an empty window", () => {
+    expect(waterReminders({ every: 60, from: "22:00", to: "09:00", now: Date.now() })).toEqual([]);
   });
 });

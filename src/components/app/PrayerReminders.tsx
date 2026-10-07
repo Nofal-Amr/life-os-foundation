@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, format } from "date-fns";
-import { Bell, BellOff, ListChecks, Moon } from "lucide-react";
+import { Bell, BellOff, GlassWater, ListChecks, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   DEFAULT_REMINDERS,
   taskReminders,
+  waterReminders,
   timedTaskReminders,
   type ReminderSettings,
 } from "@/data/reminders";
@@ -86,7 +87,7 @@ function useReminderSettings() {
   const update = (patch: Partial<ReminderSettings>) => {
     const next = { ...readSettings(), ...patch };
     writeSettings(next);
-    if ((patch.enabled || patch.tasksEnabled) && !canNotify()) requestNotifications();
+    if ((patch.enabled || patch.tasksEnabled || patch.water) && !canNotify()) requestNotifications();
   };
   return [settings, update] as const;
 }
@@ -277,6 +278,25 @@ export function useReminderSync() {
       reminders.push(...timedTaskReminders({ tasks: tasks.data ?? [], now }));
     }
 
+    // Water, every so often through the day.
+    if (settings.water) {
+      for (const item of waterReminders({
+        every: settings.waterEvery,
+        from: settings.waterFrom,
+        to: settings.waterTo,
+        now,
+      })) {
+        reminders.push({
+          id: item.id,
+          at: item.at,
+          title: "Water",
+          body: "A glass of water.",
+          path: "/dashboard",
+          channel: "tasks",
+        });
+      }
+    }
+
     // Your own reminders ring whatever the prayer settings are.
     reminders.push(...reminderNotifications(userReminders.data ?? [], now));
 
@@ -462,6 +482,75 @@ function TaskControls({
   );
 }
 
+function WaterControls({
+  settings,
+  update,
+}: {
+  settings: ReminderSettings;
+  update: (patch: Partial<ReminderSettings>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <GlassWater className="size-4" aria-hidden="true" />
+            Water
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">A nudge to drink, through the day.</p>
+        </div>
+        <Switch
+          checked={settings.water}
+          onCheckedChange={(water) => update({ water })}
+          aria-label="Water reminders"
+        />
+      </div>
+      {settings.water ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-2">
+            <Label>Every</Label>
+            <Select
+              value={String(settings.waterEvery)}
+              onValueChange={(value) => update({ waterEvery: Number(value) })}
+            >
+              <SelectTrigger className="h-11 w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[30, 45, 60, 90, 120, 180].map((minutes) => (
+                  <SelectItem key={minutes} value={String(minutes)}>
+                    {minutes < 60 ? `${minutes} minutes` : `${minutes / 60} hour${minutes === 60 ? "" : "s"}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="water-from">From</Label>
+            <Input
+              id="water-from"
+              type="time"
+              className="h-11 w-32 tabular-nums"
+              value={settings.waterFrom}
+              onChange={(event) => event.target.value && update({ waterFrom: event.target.value })}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="water-to">Until</Label>
+            <Input
+              id="water-to"
+              type="time"
+              className="h-11 w-32 tabular-nums"
+              value={settings.waterTo}
+              onChange={(event) => event.target.value && update({ waterTo: event.target.value })}
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** Settings page: prayer and task reminders together. */
 export function ReminderSettingsCard() {
   const [settings, update] = useReminderSettings();
@@ -494,6 +583,8 @@ export function ReminderSettingsCard() {
           <PrayerControls settings={settings} update={update} />
           <div className="border-t border-border" />
           <TaskControls settings={settings} update={update} />
+          <div className="border-t border-border" />
+          <WaterControls settings={settings} update={update} />
         </>
       ) : null}
     </section>

@@ -26,6 +26,11 @@ export type ReminderSettings = {
   azkar: boolean;
   /** Minutes after Fajr / Asr. */
   azkarDelay: number;
+  /** "Drink some water" every waterEvery minutes between waterFrom and waterTo. */
+  water: boolean;
+  waterEvery: number;
+  waterFrom: string;
+  waterTo: string;
 };
 
 export const DEFAULT_REMINDERS: ReminderSettings = {
@@ -37,7 +42,46 @@ export const DEFAULT_REMINDERS: ReminderSettings = {
   taskTime: "09:00",
   azkar: true,
   azkarDelay: 20,
+  water: false,
+  waterEvery: 90,
+  waterFrom: "09:00",
+  waterTo: "22:00",
 };
+
+/**
+ * Water reminders for today and tomorrow: every `every` minutes from `from`
+ * to `to` (local "HH:mm"), only times still ahead.
+ */
+export function waterReminders(args: {
+  every: number;
+  from: string;
+  to: string;
+  now: number;
+  days?: number;
+}): { id: string; at: number }[] {
+  const out: { id: string; at: number }[] = [];
+  const every = Math.max(15, Math.round(args.every));
+  const [fromH, fromM] = args.from.split(":").map(Number);
+  const [toH, toM] = args.to.split(":").map(Number);
+  const start = (fromH ?? 9) * 60 + (fromM ?? 0);
+  const end = (toH ?? 22) * 60 + (toM ?? 0);
+  if (end <= start) return out;
+  for (let offset = 0; offset < (args.days ?? 2); offset++) {
+    const day = new Date(args.now);
+    day.setHours(0, 0, 0, 0);
+    day.setDate(day.getDate() + offset);
+    for (let minute = start; minute <= end; minute += every) {
+      const at = day.getTime() + minute * 60_000;
+      if (at <= args.now) continue;
+      const stamp = new Date(at);
+      out.push({
+        id: `water-${stamp.getFullYear()}-${stamp.getMonth() + 1}-${stamp.getDate()}-${minute}`,
+        at,
+      });
+    }
+  }
+  return out;
+}
 
 /** Tasks due (or, for today, overdue) and still open, top-level only. */
 function openTasksFor(tasks: Task[], date: string, today: string): Task[] {

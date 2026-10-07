@@ -12,6 +12,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/app/AnimatedNumber";
 import { SpendingReview } from "@/components/app/SpendingInbox";
+import { WorkdayCostCard } from "@/components/app/WorkdayCostCard";
 import { AreaHabits } from "@/components/app/AreaHabits";
 import { MoreSections, Section } from "@/components/app/MoreSections";
 import { ResourcesSummary } from "@/components/app/ResourcesSummary";
@@ -442,6 +443,7 @@ function FinanceOverview() {
             </div>
             <RecurringList compact />
           </Section>
+          <WorkdayCostCard />
           </MoreSections>
         </div>
       )}
