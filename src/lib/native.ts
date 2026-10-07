@@ -19,6 +19,11 @@ type NativeBridge = {
   setCompassMode?(mode: string): void;
   compassDeclination?(): number;
   stopCompass?(): void;
+  setConnect?(json: string): boolean;
+  requestConnectPermissions?(): void;
+  connectStatus?(): string;
+  connectTest?(): void;
+  openBatterySettings?(): void;
 };
 
 declare global {
@@ -210,5 +215,57 @@ export const nativeCompass = {
   },
   stop(): void {
     bridge()?.stopCompass?.();
+  },
+};
+
+/* -------------------------------------------------------- life connect */
+
+export type ConnectRole = "off" | "sim" | "main";
+
+export type ConnectStatus = {
+  role: ConnectRole;
+  connected: boolean;
+  phone: boolean;
+  callLog: boolean;
+  answer: boolean;
+  contacts: boolean;
+  notifications: boolean;
+  battery: boolean;
+};
+
+/** Life Connect in the Android app; every call is a no-op on the website. */
+export const lifeConnect = {
+  available(): boolean {
+    return typeof bridge()?.setConnect === "function";
+  },
+  configure(settings: {
+    role: ConnectRole;
+    secret: string | null;
+    url: string;
+    anonKey: string;
+    device: string;
+  }): boolean {
+    try {
+      return bridge()?.setConnect?.(JSON.stringify(settings)) ?? false;
+    } catch {
+      return false;
+    }
+  },
+  requestPermissions(): void {
+    bridge()?.requestConnectPermissions?.();
+  },
+  status(): ConnectStatus | null {
+    try {
+      const raw = bridge()?.connectStatus?.();
+      return raw ? (JSON.parse(raw) as ConnectStatus) : null;
+    } catch {
+      return null;
+    }
+  },
+  test(): void {
+    bridge()?.connectTest?.();
+  },
+  openBatterySettings(): void {
+    bridge()?.openBatterySettings?.();
   },
 };

@@ -56,6 +56,7 @@ public class MainActivity extends Activity {
     private static final int NOTIFICATION_REQUEST = 2;
     private static final int HEALTH_REQUEST = 3;
     private static final int FILE_REQUEST = 4;
+    private static final int CONNECT_REQUEST = 6;
     /** Lets the web app know it runs inside this shell (see src/routes/auth.tsx). */
     private static final String UA_MARKER = "LifeOSAndroid";
     private static final String CALLBACK_SCHEME = "lifeos";
@@ -228,6 +229,10 @@ public class MainActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (requestCode == CONNECT_REQUEST) {
+            webView.evaluateJavascript("window.dispatchEvent(new Event('life-os-connect'))", null);
+            return;
+        }
         if (requestCode == NOTIFICATION_REQUEST || requestCode == HEALTH_REQUEST) {
             // Let the page re-check what it is now allowed to do.
             String event = requestCode == HEALTH_REQUEST ? "life-os-health-permissions" : "life-os-notification-permissions";
@@ -339,7 +344,101 @@ public class MainActivity extends Activity {
         if (compass != null) compass.stop();
     }
 
+    /** What each Life Connect role needs from Android. */
+    private String[] connectPermissions(String role) {
+        if ("sim".equals(role)) {
+            return new String[] {
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.READ_CALL_LOG,
+                Manifest.permission.ANSWER_PHONE_CALLS,
+                Manifest.permission.READ_CONTACTS,
+                Manifest.permission.POST_NOTIFICATIONS,
+            };
+        }
+        return new String[] { Manifest.permission.POST_NOTIFICATIONS };
+    }
+
+    private boolean granted(String permission) {
+        return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
+    }
+
     private final class NativeBridge {
+        /**
+         * Life Connect settings from the web app: {role, secret, url, anonKey,
+         * device}. Starts or stops the background connection to match.
+         */
+        @JavascriptInterface
+        public boolean setConnect(String json) {
+            if (!trusted() || json == null || json.length() > 4000) return false;
+            if (!ConnectConfig.save(MainActivity.this, json)) return false;
+            ConnectService.sync(MainActivity.this);
+            return true;
+        }
+
+        /** Asks Android for what this phone's role needs. */
+        @JavascriptInterface
+        public void requestConnectPermissions() {
+            if (!trusted()) return;
+            String role = ConnectConfig.roleOf(MainActivity.this);
+            java.util.List<String> missing = new java.util.ArrayList<>();
+            for (String permission : connectPermissions(role)) {
+                if (!granted(permission)) missing.add(permission);
+            }
+            if (missing.isEmpty()) return;
+            runOnUiThread(() -> requestPermissions(missing.toArray(new String[0]), CONNECT_REQUEST));
+        }
+
+        @JavascriptInterface
+        public String connectStatus() {
+            if (!trusted()) return "{}";
+            try {
+                String role = ConnectConfig.roleOf(MainActivity.this);
+                org.json.JSONObject status = new org.json.JSONObject()
+                    .put("role", role)
+                    .put("connected", ConnectService.connected)
+                    .put("phone", granted(Manifest.permission.READ_PHONE_STATE))
+                    .put("callLog", granted(Manifest.permission.READ_CALL_LOG))
+                    .put("answer", granted(Manifest.permission.ANSWER_PHONE_CALLS))
+                    .put("contacts", granted(Manifest.permission.READ_CONTACTS))
+                    .put("notifications", granted(Manifest.permission.POST_NOTIFICATIONS))
+                    .put("battery", getSystemService(android.os.PowerManager.class)
+                        .isIgnoringBatteryOptimizations(getPackageName()));
+                return status.toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
+
+        /** Sends a test to the other phone; true if the relay took it. */
+        @JavascriptInterface
+        public void connectTest() {
+            if (!trusted()) return;
+            ConnectConfig config = ConnectConfig.load(MainActivity.this);
+            if (config == null) return;
+            try {
+                ConnectSender.send(config,
+                    new org.json.JSONObject().put("type", "test").put("device", config.device),
+                    ok -> runOnUiThread(() -> webView.evaluateJavascript(
+                        "window.dispatchEvent(new CustomEvent('life-os-connect-test',{detail:" + ok + "}))", null)));
+            } catch (Exception ignored) {
+                // Nothing sent.
+            }
+        }
+
+        /** Lets Life Connect keep its connection while the phone sleeps. */
+        @JavascriptInterface
+        public void openBatterySettings() {
+            if (!trusted()) return;
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                        .setData(Uri.parse("package:" + getPackageName())));
+                } catch (Exception e) {
+                    startActivity(new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+                }
+            });
+        }
+
         /** Qibla finder: true-north heading from the phone's sensors (see Compass). */
         @JavascriptInterface
         public boolean startCompass(double latitude, double longitude, String mode) {

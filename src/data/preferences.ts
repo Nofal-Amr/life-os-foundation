@@ -44,6 +44,8 @@ export type PreferencesInput = {
   skin?: "serious" | "rpg";
   /** Cuisines and usual foods per meal, chosen in Food setup. */
   food_prefs?: FoodPrefs | null;
+  /** Life Connect: the account's shared secret (64 hex characters). */
+  connect_key?: string | null;
 };
 
 export type FoodPrefs = {

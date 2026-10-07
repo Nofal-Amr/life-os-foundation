@@ -1611,6 +1611,7 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          connect_key: string | null
           created_at: string
           currency: string | null
           date_format: string
@@ -1627,6 +1628,7 @@ export type Database = {
           week_start: number
         }
         Insert: {
+          connect_key?: string | null
           created_at?: string
           currency?: string | null
           date_format?: string
@@ -1643,6 +1645,7 @@ export type Database = {
           week_start?: number
         }
         Update: {
+          connect_key?: string | null
           created_at?: string
           currency?: string | null
           date_format?: string
