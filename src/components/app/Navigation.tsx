@@ -10,6 +10,7 @@ import { Bell,
   NotebookPen,
   Sun,
   Sunset,
+  Users,
   Wallet,
 } from "lucide-react";
 import { useState } from "react";
@@ -31,6 +32,7 @@ const TOOLS = [
   { to: "/calendar" as const, label: "Calendar", icon: CalendarDays, module: "calendar" as const },
   { to: "/notes" as const, label: "Notes", icon: NotebookPen, module: "notes" as const },
   { to: "/reminders" as const, label: "Reminders", icon: Bell, module: null },
+  { to: "/together" as const, label: "Together", icon: Users, module: null },
   { to: "/review" as const, label: "Daily review", icon: Sunset, module: null },
 ];
 

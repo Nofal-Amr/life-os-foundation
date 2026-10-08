@@ -90,6 +90,7 @@ import {
   type TaskEnergy,
 } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
+import { podEventsQuery, podsQuery } from "@/data/together";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
@@ -190,7 +191,14 @@ type ComingUpItem = {
   title: string;
   detail: string;
   kind: "commitment" | "projection";
-  to: "/tasks" | "/projects" | "/goals" | "/finance/recurring" | "/resources" | "/reminders";
+  to:
+    | "/tasks"
+    | "/projects"
+    | "/goals"
+    | "/finance/recurring"
+    | "/resources"
+    | "/reminders"
+    | "/together";
 };
 
 function SectionHeading({ title, detail }: { title: string; detail?: string | undefined }) {
@@ -393,6 +401,8 @@ function DashboardPage() {
   const resources = useQuery(resourcesQuery());
   const resourceReadings = useQuery(resourceReadingsQuery());
   const userReminders = useQuery(userRemindersQuery());
+  const pods = useQuery(podsQuery());
+  const podEvents = useQuery(podEventsQuery());
 
   const ringSegments = useTodaySegments();
   const [quickTask, setQuickTask] = useState(false);
@@ -609,6 +619,22 @@ function DashboardPage() {
         to: "/finance/recurring",
       });
     }
+  }
+
+  // Shared calendars (Together): the next week.
+  for (const event of podEvents.data ?? []) {
+    const day = format(new Date(event.starts_at), "yyyy-MM-dd");
+    if (day < today || day > nextWeek) continue;
+    const space = (pods.data ?? []).find((pod) => pod.id === event.pod_id)?.name ?? "Shared";
+    comingUp.push({
+      id: `pod-${event.id}`,
+      dimension: "discipline",
+      sortValue: day,
+      title: event.title,
+      detail: `${space} · ${day === today ? "Today" : fmtDate(day)}${event.all_day ? "" : ` · ${fmtTime(new Date(event.starts_at))}`}`,
+      kind: "commitment",
+      to: "/together",
+    });
   }
 
   for (const reminder of userReminders.data ?? []) {

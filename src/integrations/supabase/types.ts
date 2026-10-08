@@ -1004,6 +1004,195 @@ export type Database = {
         }
         Relationships: []
       }
+      pod_events: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          note: string | null
+          pod_id: string
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          note?: string | null
+          pod_id: string
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          note?: string | null
+          pod_id?: string
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_events_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pod_list_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          done: boolean
+          done_by: string | null
+          id: string
+          list_id: string
+          pod_id: string
+          position: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          done_by?: string | null
+          id?: string
+          list_id: string
+          pod_id: string
+          position?: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          done?: boolean
+          done_by?: string | null
+          id?: string
+          list_id?: string
+          pod_id?: string
+          position?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_list_items_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "pod_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pod_list_items_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pod_lists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          pod_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pod_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          pod_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_lists_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pod_members: {
+        Row: {
+          display_name: string
+          joined_at: string
+          pod_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          display_name: string
+          joined_at?: string
+          pod_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string
+          joined_at?: string
+          pod_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pod_members_pod_id_fkey"
+            columns: ["pod_id"]
+            isOneToOne: false
+            referencedRelation: "pods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pods: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          invite_code: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invite_code: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invite_code?: string
+          name?: string
+        }
+        Relationships: []
+      }
       prayer_logs: {
         Row: {
           completed: boolean
@@ -1698,7 +1887,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_pod: {
+        Args: { my_name: string; pod_name: string }
+        Returns: string
+      }
       delete_my_account: { Args: never; Returns: undefined }
+      is_pod_member: { Args: { target: string }; Returns: boolean }
+      is_pod_owner: { Args: { target: string }; Returns: boolean }
+      join_pod: { Args: { code: string; my_name: string }; Returns: string }
+      new_pod_code: { Args: never; Returns: string }
+      rename_me_in_pod: {
+        Args: { my_name: string; target: string }
+        Returns: undefined
+      }
+      renew_pod_code: { Args: { target: string }; Returns: string }
     }
     Enums: {
       account_type: "checking" | "savings" | "cash" | "credit"

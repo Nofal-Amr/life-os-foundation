@@ -65,6 +65,7 @@ const PAGES = [
   { label: "Notes", to: "/notes" },
   { label: "Calendar", to: "/calendar" },
   { label: "Reminders", to: "/reminders" },
+  { label: "Together", to: "/together" },
   { label: "Daily review", to: "/review" },
   { label: "Settings", to: "/settings" },
 ] as const;
