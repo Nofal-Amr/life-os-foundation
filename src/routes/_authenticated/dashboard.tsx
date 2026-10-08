@@ -1079,10 +1079,12 @@ function DashboardPage() {
         ) : error ? (
           <ErrorState error={error} onRetry={() => queries.forEach((query) => query.refetch())} />
         ) : (
-          <main className="flex min-w-0 flex-col gap-10">
+          // Phones: one column. Wide screens: the thing to do and the check-in on
+          // the left, the snapshot and today's figures on the right.
+          <main className="flex min-w-0 flex-col gap-10 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-10">
             {/* Zone 1 — the one thing to do. */}
             {isEnabled("do") ? (
-              <section className="min-w-0">
+              <section className="min-w-0 xl:col-start-1 xl:row-start-1">
                 <Card className="system-card min-w-0 border-primary/30">
                   <CardHeader>
                     <SectionHeading
@@ -1136,13 +1138,17 @@ function DashboardPage() {
 
             {/* The life snapshot comes after the one thing to do, so opening the
                 app shows what to do first (ADHD: one clear focus). */}
-            <HubCard />
+            <div className="min-w-0 xl:col-start-2 xl:row-start-1">
+              <HubCard />
+            </div>
 
             {/* How you feel, in two taps, with a one-minute reset beside it. */}
-            <CheckIn />
+            <div className="min-w-0 xl:col-start-1 xl:row-start-2">
+              <CheckIn />
+            </div>
 
             {/* Zone 2 — one block for everything today, each row acting on itself. */}
-            <section className="min-w-0">
+            <section className="min-w-0 xl:col-start-2 xl:row-start-2">
               <h2 className="text-base font-semibold text-foreground">Today</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Your own figures, and the logging beside them.
@@ -1162,7 +1168,7 @@ function DashboardPage() {
             </section>
 
             {/* Zone 3 — quiet footer: what is ahead, what is done, small tools. */}
-            <section className="min-w-0 border-t border-border/60 pt-5 text-xs text-muted-foreground">
+            <section className="min-w-0 border-t border-border/60 pt-5 text-xs text-muted-foreground xl:col-span-2">
               <div className="grid min-w-0 gap-6 sm:grid-cols-2">
                 <div className="min-w-0">
                   <h2 className="text-sm font-medium text-foreground">Coming up</h2>

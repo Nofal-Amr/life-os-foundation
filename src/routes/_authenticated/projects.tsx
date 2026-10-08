@@ -8,6 +8,7 @@ import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { ProjectCover, ProjectCoverPicker } from "@/components/app/ProjectCover";
+import { PlansDialog } from "@/components/app/PlansDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,7 @@ function ProjectsPage() {
   const [editing, setEditing] = useState<Project | null>(null);
   const [form, setForm] = useState<ProjectInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Project | null>(null);
+  const [plansOpen, setPlansOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [removeCover, setRemoveCover] = useState(false);
 
@@ -147,10 +149,18 @@ function ProjectsPage() {
 
   return (
     <>
+      <PlansDialog open={plansOpen} onOpenChange={setPlansOpen} />
       <PageHeader
         title="Projects"
         description="Everything you're moving forward, grouped by status."
-        actions={<Button onClick={openCreate}>New project</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setPlansOpen(true)}>
+              From a plan
+            </Button>
+            <Button onClick={openCreate}>New project</Button>
+          </div>
+        }
       />
 
       {projects.isLoading ? (
