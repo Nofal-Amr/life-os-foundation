@@ -43,3 +43,4 @@ playwright-report/
 
 # On-device OCR engine, copied from node_modules (scripts/ocr-assets.mjs)
 public/ocr/
+public/ai/

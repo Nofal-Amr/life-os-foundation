@@ -8,6 +8,7 @@ import {
   BookOpen,
   Check,
   List,
+  Sparkles,
   ListChecks,
   MessageSquareText,
   Palette,
@@ -23,6 +24,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } fr
 import { toast } from "sonner";
 
 import { ErrorState, LoadingState } from "@/components/app/States";
+import { AiSuggestDialog, useLocalAi } from "@/components/app/LocalAi";
+import { createTask } from "@/data/tasks";
+import { tasksFromText } from "@/lib/localAi";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -613,6 +617,10 @@ function NoteEditor({
     }
   }
 
+  const ai = useLocalAi();
+  const [findingTasks, setFindingTasks] = useState(false);
+  const noteText = items ? items.map((item) => item.text).join("\n") : (note.body ?? "");
+
   const points = items ? [] : toPoints(note.body ?? "");
   function turnIntoPoints() {
     const before = note.body;
@@ -743,6 +751,41 @@ function NoteEditor({
               Into points
             </Button>
           ) : null}
+          {ai.ready && noteText.trim().length > 20 ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setFindingTasks(true)}
+            >
+              <Sparkles className="size-4" />
+              Into tasks
+            </Button>
+          ) : null}
+          <AiSuggestDialog
+            open={findingTasks}
+            onOpenChange={setFindingTasks}
+            title="Tasks in this note"
+            description="Found on this device. Untick any that aren't tasks; the rest go to Unsorted."
+            run={() => tasksFromText(noteText)}
+            keepLabel="Add to Unsorted"
+            onKeep={async (titles) => {
+              for (const title of titles) {
+                await createTask({
+                  title,
+                  description: null,
+                  status: "inbox",
+                  priority: "medium",
+                  due_date: null,
+                  project_id: null,
+                  capability_id: null,
+                  goal_id: null,
+                });
+              }
+              toast.success(`${titles.length} ${titles.length === 1 ? "task" : "tasks"} added to Unsorted.`);
+            }}
+          />
           <Button
             type="button"
             variant="ghost"

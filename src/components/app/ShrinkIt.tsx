@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Scissors } from "lucide-react";
+import { Scissors, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AiSuggestDialog, useLocalAi } from "@/components/app/LocalAi";
 import { createStep, taskKeys, type Task } from "@/data/tasks";
+import { suggestSteps } from "@/lib/localAi";
 
 /** UI scaffolding to get past a blank field — never stored as data. */
 const STARTERS = [
@@ -38,6 +40,8 @@ export function ShrinkItDialog({
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [minutes, setMinutes] = useState("5");
+  const ai = useLocalAi();
+  const [suggesting, setSuggesting] = useState(false);
 
   const add = useMutation({
     mutationFn: async () => {
@@ -115,6 +119,16 @@ export function ShrinkItDialog({
               </Button>
             ))}
           </div>
+          {ai.ready && task ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 w-full"
+              onClick={() => setSuggesting(true)}
+            >
+              <Sparkles className="size-4" /> Suggest steps (on-device AI)
+            </Button>
+          ) : null}
           <div className="space-y-2">
             <Label htmlFor="shrink-minutes">Minutes (optional)</Label>
             <Input
@@ -131,6 +145,30 @@ export function ShrinkItDialog({
             {add.isPending ? "Adding…" : "Add this step"}
           </Button>
         </form>
+        {task ? (
+          <AiSuggestDialog
+            open={suggesting}
+            onOpenChange={setSuggesting}
+            title="Suggested steps"
+            description={`For “${task.title}”. Untick any you don't want.`}
+            run={() => suggestSteps(task.title)}
+            keepLabel="Add as steps"
+            onKeep={async (steps) => {
+              for (const [index, step] of steps.entries()) {
+                await createStep({
+                  parent_task_id: task.id,
+                  title: step,
+                  estimated_minutes: null,
+                  position: (existingSteps ?? 0) + index,
+                  project_id: task.project_id,
+                });
+              }
+              await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+              toast.success(`${steps.length} ${steps.length === 1 ? "step" : "steps"} added.`);
+              onOpenChange(false);
+            }}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   );
