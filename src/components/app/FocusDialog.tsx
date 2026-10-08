@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { habitsQuery } from "@/data/habits";
+import { isAndroidApp } from "@/lib/native";
 import { FOCUS_PRESETS, writeFocus } from "@/lib/focus";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,8 @@ export function FocusDialog({
 
   const length = custom ? Number(custom) : minutes;
   const ready = Number.isFinite(length) && length >= 1 && length <= 240;
+  const [lock, setLock] = useState(false);
+  const canLock = isAndroidApp();
   const activeHabits = (habits.data ?? []).filter((habit) => habit.active);
 
   const begin = () => {
@@ -63,6 +66,7 @@ export function FocusDialog({
       minutes: length,
       habitId: habit?.id ?? null,
       habitName: habit?.name ?? null,
+      locked: lock,
     });
     start.mutate({
       activity_id: null,
@@ -155,6 +159,22 @@ export function FocusDialog({
                 </SelectContent>
               </Select>
             </div>
+          ) : null}
+          {canLock ? (
+            <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5 size-5 accent-[var(--primary)]"
+                checked={lock}
+                onChange={(event) => setLock(event.target.checked)}
+              />
+              <span>
+                Lock the screen to Life OS
+                <span className="block text-xs text-muted-foreground">
+                  Android app pinning until the time is up. Hold Back and Recents to leave early.
+                </span>
+              </span>
+            </label>
           ) : null}
           <Button type="submit" className="h-12 w-full" disabled={!ready || start.isPending}>
             Start {ready ? `${length} min` : ""}

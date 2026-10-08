@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
+  LayoutTemplate,
   List,
   Sparkles,
   ListChecks,
@@ -27,6 +28,13 @@ import { ErrorState, LoadingState } from "@/components/app/States";
 import { AiSuggestDialog, useLocalAi } from "@/components/app/LocalAi";
 import { createTask } from "@/data/tasks";
 import { tasksFromText } from "@/lib/localAi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { NOTE_TEMPLATES, type NoteTemplate } from "@/data/noteTemplates";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -180,6 +188,30 @@ function NotesPage() {
     });
   }
 
+  /** A new note from a template (see data/noteTemplates.ts). */
+  function startFromTemplate(template: NoteTemplate) {
+    const now = new Date();
+    const iso = now.toISOString();
+    setEditing({
+      isNew: true,
+      note: {
+        id: newId(),
+        title: template.title(now),
+        body: template.checklist ? null : (template.body ?? ""),
+        tags: template.tags ?? [],
+        pinned: false,
+        archived: false,
+        color: null,
+        checklist: template.checklist
+          ? (template.checklist.map((text) => ({ id: newId(), text, done: false })) as never)
+          : null,
+        created_at: iso,
+        updated_at: iso,
+        user_id: "",
+      },
+    });
+  }
+
   /** Today's diary page: opens it if it exists, otherwise starts it. */
   function openDiary() {
     const title = format(new Date(), "EEEE d MMMM yyyy");
@@ -325,6 +357,20 @@ function NotesPage() {
           >
             <ListChecks className="size-5" />
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="ghost" size="icon" aria-label="From a template" title="From a template">
+                <LayoutTemplate className="size-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {NOTE_TEMPLATES.map((template) => (
+                <DropdownMenuItem key={template.id} onSelect={() => startFromTemplate(template)}>
+                  {template.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ) : null}
 

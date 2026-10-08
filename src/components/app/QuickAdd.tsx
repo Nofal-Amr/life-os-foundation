@@ -9,7 +9,7 @@ import { Bell,
   Utensils,
   Wallet,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { CaptureBox } from "@/components/app/CaptureBox";
 import { EntityIcon } from "@/components/app/EntityIdentity";
@@ -45,6 +45,31 @@ export function QuickAdd() {
   const [focus, setFocus] = useState(false);
   const { activities, start, running } = useTimer();
   const prayerLogs = useQuery({ ...prayerLogsQuery(), enabled: open && panel === "prayer" });
+
+  // Widget buttons open the app with ?quick=task|money|capture: go straight there.
+  const search = useRouterState({ select: (state) => state.location.searchStr });
+  useEffect(() => {
+    const quick = new URLSearchParams(search).get("quick");
+    if (!quick) return;
+    if (quick === "task") setTask(true);
+    else if (quick === "money") setMoney(true);
+    else if (quick === "capture") setOpen(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("quick");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }, [search]);
+
+  // Keyboard shortcuts (c, t, s) ask for the same things.
+  useEffect(() => {
+    const onQuick = (event: Event) => {
+      const kind = (event as CustomEvent<string>).detail;
+      if (kind === "task") setTask(true);
+      else if (kind === "money") setMoney(true);
+      else setOpen(true);
+    };
+    window.addEventListener("life-os-quick", onQuick);
+    return () => window.removeEventListener("life-os-quick", onQuick);
+  }, []);
 
   // Notes has its own new-note button in the same place.
   if (pathname.startsWith("/notes")) return null;

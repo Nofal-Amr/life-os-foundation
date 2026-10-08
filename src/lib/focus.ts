@@ -4,12 +4,16 @@
  * remembers the plan, on this device, while the session runs.
  */
 
+import { focusLock } from "@/lib/native";
+
 export type FocusSession = {
   /** Epoch ms when the session started. */
   startedAt: number;
   minutes: number;
   habitId?: string | null;
   habitName?: string | null;
+  /** The screen is pinned to Life OS until the session ends (Android). */
+  locked?: boolean;
 };
 
 const KEY = "life-os-focus";
@@ -28,6 +32,9 @@ export function readFocus(): FocusSession | null {
 }
 
 export function writeFocus(session: FocusSession | null) {
+  // Ending a session always lets go of the screen.
+  if (!session) focusLock(false);
+  else if (session.locked) focusLock(true);
   try {
     if (session) window.localStorage.setItem(KEY, JSON.stringify(session));
     else window.localStorage.removeItem(KEY);

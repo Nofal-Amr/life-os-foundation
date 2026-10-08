@@ -14,7 +14,10 @@ type NativeBridge = {
   showTimer?(title: string, startedAt: number): void;
   saveFile?(name: string, base64: string, mime: string): string;
   setWidgetData?(json: string): void;
+  setTodayWidget?(json: string): void;
   takePendingPrayerLogs?(): string;
+  listen?(json: string): void;
+  focusLock?(on: boolean): void;
   startCompass?(latitude: number, longitude: number, mode: string): boolean;
   setCompassMode?(mode: string): void;
   compassDeclination?(): number;
@@ -90,7 +93,7 @@ export function scheduleReminders(reminders: Reminder[]): void {
 
 /** Sends a request to the shell and waits for its callback. */
 export function nativeRequest(
-  method: "readHealth",
+  method: "readHealth" | "listen",
   args: Record<string, unknown>,
   timeoutMs = 120_000,
 ): Promise<string> {
@@ -352,5 +355,68 @@ export function buildFeatures(): { sms: boolean; spending: boolean } {
     return { sms: !!value.sms, spending: !!value.spending };
   } catch {
     return { sms: false, spending: false };
+  }
+}
+
+/* ------------------------------------------------ voice and focus lock */
+
+type SpeechResultList = { 0: { transcript: string } }[];
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  onresult: ((event: { results: SpeechResultList }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+};
+
+/** Whether speech-to-text is available here (the app, or a browser that has it). */
+export function canListen(): boolean {
+  if (typeof bridge()?.listen === "function") return true;
+  if (typeof window === "undefined") return false;
+  const w = window as unknown as Record<string, unknown>;
+  return !!(w["SpeechRecognition"] ?? w["webkitSpeechRecognition"]);
+}
+
+/**
+ * Speech to text: the phone's recogniser in the app, the browser's on the web.
+ * Resolves with the words, or "" if nothing was said.
+ */
+export async function listen(lang?: string): Promise<string> {
+  if (typeof bridge()?.listen === "function") {
+    return nativeRequest("listen", { lang: lang ?? "" }, 60_000);
+  }
+  const w = window as unknown as Record<string, new () => SpeechRecognitionLike>;
+  const Recognition = w["SpeechRecognition"] ?? w["webkitSpeechRecognition"];
+  if (!Recognition) throw new Error("Voice input isn't available here.");
+  return new Promise((resolve) => {
+    const recognition = new Recognition();
+    recognition.lang = lang || navigator.language;
+    recognition.interimResults = false;
+    let text = "";
+    recognition.onresult = (event) => {
+      text = event.results[0]?.[0]?.transcript ?? "";
+    };
+    recognition.onerror = () => resolve(text);
+    recognition.onend = () => resolve(text);
+    recognition.start();
+  });
+}
+
+/** Pins the screen to Life OS during focus (Android app pinning); no-op elsewhere. */
+export function focusLock(on: boolean): void {
+  try {
+    bridge()?.focusLock?.(on);
+  } catch {
+    // Not available.
+  }
+}
+
+/** Hands the Today widget its figures (already formatted text). */
+export function setTodayWidget(data: { left: string; spent: string; tasks: string }): void {
+  try {
+    bridge()?.setTodayWidget?.(JSON.stringify(data));
+  } catch {
+    // No widget here.
   }
 }

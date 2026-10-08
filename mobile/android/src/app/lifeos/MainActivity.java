@@ -57,6 +57,9 @@ public class MainActivity extends Activity {
     private static final int HEALTH_REQUEST = 3;
     private static final int FILE_REQUEST = 4;
     private static final int CONNECT_REQUEST = 6;
+    private static final int VOICE_REQUEST = 7;
+    /** The page's request id waiting for speech-to-text. */
+    private String pendingVoiceId;
     /** Lets the web app know it runs inside this shell (see src/routes/auth.tsx). */
     private static final String UA_MARKER = "LifeOSAndroid";
     private static final String CALLBACK_SCHEME = "lifeos";
@@ -228,6 +231,23 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == VOICE_REQUEST) {
+            String id = pendingVoiceId;
+            pendingVoiceId = null;
+            String text = "";
+            if (resultCode == RESULT_OK && data != null) {
+                java.util.ArrayList<String> results =
+                    data.getStringArrayListExtra(android.speech.RecognizerIntent.EXTRA_RESULTS);
+                if (results != null && !results.isEmpty()) text = results.get(0);
+            }
+            if (id != null) {
+                webView.evaluateJavascript(
+                    "window.__lifeOSNativeCallback && window.__lifeOSNativeCallback("
+                        + JSONObject.quote(id) + "," + JSONObject.quote(text) + ")",
+                    null);
+            }
+            return;
+        }
         if (requestCode != FILE_REQUEST || fileCallback == null) return;
         Uri[] picked = null;
         // The camera saved straight into our provider (it returns no data).
@@ -571,6 +591,57 @@ public class MainActivity extends Activity {
             });
         }
 
+        /**
+         * Speech to text with the phone's own recogniser (Google or Samsung):
+         * {id, lang}. The text comes back through __lifeOSNativeCallback(id).
+         * Life OS never records audio itself.
+         */
+        @JavascriptInterface
+        public void listen(String json) {
+            if (!trusted()) return;
+            try {
+                JSONObject args = new JSONObject(json);
+                String id = args.getString("id");
+                String lang = args.optString("lang", "");
+                Intent intent = new Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                    .putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    .putExtra(android.speech.RecognizerIntent.EXTRA_PROMPT, "Say it");
+                if (!lang.isEmpty()) intent.putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, lang);
+                runOnUiThread(() -> {
+                    try {
+                        pendingVoiceId = id;
+                        startActivityForResult(intent, VOICE_REQUEST);
+                    } catch (Exception none) {
+                        pendingVoiceId = null;
+                        webView.evaluateJavascript(
+                            "window.__lifeOSNativeCallback && window.__lifeOSNativeCallback("
+                                + JSONObject.quote(id) + ",'')", null);
+                    }
+                });
+            } catch (Exception ignored) {
+                // Bad request.
+            }
+        }
+
+        /**
+         * Focus lock: pins the screen to Life OS (Android's app pinning) until
+         * the focus session ends. Leaving early is always possible (hold Back
+         * and Recents), so it's a nudge, not a trap.
+         */
+        @JavascriptInterface
+        public void focusLock(boolean on) {
+            if (!trusted()) return;
+            runOnUiThread(() -> {
+                try {
+                    if (on) startLockTask();
+                    else stopLockTask();
+                } catch (Exception ignored) {
+                    // Pinning off in settings, or not pinned.
+                }
+            });
+        }
+
         /** Qibla finder: true-north heading from the phone's sensors (see Compass). */
         @JavascriptInterface
         public boolean startCompass(double latitude, double longitude, String mode) {
@@ -609,7 +680,7 @@ public class MainActivity extends Activity {
         public String saveFile(String name, String base64, String mime) {
             if (!trusted() || name == null || base64 == null || mime == null) return "";
             if (!mime.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                && !mime.equals("text/csv")) return "";
+                && !mime.equals("text/csv") && !mime.equals("application/json")) return "";
             String safe = name.replaceAll("[^A-Za-z0-9._ -]", "_");
             if (safe.isEmpty() || safe.length() > 100 || safe.startsWith(".")) safe = "life-os-export";
             byte[] bytes;
@@ -618,7 +689,7 @@ public class MainActivity extends Activity {
             } catch (IllegalArgumentException e) {
                 return "";
             }
-            if (bytes.length == 0 || bytes.length > 20 * 1024 * 1024) return "";
+            if (bytes.length == 0 || bytes.length > 50 * 1024 * 1024) return "";
             try {
                 if (Build.VERSION.SDK_INT >= 29) {
                     ContentValues values = new ContentValues();
@@ -698,6 +769,15 @@ public class MainActivity extends Activity {
             getSharedPreferences(PrayerWidget.PREFS, MODE_PRIVATE)
                 .edit().putString(PrayerWidget.KEY_DATA, json).apply();
             PrayerWidget.refresh(MainActivity.this);
+        }
+
+        /** What the home-screen Today widget shows: {left, spent, tasks} as text. */
+        @JavascriptInterface
+        public void setTodayWidget(String json) {
+            if (!trusted() || json == null || json.length() > 4000) return;
+            getSharedPreferences(PrayerWidget.PREFS, MODE_PRIVATE)
+                .edit().putString(TodayWidget.KEY_DATA, json).apply();
+            TodayWidget.refresh(MainActivity.this);
         }
 
         /** Prayers logged from notification buttons; handing them over clears them. */
