@@ -22,8 +22,11 @@
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- full:start  SMS forwarding: only in the Full build (Play Protect blocks
+         sideloaded apps that ask for SMS access). -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.SEND_SMS" />
+    <!-- full:end -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
@@ -99,6 +102,7 @@
             android:exported="false"
             android:foregroundServiceType="remoteMessaging" />
         <receiver android:name=".ConnectActionReceiver" android:exported="false" />
+        <!-- full:start -->
         <receiver
             android:name=".SmsReceiver"
             android:exported="true"
@@ -107,6 +111,7 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
+        <!-- full:end -->
         <activity
             android:name=".IncomingCallActivity"
             android:exported="false"
@@ -115,7 +120,8 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:theme="@android:style/Theme.Material.NoActionBar" />
-        <!-- Spending from bank notifications (needs Notification access in Android settings). -->
+        <!-- full:start  Spending from bank notifications (needs Notification access):
+             only in the Full build, for the same reason. -->
         <service
             android:name=".SpendingListener"
             android:exported="true"
@@ -125,6 +131,7 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+        <!-- full:end -->
         <receiver android:name=".SpendingActionReceiver" android:exported="false" />
         <receiver android:name=".CallStateReceiver" android:exported="false">
             <intent-filter>

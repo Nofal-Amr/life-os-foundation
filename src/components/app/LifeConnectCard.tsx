@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { preferencesKeys, preferencesQuery, savePreferences } from "@/data/preferences";
 import { supabase } from "@/integrations/supabase/client";
-import { lifeConnect, type ConnectRole, type ConnectStatus } from "@/lib/native";
+import { buildFeatures, lifeConnect, type ConnectRole, type ConnectStatus } from "@/lib/native";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +57,7 @@ export function LifeConnectCard() {
   const [sms, setSms] = useState(true);
   const [codes, setCodes] = useState(true);
   const available = lifeConnect.available();
+  const smsBuild = buildFeatures().sms;
 
   useEffect(() => {
     const saved = readLocal(ROLE_KEY, "off");
@@ -150,7 +151,7 @@ export function LifeConnectCard() {
             ok: !!status?.contacts,
             fix: lifeConnect.requestPermissions,
           },
-          ...(sms
+          ...(sms && smsBuild
             ? [
                 {
                   label: "Pass on SMS and send replies",
@@ -242,7 +243,13 @@ export function LifeConnectCard() {
           <p className="text-xs text-muted-foreground">
             Shown on the main phone: "Calling {device || "SIM phone"}".
           </p>
-          <div className="flex items-center justify-between gap-3 pt-2">
+          {!smsBuild ? (
+            <p className="pt-2 text-xs text-muted-foreground">
+              Passing SMS on needs Life OS Full on this phone (installed from a computer — Google
+              blocks SMS access for apps installed from WhatsApp or a browser). Calls work as is.
+            </p>
+          ) : null}
+          <div className={cn("flex items-center justify-between gap-3 pt-2", !smsBuild && "hidden")}>
             <Label htmlFor="connect-sms">Pass SMS on to the main phone</Label>
             <Switch
               id="connect-sms"
@@ -253,7 +260,7 @@ export function LifeConnectCard() {
               }}
             />
           </div>
-          {sms ? (
+          {sms && smsBuild ? (
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor="connect-codes" className="block">
                 Include one-time codes

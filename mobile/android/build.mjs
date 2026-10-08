@@ -2,11 +2,17 @@
 // Android SDK command-line tools (aapt2, d8, zipalign, apksigner) and a JDK.
 //
 //   npm run build:android            -> mobile/android/build/life-os-debug.apk
+//   npm run build:android:full       -> mobile/android/build/life-os-full.apk
+//
+// The standard build leaves out everything between <!-- full:start --> and
+// <!-- full:end --> in the manifest (SMS access, notification access): Google
+// Play Protect blocks sideloaded apps that ask for those. The Full build keeps
+// them and is meant to be installed from a computer (adb install).
 //
 // Env overrides: ANDROID_HOME, JAVA_HOME, ANDROID_PLATFORM (e.g. android-34),
 // ANDROID_BUILD_TOOLS (e.g. 35.0.0), SKIP_WEB=1 to reuse an existing web build.
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { delimiter, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +20,7 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..", "..");
 const out = join(here, "build");
+const full = process.argv.includes("--full") || process.env.LIFEOS_FULL === "1";
 const win = process.platform === "win32";
 
 const sdk =
@@ -73,12 +80,29 @@ if (!existsSync(join(web, "index.html")))
 
 // Clear the contents rather than the folder, which Windows may hold open.
 if (existsSync(out)) {
-  for (const entry of readdirSync(out)) rmSync(join(out, entry), { recursive: true, force: true });
+  // Keep the other build's finished APK (standard and Full share this folder).
+  for (const entry of readdirSync(out)) {
+    if (/^life-os-(debug|full)\.apk$/.test(entry)) continue;
+    rmSync(join(out, entry), { recursive: true, force: true });
+  }
 }
 const dirs = ["res", "classes", "dex", "assets/www", "gen"].map((d) => join(out, d));
 dirs.forEach((d) => mkdirSync(d, { recursive: true }));
 const [resOut, classesOut, dexOut, wwwOut, genOut] = dirs;
 cpSync(web, wwwOut, { recursive: true });
+
+/** The manifest for this build: the Full one as is, the standard one without the full-only parts. */
+function manifestPath() {
+  const source = readFileSync(join(here, "AndroidManifest.xml"), "utf8");
+  if (full) return join(here, "AndroidManifest.xml");
+  const stripped = source.replace(/[ \t]*<!-- full:start[\s\S]*?<!-- full:end -->\r?\n?/g, "");
+  if (/RECEIVE_SMS|NotificationListenerService/.test(stripped)) {
+    throw new Error("Full-only parts of the manifest aren't all inside full:start/full:end markers");
+  }
+  const target = join(out, "AndroidManifest.standard.xml");
+  writeFileSync(target, stripped);
+  return target;
+}
 
 // 2. Resources and manifest.
 const compiled = join(resOut, "res.zip");
@@ -91,7 +115,7 @@ run(bt("aapt2"), [
   "-I",
   androidJar,
   "--manifest",
-  join(here, "AndroidManifest.xml"),
+  manifestPath(),
   // R.java, so Java code can refer to resources (e.g. the notification icon).
   "--java",
   genOut,
@@ -177,7 +201,7 @@ if (!existsSync(keystore)) {
     "CN=Android Debug,O=Android,C=US",
   ]);
 }
-const apk = join(out, "life-os-debug.apk");
+const apk = join(out, full ? "life-os-full.apk" : "life-os-debug.apk");
 run(jdk("java"), [
   "-jar",
   btJar("apksigner"),

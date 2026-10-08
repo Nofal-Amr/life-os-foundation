@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { accountsQuery, createTransaction, financeKeys } from "@/data/finance";
 import { usePreferences } from "@/hooks/usePreferences";
-import { lifeConnect, spendingInbox, type PendingSpend, type SpendingStatus } from "@/lib/native";
+import { buildFeatures, lifeConnect, spendingInbox, type PendingSpend, type SpendingStatus } from "@/lib/native";
 import { cn } from "@/lib/utils";
 
 /** Per phone: which account spending from notifications goes to. */
@@ -200,6 +200,19 @@ export function SpendingSettingsCard() {
   }, []);
 
   if (!spendingInbox.available()) return null;
+  if (!buildFeatures().spending) {
+    return (
+      <section className="stat-card space-y-2 p-5">
+        <p className="flex items-center gap-2 text-base font-semibold">
+          <Bell className="size-4" /> Spending from bank notifications
+        </p>
+        <p className="text-sm text-muted-foreground">
+          This needs Life OS Full. Google blocks notification access for apps installed from
+          WhatsApp or a browser, so the Full version is installed from a computer.
+        </p>
+      </section>
+    );
+  }
 
   const watched = new Set(status?.watch.packages ?? []);
   const seen = Object.entries(status?.seen ?? {}).sort((a, b) => a[1].localeCompare(b[1]));

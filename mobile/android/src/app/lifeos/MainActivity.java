@@ -344,20 +344,45 @@ public class MainActivity extends Activity {
         if (compass != null) compass.stop();
     }
 
-    /** What each Life Connect role needs from Android. */
+    /** What each Life Connect role needs from Android (SMS only in the Full build). */
     private String[] connectPermissions(String role) {
         if ("sim".equals(role)) {
-            return new String[] {
+            java.util.List<String> list = new java.util.ArrayList<>(java.util.Arrays.asList(
                 Manifest.permission.READ_PHONE_STATE,
                 Manifest.permission.READ_CALL_LOG,
                 Manifest.permission.ANSWER_PHONE_CALLS,
                 Manifest.permission.READ_CONTACTS,
-                Manifest.permission.RECEIVE_SMS,
-                Manifest.permission.SEND_SMS,
-                Manifest.permission.POST_NOTIFICATIONS,
-            };
+                Manifest.permission.POST_NOTIFICATIONS));
+            if (declares(Manifest.permission.RECEIVE_SMS)) {
+                list.add(Manifest.permission.RECEIVE_SMS);
+                list.add(Manifest.permission.SEND_SMS);
+            }
+            return list.toArray(new String[0]);
         }
         return new String[] { Manifest.permission.POST_NOTIFICATIONS };
+    }
+
+    /** Whether this build's manifest asks for a permission (the Full build has more). */
+    private boolean declares(String permission) {
+        try {
+            String[] requested = getPackageManager()
+                .getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS).requestedPermissions;
+            if (requested == null) return false;
+            for (String item : requested) if (permission.equals(item)) return true;
+        } catch (Exception ignored) {
+            // Treat as not declared.
+        }
+        return false;
+    }
+
+    /** Whether this build has the notification listener (Full build only). */
+    private boolean hasSpendingListener() {
+        try {
+            getPackageManager().getServiceInfo(new android.content.ComponentName(this, SpendingListener.class), 0);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean granted(String permission) {
@@ -431,6 +456,20 @@ public class MainActivity extends Activity {
         }
 
         /* ----------------------------- spending from bank notifications */
+
+        /** Which optional features this build has: {sms, spending}. */
+        @JavascriptInterface
+        public String buildFeatures() {
+            if (!trusted()) return "{}";
+            try {
+                return new org.json.JSONObject()
+                    .put("sms", declares(Manifest.permission.RECEIVE_SMS))
+                    .put("spending", hasSpendingListener())
+                    .toString();
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
 
         @JavascriptInterface
         public String spendingStatus() {

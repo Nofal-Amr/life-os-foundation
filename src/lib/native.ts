@@ -25,6 +25,7 @@ type NativeBridge = {
   connectTest?(): void;
   openBatterySettings?(): void;
   openFullScreenSettings?(): void;
+  buildFeatures?(): string;
   spendingStatus?(): string;
   setSpendingWatch?(json: string): void;
   openNotificationAccess?(): void;
@@ -341,3 +342,15 @@ export const spendingInbox = {
     bridge()?.resolveSpending?.(id, status);
   },
 };
+
+/** Optional parts of the Android build: SMS forwarding and spending from notifications are Full-build only. */
+export function buildFeatures(): { sms: boolean; spending: boolean } {
+  try {
+    const raw = bridge()?.buildFeatures?.();
+    if (!raw) return { sms: true, spending: true };
+    const value = JSON.parse(raw) as { sms?: boolean; spending?: boolean };
+    return { sms: !!value.sms, spending: !!value.spending };
+  } catch {
+    return { sms: false, spending: false };
+  }
+}
