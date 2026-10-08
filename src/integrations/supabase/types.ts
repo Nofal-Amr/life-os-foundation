@@ -1564,6 +1564,54 @@ export type Database = {
           },
         ]
       }
+      rpg_purchases: {
+        Row: {
+          bought_at: string
+          cost: number
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          bought_at?: string
+          cost: number
+          id?: string
+          title: string
+          user_id?: string
+        }
+        Update: {
+          bought_at?: string
+          cost?: number
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rpg_rewards: {
+        Row: {
+          cost: number
+          created_at: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          cost: number
+          created_at?: string
+          id?: string
+          title: string
+          user_id?: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           capability_id: string | null

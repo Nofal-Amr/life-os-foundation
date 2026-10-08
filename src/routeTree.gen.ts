@@ -22,6 +22,7 @@ import { Route as AuthenticatedHabitsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
+import { Route as AuthenticatedQuestsRouteImport } from './routes/_authenticated/quests'
 import { Route as AuthenticatedRemindersRouteImport } from './routes/_authenticated/reminders'
 import { Route as AuthenticatedResourcesRouteImport } from './routes/_authenticated/resources'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
@@ -101,6 +102,11 @@ const AuthenticatedNotesRoute = AuthenticatedNotesRouteImport.update({
 const AuthenticatedProjectsRoute = AuthenticatedProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQuestsRoute = AuthenticatedQuestsRouteImport.update({
+  id: '/quests',
+  path: '/quests',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRemindersRoute = AuthenticatedRemindersRouteImport.update({
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/health': typeof AuthenticatedHealthRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/quests': typeof AuthenticatedQuestsRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/resources': typeof AuthenticatedResourcesRoute
   '/review': typeof AuthenticatedReviewRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/health': typeof AuthenticatedHealthRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/projects': typeof AuthenticatedProjectsRoute
+  '/quests': typeof AuthenticatedQuestsRoute
   '/reminders': typeof AuthenticatedRemindersRoute
   '/resources': typeof AuthenticatedResourcesRoute
   '/review': typeof AuthenticatedReviewRoute
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/_authenticated/health': typeof AuthenticatedHealthRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
+  '/_authenticated/quests': typeof AuthenticatedQuestsRoute
   '/_authenticated/reminders': typeof AuthenticatedRemindersRoute
   '/_authenticated/resources': typeof AuthenticatedResourcesRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/notes'
     | '/projects'
+    | '/quests'
     | '/reminders'
     | '/resources'
     | '/review'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/health'
     | '/notes'
     | '/projects'
+    | '/quests'
     | '/reminders'
     | '/resources'
     | '/review'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/_authenticated/health'
     | '/_authenticated/notes'
     | '/_authenticated/projects'
+    | '/_authenticated/quests'
     | '/_authenticated/reminders'
     | '/_authenticated/resources'
     | '/_authenticated/review'
@@ -459,6 +471,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof AuthenticatedProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/quests': {
+      id: '/_authenticated/quests'
+      path: '/quests'
+      fullPath: '/quests'
+      preLoaderRoute: typeof AuthenticatedQuestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/reminders': {
@@ -599,6 +618,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
+  AuthenticatedQuestsRoute: typeof AuthenticatedQuestsRoute
   AuthenticatedRemindersRoute: typeof AuthenticatedRemindersRoute
   AuthenticatedResourcesRoute: typeof AuthenticatedResourcesRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
@@ -621,6 +641,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
+  AuthenticatedQuestsRoute: AuthenticatedQuestsRoute,
   AuthenticatedRemindersRoute: AuthenticatedRemindersRoute,
   AuthenticatedResourcesRoute: AuthenticatedResourcesRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,

@@ -10,6 +10,7 @@ import { Bell,
   NotebookPen,
   Sun,
   Sunset,
+  Swords,
   Users,
   Wallet,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { useSignOut } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import type { ModuleKey } from "@/data/modules";
 import { useModules } from "@/hooks/useModules";
+import { usePreferences } from "@/hooks/usePreferences";
 
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard, module: null },
@@ -33,6 +35,7 @@ const TOOLS = [
   { to: "/notes" as const, label: "Notes", icon: NotebookPen, module: "notes" as const },
   { to: "/reminders" as const, label: "Reminders", icon: Bell, module: null },
   { to: "/together" as const, label: "Together", icon: Users, module: null },
+  { to: "/quests" as const, label: "Quests", icon: Swords, module: null },
   { to: "/review" as const, label: "Daily review", icon: Sunset, module: null },
 ];
 
@@ -53,10 +56,12 @@ function sectionFor(pathname: string) {
 /** Only the modules this user kept are shown; the structure is unchanged. */
 function useVisible() {
   const { enabled } = useModules();
+  const { skin } = usePreferences();
   const allows = (module: ModuleKey | null) => !module || enabled.includes(module);
   return {
     navItems: NAV_ITEMS.filter((item) => allows(item.module as ModuleKey | null)),
-    tools: TOOLS.filter((item) => allows(item.module)),
+    // Quests belong to the RPG skin.
+    tools: TOOLS.filter((item) => allows(item.module) && (item.to !== "/quests" || skin === "rpg")),
   };
 }
 

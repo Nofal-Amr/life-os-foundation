@@ -1,18 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
+  Coins,
   Flame,
   HeartPulse,
   Info,
   ListChecks,
   Moon,
   Repeat,
+  Shield,
   Sparkles,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
 
+import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { goldBalance, shieldedStreak, titleFor } from "@/data/game";
+import { purchasesQuery, spentGold } from "@/data/rpgShop";
+import type { PrayerLog } from "@/data/spirit";
 import { transactionsQuery } from "@/data/finance";
 import { habitLogsQuery, habitsQuery } from "@/data/habits";
 import { medicationLogsQuery, medicationsQuery } from "@/data/health";
@@ -37,8 +46,8 @@ const META: Record<Dimension, { icon: LucideIcon; module: ModuleKey; to: string;
  * The life snapshot at the top of Today. Serious skin: counts for the last 7
  * days. RPG skin: the same rows as XP, levels and 0–100 stats.
  */
-export function HubCard() {
-  const { skin } = usePreferences();
+/** The hub from real rows, shared by Today and the Quests page. */
+export function useHub() {
   const { enabled } = useModules();
   const tasks = useQuery(tasksQuery());
   const prayerLogs = useQuery(prayerLogsQuery());
@@ -61,9 +70,26 @@ export function HubCard() {
     healthSamples: healthSamples.data ?? [],
     enabled: (dimension) => enabled.includes(META[dimension].module),
   });
+  return {
+    hub,
+    tasks: tasks.data ?? [],
+    prayerLogs: prayerLogs.data ?? [],
+    habitLogs: habitLogs.data ?? [],
+    transactions: transactions.data ?? [],
+    healthSamples: healthSamples.data ?? [],
+  };
+}
+
+export function HubCard() {
+  const { skin } = usePreferences();
+  const { hub, prayerLogs } = useHub();
   if (!hub.lines.length) return null;
 
-  return skin === "rpg" ? <RpgSheet hub={hub} /> : <SeriousHub lines={hub.lines} />;
+  return skin === "rpg" ? (
+    <RpgSheet hub={hub} prayerLogs={prayerLogs} />
+  ) : (
+    <SeriousHub lines={hub.lines} />
+  );
 }
 
 /**
@@ -74,9 +100,7 @@ export function HubCard() {
 function SeriousHub({ lines }: { lines: DimensionLine[] }) {
   return (
     <section className="stat-card space-y-4 p-5" aria-label="Last 7 days">
-      <p className="text-xs font-medium text-muted-foreground">
-        Last 7 days
-      </p>
+      <p className="text-xs font-medium text-muted-foreground">Last 7 days</p>
       <ul className="grid gap-3 sm:grid-cols-2">
         {lines.map((line) => {
           const { icon: Icon, to, tone } = META[line.key];
@@ -112,28 +136,66 @@ function SeriousHub({ lines }: { lines: DimensionLine[] }) {
   );
 }
 
-function RpgSheet({ hub }: { hub: ReturnType<typeof buildHub> }) {
+const LEVEL_KEY = "rpg:last-level";
+
+function RpgSheet({
+  hub,
+  prayerLogs,
+}: {
+  hub: ReturnType<typeof buildHub>;
+  prayerLogs: PrayerLog[];
+}) {
   const overall = levelFor(hub.totalXp);
+  const { title } = titleFor(overall.level);
+  const streak = shieldedStreak(prayerLogs, todayISO());
+  const purchases = useQuery(purchasesQuery());
+  const gold = goldBalance(hub.totalXp, spentGold(purchases.data ?? []));
+  const [levelUp, setLevelUp] = useState<number | null>(null);
+
+  // The moment you go up a level (compared with the last level this phone saw).
+  useEffect(() => {
+    if (!hub.totalXp) return;
+    try {
+      const seen = Number(localStorage.getItem(LEVEL_KEY) ?? "0");
+      if (seen && overall.level > seen) setLevelUp(overall.level);
+      localStorage.setItem(LEVEL_KEY, String(overall.level));
+    } catch {
+      // Not remembered.
+    }
+  }, [overall.level, hub.totalXp]);
   return (
     <section className="stat-card space-y-4 p-5" aria-label="Character sheet">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Character
-          </p>
+          <p className="text-xs font-medium text-muted-foreground">Character</p>
           <p className="text-2xl font-semibold tracking-tight">
             Level {overall.level}
+            <span className="ml-2 text-base font-medium text-primary">{title}</span>
             <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">
               {hub.totalXp} XP
             </span>
           </p>
         </div>
-        {hub.prayerStreak > 1 ? (
-          <span className="tone-info inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium">
-            <Flame className="size-3.5" aria-hidden="true" />
-            {hub.prayerStreak}-day prayer streak
+        <div className="flex flex-wrap items-center gap-2">
+          {streak.days > 1 ? (
+            <span className="tone-info inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium">
+              <Flame className="size-3.5" aria-hidden="true" />
+              {streak.days}-day prayer streak
+              {streak.shields ? (
+                <span
+                  className="inline-flex items-center gap-0.5"
+                  title="Shields cover a missed day"
+                >
+                  <Shield className="size-3.5" aria-hidden="true" />×{streak.shields}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium tabular-nums">
+            <Coins className="size-3.5" aria-hidden="true" />
+            {gold.balance} gold
           </span>
-        ) : null}
+        </div>
       </div>
       <XpBar
         into={overall.into}
@@ -196,10 +258,37 @@ function RpgSheet({ hub }: { hub: ReturnType<typeof buildHub> }) {
           );
         })}
       </ul>
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Sparkles className="size-3" aria-hidden="true" />
-        Every point comes from something you logged. Tap ⓘ to see how.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Sparkles className="size-3" aria-hidden="true" />
+          Every point comes from something you logged. Tap ⓘ to see how.
+        </p>
+        <Link
+          to="/quests"
+          className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Quests, bosses &amp; shop →
+        </Link>
+      </div>
+      <Dialog open={levelUp != null} onOpenChange={(open) => !open && setLevelUp(null)}>
+        <DialogContent className="text-center sm:max-w-sm">
+          <DialogTitle className="sr-only">Level up</DialogTitle>
+          <div className="animate-in zoom-in-50 fade-in duration-500">
+            <p className="text-sm font-medium text-muted-foreground">Level up</p>
+            <p className="mt-2 text-6xl font-semibold tabular-nums">{levelUp}</p>
+            <p className="mt-2 text-lg font-medium text-primary">
+              {levelUp ? titleFor(levelUp).title : ""}
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              From what you actually did.{" "}
+              {levelUp ? `${levelFor(hub.totalXp).span} XP to the next.` : ""}
+            </p>
+          </div>
+          <Button className="mt-2" onClick={() => setLevelUp(null)}>
+            Keep going
+          </Button>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
