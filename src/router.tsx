@@ -4,6 +4,7 @@ import { routeTree } from "./routeTree.gen";
 import { supabase } from "./integrations/supabase/client";
 import { installOffline, isOffline } from "./lib/offline";
 import { installOfflineSession } from "./lib/session";
+import { applyLang } from "./lib/i18n";
 import { isOfflineError } from "@/lib/supabase-helpers";
 
 export const getRouter = () => {
@@ -24,7 +25,10 @@ export const getRouter = () => {
     },
   });
 
-  if (typeof window !== "undefined") installOfflineSession(isOffline);
+  if (typeof window !== "undefined") {
+    installOfflineSession(isOffline);
+    applyLang();
+  }
   installOffline({
     supabaseUrl: String((supabase as unknown as { supabaseUrl: string | URL }).supabaseUrl),
     getAccessToken: async () =>

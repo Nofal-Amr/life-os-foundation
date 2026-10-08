@@ -6,6 +6,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { tChildren } from "@/lib/i18n";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -92,6 +93,7 @@ const SheetTitle = React.forwardRef<
     ref={ref}
     className={cn("text-lg font-semibold text-foreground", className)}
     {...props}
+    children={tChildren(props.children)}
   />
 ));
 SheetTitle.displayName = SheetPrimitive.Title.displayName;

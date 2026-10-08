@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { t } from "@/lib/i18n";
 
 export function EmptyState({
   title,
@@ -14,9 +15,9 @@ export function EmptyState({
 }) {
   return (
     <div className="rounded-xl border border-dashed border-border px-6 py-12 text-center animate-in fade-in duration-300 ease-out">
-      <p className="text-base font-medium text-foreground">{title}</p>
+      <p className="text-base font-medium text-foreground">{t(title)}</p>
       {description ? (
-        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{t(description)}</p>
       ) : null}
       {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
     </div>

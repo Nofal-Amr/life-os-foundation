@@ -22,6 +22,7 @@ import { useSignOut } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import type { ModuleKey } from "@/data/modules";
 import { useModules } from "@/hooks/useModules";
+import { t } from "@/lib/i18n";
 import { usePreferences } from "@/hooks/usePreferences";
 
 export const NAV_ITEMS = [
@@ -99,7 +100,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             className={itemClass(active)}
           >
             <Icon className={iconClass(active)} strokeWidth={1.75} aria-hidden="true" />
-            <span className="truncate">{label}</span>
+            <span className="truncate">{t(label)}</span>
           </Link>
         );
       })}
@@ -132,7 +133,7 @@ function ToolLinks({
               className={itemClass(active)}
             >
               <Icon className={iconClass(active)} strokeWidth={1.75} aria-hidden="true" />
-              {label}
+              {t(label)}
             </Link>
           );
         })}
@@ -178,7 +179,7 @@ export function BottomNav() {
                   strokeWidth={1.75}
                   aria-hidden="true"
                 />
-                {label}
+                {t(label)}
               </Link>
             </li>
           );

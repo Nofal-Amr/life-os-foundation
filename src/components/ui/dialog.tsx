@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { tChildren } from "@/lib/i18n";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -74,6 +75,7 @@ const DialogTitle = React.forwardRef<
     ref={ref}
     className={cn("text-lg font-semibold leading-none tracking-tight", className)}
     {...props}
+    children={tChildren(props.children)}
   />
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
@@ -86,6 +88,7 @@ const DialogDescription = React.forwardRef<
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
+    children={tChildren(props.children)}
   />
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;

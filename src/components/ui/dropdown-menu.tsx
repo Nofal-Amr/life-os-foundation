@@ -5,6 +5,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { tChildren } from "@/lib/i18n";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -87,6 +88,7 @@ const DropdownMenuItem = React.forwardRef<
       className,
     )}
     {...props}
+    children={tChildren(props.children)}
   />
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;

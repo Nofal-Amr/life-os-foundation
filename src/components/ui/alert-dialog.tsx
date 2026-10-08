@@ -3,6 +3,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
+import { tChildren } from "@/lib/i18n";
 
 const AlertDialog = AlertDialogPrimitive.Root;
 
@@ -64,6 +65,7 @@ const AlertDialogTitle = React.forwardRef<
     ref={ref}
     className={cn("text-lg font-semibold", className)}
     {...props}
+    children={tChildren(props.children)}
   />
 ));
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName;
@@ -76,6 +78,7 @@ const AlertDialogDescription = React.forwardRef<
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
+    children={tChildren(props.children)}
   />
 ));
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;

@@ -33,6 +33,7 @@ import { prayersOn } from "@/data/stats";
 import { prayerCounts } from "@/data/week";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+import { t } from "@/lib/i18n";
 import { prayerTimesFor } from "@/lib/prayer";
 
 export const Route = createFileRoute("/_authenticated/spirit")({
@@ -181,7 +182,7 @@ function SpiritPage() {
               (tab === option.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")
             }
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>

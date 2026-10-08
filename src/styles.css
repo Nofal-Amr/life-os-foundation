@@ -4,6 +4,8 @@
 @import "@fontsource-variable/hanken-grotesk";
 /* Arabic text (azkar, Quran): bundled, so it works offline; loads only when Arabic shows. */
 @import "@fontsource-variable/noto-naskh-arabic";
+/* Arabic interface text; only loads when Arabic is on screen. */
+@import "@fontsource-variable/noto-sans-arabic";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -22,7 +24,7 @@
  */
 
 @theme inline {
-  --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk Variable", "Noto Sans Arabic Variable", ui-sans-serif, system-ui, sans-serif;
   --font-arabic: "Noto Naskh Arabic Variable", "Noto Naskh Arabic", serif;
   /* One dense-data size below xs (heatmaps, chart axes); nothing smaller. */
   --text-2xs: 0.6875rem;
@@ -440,4 +442,9 @@
   .qibla-eight {
     animation: none;
   }
+}
+
+/* Right-to-left (Arabic): arrows that mean "back" or "forward" turn round. */
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
 }
