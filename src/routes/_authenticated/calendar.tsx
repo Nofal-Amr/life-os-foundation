@@ -22,6 +22,7 @@ import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
+import { useHolidays } from "@/components/app/Holidays";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +63,7 @@ type FormState = { title: string; description: string | null; start: string; end
 
 const emptyForm: FormState = { title: "", description: null, start: "", end: "" };
 
-type SourceId = "events" | "tasks" | "projects" | "goals" | "costs" | "health";
+type SourceId = "events" | "tasks" | "projects" | "goals" | "costs" | "health" | "holidays";
 
 const SOURCES: { id: SourceId; label: string; dot: string; text: string }[] = [
   { id: "events", label: "Events", dot: "bg-chart-1", text: "text-chart-1" },
@@ -71,6 +72,7 @@ const SOURCES: { id: SourceId; label: string; dot: string; text: string }[] = [
   { id: "goals", label: "Goals", dot: "bg-chart-4", text: "text-chart-4" },
   { id: "costs", label: "Recurring costs", dot: "bg-chart-5", text: "text-chart-5" },
   { id: "health", label: "Health logs", dot: "bg-primary", text: "text-primary" },
+  { id: "holidays", label: "Holidays", dot: "bg-muted-foreground", text: "text-muted-foreground" },
 ];
 
 type DayItem = {
@@ -88,6 +90,7 @@ type DayItem = {
 function CalendarPage() {
   const queryClient = useQueryClient();
   const { fmtDateTime, fmtDate, fmtMoney } = usePreferences();
+  const holidays = useHolidays();
   const events = useQuery(eventsQuery());
   const tasks = useQuery(tasksQuery());
   const projects = useQuery(projectsQuery());
@@ -239,6 +242,19 @@ function CalendarPage() {
       title: "Health logged",
       detail: `Health log · ${fmtDate(log.log_date)}`,
       to: "/health",
+    });
+  }
+
+  for (const holiday of holidays) {
+    items.push({
+      id: `holiday-${holiday.date}-${holiday.name}`,
+      source: "holidays",
+      date: holiday.date,
+      title: holiday.name,
+      detail: holiday.kind === "islamic"
+        ? `${holiday.localName ?? "Islamic occasion"} · expected`
+        : (holiday.localName ?? "Public holiday"),
+      to: "/settings",
     });
   }
 

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/app/PageHeader";
 import { LifeConnectCard } from "@/components/app/LifeConnectCard";
 import { LocalAiCard } from "@/components/app/LocalAi";
+import { HolidaysCard } from "@/components/app/Holidays";
 import { SpendingSettingsCard } from "@/components/app/SpendingInbox";
 import { ReminderSettingsCard } from "@/components/app/PrayerReminders";
 import { UsageInsights } from "@/components/app/UsageInsights";
@@ -1050,6 +1051,7 @@ function SettingsPage() {
         <LifeConnectCard />
         <SpendingSettingsCard />
         <LocalAiCard />
+        <HolidaysCard />
 
         <UsageInsights />
 

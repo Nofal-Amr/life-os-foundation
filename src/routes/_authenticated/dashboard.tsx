@@ -29,6 +29,7 @@ import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
 import { DaySummary } from "@/components/app/DaySummary";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
+import { useHolidays } from "@/components/app/Holidays";
 import { HubCard } from "@/components/app/HubCard";
 import { TaskTimerButton } from "@/components/app/Timer";
 import { PrayerTiles } from "@/components/app/PrayerLog";
@@ -208,7 +209,8 @@ type ComingUpItem = {
     | "/resources"
     | "/reminders"
     | "/together"
-    | "/study";
+    | "/study"
+    | "/calendar";
 };
 
 function SectionHeading({ title, detail }: { title: string; detail?: string | undefined }) {
@@ -413,6 +415,7 @@ function DashboardPage() {
   const userReminders = useQuery(userRemindersQuery());
   const pods = useQuery(podsQuery());
   const podEvents = useQuery(podEventsQuery());
+  const holidays = useHolidays();
   const studyEnabled = useModules().isEnabled("study");
   const studyItems = useQuery({ ...studyItemsQuery(), enabled: studyEnabled });
   const classSessions = useQuery({ ...classSessionsQuery(), enabled: studyEnabled });
@@ -664,6 +667,20 @@ function DashboardPage() {
         to: "/study",
       });
     }
+  }
+
+  // Holidays you turned on (Settings → Holidays): the next week.
+  for (const holiday of holidays) {
+    if (holiday.date < today || holiday.date > nextWeek) continue;
+    comingUp.push({
+      id: `holiday-${holiday.date}-${holiday.name}`,
+      dimension: "spirit",
+      sortValue: holiday.date,
+      title: holiday.name,
+      detail: `${holiday.kind === "islamic" ? "Expected" : "Holiday"} · ${holiday.date === today ? "Today" : fmtDate(holiday.date)}`,
+      kind: "commitment",
+      to: "/calendar",
+    });
   }
 
   // Shared calendars (Together): the next week.
