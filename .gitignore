@@ -40,3 +40,6 @@ mobile/android/build/
 # Playwright
 test-results/
 playwright-report/
+
+# On-device OCR engine, copied from node_modules (scripts/ocr-assets.mjs)
+public/ocr/

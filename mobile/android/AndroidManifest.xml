@@ -95,6 +95,12 @@
         </activity-alias>
 
         <receiver android:name=".ReminderReceiver" android:exported="false" />
+        <!-- Where the camera saves a photo for the on-device photo reader. -->
+        <provider
+            android:name=".CaptureProvider"
+            android:authorities="app.lifeos.capture"
+            android:exported="false"
+            android:grantUriPermissions="true" />
         <receiver android:name=".PrayerActionReceiver" android:exported="false" />
         <!-- Life Connect -->
         <service

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useXp } from "@/hooks/useXp";
 
+import { PhotoReader } from "@/components/app/PhotoReader";
 import { Button } from "@/components/ui/button";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import {
@@ -197,6 +198,13 @@ export function QuickAddTransactionDialog({
               value={amount}
               placeholder="0.00"
               onChange={(event) => setAmount(event.target.value)}
+            />
+            <PhotoReader
+              kind="receipt"
+              onReceipt={(receipt) => {
+                if (receipt.total != null) setAmount(String(receipt.total));
+                if (receipt.merchant && !note.trim()) setNote(receipt.merchant);
+              }}
             />
           </div>
 

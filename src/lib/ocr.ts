@@ -89,7 +89,8 @@ export function numbersIn(text: string): number[] {
 
 const TOTAL_WORDS =
   /\b(grand\s*total|total\s*(due|amount|egp|le)?|amount\s*due|net\s*total|to\s*pay|balance\s*due)\b|الإجمالي|الاجمالي|المجموع|الصافي|المطلوب/i;
-const NOT_TOTAL = /\b(sub\s*-?\s*total|subtotal|vat|tax|discount|change|cash|tip|service)\b|خصم|ضريبة|الباقي/i;
+const NOT_TOTAL =
+  /\b(sub\s*-?\s*total|subtotal|vat|tax|discount|change|cash|tip|service)\b|خصم|ضريبة|الباقي/i;
 const AMOUNT = /(\d{1,3}(?:[,\s]\d{3})+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?)/g;
 
 function amountsOn(line: string): number[] {
@@ -120,6 +121,8 @@ export function receiptFrom(text: string): { total: number | null; merchant: str
     total = all.length ? Math.max(...all) : null;
   }
   const merchant =
-    lines.find((line) => /[A-Za-z؀-ۿ]{3,}/.test(line) && !/receipt|invoice|فاتورة|tax/i.test(line)) ?? null;
+    lines.find(
+      (line) => /[A-Za-z؀-ۿ]{3,}/.test(line) && !/receipt|invoice|فاتورة|tax/i.test(line),
+    ) ?? null;
   return { total, merchant: merchant ? merchant.slice(0, 60) : null };
 }

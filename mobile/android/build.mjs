@@ -70,6 +70,8 @@ const run = (cmd, args, opts = {}) => {
 
 // 1. Static single-page web bundle.
 if (process.env.SKIP_WEB !== "1") {
+  // The on-device photo reader's engine goes into the APK too (works offline).
+  run(process.execPath, [join(root, "scripts", "ocr-assets.mjs")]);
   run(process.execPath, [join(root, "node_modules", "vite", "bin", "vite.js"), "build"], {
     env: { ...process.env, LIFE_OS_MOBILE: "1" },
   });

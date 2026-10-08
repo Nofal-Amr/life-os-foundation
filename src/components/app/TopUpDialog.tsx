@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { PhotoReader } from "@/components/app/PhotoReader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -156,6 +157,7 @@ export function TopUpDialog({
               placeholder="What it shows"
               onChange={(event) => setBefore(event.target.value)}
             />
+            <PhotoReader kind="number" onNumber={(value) => setBefore(String(value))} />
             {balance != null ? (
               <p className="text-xs text-muted-foreground">
                 Last reading {balance} {resource.unit}. Change it if the meter shows something else now.

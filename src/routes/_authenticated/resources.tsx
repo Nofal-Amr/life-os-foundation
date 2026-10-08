@@ -23,6 +23,7 @@ import {
 } from "@/components/app/StatCards";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
+import { PhotoReader } from "@/components/app/PhotoReader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1028,6 +1029,7 @@ function ResourcesPage() {
               value={readingValue}
               onChange={(event) => setReadingValue(event.target.value)}
             />
+            <PhotoReader kind="number" onNumber={(value) => setReadingValue(String(value))} />
             <div className="space-y-1.5 pt-1">
               <Label htmlFor="reading-at">Taken on</Label>
               <Input

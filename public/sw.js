@@ -29,7 +29,8 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (url.pathname.startsWith("/assets/") || /\.(png|svg|ico|webmanifest|woff2?)$/.test(url.pathname)) {
+  // /ocr/: the on-device photo reader's engine, kept so it works offline.
+  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/ocr/") || /\.(png|svg|ico|webmanifest|woff2?)$/.test(url.pathname)) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE);

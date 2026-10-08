@@ -11,8 +11,9 @@ mkdirSync(out, { recursive: true });
 
 const files = [
   ["node_modules/tesseract.js/dist/worker.min.js", "worker.min.js"],
-  // LSTM-only engine, with and without SIMD; the worker picks one.
+  // LSTM-only engine in three builds; the worker picks what the device supports.
   ["node_modules/tesseract.js-core/tesseract-core-lstm.wasm.js", "tesseract-core-lstm.wasm.js"],
+  ["node_modules/tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm.js", "tesseract-core-relaxedsimd-lstm.wasm.js"],
   ["node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js", "tesseract-core-simd-lstm.wasm.js"],
   ["node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz", "eng.traineddata.gz"],
 ];

@@ -68,6 +68,8 @@ public class MainActivity extends Activity {
     private volatile String currentHost = APP_HOST;
     /** Pending <input type="file"> request from the page. */
     private ValueCallback<Uri[]> fileCallback;
+    /** Where the camera was asked to save, for a capture="environment" picker. */
+    private Uri cameraOutput;
     /** The Qibla finder's compass, while it's open. */
     private Compass compass;
 
@@ -113,9 +115,22 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
+                cameraOutput = null;
                 Intent intent = params.createIntent();
                 if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) {
                     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                }
+                // A photo the page wants taken now (the photo reader): offer the camera
+                // first, saving into our own provider, with the gallery as the other choice.
+                if (params.isCaptureEnabled() && acceptsImages(params)) {
+                    cameraOutput = CaptureProvider.newPhoto(MainActivity.this);
+                    Intent camera = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+                        .putExtra(android.provider.MediaStore.EXTRA_OUTPUT, cameraOutput)
+                        .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    camera.setClipData(android.content.ClipData.newRawUri("photo", cameraOutput));
+                    Intent chooser = Intent.createChooser(intent, "Photo");
+                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { camera });
+                    intent = chooser;
                 }
                 try {
                     startActivityForResult(intent, FILE_REQUEST);
@@ -215,7 +230,12 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != FILE_REQUEST || fileCallback == null) return;
         Uri[] picked = null;
-        if (resultCode == RESULT_OK && data != null) {
+        // The camera saved straight into our provider (it returns no data).
+        if (resultCode == RESULT_OK && cameraOutput != null
+            && (data == null || data.getData() == null && data.getClipData() == null)
+            && CaptureProvider.sizeOf(this, cameraOutput) > 0) {
+            picked = new Uri[] { cameraOutput };
+        } else if (resultCode == RESULT_OK && data != null) {
             if (data.getClipData() != null) {
                 picked = new Uri[data.getClipData().getItemCount()];
                 for (int i = 0; i < picked.length; i++) picked[i] = data.getClipData().getItemAt(i).getUri();
@@ -244,6 +264,13 @@ public class MainActivity extends Activity {
         pendingGeoCallback.invoke(pendingGeoOrigin, granted, false);
         pendingGeoCallback = null;
         pendingGeoOrigin = null;
+    }
+
+    private static boolean acceptsImages(WebChromeClient.FileChooserParams params) {
+        String[] types = params.getAcceptTypes();
+        if (types == null || types.length == 0) return true;
+        for (String type : types) if (type == null || type.isEmpty() || type.startsWith("image/")) return true;
+        return false;
     }
 
     private boolean hasLocationPermission() {
