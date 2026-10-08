@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Bell,
   CalendarDays,
   CheckSquare,
+  GraduationCap,
   HeartPulse,
   LayoutDashboard,
   LogOut,
@@ -33,6 +34,7 @@ export const NAV_ITEMS = [
 const TOOLS = [
   { to: "/calendar" as const, label: "Calendar", icon: CalendarDays, module: "calendar" as const },
   { to: "/notes" as const, label: "Notes", icon: NotebookPen, module: "notes" as const },
+  { to: "/study" as const, label: "Study", icon: GraduationCap, module: "study" as const },
   { to: "/reminders" as const, label: "Reminders", icon: Bell, module: null },
   { to: "/together" as const, label: "Together", icon: Users, module: null },
   { to: "/quests" as const, label: "Quests", icon: Swords, module: null },

@@ -90,6 +90,15 @@ import {
   type TaskEnergy,
 } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
+import {
+  classSessionsQuery,
+  classesOn,
+  coursesQuery,
+  dueLabel,
+  hhmm,
+  studyItemsQuery,
+  upcomingItems,
+} from "@/data/study";
 import { podEventsQuery, podsQuery } from "@/data/together";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
@@ -198,7 +207,8 @@ type ComingUpItem = {
     | "/finance/recurring"
     | "/resources"
     | "/reminders"
-    | "/together";
+    | "/together"
+    | "/study";
 };
 
 function SectionHeading({ title, detail }: { title: string; detail?: string | undefined }) {
@@ -403,6 +413,10 @@ function DashboardPage() {
   const userReminders = useQuery(userRemindersQuery());
   const pods = useQuery(podsQuery());
   const podEvents = useQuery(podEventsQuery());
+  const studyEnabled = useModules().isEnabled("study");
+  const studyItems = useQuery({ ...studyItemsQuery(), enabled: studyEnabled });
+  const classSessions = useQuery({ ...classSessionsQuery(), enabled: studyEnabled });
+  const studyCourses = useQuery({ ...coursesQuery(), enabled: studyEnabled });
 
   const ringSegments = useTodaySegments();
   const [quickTask, setQuickTask] = useState(false);
@@ -617,6 +631,37 @@ function DashboardPage() {
         detail: `Recurring cost · ${fmtMoney(Number(cost.amount))} · ${fmtDate(cost.next_due_date)}`,
         kind: "projection",
         to: "/finance/recurring",
+      });
+    }
+  }
+
+  // Student mode: today's classes, and what's due this week.
+  if (studyEnabled) {
+    const courseName = (id: string | null) =>
+      (studyCourses.data ?? []).find((course) => course.id === id)?.name ?? null;
+    for (const session of classesOn(classSessions.data ?? [], today)) {
+      comingUp.push({
+        id: `class-${session.id}`,
+        dimension: "knowledge",
+        sortValue: `${today} ${session.starts}`,
+        title: courseName(session.course_id) ?? "Class",
+        detail: `Class · Today ${hhmm(session.starts)}–${hhmm(session.ends)}${session.room ? ` · ${session.room}` : ""}`,
+        kind: "commitment",
+        to: "/study",
+      });
+    }
+    for (const item of upcomingItems(studyItems.data ?? [])) {
+      const due = item.due_at!.slice(0, 10);
+      if (due > nextWeek) continue;
+      const course = courseName(item.course_id);
+      comingUp.push({
+        id: `study-${item.id}`,
+        dimension: "knowledge",
+        sortValue: due,
+        title: item.title,
+        detail: `${item.kind[0]!.toUpperCase()}${item.kind.slice(1)}${course ? ` · ${course}` : ""} · due ${dueLabel(item.due_at!)}`,
+        kind: "commitment",
+        to: "/study",
       });
     }
   }

@@ -37,6 +37,7 @@ import {
 } from "@/data/spirit";
 import { azkarDone, dhikrKeys, dhikrLogsQuery, logDhikr } from "@/data/azkar";
 import { buildWidgetPayload } from "@/data/prayerWidget";
+import { classSessionsQuery, classesOn, coursesQuery, hhmm } from "@/data/study";
 import { tasksQuery } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -149,6 +150,8 @@ export function useReminderSync() {
   const tasks = useQuery({ ...tasksQuery(), enabled: android });
   const userReminders = useQuery({ ...userRemindersQuery(), enabled: android });
   const dhikrLogs = useQuery({ ...dhikrLogsQuery(), enabled: android });
+  const classSessions = useQuery({ ...classSessionsQuery(), enabled: android });
+  const courses = useQuery({ ...coursesQuery(), enabled: android });
   const { fmtTime } = usePreferences();
   const [settings] = useReminderSettings();
   usePendingPrayerLogs(android);
@@ -278,6 +281,26 @@ export function useReminderSync() {
       reminders.push(...timedTaskReminders({ tasks: tasks.data ?? [], now }));
     }
 
+    // Student mode: 10 minutes before each class this week.
+    if (modules.includes("study") && settings.tasksEnabled) {
+      for (let offset = 0; offset < 7; offset++) {
+        const date = format(addDays(new Date(), offset), "yyyy-MM-dd");
+        for (const session of classesOn(classSessions.data ?? [], date)) {
+          const at = new Date(`${date}T${hhmm(session.starts)}:00`).getTime() - 10 * 60_000;
+          if (at <= now) continue;
+          const name = (courses.data ?? []).find((c) => c.id === session.course_id)?.name ?? "Class";
+          reminders.push({
+            id: `class-${session.id}-${date}`,
+            at,
+            title: `${name} at ${hhmm(session.starts)}`,
+            body: session.room ? `In ${session.room}.` : "In 10 minutes.",
+            path: "/study",
+            channel: "tasks",
+          });
+        }
+      }
+    }
+
     // Water, every so often through the day.
     if (settings.water) {
       for (const item of waterReminders({
@@ -329,6 +352,8 @@ export function useReminderSync() {
     tasks.data,
     userReminders.data,
     dhikrLogs.data,
+    classSessions.data,
+    courses.data,
     settings,
     modules,
   ]);

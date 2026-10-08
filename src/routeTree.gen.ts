@@ -28,6 +28,7 @@ import { Route as AuthenticatedResourcesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSpiritRouteImport } from './routes/_authenticated/spirit'
+import { Route as AuthenticatedStudyRouteImport } from './routes/_authenticated/study'
 import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/tasks'
 import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/time'
 import { Route as AuthenticatedTogetherRouteImport } from './routes/_authenticated/together'
@@ -134,6 +135,11 @@ const AuthenticatedSpiritRoute = AuthenticatedSpiritRouteImport.update({
   path: '/spirit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStudyRoute = AuthenticatedStudyRouteImport.update({
+  id: '/study',
+  path: '/study',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTasksRoute = AuthenticatedTasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/review': typeof AuthenticatedReviewRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/spirit': typeof AuthenticatedSpiritRoute
+  '/study': typeof AuthenticatedStudyRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/time': typeof AuthenticatedTimeRoute
   '/together': typeof AuthenticatedTogetherRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/review': typeof AuthenticatedReviewRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/spirit': typeof AuthenticatedSpiritRoute
+  '/study': typeof AuthenticatedStudyRoute
   '/tasks': typeof AuthenticatedTasksRoute
   '/time': typeof AuthenticatedTimeRoute
   '/together': typeof AuthenticatedTogetherRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/spirit': typeof AuthenticatedSpiritRoute
+  '/_authenticated/study': typeof AuthenticatedStudyRoute
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/together': typeof AuthenticatedTogetherRoute
@@ -302,6 +311,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/spirit'
+    | '/study'
     | '/tasks'
     | '/time'
     | '/together'
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/settings'
     | '/spirit'
+    | '/study'
     | '/tasks'
     | '/time'
     | '/together'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/_authenticated/review'
     | '/_authenticated/settings'
     | '/_authenticated/spirit'
+    | '/_authenticated/study'
     | '/_authenticated/tasks'
     | '/_authenticated/time'
     | '/_authenticated/together'
@@ -515,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSpiritRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/study': {
+      id: '/_authenticated/study'
+      path: '/study'
+      fullPath: '/study'
+      preLoaderRoute: typeof AuthenticatedStudyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tasks': {
       id: '/_authenticated/tasks'
       path: '/tasks'
@@ -624,6 +643,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSpiritRoute: typeof AuthenticatedSpiritRoute
+  AuthenticatedStudyRoute: typeof AuthenticatedStudyRoute
   AuthenticatedTasksRoute: typeof AuthenticatedTasksRoute
   AuthenticatedTimeRoute: typeof AuthenticatedTimeRoute
   AuthenticatedTogetherRoute: typeof AuthenticatedTogetherRoute
@@ -647,6 +667,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSpiritRoute: AuthenticatedSpiritRoute,
+  AuthenticatedStudyRoute: AuthenticatedStudyRoute,
   AuthenticatedTasksRoute: AuthenticatedTasksRoute,
   AuthenticatedTimeRoute: AuthenticatedTimeRoute,
   AuthenticatedTogetherRoute: AuthenticatedTogetherRoute,

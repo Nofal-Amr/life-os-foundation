@@ -208,6 +208,83 @@ export type Database = {
         }
         Relationships: []
       }
+      class_sessions: {
+        Row: {
+          course_id: string
+          created_at: string
+          ends: string
+          id: string
+          kind: string | null
+          room: string | null
+          starts: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          ends: string
+          id?: string
+          kind?: string | null
+          room?: string | null
+          starts: string
+          user_id?: string
+          weekday: number
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          ends?: string
+          id?: string
+          kind?: string | null
+          room?: string | null
+          starts?: string
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_sessions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          active: boolean
+          code: string | null
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          teacher: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          code?: string | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          teacher?: string | null
+          user_id?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          teacher?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_reviews: {
         Row: {
           challenges: string | null
@@ -1611,6 +1688,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      study_items: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          done: boolean
+          due_at: string | null
+          grade: number | null
+          id: string
+          kind: string
+          max_grade: number | null
+          note: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          done?: boolean
+          due_at?: string | null
+          grade?: number | null
+          id?: string
+          kind: string
+          max_grade?: number | null
+          note?: string | null
+          title: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          done?: boolean
+          due_at?: string | null
+          grade?: number | null
+          id?: string
+          kind?: string
+          max_grade?: number | null
+          note?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_items_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {

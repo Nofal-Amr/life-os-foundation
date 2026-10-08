@@ -12,6 +12,7 @@ export const MODULE_KEYS = [
   "habits",
   "notes",
   "calendar",
+  "study",
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -26,6 +27,11 @@ export const MODULES: { key: ModuleKey; label: string; description: string }[] =
   { key: "habits", label: "Habits", description: "Small things you want to keep doing." },
   { key: "notes", label: "Notes", description: "Quick thoughts you do not want to lose." },
   { key: "calendar", label: "Calendar", description: "Everything with a date, on one month view." },
+  {
+    key: "study",
+    label: "Study",
+    description: "Student mode: courses, timetable, assignments and exams.",
+  },
 ];
 
 export const ALL_MODULE_KEYS: string[] = [...MODULE_KEYS];
@@ -57,6 +63,7 @@ const ROUTE_MODULES: { prefix: string; module: ModuleKey }[] = [
   { prefix: "/spirit", module: "spirit" },
   { prefix: "/notes", module: "notes" },
   { prefix: "/calendar", module: "calendar" },
+  { prefix: "/study", module: "study" },
 ];
 
 export function moduleForPath(pathname: string): ModuleKey | null {
