@@ -97,6 +97,7 @@ export const AR: Record<string, string> = {
   "Log as read": "سجّلها مقروءة",
   "Save to today": "احفظ لليوم",
   "Send a test to the other phone": "أرسل تجربة للهاتف الآخر",
+  "Open Autostart": "افتح التشغيل التلقائي",
   "Read from photo": "اقرأ من صورة",
   "Scan a receipt": "امسح إيصالًا",
   "Start from a plan": "ابدأ بخطة",

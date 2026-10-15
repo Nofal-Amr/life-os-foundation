@@ -114,7 +114,7 @@ final class RealtimeSocket {
                 pause = 2_000;
                 continue;
             }
-            pause = Math.min(pause * 2, 60_000);
+            pause = Math.min(pause * 2, 15_000);
         }
     }
 

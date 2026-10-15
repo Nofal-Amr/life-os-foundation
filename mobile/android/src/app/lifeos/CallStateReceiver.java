@@ -23,6 +23,10 @@ public class CallStateReceiver extends BroadcastReceiver {
     private static final String KEY_NUMBER = "last_number";
     private static final String KEY_NAME = "last_name";
     private static final String KEY_SENT = "ring_sent_at";
+    private static final String KEY_CALL = "call_id";
+    /** How often, and for how long, a ringing call is announced again. */
+    private static final long RESEND_EVERY_MS = 5_000;
+    private static final long RESEND_FOR_MS = 45_000;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -48,22 +52,27 @@ public class CallStateReceiver extends BroadcastReceiver {
                 if (TelephonyManager.EXTRA_STATE_RINGING.equals(previous)
                     && System.currentTimeMillis() - sentAt < 60_000) return;
                 String name = number == null ? null : contactName(context, number);
+                String callId = java.util.UUID.randomUUID().toString();
                 prefs.edit()
+                    .putString(KEY_CALL, callId)
                     .putString(KEY_STATE, state)
                     .putString(KEY_NUMBER, number == null ? "" : number)
                     .putString(KEY_NAME, name == null ? "" : name)
                     .putLong(KEY_SENT, System.currentTimeMillis())
                     .apply();
-                message.put("type", "ring").put("number", number == null ? "" : number).put("name", name == null ? "" : name);
+                message.put("type", "ring").put("call", callId)
+                    .put("number", number == null ? "" : number).put("name", name == null ? "" : name);
+                announceWhileRinging(context, config, message, callId);
+                return;
             } else if (TelephonyManager.EXTRA_STATE_OFFHOOK.equals(state)) {
                 prefs.edit().putString(KEY_STATE, state).apply();
                 if (!TelephonyManager.EXTRA_STATE_RINGING.equals(previous)) return; // an outgoing call
-                message.put("type", "answered");
+                message.put("type", "answered").put("call", prefs.getString(KEY_CALL, ""));
             } else if (TelephonyManager.EXTRA_STATE_IDLE.equals(state)) {
                 prefs.edit().putString(KEY_STATE, state).apply();
                 CallControl.unmute(context);
                 if (TelephonyManager.EXTRA_STATE_IDLE.equals(previous)) return;
-                message.put("type", "ended")
+                message.put("type", "ended").put("call", prefs.getString(KEY_CALL, ""))
                     .put("missed", TelephonyManager.EXTRA_STATE_RINGING.equals(previous))
                     .put("number", prefs.getString(KEY_NUMBER, ""))
                     .put("name", prefs.getString(KEY_NAME, ""));
@@ -75,6 +84,36 @@ public class CallStateReceiver extends BroadcastReceiver {
         }
         PendingResult pending = goAsync();
         ConnectSender.send(config, message, ok -> pending.finish());
+    }
+
+    /**
+     * Sends the ring now and again every few seconds while this same call is
+     * still ringing (up to 45 s), holding the CPU awake meanwhile. The main
+     * phone rings once per call, so repeats only help one that was offline.
+     */
+    private void announceWhileRinging(Context context, ConnectConfig config, JSONObject message, String callId) {
+        PendingResult pending = goAsync();
+        android.os.PowerManager.WakeLock lock = context.getSystemService(android.os.PowerManager.class)
+            .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "lifeos:ring");
+        lock.acquire(RESEND_FOR_MS + 10_000);
+        new Thread(() -> {
+            SharedPreferences prefs = context.getSharedPreferences(ConnectConfig.PREFS, Context.MODE_PRIVATE);
+            long until = System.currentTimeMillis() + RESEND_FOR_MS;
+            try {
+                while (System.currentTimeMillis() < until) {
+                    boolean stillRinging = callId.equals(prefs.getString(KEY_CALL, ""))
+                        && TelephonyManager.EXTRA_STATE_RINGING.equals(prefs.getString(KEY_STATE, ""));
+                    if (!stillRinging) break;
+                    ConnectSender.sendNow(config, new JSONObject(message.toString()));
+                    Thread.sleep(RESEND_EVERY_MS);
+                }
+            } catch (Exception ignored) {
+                // Stop announcing.
+            } finally {
+                if (lock.isHeld()) lock.release();
+                pending.finish();
+            }
+        }, "life-connect-ring").start();
     }
 
     private static String contactName(Context context, String number) {

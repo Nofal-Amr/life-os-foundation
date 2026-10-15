@@ -282,9 +282,25 @@ export function LifeConnectCard() {
       ) : null}
       {role === "main" ? (
         <p className="text-xs text-muted-foreground">
-          For your watch: in Galaxy Wearable → Watch settings → Notifications, turn on Life OS.
-          Calls then show on the watch with Decline and Mute.
+          For your watch: in Galaxy Wearable → Watch settings → Notifications → App notifications,
+          turn on Life OS. Calls then ring on the watch with Decline.
         </p>
+      ) : null}
+      {role === "sim" && /xiaomi|poco|redmi/.test(status?.brand ?? "") ? (
+        <div className="space-y-2 rounded-lg bg-secondary p-3 text-xs text-muted-foreground">
+          <p>
+            On this phone, Xiaomi stops Life OS from hearing calls unless you allow it: turn on
+            Autostart for Life OS, and in its battery saver choose "No restrictions".
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={lifeConnect.openAutostartSettings}
+          >
+            Open Autostart
+          </Button>
+        </div>
       ) : null}
 
       {checks.length ? (

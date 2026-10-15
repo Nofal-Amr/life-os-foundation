@@ -30,7 +30,20 @@ final class ConnectSender {
         void finished(boolean ok);
     }
 
+    /** Sends, trying again twice if the network hiccups. */
     static boolean sendNow(ConnectConfig config, JSONObject message) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            if (sendOnce(config, message)) return true;
+            try {
+                Thread.sleep(1500L * (attempt + 1));
+            } catch (InterruptedException e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static boolean sendOnce(ConnectConfig config, JSONObject message) {
         HttpURLConnection connection = null;
         try {
             message.put("at", System.currentTimeMillis());

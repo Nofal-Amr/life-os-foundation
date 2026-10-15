@@ -50,7 +50,13 @@ final class CallAlert {
         return number.isEmpty() ? "Unknown number" : number;
     }
 
+    /** The call ringing here now, so repeats of the same call don't ring twice. */
+    private static volatile String ringingCall = null;
+
     static void ring(Context context, JSONObject message) {
+        String call = message.optString("call", "");
+        if (!call.isEmpty() && call.equals(ringingCall)) return;
+        ringingCall = call.isEmpty() ? null : call;
         ensureChannels(context);
         String device = message.optString("device", "your SIM phone");
         String number = message.optString("number", "");
@@ -59,13 +65,25 @@ final class CallAlert {
             .setContentTitle(who(message))
             .setContentText("Calling " + device + (number.isEmpty() || who(message).equals(number) ? "" : " · " + number))
             .setCategory(Notification.CATEGORY_CALL)
-            .setOngoing(true)
+            // Not "ongoing": watches (Galaxy Watch, Wear OS) never show ongoing
+            // notifications, and the call should ring on the wrist too.
             .setAutoCancel(false)
             .setTimeoutAfter(90_000)
             .setContentIntent(open(context))
-            .setFullScreenIntent(callScreen(context, message), true)
-            .addAction(action(context, "decline", "Decline", 1))
-            .addAction(action(context, "mute", "Mute", 2));
+            .setFullScreenIntent(callScreen(context, message), true);
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            // A real call notification, like Messenger's: the watch rings with
+            // it and shows Decline. "Answer" opens the call screen here, since
+            // the call itself is picked up on the SIM phone.
+            android.app.Person caller = new android.app.Person.Builder()
+                .setName(who(message)).setImportant(true).build();
+            builder.setStyle(Notification.CallStyle.forIncomingCall(
+                    caller, actionIntent(context, "decline", 1), callScreen(context, message)))
+                .addAction(action(context, "mute", "Mute", 2));
+        } else {
+            builder.addAction(action(context, "decline", "Decline", 1))
+                .addAction(action(context, "mute", "Mute", 2));
+        }
         Notification notification = builder.build();
         // Keep ringing until answered, declined or muted, like a call.
         notification.flags |= Notification.FLAG_INSISTENT;
@@ -80,7 +98,6 @@ final class CallAlert {
             .setContentText(text)
             .setCategory(Notification.CATEGORY_CALL)
             .setOnlyAlertOnce(true)
-            .setOngoing(true)
             .setTimeoutAfter(90_000)
             .addAction(action(context, "decline", "Decline", 1))
             .build();
@@ -88,6 +105,7 @@ final class CallAlert {
     }
 
     static void answered(Context context, JSONObject message) {
+        ringingCall = null;
         context.getSystemService(NotificationManager.class).cancel(RING_ID);
         IncomingCallActivity.close();
     }
@@ -96,6 +114,7 @@ final class CallAlert {
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         manager.cancel(RING_ID);
         IncomingCallActivity.close();
+        ringingCall = null;
         if (!message.optBoolean("missed")) return;
         ensureChannels(context);
         manager.notify(MISSED_ID, new Notification.Builder(context, CHANNEL_INFO)
@@ -138,9 +157,12 @@ final class CallAlert {
     }
 
     private static Notification.Action action(Context context, String what, String label, int code) {
+        return new Notification.Action.Builder(null, label, actionIntent(context, what, code)).build();
+    }
+
+    private static PendingIntent actionIntent(Context context, String what, int code) {
         Intent intent = new Intent(context, ConnectActionReceiver.class).setAction("app.lifeos.CONNECT_" + what);
-        PendingIntent pending = PendingIntent.getBroadcast(context, 7210 + code, intent,
+        return PendingIntent.getBroadcast(context, 7210 + code, intent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        return new Notification.Action.Builder(null, label, pending).build();
     }
 }

@@ -480,7 +480,8 @@ public class MainActivity extends Activity {
                     .put("fullScreen", android.os.Build.VERSION.SDK_INT < 34
                         || getSystemService(android.app.NotificationManager.class).canUseFullScreenIntent())
                     .put("battery", getSystemService(android.os.PowerManager.class)
-                        .isIgnoringBatteryOptimizations(getPackageName()));
+                        .isIgnoringBatteryOptimizations(getPackageName()))
+                    .put("brand", android.os.Build.MANUFACTURER.toLowerCase(java.util.Locale.ROOT));
                 return status.toString();
             } catch (Exception e) {
                 return "{}";
@@ -573,6 +574,28 @@ public class MainActivity extends Activity {
                 } catch (Exception e) {
                     startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                         .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName()));
+                }
+            });
+        }
+
+        /** Xiaomi/POCO/Redmi: open the Autostart list (call events need it). */
+        @JavascriptInterface
+        public void openAutostartSettings() {
+            if (!trusted()) return;
+            runOnUiThread(() -> {
+                Intent[] tries = {
+                    new Intent().setComponent(new android.content.ComponentName(
+                        "com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity")),
+                    new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        .setData(Uri.parse("package:" + getPackageName())),
+                };
+                for (Intent intent : tries) {
+                    try {
+                        startActivity(intent);
+                        return;
+                    } catch (Exception next) {
+                        // Try the next one.
+                    }
                 }
             });
         }

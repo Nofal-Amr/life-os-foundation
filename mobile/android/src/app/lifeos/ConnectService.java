@@ -32,6 +32,7 @@ public class ConnectService extends Service {
     private RealtimeSocket socket;
     private ConnectConfig config;
     private ConnectivityManager.NetworkCallback networkCallback;
+    private android.content.BroadcastReceiver screenOn;
 
     /** Starts or stops the service to match the saved role. */
     static void sync(Context context) {
@@ -86,6 +87,7 @@ public class ConnectService extends Service {
         });
         socket.start();
         watchNetwork();
+        watchScreen();
         return START_STICKY;
     }
 
@@ -105,6 +107,20 @@ public class ConnectService extends Service {
             .setContentIntent(tap)
             .setOngoing(true)
             .build();
+    }
+
+    /** Screen turned on: if the connection dropped while asleep, reconnect now. */
+    private void watchScreen() {
+        if (screenOn != null) return;
+        screenOn = new android.content.BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (socket != null && !connected) socket.kick();
+            }
+        };
+        android.content.IntentFilter filter = new android.content.IntentFilter(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_USER_PRESENT);
+        registerReceiver(screenOn, filter);
     }
 
     /** Network came back: reconnect now instead of waiting out the pause. */
@@ -177,6 +193,14 @@ public class ConnectService extends Service {
         if (socket != null) socket.stop();
         socket = null;
         connected = false;
+        if (screenOn != null) {
+            try {
+                unregisterReceiver(screenOn);
+            } catch (Exception ignored) {
+                // Already gone.
+            }
+            screenOn = null;
+        }
         if (networkCallback != null) {
             try {
                 getSystemService(ConnectivityManager.class).unregisterNetworkCallback(networkCallback);

@@ -27,6 +27,7 @@ type NativeBridge = {
   connectStatus?(): string;
   connectTest?(): void;
   openBatterySettings?(): void;
+  openAutostartSettings?(): void;
   openFullScreenSettings?(): void;
   buildFeatures?(): string;
   spendingStatus?(): string;
@@ -245,6 +246,8 @@ export type ConnectStatus = {
   sms: boolean;
   /** Main phone: the call screen may show over the lock screen. */
   fullScreen: boolean;
+  /** Phone maker, lower case (e.g. "xiaomi", "samsung"). */
+  brand?: string;
 };
 
 /** Life Connect in the Android app; every call is a no-op on the website. */
@@ -287,6 +290,9 @@ export const lifeConnect = {
   },
   openBatterySettings(): void {
     bridge()?.openBatterySettings?.();
+  },
+  openAutostartSettings(): void {
+    bridge()?.openAutostartSettings?.();
   },
 };
 
