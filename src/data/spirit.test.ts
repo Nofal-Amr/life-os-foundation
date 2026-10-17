@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 
-import { prayerLabel, prayerWindowEnds } from "./spirit";
+import { DAY_ORDER, isSunnah, PRAYER_NAMES, prayerLabel, prayerWindowEnds } from "./spirit";
 
 describe("prayerLabel", () => {
   it("calls Dhuhr Jumu'ah on Fridays only", () => {
@@ -24,5 +24,19 @@ describe("prayerWindowEnds", () => {
     expect(ends.dhuhr).toEqual(at(15));
     expect(ends.maghrib).toEqual(at(19));
     expect(ends.isha).toEqual(new Date(2026, 8, 26, 4));
+  });
+});
+
+describe("sunnah prayers", () => {
+  it("puts the sunnah of Fajr first and Witr last, around the five", () => {
+    expect(DAY_ORDER).toEqual(["sunnah_fajr", ...PRAYER_NAMES, "witr"]);
+    expect(prayerLabel("sunnah_fajr")).toBe("Sunnah of Fajr");
+    expect(prayerLabel("witr")).toBe("Witr");
+  });
+
+  it("keeps them out of the five", () => {
+    expect(PRAYER_NAMES.some((name) => isSunnah(name))).toBe(false);
+    expect(isSunnah("witr")).toBe(true);
+    expect(isSunnah("sunnah_fajr")).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
 import { Check, Clock, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -7,20 +7,24 @@ import { useXp } from "@/hooks/useXp";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  PRAYER_LABELS,
+  DAY_ORDER,
+  isSunnah,
+  PRAYER_SHORT_LABELS,
   prayerLabel,
-  PRAYER_NAMES,
   PRAYER_STATUSES,
   PRAYER_STATUS_LABELS,
   prayerStatusCounts,
   setPrayerStatus,
   spiritKeys,
   statusOf,
+  sunnahLogsQuery,
+  type LoggedPrayer,
   type PrayerLog,
   type PrayerName,
   type PrayerStatus,
 } from "@/data/spirit";
 import { track } from "@/lib/analytics";
+import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,6 +39,27 @@ export const STATUS_STYLE: Record<PrayerStatus, { icon: LucideIcon; color: strin
   missed: { icon: X, color: "var(--color-muted-foreground)" },
 };
 
+/** The colour drawn around the sunnah prayers, so they read apart from the five. */
+const SUNNAH_RING = "0 0 0 2px var(--chart-5)";
+
+/** When each sunnah is prayed: shown with Fajr's time, and Witr with Isha's. */
+const SUNNAH_HINT: Record<string, string> = {
+  sunnah_fajr: "Before Fajr's fard",
+  witr: "After Isha, before Fajr",
+};
+
+function timeOf(times: Partial<Record<PrayerName, Date>> | null | undefined, name: LoggedPrayer) {
+  if (name === "sunnah_fajr") return times?.fajr;
+  if (name === "witr") return times?.isha;
+  return times?.[name];
+}
+
+/** The logs of the five (passed in) plus the sunnah logs. */
+function useDayLogs(logs: PrayerLog[]): PrayerLog[] {
+  const sunnah = useQuery(sunnahLogsQuery());
+  return sunnah.data?.length ? [...logs, ...sunnah.data] : logs;
+}
+
 /** Sets a prayer's status with an instant, rolled-back-on-error update. */
 export function usePrayerStatus() {
   const queryClient = useQueryClient();
@@ -46,24 +71,26 @@ export function usePrayerStatus() {
       status,
     }: {
       date: string;
-      name: PrayerName;
+      name: LoggedPrayer;
       status: PrayerStatus | null;
     }) => {
       track("prayer_logged", { status });
       return setPrayerStatus(date, name, status);
     },
-    onSuccess: (_data, { status }) => {
-      if (status) xp.toast({ kind: "prayer", status });
+    onSuccess: (_data, { name, status }) => {
+      // The game counts the five; the sunnah prayers earn nothing there.
+      if (status && !isSunnah(name)) xp.toast({ kind: "prayer", status });
     },
     onMutate: async ({ date, name, status }) => {
+      const key = isSunnah(name) ? spiritKeys.sunnah : spiritKeys.logs;
       await queryClient.cancelQueries({ queryKey: spiritKeys.logs });
-      const previous = queryClient.getQueryData<PrayerLog[]>(spiritKeys.logs);
+      const previous = queryClient.getQueryData<PrayerLog[]>(key);
       if (previous) {
         const rest = previous.filter(
           (log) => !(log.prayer_date === date && log.prayer_name === name),
         );
         queryClient.setQueryData<PrayerLog[]>(
-          spiritKeys.logs,
+          key,
           status
             ? [
                 {
@@ -81,8 +108,10 @@ export function usePrayerStatus() {
       }
       return previous;
     },
-    onError: (error, _vars, previous) => {
-      if (previous) queryClient.setQueryData(spiritKeys.logs, previous);
+    onError: (error, { name }, previous) => {
+      if (previous) {
+        queryClient.setQueryData(isSunnah(name) ? spiritKeys.sunnah : spiritKeys.logs, previous);
+      }
       toast.error(error instanceof Error ? error.message : "Couldn't save that.");
     },
     onSettled: () => void queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
@@ -176,6 +205,7 @@ export function PrayerDayList({
   sunrise?: Date | null | undefined;
 }) {
   const setStatus = usePrayerStatus();
+  const dayLogs = useDayLogs(logs);
   const sunriseRow = sunrise ? (
     <li key="sunrise">
       <div className="flex min-h-11 items-baseline gap-3 rounded-xl border border-dashed border-border px-4 py-2.5">
@@ -187,11 +217,12 @@ export function PrayerDayList({
   ) : null;
   return (
     <ul className="space-y-2">
-      {PRAYER_NAMES.flatMap((name) => {
+      {DAY_ORDER.flatMap((name) => {
         const status = statusOf(
-          logs.find((log) => log.prayer_date === date && log.prayer_name === name),
+          dayLogs.find((log) => log.prayer_date === date && log.prayer_name === name),
         );
-        const time = times?.[name];
+        const time = timeOf(times, name);
+        const sunnah = isSunnah(name);
         const row = (
           <li key={name}>
             <StatusPicker
@@ -203,12 +234,18 @@ export function PrayerDayList({
               <button
                 type="button"
                 className="stat-card flex min-h-16 w-full items-center gap-3 overflow-hidden p-0 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
+                style={sunnah ? { boxShadow: SUNNAH_RING } : undefined}
               >
-                <span className="flex min-w-0 flex-1 items-baseline gap-3 px-4 py-3">
-                  <span className="w-20 text-sm font-semibold">{prayerLabel(name, date)}</span>
+                <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-3">
+                  <span className={cn("text-sm font-semibold", sunnah ? "min-w-20" : "w-20")}>
+                    {prayerLabel(name, date)}
+                  </span>
                   <span className="text-sm tabular-nums text-muted-foreground">
                     {time ? formatTime(time) : "—"}
                   </span>
+                  {sunnah ? (
+                    <span className="text-xs text-muted-foreground">{t(SUNNAH_HINT[name]!)}</span>
+                  ) : null}
                   {next === name && !status ? (
                     <span className="text-2xs font-semibold uppercase tracking-wide text-primary">
                       Next
@@ -248,7 +285,7 @@ export function PrayerDayList({
   );
 }
 
-/** Dashboard and Week: five compact tiles. */
+/** Dashboard and Week: compact tiles, the five with the sunnah of Fajr and Witr. */
 export function PrayerTiles({
   date,
   logs,
@@ -265,13 +302,14 @@ export function PrayerTiles({
   disabled?: boolean | undefined;
 }) {
   const setStatus = usePrayerStatus();
+  const dayLogs = useDayLogs(logs);
   return (
-    <div className="grid min-w-0 grid-cols-5 gap-1.5">
-      {PRAYER_NAMES.map((name) => {
+    <div className="grid min-w-0 grid-cols-7 gap-1.5">
+      {DAY_ORDER.map((name) => {
         const status = statusOf(
-          logs.find((log) => log.prayer_date === date && log.prayer_name === name),
+          dayLogs.find((log) => log.prayer_date === date && log.prayer_name === name),
         );
-        const time = times?.[name];
+        const time = timeOf(times, name);
         return (
           <StatusPicker
             key={name}
@@ -287,9 +325,14 @@ export function PrayerTiles({
                 "flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-2 text-center transition-transform active:scale-[0.97] disabled:opacity-40",
                 status ? "border-transparent text-white" : "border-border",
               )}
-              style={status ? { background: STATUS_STYLE[status].color } : undefined}
+              style={{
+                ...(status ? { background: STATUS_STYLE[status].color } : {}),
+                ...(isSunnah(name) ? { boxShadow: SUNNAH_RING } : {}),
+              }}
             >
-              <span className="w-full truncate text-xs font-medium">{prayerLabel(name, date)}</span>
+              <span className="w-full truncate text-xs font-medium">
+                {name === "sunnah_fajr" ? t(PRAYER_SHORT_LABELS[name]) : prayerLabel(name, date)}
+              </span>
               {time && formatTime ? (
                 <span className="w-full truncate text-2xs tabular-nums opacity-80">
                   {formatTime(time)}
@@ -325,9 +368,11 @@ const RANGES = [
 export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string }) {
   const [range, setRange] = useState<(typeof RANGES)[number]["days"]>(14);
   const from = format(addDays(parseISO(today), -(range - 1)), "yyyy-MM-dd");
+  // The counts are of the five; the heatmap also shows the sunnah rows.
   const counts = prayerStatusCounts(logs, from, today);
+  const allLogs = useDayLogs(logs);
   const byKey = new Map(
-    logs.map((log) => [`${log.prayer_date}|${log.prayer_name}`, statusOf(log)]),
+    allLogs.map((log) => [`${log.prayer_date}|${log.prayer_name}`, statusOf(log)]),
   );
   const dates = Array.from({ length: range }, (_, index) =>
     format(addDays(parseISO(from), index), "yyyy-MM-dd"),
@@ -385,11 +430,19 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
                   ))}
                 </>
               ) : null}
-              {PRAYER_NAMES.map((name) => (
+              {DAY_ORDER.map((name) => (
                 <PrayerHeatRow key={name} name={name} dates={dates} byKey={byKey} cell={cell} />
               ))}
             </div>
           </div>
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span
+              className="inline-block size-3 rounded-[3px] bg-border"
+              style={{ boxShadow: SUNNAH_RING }}
+              aria-hidden="true"
+            />
+            {t("Outlined: sunnah, not counted in the five.")}
+          </p>
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {PRAYER_STATUSES.map((status) => (
@@ -422,15 +475,21 @@ function PrayerHeatRow({
   byKey,
   cell,
 }: {
-  name: PrayerName;
+  name: LoggedPrayer;
   dates: string[];
   byKey: Map<string, PrayerStatus | null>;
   cell: number;
 }) {
+  const sunnah = isSunnah(name);
   return (
     <>
-      <span className="pr-2 text-2xs font-medium text-muted-foreground">
-        {PRAYER_LABELS[name]}
+      <span
+        className={cn(
+          "pr-2 text-2xs font-medium",
+          sunnah ? "text-[var(--chart-5)]" : "text-muted-foreground",
+        )}
+      >
+        {t(PRAYER_SHORT_LABELS[name])}
       </span>
       {dates.map((date) => {
         const status = byKey.get(`${date}|${name}`) ?? null;
@@ -442,6 +501,7 @@ function PrayerHeatRow({
             style={{
               width: cell,
               height: cell,
+              ...(sunnah ? { boxShadow: `inset 0 0 0 ${cell > 10 ? 2 : 1}px var(--chart-5)` } : {}),
               background: status
                 ? status === "missed"
                   ? "color-mix(in oklch, var(--color-muted-foreground) 45%, transparent)"

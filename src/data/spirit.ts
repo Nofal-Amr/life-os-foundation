@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { t } from "@/lib/i18n";
 import { currentUserId, unwrap, writeWithColumnFallback } from "@/lib/supabase-helpers";
 
 export type PrayerLog = Database["public"]["Tables"]["prayer_logs"]["Row"];
@@ -10,22 +11,47 @@ export type PrayerSettings = Database["public"]["Tables"]["prayer_settings"]["Ro
 export const PRAYER_NAMES = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 export type PrayerName = (typeof PRAYER_NAMES)[number];
 
-export const PRAYER_LABELS: Record<PrayerName, string> = {
+/**
+ * The two sunnah prayers logged alongside the five: the two rak'ahs before
+ * Fajr, and Witr after Isha. Kept apart from PRAYER_NAMES so "5 of 5" and
+ * every count of the five stay as they are.
+ */
+export const SUNNAH_NAMES = ["sunnah_fajr", "witr"] as const;
+export type SunnahName = (typeof SUNNAH_NAMES)[number];
+/** Any prayer that can be logged. */
+export type LoggedPrayer = PrayerName | SunnahName;
+
+export function isSunnah(name: string): name is SunnahName {
+  return (SUNNAH_NAMES as readonly string[]).includes(name);
+}
+
+export const PRAYER_LABELS: Record<LoggedPrayer, string> = {
+  sunnah_fajr: "Sunnah of Fajr",
   fajr: "Fajr",
   dhuhr: "Dhuhr",
   asr: "Asr",
   maghrib: "Maghrib",
   isha: "Isha",
+  witr: "Witr",
+};
+
+/** Short names for tight spaces (tiles, the heatmap). */
+export const PRAYER_SHORT_LABELS: Record<LoggedPrayer, string> = {
+  ...PRAYER_LABELS,
+  sunnah_fajr: "Sunnah",
 };
 
 /** A prayer's name on a given day: Dhuhr on a Friday is Jumu'ah. */
-export function prayerLabel(name: PrayerName, date?: string | Date | null): string {
+export function prayerLabel(name: LoggedPrayer, date?: string | Date | null): string {
   if (name === "dhuhr" && date) {
     const day = typeof date === "string" ? new Date(`${date.slice(0, 10)}T12:00:00`) : date;
-    if (day.getDay() === 5) return "Jumu'ah";
+    if (day.getDay() === 5) return t("Jumu'ah");
   }
-  return PRAYER_LABELS[name];
+  return t(PRAYER_LABELS[name]);
 }
+
+/** The day's order: the sunnah of Fajr first, Witr last. */
+export const DAY_ORDER: readonly LoggedPrayer[] = ["sunnah_fajr", ...PRAYER_NAMES, "witr"];
 
 /**
  * When each prayer's time runs out: Fajr at sunrise, Dhuhr at Asr, Asr at
@@ -67,6 +93,8 @@ export const ASR_SCHOOLS = [
 export const spiritKeys = {
   settings: ["prayer_settings"] as const,
   logs: ["prayer_logs"] as const,
+  /** Under "prayer_logs", so invalidating the logs refreshes these too. */
+  sunnah: ["prayer_logs", "sunnah"] as const,
 };
 
 export const prayerSettingsQuery = () =>
@@ -78,17 +106,35 @@ export const prayerSettingsQuery = () =>
       ) as PrayerSettings | null,
   });
 
+/** One request serves both queries below when they load together. */
+let loading: Promise<PrayerLog[]> | null = null;
+
+function allPrayerLogs(): Promise<PrayerLog[]> {
+  loading ??= (async () =>
+    unwrap(
+      await supabase
+        .from("prayer_logs")
+        .select("*")
+        .order("prayer_date", { ascending: false })
+        .limit(2000),
+    ) as PrayerLog[])().finally(() => {
+    loading = null;
+  });
+  return loading;
+}
+
+/** Logs of the five prayers. */
 export const prayerLogsQuery = () =>
   queryOptions({
     queryKey: spiritKeys.logs,
-    queryFn: async () =>
-      unwrap(
-        await supabase
-          .from("prayer_logs")
-          .select("*")
-          .order("prayer_date", { ascending: false })
-          .limit(2000),
-      ) as PrayerLog[],
+    queryFn: async () => (await allPrayerLogs()).filter((log) => !isSunnah(log.prayer_name)),
+  });
+
+/** Logs of the sunnah of Fajr and Witr. */
+export const sunnahLogsQuery = () =>
+  queryOptions({
+    queryKey: spiritKeys.sunnah,
+    queryFn: async () => (await allPrayerLogs()).filter((log) => isSunnah(log.prayer_name)),
   });
 
 export type PrayerSettingsInput = {
@@ -126,7 +172,7 @@ export async function logPrayer(input: {
   ) as PrayerLog;
 }
 
-export async function clearPrayerLog(prayer_date: string, prayer_name: PrayerName) {
+export async function clearPrayerLog(prayer_date: string, prayer_name: LoggedPrayer) {
   const { error } = await supabase
     .from("prayer_logs")
     .delete()
@@ -203,7 +249,7 @@ export function statusOf(log: PrayerLog | undefined | null): PrayerStatus | null
 /** Records how a prayer was prayed, or clears it with null. */
 export async function setPrayerStatus(
   prayer_date: string,
-  prayer_name: PrayerName,
+  prayer_name: LoggedPrayer,
   status: PrayerStatus | null,
 ): Promise<void> {
   if (!status) return clearPrayerLog(prayer_date, prayer_name);
