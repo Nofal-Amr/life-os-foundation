@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { PrayerTiles } from "@/components/app/PrayerLog";
+import { WeeklyReset } from "@/components/app/WeeklyReset";
 import { SplitAcrossDaysDialog } from "@/components/app/SplitAcrossDays";
 import { TaskTimerButton } from "@/components/app/Timer";
 import { Ring, type ChartTone } from "@/components/app/StatCards";
@@ -172,6 +173,7 @@ function WeekPage() {
         />
       ) : (
         <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300">
+          {isThisWeek ? <WeeklyReset week={start} today={today} /> : null}
           <div className="grid gap-4 lg:grid-cols-3">
             {/* Week summary */}
             <section className="stat-card p-5">

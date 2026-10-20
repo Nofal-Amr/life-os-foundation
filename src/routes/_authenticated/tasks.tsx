@@ -83,6 +83,14 @@ export const Route = createFileRoute("/_authenticated/tasks")({
       { property: "og:description", content: "Capture, filter and complete your tasks." },
     ],
   }),
+  // ?filter=inbox etc. opens that list (the Week page's weekly reset links here).
+  validateSearch: (search: Record<string, unknown>): { filter?: TaskFilter } => {
+    const filter = search["filter"];
+    return typeof filter === "string" &&
+      ["all", "today", "upcoming", "overdue", "inbox", "completed"].includes(filter)
+      ? { filter: filter as TaskFilter }
+      : {};
+  },
   component: TasksPage,
 });
 
@@ -126,7 +134,11 @@ function TasksPage() {
   const projects = useQuery(projectsQuery());
   const capabilities = useQuery(capabilitiesQuery());
   const goals = useQuery(goalsQuery());
-  const [filter, setFilter] = useState<TaskFilter>("today");
+  const search = Route.useSearch();
+  const [filter, setFilter] = useState<TaskFilter>(search.filter ?? "today");
+  useEffect(() => {
+    if (search.filter) setFilter(search.filter);
+  }, [search.filter]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [form, setForm] = useState<TaskInput>(emptyForm);

@@ -99,6 +99,27 @@ export const AR: Record<string, string> = {
   "Send a test to the other phone": "أرسل تجربة للهاتف الآخر",
   "Open Autostart": "افتح التشغيل التلقائي",
 
+  // Weekly reset
+  "Weekly reset": "ترتيب الأسبوع",
+  "Ten quiet minutes to start the week clear. Do as many steps as you like.": "عشر دقائق هادئة لتبدأ الأسبوع صافي الذهن. اعمل ما تشاء من الخطوات.",
+  "Sort the inbox": "رتّب صندوق الوارد",
+  "waiting to be sorted": "تنتظر الترتيب",
+  "Nothing in the inbox.": "لا شيء في الوارد.",
+  "Open the inbox": "افتح الوارد",
+  "Decide on what has waited": "قرّر بشأن ما طال انتظاره",
+  "tasks waiting two weeks or more": "مهام تنتظر أسبوعين أو أكثر",
+  "Nothing has been waiting long.": "لا شيء ينتظر منذ مدة طويلة.",
+  "Give overdue tasks a real date": "أعطِ المهام المتأخرة موعدًا حقيقيًا",
+  "past their date": "فات موعدها",
+  "Nothing is past its date.": "لا شيء فات موعده.",
+  "See them": "اعرضها",
+  "Look at the week ahead": "انظر إلى الأسبوع القادم",
+  "tasks due in the next 7 days": "مهام موعدها خلال ٧ أيام",
+  "Open the calendar": "افتح التقويم",
+  "Write the week's note": "اكتب ملاحظة الأسبوع",
+  "What went well, what got in the way, and the one thing for next week.": "ما الذي سار جيدًا، وما الذي عطّلك، والشيء الأهم للأسبوع القادم.",
+  "Start the note": "ابدأ الملاحظة",
+
   // Watch
   "Your watch": "ساعتك",
   "Life OS reminders and calls reach a Galaxy Watch through Galaxy Wearable on this phone. If they don't show up there:": "تصل تذكيرات Life OS والمكالمات إلى ساعة Galaxy عبر تطبيق Galaxy Wearable على هذا الهاتف. إن لم تظهر هناك:",
