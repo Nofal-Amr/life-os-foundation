@@ -79,6 +79,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        CrashLog.install(this);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         applySystemBars();
 
@@ -505,6 +506,18 @@ public class MainActivity extends Activity {
         }
 
         /* ----------------------------- spending from bank notifications */
+
+        /** The last crash and recent app exits, for Settings to show and copy. */
+        @JavascriptInterface
+        public String crashReport() {
+            if (!trusted()) return "{}";
+            return CrashLog.report(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void clearCrashReport() {
+            if (trusted()) CrashLog.clear(MainActivity.this);
+        }
 
         /** Which optional features this build has: {sms, spending}. */
         @JavascriptInterface

@@ -51,6 +51,7 @@ public class ConnectService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        CrashLog.install(this);
         NotificationManager manager = getSystemService(NotificationManager.class);
         NotificationChannel status = new NotificationChannel(
             CHANNEL_STATUS, "Life Connect", NotificationManager.IMPORTANCE_MIN);
@@ -120,7 +121,15 @@ public class ConnectService extends Service {
         };
         android.content.IntentFilter filter = new android.content.IntentFilter(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_USER_PRESENT);
-        registerReceiver(screenOn, filter);
+        try {
+            if (Build.VERSION.SDK_INT >= 33) {
+                registerReceiver(screenOn, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(screenOn, filter);
+            }
+        } catch (Exception e) {
+            screenOn = null;
+        }
     }
 
     /** Network came back: reconnect now instead of waiting out the pause. */

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { CrashReportCard } from "@/components/app/CrashReportCard";
 import { LifeConnectCard } from "@/components/app/LifeConnectCard";
 import { LocalAiCard } from "@/components/app/LocalAi";
 import { LanguageCard } from "@/components/app/LanguageCard";
@@ -1056,6 +1057,7 @@ function SettingsPage() {
         <HolidaysCard />
 
         <UsageInsights />
+        <CrashReportCard />
 
         <ExportDataCard />
 

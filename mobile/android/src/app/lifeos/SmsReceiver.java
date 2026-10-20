@@ -42,15 +42,17 @@ public class SmsReceiver extends BroadcastReceiver {
             at = part.getTimestampMillis();
         }
 
-        PendingResult pending = goAsync();
+        // Sent on the sender threads, not by holding this broadcast (holding it
+        // long makes Android treat the app as frozen).
         long sentAt = at;
-        new Thread(() -> {
+        Context app = context.getApplicationContext();
+        ConnectSender.run(() -> {
             try {
                 for (Map.Entry<String, StringBuilder> entry : bySender.entrySet()) {
                     String body = entry.getValue().toString();
                     if (!config.forwardCodes && CODE.matcher(body).find()) continue;
                     String from = entry.getKey();
-                    String name = contactName(context, from);
+                    String name = contactName(app, from);
                     ConnectSender.sendNow(config, new JSONObject()
                         .put("type", "sms")
                         .put("from", from)
@@ -61,10 +63,8 @@ public class SmsReceiver extends BroadcastReceiver {
                 }
             } catch (Exception ignored) {
                 // Nothing more to do.
-            } finally {
-                pending.finish();
             }
-        }).start();
+        });
     }
 
     static String contactName(Context context, String number) {

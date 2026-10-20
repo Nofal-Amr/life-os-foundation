@@ -82,22 +82,22 @@ public class CallStateReceiver extends BroadcastReceiver {
         } catch (Exception e) {
             return;
         }
-        PendingResult pending = goAsync();
-        ConnectSender.send(config, message, ok -> pending.finish());
+        ConnectSender.send(config, message, null);
     }
 
     /**
      * Sends the ring now and again every few seconds while this same call is
      * still ringing (up to 45 s), holding the CPU awake meanwhile. The main
      * phone rings once per call, so repeats only help one that was offline.
+     * Returns at once: the broadcast must not be held (see above).
      */
     private void announceWhileRinging(Context context, ConnectConfig config, JSONObject message, String callId) {
-        PendingResult pending = goAsync();
-        android.os.PowerManager.WakeLock lock = context.getSystemService(android.os.PowerManager.class)
+        Context app = context.getApplicationContext();
+        android.os.PowerManager.WakeLock lock = app.getSystemService(android.os.PowerManager.class)
             .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "lifeos:ring");
         lock.acquire(RESEND_FOR_MS + 10_000);
-        new Thread(() -> {
-            SharedPreferences prefs = context.getSharedPreferences(ConnectConfig.PREFS, Context.MODE_PRIVATE);
+        ConnectSender.run(() -> {
+            SharedPreferences prefs = app.getSharedPreferences(ConnectConfig.PREFS, Context.MODE_PRIVATE);
             long until = System.currentTimeMillis() + RESEND_FOR_MS;
             try {
                 while (System.currentTimeMillis() < until) {
@@ -111,9 +111,8 @@ public class CallStateReceiver extends BroadcastReceiver {
                 // Stop announcing.
             } finally {
                 if (lock.isHeld()) lock.release();
-                pending.finish();
             }
-        }, "life-connect-ring").start();
+        });
     }
 
     private static String contactName(Context context, String number) {

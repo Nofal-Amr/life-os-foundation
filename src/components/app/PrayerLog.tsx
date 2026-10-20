@@ -1,3 +1,4 @@
+import { Slot } from "@radix-ui/react-slot";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
 import { Check, Clock, Users, X, Zap, type LucideIcon } from "lucide-react";
@@ -39,8 +40,12 @@ export const STATUS_STYLE: Record<PrayerStatus, { icon: LucideIcon; color: strin
   missed: { icon: X, color: "var(--color-muted-foreground)" },
 };
 
-/** The colour drawn around the sunnah prayers, so they read apart from the five. */
-const SUNNAH_RING = "0 0 0 2px var(--chart-5)";
+/**
+ * The soft outline around the sunnah prayers, so they read apart from the
+ * five: the app's own accent, faded, so it stays quiet.
+ */
+const SUNNAH_COLOR = "color-mix(in oklch, var(--primary) 40%, transparent)";
+const SUNNAH_RING = `0 0 0 1.5px ${SUNNAH_COLOR}`;
 
 /** When each sunnah is prayed: shown with Fajr's time, and Witr with Isha's. */
 const SUNNAH_HINT: Record<string, string> = {
@@ -121,6 +126,43 @@ export function usePrayerStatus() {
 export function StatusMark({ status, size = "size-4" }: { status: PrayerStatus; size?: string }) {
   const { icon: Icon } = STATUS_STYLE[status];
   return <Icon className={size} aria-hidden="true" />;
+}
+
+/**
+ * The sunnah prayers have one status, on time: a tap marks it, another
+ * clears it. The five get the full picker.
+ */
+function StatusControl({
+  name,
+  current,
+  disabled,
+  onPick,
+  children,
+  label,
+}: {
+  name: LoggedPrayer;
+  current: PrayerStatus | null;
+  disabled?: boolean | undefined;
+  onPick: (status: PrayerStatus | null) => void;
+  children: ReactNode;
+  label: string;
+}) {
+  if (!isSunnah(name)) {
+    return (
+      <StatusPicker current={current} disabled={disabled} onPick={onPick} label={label}>
+        {children}
+      </StatusPicker>
+    );
+  }
+  return (
+    <Slot
+      aria-pressed={!!current}
+      {...(disabled ? { disabled: true } : {})}
+      onClick={() => onPick(current ? null : "on_time")}
+    >
+      {children}
+    </Slot>
+  );
 }
 
 /** The four statuses (and clear) in a small popover. */
@@ -225,7 +267,8 @@ export function PrayerDayList({
         const sunnah = isSunnah(name);
         const row = (
           <li key={name}>
-            <StatusPicker
+            <StatusControl
+              name={name}
               current={status}
               disabled={disabled}
               label={`How was ${prayerLabel(name, date)} prayed?`}
@@ -276,7 +319,7 @@ export function PrayerDayList({
                   )}
                 </span>
               </button>
-            </StatusPicker>
+            </StatusControl>
           </li>
         );
         return name === "fajr" && sunriseRow ? [row, sunriseRow] : [row];
@@ -311,8 +354,9 @@ export function PrayerTiles({
         );
         const time = timeOf(times, name);
         return (
-          <StatusPicker
+          <StatusControl
             key={name}
+            name={name}
             current={status}
             disabled={disabled}
             label={`How was ${prayerLabel(name, date)} prayed?`}
@@ -351,7 +395,7 @@ export function PrayerTiles({
                 )}
               </span>
             </button>
-          </StatusPicker>
+          </StatusControl>
         );
       })}
     </div>
@@ -486,7 +530,7 @@ function PrayerHeatRow({
       <span
         className={cn(
           "pr-2 text-2xs font-medium",
-          sunnah ? "text-[var(--chart-5)]" : "text-muted-foreground",
+          sunnah ? "text-primary/80" : "text-muted-foreground",
         )}
       >
         {t(PRAYER_SHORT_LABELS[name])}
@@ -501,7 +545,7 @@ function PrayerHeatRow({
             style={{
               width: cell,
               height: cell,
-              ...(sunnah ? { boxShadow: `inset 0 0 0 ${cell > 10 ? 2 : 1}px var(--chart-5)` } : {}),
+              ...(sunnah ? { boxShadow: `inset 0 0 0 ${cell > 10 ? 1.5 : 1}px ${SUNNAH_COLOR}` } : {}),
               background: status
                 ? status === "missed"
                   ? "color-mix(in oklch, var(--color-muted-foreground) 45%, transparent)"

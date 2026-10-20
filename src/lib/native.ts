@@ -30,6 +30,8 @@ type NativeBridge = {
   openAutostartSettings?(): void;
   openFullScreenSettings?(): void;
   buildFeatures?(): string;
+  crashReport?(): string;
+  clearCrashReport?(): void;
   spendingStatus?(): string;
   setSpendingWatch?(json: string): void;
   openNotificationAccess?(): void;
@@ -362,6 +364,27 @@ export function buildFeatures(): { sms: boolean; spending: boolean } {
   } catch {
     return { sms: false, spending: false };
   }
+}
+
+/* ------------------------------------------------------- crash reports */
+
+export type CrashExit = { at: number; reason: string; description: string; trace?: string };
+export type CrashReport = { crash: string; exits: CrashExit[]; device: string };
+
+/** What the Android app kept about its last crash and recent stops; null on the web. */
+export function crashReport(): CrashReport | null {
+  try {
+    const raw = bridge()?.crashReport?.();
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<CrashReport>;
+    return { crash: value.crash ?? "", exits: value.exits ?? [], device: value.device ?? "" };
+  } catch {
+    return null;
+  }
+}
+
+export function clearCrashReport(): void {
+  bridge()?.clearCrashReport?.();
 }
 
 /* ------------------------------------------------ voice and focus lock */

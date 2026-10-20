@@ -14,16 +14,35 @@ import java.util.concurrent.Executors;
 
 /** Sends one sealed Life Connect message through Supabase Realtime's broadcast endpoint. */
 final class ConnectSender {
-    private static final ExecutorService POOL = Executors.newSingleThreadExecutor();
+    private static final ExecutorService POOL = Executors.newCachedThreadPool();
 
     private ConnectSender() {}
 
-    /** Sends in the background; done (may be null) runs afterwards with whether it went. */
+    /**
+     * Sends in the background; done (may be null) runs afterwards with whether
+     * it went. Never blocks the caller, so it's safe from a broadcast receiver.
+     */
     static void send(ConnectConfig config, JSONObject message, Callback done) {
         POOL.execute(() -> {
-            boolean ok = sendNow(config, message);
-            if (done != null) done.finished(ok);
+            boolean ok = false;
+            try {
+                ok = sendNow(config, message);
+            } catch (Exception ignored) {
+                // Reported as not sent.
+            }
+            if (done != null) {
+                try {
+                    done.finished(ok);
+                } catch (Exception ignored) {
+                    // A failing callback must not take the app down.
+                }
+            }
         });
+    }
+
+    /** Runs work on the sender's threads (for the SIM phone's repeated ring). */
+    static void run(Runnable work) {
+        POOL.execute(work);
     }
 
     interface Callback {

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { azkarFor, dhikrKeys, logDhikr, type AzkarTime } from "@/data/azkar";
+import { azkarFor, dhikrKeys, logDhikr, sourceLabel, type AzkarTime } from "@/data/azkar";
+import { t } from "@/lib/i18n";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
 
@@ -174,7 +175,12 @@ export function AzkarSession({
                 )}
               >
                 <span className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                  <span>{zikr.title}</span>
+                  <span>
+                    {t(zikr.title)}
+                    {zikr.source ? (
+                      <span className="ms-2 tabular-nums opacity-80">· {sourceLabel(zikr.source)}</span>
+                    ) : null}
+                  </span>
                   <span
                     className={cn(
                       "inline-flex min-w-12 items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",

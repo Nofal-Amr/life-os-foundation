@@ -16,14 +16,12 @@ public class ConnectActionReceiver extends BroadcastReceiver {
         String who = intent.getStringExtra("who");
         if (text == null || text.length() == 0 || to == null) return;
         String body = text.toString();
-        PendingResult pending = goAsync();
+        Context app = context.getApplicationContext();
         try {
-            ConnectSender.send(config, new JSONObject().put("type", "reply").put("to", to).put("body", body), ok -> {
-                SmsAlert.replied(context, to, who == null ? to : who, body, ok);
-                pending.finish();
-            });
-        } catch (Exception e) {
-            pending.finish();
+            ConnectSender.send(config, new JSONObject().put("type", "reply").put("to", to).put("body", body),
+                ok -> SmsAlert.replied(app, to, who == null ? to : who, body, ok));
+        } catch (Exception ignored) {
+            // Nothing sent.
         }
     }
 
@@ -46,11 +44,10 @@ public class ConnectActionReceiver extends BroadcastReceiver {
         } else {
             CallAlert.silence(context, "Muted", "The call is still ringing on your SIM phone.");
         }
-        PendingResult pending = goAsync();
         try {
-            ConnectSender.send(config, new JSONObject().put("type", what), ok -> pending.finish());
-        } catch (Exception e) {
-            pending.finish();
+            ConnectSender.send(config, new JSONObject().put("type", what), null);
+        } catch (Exception ignored) {
+            // Nothing sent.
         }
     }
 }

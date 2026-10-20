@@ -2,14 +2,16 @@
  * Morning and evening azkar (from Hisn al-Muslim), the tasbih counter's
  * phrases, and the plain record of what was read (dhikr_logs).
  *
- * Texts are written without tashkeel on purpose: every word here is checked
- * against the standard printing, and unvocalised text can't carry a wrong
- * vowel. Counts are the ones the hadith give.
+ * Texts are written without tashkeel, except Ayat al-Kursi, which carries the
+ * full tashkeel of the Madinah mushaf (in everyday spelling, with its waqf
+ * marks). Every word is checked against the standard printing. Counts are the
+ * ones the hadith give.
  */
 import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { getLang } from "@/lib/i18n";
 import { currentUserId, unwrap } from "@/lib/supabase-helpers";
 
 export type DhikrLog = Database["public"]["Tables"]["dhikr_logs"]["Row"];
@@ -25,30 +27,58 @@ export type Zikr = {
   /** Said at both times, same words. */
   text?: string;
   count: number;
+  /** Where a Quran passage is from: surah and verse. */
+  source?: string;
 };
 
+/** Al-Baqarah 2:255. */
 const AYAT_AL_KURSI =
-  "الله لا إله إلا هو الحي القيوم لا تأخذه سنة ولا نوم له ما في السماوات وما في الأرض من ذا الذي يشفع عنده إلا بإذنه يعلم ما بين أيديهم وما خلفهم ولا يحيطون بشيء من علمه إلا بما شاء وسع كرسيه السماوات والأرض ولا يؤوده حفظهما وهو العلي العظيم";
+  "اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ";
+
+const SURAH_AR: Record<string, string> = {
+  "Al-Baqarah": "البقرة",
+  "Al-Ikhlas": "الإخلاص",
+  "Al-Falaq": "الفلق",
+  "An-Nas": "الناس",
+};
+
+/** "Al-Baqarah 2:255", or in Arabic "البقرة: ٢٥٥". */
+export function sourceLabel(source: string): string {
+  if (getLang() !== "ar") return source;
+  const match = /^(.+?) \d+:(.+)$/.exec(source);
+  if (!match) return source;
+  const verses = match[2]!.replace(/\d/g, (digit) => "٠١٢٣٤٥٦٧٨٩"[Number(digit)]!);
+  return `${SURAH_AR[match[1]!] ?? match[1]}: ${verses}`;
+}
 
 export const AZKAR: Zikr[] = [
-  { id: "kursi", title: "Ayat al-Kursi", text: AYAT_AL_KURSI, count: 1 },
+  {
+    id: "kursi",
+    title: "Ayat al-Kursi",
+    text: AYAT_AL_KURSI,
+    count: 1,
+    source: "Al-Baqarah 2:255",
+  },
   {
     id: "ikhlas",
     title: "Al-Ikhlas",
     text: "بسم الله الرحمن الرحيم ۝ قل هو الله أحد ۝ الله الصمد ۝ لم يلد ولم يولد ۝ ولم يكن له كفوا أحد",
     count: 3,
+    source: "Al-Ikhlas 112:1–4",
   },
   {
     id: "falaq",
     title: "Al-Falaq",
     text: "بسم الله الرحمن الرحيم ۝ قل أعوذ برب الفلق ۝ من شر ما خلق ۝ ومن شر غاسق إذا وقب ۝ ومن شر النفاثات في العقد ۝ ومن شر حاسد إذا حسد",
     count: 3,
+    source: "Al-Falaq 113:1–5",
   },
   {
     id: "nas",
     title: "An-Nas",
     text: "بسم الله الرحمن الرحيم ۝ قل أعوذ برب الناس ۝ ملك الناس ۝ إله الناس ۝ من شر الوسواس الخناس ۝ الذي يوسوس في صدور الناس ۝ من الجنة والناس",
     count: 3,
+    source: "An-Nas 114:1–6",
   },
   {
     id: "mulk",
