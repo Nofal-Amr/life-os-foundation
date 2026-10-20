@@ -13,6 +13,7 @@ import { HolidaysCard } from "@/components/app/Holidays";
 import { SpendingSettingsCard } from "@/components/app/SpendingInbox";
 import { ReminderSettingsCard } from "@/components/app/PrayerReminders";
 import { UsageInsights } from "@/components/app/UsageInsights";
+import { WatchCard } from "@/components/app/WatchCard";
 import { CurrencyCombobox } from "@/components/app/CurrencyCombobox";
 import { DatePicker } from "@/components/app/DatePicker";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -1052,6 +1053,7 @@ function SettingsPage() {
         <LanguageCard />
         <ReminderSettingsCard />
         <LifeConnectCard />
+        <WatchCard />
         <SpendingSettingsCard />
         <LocalAiCard />
         <HolidaysCard />

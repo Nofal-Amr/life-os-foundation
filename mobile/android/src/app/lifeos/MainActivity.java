@@ -591,6 +591,29 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Opens Galaxy Wearable (or the Wear OS / Pixel Watch app); false if none. */
+        @JavascriptInterface
+        public boolean openWatchCompanion() {
+            if (!trusted()) return false;
+            for (String pkg : new String[] {
+                "com.samsung.android.app.watchmanager",
+                "com.google.android.apps.wear.companion",
+                "com.google.android.wearable.app",
+            }) {
+                Intent launch = getPackageManager().getLaunchIntentForPackage(pkg);
+                if (launch == null) continue;
+                runOnUiThread(() -> {
+                    try {
+                        startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    } catch (Exception ignored) {
+                        // Not openable after all.
+                    }
+                });
+                return true;
+            }
+            return false;
+        }
+
         /** Xiaomi/POCO/Redmi: open the Autostart list (call events need it). */
         @JavascriptInterface
         public void openAutostartSettings() {

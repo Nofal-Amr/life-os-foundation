@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "build:android": "node mobile/android/build.mjs",
     "build:android:full": "node mobile/android/build.mjs --full",
+    "build:wear": "node mobile/wear/build.mjs",
     "test:android": "node mobile/android/test.mjs",
     "test:e2e": "playwright test"
   },

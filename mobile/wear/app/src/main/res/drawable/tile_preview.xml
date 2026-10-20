@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Preview in the tile picker: the next prayer on a dark round face. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="192dp"
+    android:height="192dp"
+    android:viewportWidth="192"
+    android:viewportHeight="192">
+    <path android:fillColor="#000000" android:pathData="M96,0a96,96 0,1 1,0 192a96,96 0,1 1,0 -192" />
+    <path android:fillColor="#A0FFFFFF" android:pathData="M80,46h32v6h-32z" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M62,70h68v14h-68z" />
+    <path android:fillColor="#30D5C8" android:pathData="M52,96h88v24h-88z" />
+    <path android:fillColor="#A0FFFFFF" android:pathData="M70,140h52v6h-52z" />
+</vector>

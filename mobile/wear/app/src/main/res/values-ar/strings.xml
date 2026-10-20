@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Life OS</string>
+    <string name="tile_label">مواقيت الصلاة</string>
+    <string name="complication_label">الصلاة القادمة</string>
+
+    <string name="fajr">الفجر</string>
+    <string name="sunrise">الشروق</string>
+    <string name="dhuhr">الظهر</string>
+    <string name="jumuah">الجمعة</string>
+    <string name="asr">العصر</string>
+    <string name="maghrib">المغرب</string>
+    <string name="isha">العشاء</string>
+
+    <string name="next">القادمة</string>
+    <string name="in_time">بعد %1$s</string>
+    <string name="hours_minutes">%1$d س %2$d د</string>
+    <string name="minutes">%1$d د</string>
+    <string name="no_place">المواقيت تحتاج موقعك مرة واحدة، ويُحفظ على الساعة.</string>
+    <string name="use_location">استخدم موقعي</string>
+    <string name="update_location">حدّث الموقع</string>
+    <string name="finding">جارٍ تحديد موقعك…</string>
+    <string name="no_fix">تعذّر تحديد الموقع. جرّب في الخارج أو والهاتف قريب.</string>
+    <string name="need_permission">يحتاج Life OS إلى الموقع لحساب المواقيت.</string>
+    <string name="place_updated">حُدّث الموقع %1$s</string>
+    <string name="method">طريقة الحساب</string>
+    <string name="asr_school">العصر</string>
+    <string name="shafi">الشافعي والمالكي والحنبلي</string>
+    <string name="hanafi">الحنفي</string>
+    <string name="on_watch">محسوبة على الساعة، بلا إنترنت.</string>
+    <string name="qibla">القبلة</string>
+    <string name="qibla_facing">أنت باتجاه القبلة</string>
+    <string name="qibla_turn_right">استدر يمينًا %1$d°</string>
+    <string name="qibla_turn_left">استدر يسارًا %1$d°</string>
+    <string name="qibla_calibrate">إذا انحرف السهم، حرّك الساعة على شكل رقم 8 عدة مرات.</string>
+    <string name="qibla_notice">للاسترشاد فقط، وما زالت قيد التطوير. أمسك الساعة مستوية.</string>
+    <string name="qibla_no_sensor">لا توجد بوصلة في هذه الساعة.</string>
+
+    <string name="m_Egyptian">الهيئة المصرية العامة للمساحة</string>
+    <string name="m_MuslimWorldLeague">رابطة العالم الإسلامي</string>
+    <string name="m_UmmAlQura">أم القرى، مكة</string>
+    <string name="m_Karachi">كراتشي</string>
+    <string name="m_Dubai">دبي</string>
+    <string name="m_Kuwait">الكويت</string>
+    <string name="m_Qatar">قطر</string>
+    <string name="m_Singapore">سنغافورة</string>
+    <string name="m_NorthAmerica">أمريكا الشمالية</string>
+    <string name="m_MoonsightingCommittee">لجنة رؤية الهلال</string>
+</resources>

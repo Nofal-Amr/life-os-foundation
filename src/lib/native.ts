@@ -31,6 +31,7 @@ type NativeBridge = {
   openFullScreenSettings?(): void;
   buildFeatures?(): string;
   crashReport?(): string;
+  openWatchCompanion?(): boolean;
   clearCrashReport?(): void;
   spendingStatus?(): string;
   setSpendingWatch?(json: string): void;
@@ -385,6 +386,20 @@ export function crashReport(): CrashReport | null {
 
 export function clearCrashReport(): void {
   bridge()?.clearCrashReport?.();
+}
+
+/** Opens Galaxy Wearable (or the Wear OS app) on Android; false if it isn't there. */
+export function openWatchCompanion(): boolean {
+  try {
+    return bridge()?.openWatchCompanion?.() ?? false;
+  } catch {
+    return false;
+  }
+}
+
+/** Whether this is the Android app with the watch-companion shortcut. */
+export function canOpenWatchCompanion(): boolean {
+  return typeof bridge()?.openWatchCompanion === "function";
 }
 
 /* ------------------------------------------------ voice and focus lock */

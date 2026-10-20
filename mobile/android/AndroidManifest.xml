@@ -47,6 +47,10 @@
     <queries>
         <package android:name="com.sec.android.app.shealth" />
         <package android:name="com.google.android.apps.healthdata" />
+        <!-- The watch companion apps, to open from Settings → Your watch. -->
+        <package android:name="com.samsung.android.app.watchmanager" />
+        <package android:name="com.google.android.apps.wear.companion" />
+        <package android:name="com.google.android.wearable.app" />
     </queries>
 
     <!-- App names for the spending app picker (names only). -->

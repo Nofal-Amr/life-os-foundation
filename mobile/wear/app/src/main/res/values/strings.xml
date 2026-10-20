@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Life OS</string>
+    <string name="tile_label">Prayer times</string>
+    <string name="complication_label">Next prayer</string>
+
+    <string name="fajr">Fajr</string>
+    <string name="sunrise">Sunrise</string>
+    <string name="dhuhr">Dhuhr</string>
+    <string name="jumuah">Jumu\'ah</string>
+    <string name="asr">Asr</string>
+    <string name="maghrib">Maghrib</string>
+    <string name="isha">Isha</string>
+
+    <string name="next">Next</string>
+    <string name="in_time">in %1$s</string>
+    <string name="hours_minutes">%1$dh %2$dm</string>
+    <string name="minutes">%1$d min</string>
+    <string name="no_place">Times need your location once. It\'s saved on the watch.</string>
+    <string name="use_location">Use my location</string>
+    <string name="update_location">Update location</string>
+    <string name="finding">Finding your location…</string>
+    <string name="no_fix">Couldn\'t get a location. Try outside, or with the phone nearby.</string>
+    <string name="need_permission">Life OS needs location to work out the times.</string>
+    <string name="place_updated">Location updated %1$s</string>
+    <string name="method">Method</string>
+    <string name="asr_school">Asr</string>
+    <string name="shafi">Shafi, Maliki, Hanbali</string>
+    <string name="hanafi">Hanafi</string>
+    <string name="on_watch">Worked out on the watch, offline.</string>
+    <string name="qibla">Qibla</string>
+    <string name="qibla_facing">Facing the Qibla</string>
+    <string name="qibla_turn_right">Turn right %1$d°</string>
+    <string name="qibla_turn_left">Turn left %1$d°</string>
+    <string name="qibla_calibrate">If the arrow drifts, move the watch in a figure 8 a few times.</string>
+    <string name="qibla_notice">For reference only, still in development. Hold the watch flat.</string>
+    <string name="qibla_no_sensor">This watch has no compass.</string>
+
+    <string name="m_Egyptian">Egyptian General Authority</string>
+    <string name="m_MuslimWorldLeague">Muslim World League</string>
+    <string name="m_UmmAlQura">Umm al-Qura, Makkah</string>
+    <string name="m_Karachi">Karachi</string>
+    <string name="m_Dubai">Dubai</string>
+    <string name="m_Kuwait">Kuwait</string>
+    <string name="m_Qatar">Qatar</string>
+    <string name="m_Singapore">Singapore</string>
+    <string name="m_NorthAmerica">ISNA (North America)</string>
+    <string name="m_MoonsightingCommittee">Moonsighting Committee</string>
+</resources>

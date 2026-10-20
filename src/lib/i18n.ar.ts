@@ -99,6 +99,23 @@ export const AR: Record<string, string> = {
   "Send a test to the other phone": "أرسل تجربة للهاتف الآخر",
   "Open Autostart": "افتح التشغيل التلقائي",
 
+  // Watch
+  "Your watch": "ساعتك",
+  "Life OS reminders and calls reach a Galaxy Watch through Galaxy Wearable on this phone. If they don't show up there:": "تصل تذكيرات Life OS والمكالمات إلى ساعة Galaxy عبر تطبيق Galaxy Wearable على هذا الهاتف. إن لم تظهر هناك:",
+  "In Galaxy Wearable: Watch settings → Notifications → App notifications, turn on Life OS.": "في Galaxy Wearable: إعدادات الساعة ← الإشعارات ← إشعارات التطبيقات، فعّل Life OS.",
+  "In the same Notifications screen, allow notifications on the watch while you're using the phone (otherwise they only go to the watch when the phone is idle).": "في شاشة الإشعارات نفسها، اسمح بالإشعارات على الساعة أثناء استخدام الهاتف (وإلا فلن تصل للساعة إلا والهاتف غير مستخدم).",
+  "Check the watch isn't in Do not disturb, Bedtime or Theatre mode.": "تأكد أن الساعة ليست في وضع عدم الإزعاج أو النوم أو المسرح.",
+  "Open Galaxy Wearable": "افتح Galaxy Wearable",
+  "Galaxy Wearable isn't installed on this phone.": "تطبيق Galaxy Wearable غير مثبت على هذا الهاتف.",
+  "Life OS on the watch": "Life OS على الساعة",
+  "A prayer-times tile, a “Next prayer” slot for watch faces, and the Qibla. Times are worked out on the watch from its location, so it works offline and without signing in.": "بطاقة لمواقيت الصلاة، وخانة «الصلاة القادمة» لواجهات الساعة، والقبلة. تُحسب المواقيت على الساعة من موقعها، فتعمل بلا إنترنت وبلا تسجيل دخول.",
+  "Download life-os-wear.apk from the release page.": "نزّل life-os-wear.apk من صفحة الإصدار.",
+  "On the watch: Settings → About watch → Software → tap Software version 5 times. Then Developer options → turn on ADB debugging and Wireless debugging.": "على الساعة: الإعدادات ← حول الساعة ← البرامج ← اضغط إصدار البرنامج ٥ مرات. ثم خيارات المطوّر ← فعّل تصحيح ADB والتصحيح اللاسلكي.",
+  "From a computer on the same Wi-Fi:": "من كمبيوتر على نفس شبكة Wi-Fi:",
+  "the address the watch shows, then": "بالعنوان الذي تعرضه الساعة، ثم",
+  "Add the tile: swipe to the last tile, tap +, choose Prayer times. On a watch face: long-press it → Customise → pick a slot → Life OS.": "أضف البطاقة: اسحب لآخر بطاقة، اضغط +، واختر مواقيت الصلاة. وعلى واجهة الساعة: اضغط مطولًا ← تخصيص ← اختر خانة ← Life OS.",
+  "Release page": "صفحة الإصدار",
+
   // Stuck tasks
   "Through the wall": "عبر الجدار",
   "Finish a task that waited two weeks or more.": "أنهِ مهمة انتظرت أسبوعين أو أكثر.",
