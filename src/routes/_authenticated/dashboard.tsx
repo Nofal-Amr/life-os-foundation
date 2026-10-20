@@ -33,7 +33,9 @@ import { useHolidays } from "@/components/app/Holidays";
 import { HubCard } from "@/components/app/HubCard";
 import { TaskTimerButton } from "@/components/app/Timer";
 import { PrayerTiles } from "@/components/app/PrayerLog";
-import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
+import { ShrinkItButton } from "@/components/app/ShrinkIt";
+import { StuckCard, StuckHelperDialog } from "@/components/app/StuckHelper";
+import { isSnoozed, snoozeForToday, stuckTasks } from "@/data/stuck";
 
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -488,6 +490,12 @@ function DashboardPage() {
   const capacity = energyCapacity(todayReview.data?.energy);
   const actions = nextActions(allTasks, today, capacity);
   const primary = actions[0];
+  // One task that has waited a long while (not the one already up next).
+  // "Not today" is kept per device; the counter only re-renders after it.
+  const [, setSnoozed] = useState(0);
+  const stuck = stuckTasks(allTasks, today).find(
+    (item) => item.task.id !== primary?.parent.id && !isSnoozed(item.task.id, today),
+  );
   // Everything after the one next action, by when it's due (up to six).
   const projectById = new Map((projects.data ?? []).map((project) => [project.id, project]));
   const focusRows: FocusRow[] = [];
@@ -1117,6 +1125,19 @@ function DashboardPage() {
                   </CardContent>
                 </Card>
 
+                {stuck ? (
+                  <div className="mt-5">
+                    <StuckCard
+                      key={stuck.task.id}
+                      item={stuck}
+                      onSnooze={() => {
+                        snoozeForToday(stuck.task.id, today);
+                        setSnoozed((count) => count + 1);
+                      }}
+                    />
+                  </div>
+                ) : null}
+
                 {focusRows.length ? (
                   <div className="mt-5 min-w-0">
                     <div className="mb-3 flex items-center justify-between gap-3">
@@ -1235,7 +1256,7 @@ function DashboardPage() {
         task={focusTask}
         onOpenChange={(open) => !open && setFocusTask(null)}
       />
-      <ShrinkItDialog
+      <StuckHelperDialog
         task={shrinkTask}
         existingSteps={shrinkTask ? stepsOf(allTasks, shrinkTask.id).length : 0}
         open={!!shrinkTask}

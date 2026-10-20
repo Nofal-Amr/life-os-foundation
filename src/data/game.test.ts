@@ -32,6 +32,16 @@ const empty = {
 };
 
 describe("achievements", () => {
+  it("counts a task finished after waiting two weeks as through the wall", () => {
+    const tasks = [
+      { status: "completed", created_at: "2026-09-10T09:00:00Z", completed_at: "2026-10-12T10:00:00Z", parent_task_id: null },
+      { status: "completed", created_at: "2026-10-10T09:00:00Z", completed_at: "2026-10-12T10:00:00Z", parent_task_id: null },
+    ] as Task[];
+    const wall = achievements({ ...empty, tasks }).find((item) => item.id === "wall-1")!;
+    expect(wall.earnedOn).toBe("2026-10-12");
+    expect(wall.progress.have).toBe(1);
+  });
+
   it("dates each one by when it was really earned", () => {
     const tasks = [
       { status: "completed", completed_at: "2026-10-02T10:00:00Z" },

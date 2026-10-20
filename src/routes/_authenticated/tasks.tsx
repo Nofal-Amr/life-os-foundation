@@ -55,7 +55,9 @@ import {
   TASK_ENERGY,
   type TaskEnergy,
 } from "@/data/tasks";
-import { ShrinkItButton, ShrinkItDialog } from "@/components/app/ShrinkIt";
+import { ShrinkItButton } from "@/components/app/ShrinkIt";
+import { StuckHelperDialog } from "@/components/app/StuckHelper";
+import { stuckTasks } from "@/data/stuck";
 import { TaskTimerButton } from "@/components/app/Timer";
 import { formatMinutes, minutesByTask, timeEntriesQuery } from "@/data/time";
 import {
@@ -363,6 +365,7 @@ function TasksPage() {
   }, [navigate, taskHash, tasks.data]);
 
   const allTasks = tasks.data ?? [];
+  const stuckDays = new Map(stuckTasks(allTasks, todayISO()).map((item) => [item.task.id, item.days]));
   const visible = filterTasks(topLevelTasks(allTasks), filter);
   const weekly = tasksCompletedPerWeek(allTasks);
   const weeklyTotal = weekly.reduce((sum, week) => sum + week.total, 0);
@@ -510,6 +513,18 @@ function TasksPage() {
                           {isExpanded ? "Hide steps" : "Show steps"}
                         </span>
                       </Button>
+                    ) : null}
+                    {!completed && stuckDays.has(task.id) ? (
+                      <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                        <span>Waiting {stuckDays.get(task.id)} days.</span>
+                        <button
+                          type="button"
+                          className="font-medium text-primary underline-offset-2 hover:underline"
+                          onClick={() => setShrinkTask(task)}
+                        >
+                          Help me start
+                        </button>
+                      </p>
                     ) : null}
                     {(task.postponed_count ?? 0) >= 3 ? (
                       <p className="mt-2 text-xs text-muted-foreground">
@@ -1015,7 +1030,7 @@ function TasksPage() {
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
 
-      <ShrinkItDialog
+      <StuckHelperDialog
         task={shrinkTask}
         existingSteps={shrinkTask ? stepsOf(allTasks, shrinkTask.id).length : 0}
         open={!!shrinkTask}
