@@ -234,13 +234,13 @@ function SpiritPage() {
           <section className="space-y-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-sm font-semibold">
-                {doneCount} of 5 prayed
-                <span className="ml-2 font-normal text-muted-foreground">
-                  {weekLogged} of 35 over the last seven days
+                {doneCount} {t("of 5 prayed")}
+                <span className="ms-2 font-normal text-muted-foreground">
+                  {weekLogged} {t("of 35 over the last seven days")}
                 </span>
               </p>
               <span className="flex items-center gap-3 text-xs text-muted-foreground">
-                {config?.city ? `Times for ${config.city}` : "Times for your saved location"}
+                {config?.city ? `${t("Times for")} ${config.city}` : t("Times for your saved location")}
                 <label className="flex items-center gap-1.5">
                   <Switch
                     checked={showSunrise}

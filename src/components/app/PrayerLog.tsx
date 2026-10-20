@@ -206,7 +206,7 @@ function StatusPicker({
               style={current === status ? { background: STATUS_STYLE[status].color } : undefined}
             >
               <StatusMark status={status} />
-              {PRAYER_STATUS_LABELS[status]}
+              {t(PRAYER_STATUS_LABELS[status])}
             </button>
           ))}
         </div>
@@ -219,7 +219,7 @@ function StatusPicker({
             }}
             className="mt-1.5 w-full rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
           >
-            Clear
+            {t("Clear")}
           </button>
         ) : null}
       </PopoverContent>
@@ -251,9 +251,9 @@ export function PrayerDayList({
   const sunriseRow = sunrise ? (
     <li key="sunrise">
       <div className="flex min-h-11 items-baseline gap-3 rounded-xl border border-dashed border-border px-4 py-2.5">
-        <span className="w-20 text-sm text-muted-foreground">Sunrise</span>
+        <span className="w-20 text-sm text-muted-foreground">{t("Sunrise")}</span>
         <span className="text-sm tabular-nums text-muted-foreground">{formatTime(sunrise)}</span>
-        <span className="text-xs text-muted-foreground">Fajr's time ends · الشروق</span>
+        <span className="text-xs text-muted-foreground">{t("Fajr's time ends")}</span>
       </div>
     </li>
   ) : null;
@@ -271,7 +271,7 @@ export function PrayerDayList({
               name={name}
               current={status}
               disabled={disabled}
-              label={`How was ${prayerLabel(name, date)} prayed?`}
+              label={`${t("How was it prayed?")} ${prayerLabel(name, date)}`}
               onPick={(value) => setStatus.mutate({ date, name, status: value })}
             >
               <button
@@ -291,7 +291,7 @@ export function PrayerDayList({
                   ) : null}
                   {next === name && !status ? (
                     <span className="text-2xs font-semibold uppercase tracking-wide text-primary">
-                      Next
+                      {t("Next")}
                     </span>
                   ) : null}
                 </span>
@@ -312,10 +312,10 @@ export function PrayerDayList({
                   {status ? (
                     <>
                       <StatusMark status={status} size="size-5" />
-                      {PRAYER_STATUS_LABELS[status]}
+                      {t(PRAYER_STATUS_LABELS[status])}
                     </>
                   ) : (
-                    "Log"
+                    t("Log")
                   )}
                 </span>
               </button>
@@ -359,12 +359,12 @@ export function PrayerTiles({
             name={name}
             current={status}
             disabled={disabled}
-            label={`How was ${prayerLabel(name, date)} prayed?`}
+            label={`${t("How was it prayed?")} ${prayerLabel(name, date)}`}
             onPick={(value) => setStatus.mutate({ date, name, status: value })}
           >
             <button
               type="button"
-              aria-label={`${prayerLabel(name, date)}: ${status ? PRAYER_STATUS_LABELS[status] : "not logged"}`}
+              aria-label={`${prayerLabel(name, date)}: ${status ? t(PRAYER_STATUS_LABELS[status]) : t("not logged")}`}
               className={cn(
                 "flex min-h-16 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 py-2 text-center transition-transform active:scale-[0.97] disabled:opacity-40",
                 status ? "border-transparent text-white" : "border-border",
@@ -386,12 +386,12 @@ export function PrayerTiles({
                 {status ? (
                   <>
                     <StatusMark status={status} size="size-3" />
-                    {PRAYER_STATUS_LABELS[status]}
+                    {t(PRAYER_STATUS_LABELS[status])}
                   </>
                 ) : next === name ? (
-                  <span className="font-semibold text-primary">Next</span>
+                  <span className="font-semibold text-primary">{t("Next")}</span>
                 ) : (
-                  <span className="text-muted-foreground">Log</span>
+                  <span className="text-muted-foreground">{t("Log")}</span>
                 )}
               </span>
             </button>
@@ -426,7 +426,7 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
   return (
     <section className="stat-card space-y-4 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold">How prayers were logged</p>
+        <p className="text-sm font-semibold">{t("How prayers were logged")}</p>
         <div
           className="inline-flex gap-1 rounded-xl bg-secondary p-1"
           role="radiogroup"
@@ -446,14 +446,14 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
                   : "text-muted-foreground",
               )}
             >
-              {option.label}
+              {t(option.label)}
             </button>
           ))}
         </div>
       </div>
 
       {counts.logged === 0 ? (
-        <p className="text-sm text-muted-foreground">Nothing logged in this range yet.</p>
+        <p className="text-sm text-muted-foreground">{t("Nothing logged in this range yet.")}</p>
       ) : (
         <>
           <div className="overflow-x-auto pb-1">
@@ -496,13 +496,13 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
                   style={{ color: STATUS_STYLE[status].color }}
                 >
                   <StatusMark status={status} size="size-3.5" />
-                  <span className="text-foreground">{PRAYER_STATUS_LABELS[status]}</span>
+                  <span className="text-foreground">{t(PRAYER_STATUS_LABELS[status])}</span>
                 </p>
                 <p className="mt-1 text-2xl font-semibold tabular-nums">
                   {Math.round((counts[status] / counts.logged) * 100)}%
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {counts[status]} of {counts.logged} logged
+                  {counts[status]} {t("of")} {counts.logged} {t("logged")}
                 </p>
               </div>
             ))}
@@ -540,7 +540,7 @@ function PrayerHeatRow({
         return (
           <span
             key={date}
-            title={`${prayerLabel(name, date)}, ${format(parseISO(date), "d MMM")}: ${status ? PRAYER_STATUS_LABELS[status] : "not logged"}`}
+            title={`${prayerLabel(name, date)}, ${format(parseISO(date), "d MMM")}: ${status ? t(PRAYER_STATUS_LABELS[status]) : t("not logged")}`}
             className="rounded-[3px]"
             style={{
               width: cell,

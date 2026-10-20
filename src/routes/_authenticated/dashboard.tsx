@@ -104,6 +104,7 @@ import {
 } from "@/data/study";
 import { podEventsQuery, podsQuery } from "@/data/together";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 import { todayISO } from "@/lib/date";
 import { prayerTimesFor } from "@/lib/prayer";
 
@@ -191,9 +192,9 @@ function nextActions(
 
 function greeting() {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return t("Good morning");
+  if (hour < 18) return t("Good afternoon");
+  return t("Good evening");
 }
 
 type ComingUpItem = {
@@ -218,7 +219,7 @@ type ComingUpItem = {
 function SectionHeading({ title, detail }: { title: string; detail?: string | undefined }) {
   return (
     <div className="min-w-0">
-      <h2 className="text-lg font-semibold tracking-[-0.01em] text-foreground">{title}</h2>
+      <h2 className="text-lg font-semibold tracking-[-0.01em] text-foreground">{t(title)}</h2>
       {detail ? <p className="mt-1 text-sm text-muted-foreground">{detail}</p> : null}
     </div>
   );
@@ -926,13 +927,13 @@ function DashboardPage() {
             trigger={
               <Button type="button" variant="outline" size="sm" className="min-h-11">
                 <Info className="size-4" />
-                <span>Left before payday</span>
+                <span>{t("Left before payday")}</span>
               </Button>
             }
           />
         ) : (
           <Button asChild variant="outline" size="sm" className="min-h-11">
-            <Link to="/settings">Set up payday</Link>
+            <Link to="/settings">{t("Set up payday")}</Link>
           </Button>
         )
       }
@@ -1109,13 +1110,13 @@ function DashboardPage() {
                       <div key={primary.item.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out">
                         <ActionBlock action={primary} large />
                         {capacity != null && primary.parent.energy != null && fitsEnergy(primary.parent, capacity) ? (
-                          <p className="mt-3 text-xs text-muted-foreground">Picked to fit your energy right now.</p>
+                          <p className="mt-3 text-xs text-muted-foreground">{t("Picked to fit your energy right now.")}</p>
                         ) : null}
                       </div>
                     ) : (
                       <div className="flex min-w-0 flex-wrap items-center justify-between gap-4">
                         <p className="min-w-0 text-sm text-muted-foreground">
-                          No open tasks right now.
+                          {t("No open tasks right now.")}
                         </p>
                         <Button type="button" onClick={() => setQuickTask(true)}>
                           Add a task
@@ -1141,7 +1142,7 @@ function DashboardPage() {
                 {focusRows.length ? (
                   <div className="mt-5 min-w-0">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <h2 className="text-sm font-semibold text-foreground">Today's focus</h2>
+                      <h2 className="text-sm font-semibold text-foreground">{t("Today's focus")}</h2>
                       <Button type="button" size="sm" variant="ghost" onClick={() => setQuickTask(true)}>
                         Add task
                       </Button>
@@ -1170,13 +1171,13 @@ function DashboardPage() {
 
             {/* Zone 2 — one block for everything today, each row acting on itself. */}
             <section className="min-w-0 xl:col-start-2 xl:row-start-2">
-              <h2 className="text-base font-semibold text-foreground">Today</h2>
+              <h2 className="text-base font-semibold text-foreground">{t("Today")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your own figures, and the logging beside them.
+                {t("Your own figures, and the logging beside them.")}
               </p>
               {strips.length === 0 ? (
                 <p className="mt-3 text-sm text-muted-foreground">
-                  No modules are switched on yet. Choose what to track in Settings.
+                  {t("No modules are switched on yet. Choose what to track in Settings.")}
                 </p>
               ) : null}
               <div className="mt-3 min-w-0 divide-y divide-border">
@@ -1192,7 +1193,7 @@ function DashboardPage() {
             <section className="min-w-0 border-t border-border/60 pt-5 text-xs text-muted-foreground xl:col-span-2">
               <div className="grid min-w-0 gap-6 sm:grid-cols-2">
                 <div className="min-w-0">
-                  <h2 className="text-sm font-medium text-foreground">Coming up</h2>
+                  <h2 className="text-sm font-medium text-foreground">{t("Coming up")}</h2>
                   {visibleComingUp.length ? (
                     <div className="mt-1 divide-y divide-border/50">
                       {visibleComingUp.slice(0, 6).map((item) => (
@@ -1212,7 +1213,7 @@ function DashboardPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-1">Nothing due soon.</p>
+                    <p className="mt-1">{t("Nothing due soon.")}</p>
                   )}
                 </div>
 
@@ -1231,7 +1232,7 @@ function DashboardPage() {
                     size="sm"
                     className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
                   >
-                    <Link to="/calendar">Calendar</Link>
+                    <Link to="/calendar">{t("Calendar")}</Link>
                   </Button>
                 ) : null}
                 {isEnabled("notes") ? (
@@ -1241,7 +1242,7 @@ function DashboardPage() {
                     size="sm"
                     className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
                   >
-                    <Link to="/notes">Notes</Link>
+                    <Link to="/notes">{t("Notes")}</Link>
                   </Button>
                 ) : null}
               </div>
