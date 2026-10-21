@@ -1,6 +1,6 @@
 # Work: attendance and the monthly pay sheet (design)
 
-Status: draft for Amr's approval · 21 Oct 2026
+Status: ready for Amr's approval · 21 Oct 2026
 
 ## Why
 
@@ -46,11 +46,15 @@ His example is the sheet his own office (ADO Consult) uses: check-in and check-o
 1. Tap **Clock in** (or **Clock out**).
 2. Fingerprint prompt. If the phone has no fingerprint, its PIN or pattern works instead, and the record says which was used.
 3. One fresh location reading (up to ~20 s).
-4. Inside a place → saved with the time, the place, the distance and how accurate the reading was. Outside → "You're 140 m from Office", and nothing is saved.
-5. GPS is often 20–40 m off indoors, so a reading counts as inside when (distance − accuracy) ≤ radius. Weak readings (accuracy worse than 100 m) are refused with "Location isn't clear here, step outside or near a window" instead of guessing.
-6. **Faked location**: Android flags mock locations. Such a clock-in is saved but marked for the admin.
-7. **No internet**: the event is saved on the phone with its real time and place, and sent once online (the app's offline layer already does this for other data). It's marked "sent later".
-8. Clocking in only works in the Android app (fingerprint + location). The website shows records and sheets but can't clock in.
+4. Inside a place → saved with the time, the place, the distance and how accurate the reading was.
+5. Outside → "You're 140 m from Office". What happens next is a company setting (decided by Amr):
+   - **Refuse and record the attempt** (default): it doesn't count as a clock-in, but the attempt is kept with its time, distance and a reason the member types ("at the client's office"). The admin sees attempts and can turn one into a clock-in, which is recorded as a correction.
+   - **Refuse**: nothing is kept.
+   - **Allow with a reason**: it counts, marked "outside" for the admin.
+6. GPS is often 20–40 m off indoors, so a reading counts as inside when (distance − accuracy) ≤ radius. Weak readings (accuracy worse than 100 m) are refused with "Location isn't clear here, step outside or near a window" instead of guessing.
+7. **Faked location**: Android flags mock locations. Such a clock-in is saved but marked for the admin.
+8. **No internet**: the event is saved on the phone with its real time and place, and sent once online (the app's offline layer already does this for other data). It's marked "sent later".
+9. Clocking in only works in the Android app (fingerprint + location). The website shows records and sheets but can't clock in.
 
 ### Rules (per company, all editable; defaults from the example sheet)
 | Setting | Default (from the example) |
@@ -59,7 +63,7 @@ His example is the sheet his own office (ADO Consult) uses: check-in and check-o
 | Workday | 08:00 to 16:30 |
 | Grace before counting late | 0 minutes |
 | Late minutes | minutes after the start time |
-| Penalties for very late arrival | a table the admin fills in, e.g. after 09:00 → 120 min (see question 2) |
+| Penalties for very late arrival | by how many times it happened this month; after 10:00 a whole day (see below) |
 | Overtime | minutes before the start time + minutes after the end time; a whole day worked on a day off counts entirely as overtime |
 | Overtime rate | a fixed amount per hour (example: 47 EGP), or base salary ÷ the month's working hours |
 | Late and penalty deduction | per hour, at the overtime rate by default |
@@ -69,6 +73,9 @@ His example is the sheet his own office (ADO Consult) uses: check-in and check-o
 | Money rounding | to the nearest pound, as in the example |
 | Currency, time zone | EGP, Africa/Cairo |
 
+- **Penalties (decided by Amr): HR sets the formula, by occurrence.** HR sets what counts as an occurrence (default: arriving after 09:00, i.e. 60 minutes late) and a ladder of penalty minutes for the 1st, 2nd, 3rd… occurrence in the month (default from the example: 120, 150, 180, then +30 each). On a penalty day the late minutes aren't counted again (as in the example). The count starts again each month. In the example sheet this gives exactly its numbers: 9:59 (1st) → 120, 9:20 (2nd) → 150, 9:21 (3rd) → 180.
+- **A day's penalty for arriving very late (decided by Amr):** arriving after a second time (default **10:00**) costs a whole day instead of the occurrence ladder. HR sets the time and what a day costs; the default is one day's pay = base salary ÷ 30 *(my call; it's a setting)*. Such days are listed on the sheet as "day penalty".
+- HR can add more steps the same way (a time → penalty minutes, or → a day), so other companies' rules fit too.
 - A day's **first clock-in and last clock-out** count. A clock-out after midnight belongs to the day of its clock-in.
 - **Site days**: a day whose clock-in was at a place marked "site" counts as a site day. The sheet shows the count.
 - **Leave**: the admin marks a day as leave with or without permission; the member can ask for it, the admin approves.
@@ -112,6 +119,7 @@ His example is the sheet his own office (ADO Consult) uses: check-in and check-o
 - **Overtime minimum**: none by default (the example counts single minutes). It's a setting.
 - **Where it lives**: a **Work** page in the menu once you're in a company. It shows the clock in/out button, today's record and your month; admins also get People, Places, Rules and Sheets. Settings → Work makes or joins a company.
 
-## Questions only Amr can answer
-1. **Outside the radius**: refuse (as above), or allow it with a reason that the admin sees?
-2. **Penalties**: in the example, late arrivals at 9:20 and 9:59 got 120–180 penalty minutes with no single formula. Should the admin type penalties per day, or set a table ("after 09:00 → 120 min, after 09:30 → 180")?
+## Answered by Amr (21 Oct)
+1. **Outside the radius**: customisable; default "refuse but record the attempt with a reason".
+2. **Penalties**: HR sets the formula; by default the nth occurrence in the month gives a growing penalty (120, 150, 180…).
+3. **After 10:00**: a whole day's penalty (time and cost are settings).
