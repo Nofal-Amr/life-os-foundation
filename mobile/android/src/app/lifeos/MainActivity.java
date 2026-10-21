@@ -537,6 +537,28 @@ public class MainActivity extends Activity {
             }
         }
 
+        /**
+         * Work: fingerprint (or screen lock) + one location reading, for
+         * clocking in or out. {id, title}; the answer comes back through
+         * __lifeOSNativeCallback(id) as WorkClock's JSON.
+         */
+        @JavascriptInterface
+        public void workCheck(String json) {
+            if (!trusted()) return;
+            try {
+                JSONObject args = new JSONObject(json);
+                String id = args.getString("id");
+                String title = args.optString("title", "Clock in");
+                runOnUiThread(() -> WorkClock.check(MainActivity.this, title, payload -> runOnUiThread(() ->
+                    webView.evaluateJavascript(
+                        "window.__lifeOSNativeCallback && window.__lifeOSNativeCallback("
+                            + JSONObject.quote(id) + "," + JSONObject.quote(payload) + ")",
+                        null))));
+            } catch (Exception ignored) {
+                // Bad request.
+            }
+        }
+
         /** The last crash and recent app exits, for Settings to show and copy. */
         @JavascriptInterface
         public String crashReport() {

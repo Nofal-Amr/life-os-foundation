@@ -17,6 +17,7 @@ type NativeBridge = {
   setTodayWidget?(json: string): void;
   takePendingPrayerLogs?(): string;
   listen?(json: string): void;
+  workCheck?(json: string): void;
   focusLock?(on: boolean): void;
   startCompass?(latitude: number, longitude: number, mode: string): boolean;
   setCompassMode?(mode: string): void;
@@ -100,7 +101,7 @@ export function scheduleReminders(reminders: Reminder[]): void {
 
 /** Sends a request to the shell and waits for its callback. */
 export function nativeRequest(
-  method: "readHealth" | "listen",
+  method: "readHealth" | "listen" | "workCheck",
   args: Record<string, unknown>,
   timeoutMs = 120_000,
 ): Promise<string> {
@@ -368,6 +369,35 @@ export function buildFeatures(): { sms: boolean; spending: boolean } {
   } catch {
     return { sms: false, spending: false };
   }
+}
+
+/* ---------------------------------------------------------------- work */
+
+export type WorkCheck =
+  | {
+      ok: true;
+      verified: "biometric" | "credential";
+      latitude: number;
+      longitude: number;
+      accuracy: number;
+      mock: boolean;
+      /** Epoch ms. */
+      at: number;
+    }
+  | { ok: false; reason: "cancelled" | "no-lock" | "no-permission" | "no-location" | "unsupported" };
+
+/** Fingerprint (or screen lock) and one location reading, on the Android app. */
+export async function workCheck(title: string): Promise<WorkCheck> {
+  const raw = await nativeRequest("workCheck", { title }, 90_000);
+  try {
+    return JSON.parse(raw) as WorkCheck;
+  } catch {
+    return { ok: false, reason: "no-location" };
+  }
+}
+
+export function canClockIn(): boolean {
+  return typeof bridge()?.workCheck === "function";
 }
 
 /* ------------------------------------------------- Life Connect log */
