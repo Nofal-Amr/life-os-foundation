@@ -176,6 +176,7 @@ public class ConnectService extends Service {
                 }
             } else {
                 switch (type) {
+                    case "answer": CallControl.answer(this); break;
                     case "decline": CallControl.decline(this); break;
                     case "mute": CallControl.mute(this); break;
                     case "reply": SmsAlert.send(this, message); break;

@@ -16,8 +16,8 @@ import java.lang.ref.WeakReference;
 
 /**
  * Full-screen "incoming call" on the main phone (also over the lock screen),
- * like a real call: who's calling the SIM phone, with Decline and Mute. You
- * answer on the SIM phone itself.
+ * like a real call: who's calling the SIM phone, with "Answer on …" (picks up
+ * on the SIM phone, heard there or on earbuds connected to it), Decline and Mute.
  */
 public class IncomingCallActivity extends Activity {
     private static volatile WeakReference<IncomingCallActivity> current = new WeakReference<>(null);
@@ -58,8 +58,13 @@ public class IncomingCallActivity extends Activity {
         LinearLayout spacer = new LinearLayout(this);
         root.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1f));
 
-        root.addView(text("Answer on " + (device == null ? "your SIM phone" : device), 14,
-            Color.argb(150, 255, 255, 255), false));
+        // Picks up on the SIM phone; talk there, or on earbuds connected to it.
+        Button answer = button(CallAlert.answerLabel(device), Color.rgb(22, 92, 62));
+        LinearLayout.LayoutParams wide = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(64));
+        wide.setMargins(dp(8), 0, dp(8), 0);
+        root.addView(answer, wide);
+        root.addView(text("The sound comes from " + (device == null ? "your SIM phone" : device)
+            + ", or earbuds connected to it.", 13, Color.argb(150, 255, 255, 255), false));
 
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
@@ -73,6 +78,10 @@ public class IncomingCallActivity extends Activity {
         root.addView(buttons, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        answer.setOnClickListener(view -> {
+            act("answer");
+            finish();
+        });
         decline.setOnClickListener(view -> {
             act("decline");
             finish();

@@ -52,6 +52,8 @@ final class CallAlert {
 
     /** The call ringing here now, so repeats of the same call don't ring twice. */
     private static volatile String ringingCall = null;
+    /** Its SIM phone's name, for "Answer on …" once muted. */
+    private static volatile String ringingDevice = null;
 
     static void ring(Context context, JSONObject message) {
         String call = message.optString("call", "");
@@ -59,6 +61,7 @@ final class CallAlert {
         ringingCall = call.isEmpty() ? null : call;
         ensureChannels(context);
         String device = message.optString("device", "your SIM phone");
+        ringingDevice = device;
         String number = message.optString("number", "");
         Notification.Builder builder = new Notification.Builder(context, CHANNEL_RING)
             .setSmallIcon(R.drawable.ic_stat_prayer)
@@ -71,23 +74,21 @@ final class CallAlert {
             .setTimeoutAfter(90_000)
             .setContentIntent(open(context))
             .setFullScreenIntent(callScreen(context, message), true);
-        if (android.os.Build.VERSION.SDK_INT >= 31) {
-            // A real call notification, like Messenger's: the watch rings with
-            // it and shows Decline. "Answer" opens the call screen here, since
-            // the call itself is picked up on the SIM phone.
-            android.app.Person caller = new android.app.Person.Builder()
-                .setName(who(message)).setImportant(true).build();
-            builder.setStyle(Notification.CallStyle.forIncomingCall(
-                    caller, actionIntent(context, "decline", 1), callScreen(context, message)))
-                .addAction(action(context, "mute", "Mute", 2));
-        } else {
-            builder.addAction(action(context, "decline", "Decline", 1))
-                .addAction(action(context, "mute", "Mute", 2));
-        }
+        // Plain actions rather than Android's call style, so the button can
+        // say where the call is picked up: "Answer on POCO". They show on the
+        // watch too.
+        builder.addAction(action(context, "answer", answerLabel(device), 3))
+            .addAction(action(context, "decline", "Decline", 1))
+            .addAction(action(context, "mute", "Mute", 2));
         Notification notification = builder.build();
         // Keep ringing until answered, declined or muted, like a call.
         notification.flags |= Notification.FLAG_INSISTENT;
         context.getSystemService(NotificationManager.class).notify(RING_ID, notification);
+    }
+
+    /** "Answer on POCO": the call is picked up on the SIM phone. */
+    static String answerLabel(String device) {
+        return "Answer on " + (device == null || device.isEmpty() ? "SIM phone" : device);
     }
 
     /** Muted here: keep showing the call, without the sound. */
@@ -99,6 +100,7 @@ final class CallAlert {
             .setCategory(Notification.CATEGORY_CALL)
             .setOnlyAlertOnce(true)
             .setTimeoutAfter(90_000)
+            .addAction(action(context, "answer", answerLabel(ringingDevice), 3))
             .addAction(action(context, "decline", "Decline", 1))
             .build();
         context.getSystemService(NotificationManager.class).notify(RING_ID, notification);

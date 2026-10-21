@@ -36,9 +36,9 @@ public class ConnectActionReceiver extends BroadcastReceiver {
             reply(context, intent, config);
             return;
         }
-        if (!"decline".equals(what) && !"mute".equals(what)) return;
+        if (!"decline".equals(what) && !"mute".equals(what) && !"answer".equals(what)) return;
 
-        if ("decline".equals(what)) {
+        if ("decline".equals(what) || "answer".equals(what)) {
             context.getSystemService(NotificationManager.class).cancel(CallAlert.RING_ID);
             IncomingCallActivity.close();
         } else {

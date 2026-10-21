@@ -120,6 +120,8 @@ export const AR: Record<string, string> = {
   "What went well, what got in the way, and the one thing for next week.": "ما الذي سار جيدًا، وما الذي عطّلك، والشيء الأهم للأسبوع القادم.",
   "Start the note": "ابدأ الملاحظة",
 
+  "Answer and decline from the other phone": "الرد والرفض من الهاتف الآخر",
+
   // Watch
   "Your watch": "ساعتك",
   "Life OS reminders and calls reach a Galaxy Watch through Galaxy Wearable on this phone. If they don't show up there:": "تصل تذكيرات Life OS والمكالمات إلى ساعة Galaxy عبر تطبيق Galaxy Wearable على هذا الهاتف. إن لم تظهر هناك:",

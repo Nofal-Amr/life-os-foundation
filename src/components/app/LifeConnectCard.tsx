@@ -142,7 +142,7 @@ export function LifeConnectCard() {
             fix: lifeConnect.requestPermissions,
           },
           {
-            label: "Decline from the other phone",
+            label: "Answer and decline from the other phone",
             ok: !!status?.answer,
             fix: lifeConnect.requestPermissions,
           },
@@ -194,7 +194,8 @@ export function LifeConnectCard() {
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Calls to the phone with your SIM card ring on your main phone (and your watch), with
-          Decline and Mute, and its SMS show up there with Reply. You answer calls on the SIM phone.
+          Answer, Decline and Mute, and its SMS show up there with Reply. “Answer on” picks up on the
+          SIM phone: talk on it, or on earbuds connected to it.
           Set this up on both phones, signed in to this account.
         </p>
       </div>

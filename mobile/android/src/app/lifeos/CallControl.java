@@ -27,6 +27,23 @@ final class CallControl {
         }
     }
 
+    /**
+     * Picks up the ringing call. The sound goes wherever this phone sends call
+     * audio: earbuds or a car if one is connected, otherwise its earpiece.
+     */
+    @SuppressWarnings("deprecation")
+    static void answer(Context context) {
+        if (context.checkSelfPermission(Manifest.permission.ANSWER_PHONE_CALLS) != PackageManager.PERMISSION_GRANTED) {
+            Log.w("LifeOS", "Life Connect: no permission to answer calls");
+            return;
+        }
+        try {
+            context.getSystemService(TelecomManager.class).acceptRingingCall(android.telecom.VideoProfile.STATE_AUDIO_ONLY);
+        } catch (Exception e) {
+            Log.w("LifeOS", "Life Connect: couldn't answer the call");
+        }
+    }
+
     /** Silences the ringtone; it comes back when the call ends (see unmute). */
     static void mute(Context context) {
         try {
