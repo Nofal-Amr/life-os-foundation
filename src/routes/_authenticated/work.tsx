@@ -1,13 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { ClockCard } from "@/components/app/work/ClockCard";
 import { MemberMonth, MonthNav, useMonthPicker } from "@/components/app/work/MyMonth";
 import { useMonthSheet } from "@/components/app/work/useMonthSheet";
+import { PeopleAdmin } from "@/components/app/work/PeopleAdmin";
+import { PlacesAdmin } from "@/components/app/work/PlacesAdmin";
+import { RulesEditor } from "@/components/app/work/RulesEditor";
+import { SheetsAdmin } from "@/components/app/work/SheetsAdmin";
 import { Button } from "@/components/ui/button";
 import {
   readRules,
@@ -196,13 +200,21 @@ function TodayTab({ org, rules, me }: { org: WorkOrg; rules: WorkRules; me: Work
   );
 }
 
-/** Filled in by the admin screens. */
-function AdminTab(props: {
+/** Owners and admins: people, places, rules and everyone's sheets. */
+function AdminTab({
+  tab,
+  org,
+  rules,
+  me,
+}: {
   tab: WorkTab;
   org: WorkOrg;
   rules: WorkRules;
   me: WorkMember;
-}): ReactNode {
-  void props;
+}) {
+  if (tab === "people") return <PeopleAdmin org={org} me={me} />;
+  if (tab === "places") return <PlacesAdmin org={org} />;
+  if (tab === "rules") return <RulesEditor key={org.updated_at} org={org} rules={rules} />;
+  if (tab === "sheets") return <SheetsAdmin org={org} rules={rules} />;
   return null;
 }
