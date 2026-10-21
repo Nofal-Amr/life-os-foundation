@@ -14,6 +14,7 @@ import { SpendingSettingsCard } from "@/components/app/SpendingInbox";
 import { ReminderSettingsCard } from "@/components/app/PrayerReminders";
 import { UsageInsights } from "@/components/app/UsageInsights";
 import { WatchCard } from "@/components/app/WatchCard";
+import { WorkSettingsCard } from "@/components/app/work/WorkSettingsCard";
 import { CurrencyCombobox } from "@/components/app/CurrencyCombobox";
 import { DatePicker } from "@/components/app/DatePicker";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -1054,6 +1055,7 @@ function SettingsPage() {
         <ReminderSettingsCard />
         <LifeConnectCard />
         <WatchCard />
+        <WorkSettingsCard />
         <SpendingSettingsCard />
         <LocalAiCard />
         <HolidaysCard />

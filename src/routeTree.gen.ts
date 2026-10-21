@@ -35,6 +35,7 @@ import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTimeRouteImport } from './routes/_authenticated/time'
 import { Route as AuthenticatedTogetherRouteImport } from './routes/_authenticated/together'
 import { Route as AuthenticatedWeekRouteImport } from './routes/_authenticated/week'
+import { Route as AuthenticatedWorkRouteImport } from './routes/_authenticated/work'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthenticatedFinanceIndexRouteImport } from './routes/_authenticated/finance.index'
 import { Route as AuthenticatedFinanceAccountsRouteImport } from './routes/_authenticated/finance.accounts'
@@ -172,6 +173,11 @@ const AuthenticatedWeekRoute = AuthenticatedWeekRouteImport.update({
   path: '/week',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWorkRoute = AuthenticatedWorkRouteImport.update({
+  id: '/work',
+  path: '/work',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthUpdatePasswordRoute = AuthUpdatePasswordRouteImport.update({
   id: '/update-password',
   path: '/update-password',
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/time': typeof AuthenticatedTimeRoute
   '/together': typeof AuthenticatedTogetherRoute
   '/week': typeof AuthenticatedWeekRoute
+  '/work': typeof AuthenticatedWorkRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/time': typeof AuthenticatedTimeRoute
   '/together': typeof AuthenticatedTogetherRoute
   '/week': typeof AuthenticatedWeekRoute
+  '/work': typeof AuthenticatedWorkRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/_authenticated/time': typeof AuthenticatedTimeRoute
   '/_authenticated/together': typeof AuthenticatedTogetherRoute
   '/_authenticated/week': typeof AuthenticatedWeekRoute
+  '/_authenticated/work': typeof AuthenticatedWorkRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/_authenticated/finance/accounts': typeof AuthenticatedFinanceAccountsRoute
   '/_authenticated/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/time'
     | '/together'
     | '/week'
+    | '/work'
     | '/auth/update-password'
     | '/finance/accounts'
     | '/finance/categories'
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/time'
     | '/together'
     | '/week'
+    | '/work'
     | '/auth/update-password'
     | '/finance/accounts'
     | '/finance/categories'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/_authenticated/time'
     | '/_authenticated/together'
     | '/_authenticated/week'
+    | '/_authenticated/work'
     | '/auth/update-password'
     | '/_authenticated/finance/accounts'
     | '/_authenticated/finance/categories'
@@ -600,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWeekRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/work': {
+      id: '/_authenticated/work'
+      path: '/work'
+      fullPath: '/work'
+      preLoaderRoute: typeof AuthenticatedWorkRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/auth/update-password': {
       id: '/auth/update-password'
       path: '/update-password'
@@ -688,6 +707,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTimeRoute: typeof AuthenticatedTimeRoute
   AuthenticatedTogetherRoute: typeof AuthenticatedTogetherRoute
   AuthenticatedWeekRoute: typeof AuthenticatedWeekRoute
+  AuthenticatedWorkRoute: typeof AuthenticatedWorkRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -714,6 +734,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTimeRoute: AuthenticatedTimeRoute,
   AuthenticatedTogetherRoute: AuthenticatedTogetherRoute,
   AuthenticatedWeekRoute: AuthenticatedWeekRoute,
+  AuthenticatedWorkRoute: AuthenticatedWorkRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

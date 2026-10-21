@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, MessageSquare,
+import { Bell, Briefcase, MessageSquare,
   CalendarDays,
   CheckSquare,
   GraduationCap,
@@ -24,6 +24,8 @@ import type { ModuleKey } from "@/data/modules";
 import { useModules } from "@/hooks/useModules";
 import { t } from "@/lib/i18n";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useQuery } from "@tanstack/react-query";
+import { workOrgsQuery } from "@/data/work/api";
 
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard, module: null },
@@ -39,6 +41,7 @@ const TOOLS = [
   { to: "/study" as const, label: "Study", icon: GraduationCap, module: "study" as const },
   { to: "/reminders" as const, label: "Reminders", icon: Bell, module: null },
   { to: "/messages" as const, label: "Messages", icon: MessageSquare, module: null },
+  { to: "/work" as const, label: "Work", icon: Briefcase, module: null },
   { to: "/insights" as const, label: "Insights", icon: LineChart, module: null },
   { to: "/together" as const, label: "Together", icon: Users, module: null },
   { to: "/quests" as const, label: "Quests", icon: Swords, module: null },
@@ -63,11 +66,18 @@ function sectionFor(pathname: string) {
 function useVisible() {
   const { enabled } = useModules();
   const { skin } = usePreferences();
+  // Work shows once you're in a company.
+  const inCompany = (useQuery(workOrgsQuery()).data ?? []).length > 0;
   const allows = (module: ModuleKey | null) => !module || enabled.includes(module);
   return {
     navItems: NAV_ITEMS.filter((item) => allows(item.module as ModuleKey | null)),
     // Quests belong to the RPG skin.
-    tools: TOOLS.filter((item) => allows(item.module) && (item.to !== "/quests" || skin === "rpg")),
+    tools: TOOLS.filter(
+      (item) =>
+        allows(item.module) &&
+        (item.to !== "/quests" || skin === "rpg") &&
+        (item.to !== "/work" || inCompany),
+    ),
   };
 }
 
