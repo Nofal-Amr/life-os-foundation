@@ -31,6 +31,9 @@ type NativeBridge = {
   openFullScreenSettings?(): void;
   buildFeatures?(): string;
   crashReport?(): string;
+  connectLog?(): string;
+  clearConnectLog?(): void;
+  connectReply?(to: string, who: string, body: string): boolean;
   openWatchCompanion?(): boolean;
   clearCrashReport?(): void;
   spendingStatus?(): string;
@@ -366,6 +369,48 @@ export function buildFeatures(): { sms: boolean; spending: boolean } {
     return { sms: false, spending: false };
   }
 }
+
+/* ------------------------------------------------- Life Connect log */
+
+export type ConnectLogEntry = {
+  kind: "sms" | "sent" | "call";
+  /** Epoch ms. */
+  at: number;
+  number?: string;
+  name?: string;
+  body?: string;
+  device?: string;
+  /** Sent replies: whether it reached the SIM phone. */
+  ok?: boolean;
+  call?: string;
+  outcome?: "ringing" | "answered" | "missed" | "ended";
+};
+
+/** SMS and calls Life Connect passed to this phone (kept on the phone only); null on the web. */
+export const connectLog = {
+  available(): boolean {
+    return typeof bridge()?.connectLog === "function";
+  },
+  read(): ConnectLogEntry[] {
+    try {
+      const raw = bridge()?.connectLog?.();
+      return raw ? (JSON.parse(raw) as ConnectLogEntry[]) : [];
+    } catch {
+      return [];
+    }
+  },
+  clear(): void {
+    bridge()?.clearConnectLog?.();
+  },
+  /** Sends a reply as an SMS from the SIM phone; false if it couldn't be handed over. */
+  reply(to: string, who: string, body: string): boolean {
+    try {
+      return bridge()?.connectReply?.(to, who, body) ?? false;
+    } catch {
+      return false;
+    }
+  },
+};
 
 /* ------------------------------------------------------- crash reports */
 

@@ -122,6 +122,28 @@ export const AR: Record<string, string> = {
 
   "Answer and decline from the other phone": "الرد والرفض من الهاتف الآخر",
 
+  // Messages
+  "Messages": "الرسائل",
+  "SMS and calls from your SIM phone, kept on this phone only.": "رسائل ومكالمات هاتف الشريحة، محفوظة على هذا الهاتف فقط.",
+  "Messages from your SIM phone show here": "رسائل هاتف الشريحة تظهر هنا",
+  "Open Life OS on your main phone with Life Connect set to “Rings here”. SMS and calls are kept on that phone only.": "افتح Life OS على هاتفك الرئيسي مع ضبط Life Connect على «يرن هنا». الرسائل والمكالمات تُحفظ على ذلك الهاتف فقط.",
+  "Calls": "المكالمات",
+  "You": "أنت",
+  "No messages yet": "لا رسائل بعد",
+  "SMS your SIM phone gets show here once Life Connect passes them on.": "رسائل هاتف الشريحة تظهر هنا بعد أن يمررها Life Connect.",
+  "Answered": "رُدّ عليها",
+  "Ringing": "ترن",
+  "Not answered": "لم يُرد عليها",
+  "Unknown number": "رقم غير معروف",
+  "No calls yet": "لا مكالمات بعد",
+  "Calls to your SIM phone show here.": "مكالمات هاتف الشريحة تظهر هنا.",
+  "Clear the messages and calls?": "مسح الرسائل والمكالمات؟",
+  "This removes them from this phone. The SIM phone keeps its own SMS.": "سيتم حذفها من هذا الهاتف. هاتف الشريحة يحتفظ برسائله.",
+  "Couldn't send. Is Life Connect on?": "تعذّر الإرسال. هل Life Connect مفعّل؟",
+  "not sent": "لم تُرسل",
+  "Reply from your SIM phone": "رد من هاتف الشريحة",
+  "Send": "إرسال",
+
   // Watch
   "Your watch": "ساعتك",
   "Life OS reminders and calls reach a Galaxy Watch through Galaxy Wearable on this phone. If they don't show up there:": "تصل تذكيرات Life OS والمكالمات إلى ساعة Galaxy عبر تطبيق Galaxy Wearable على هذا الهاتف. إن لم تظهر هناك:",

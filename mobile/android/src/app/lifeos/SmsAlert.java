@@ -32,6 +32,7 @@ final class SmsAlert {
     }
 
     static void show(Context context, JSONObject message) {
+        ConnectLog.sms(context, message);
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         NotificationChannel channel = new NotificationChannel(
             CHANNEL, "SMS from your SIM phone", NotificationManager.IMPORTANCE_HIGH);
@@ -64,11 +65,13 @@ final class SmsAlert {
             .setAutoCancel(true)
             .addAction(reply)
             .build();
+        NotificationTidy.beforePost(context, CHANNEL, idFor(from));
         manager.notify(idFor(from), notification);
     }
 
     /** After a reply: update the conversation so it shows what was sent. */
     static void replied(Context context, String to, String who, String text, boolean sent) {
+        ConnectLog.sent(context, to, who, text, sent);
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         Notification notification = new Notification.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_prayer)

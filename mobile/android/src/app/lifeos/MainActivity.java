@@ -507,6 +507,36 @@ public class MainActivity extends Activity {
 
         /* ----------------------------- spending from bank notifications */
 
+        /** Life Connect's SMS and calls on this phone (the Messages page), as JSON. */
+        @JavascriptInterface
+        public String connectLog() {
+            if (!trusted()) return "[]";
+            return ConnectLog.read(MainActivity.this);
+        }
+
+        @JavascriptInterface
+        public void clearConnectLog() {
+            if (trusted()) ConnectLog.clear(MainActivity.this);
+        }
+
+        /** Reply to an SMS from the Messages page: sent as an SMS by the SIM phone. */
+        @JavascriptInterface
+        public boolean connectReply(String to, String who, String body) {
+            if (!trusted() || to == null || to.isEmpty() || body == null || body.trim().isEmpty() || body.length() > 1600) {
+                return false;
+            }
+            ConnectConfig config = ConnectConfig.load(MainActivity.this);
+            if (config == null || !"main".equals(config.role)) return false;
+            try {
+                String text = body.trim();
+                ConnectSender.send(config, new org.json.JSONObject().put("type", "reply").put("to", to).put("body", text),
+                    ok -> ConnectLog.sent(MainActivity.this, to, who, text, ok));
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
         /** The last crash and recent app exits, for Settings to show and copy. */
         @JavascriptInterface
         public String crashReport() {

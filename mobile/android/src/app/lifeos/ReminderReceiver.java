@@ -35,7 +35,9 @@ public class ReminderReceiver extends BroadcastReceiver {
                 || PrayerActionReceiver.isPending(context, prayerDate, prayerName))) {
             return;
         }
-        int notificationId = id == null ? 0 : id.hashCode();
+        // Reminders for the same thing share one notification (see NotificationTidy).
+        String slot = ReminderSlots.slot(id);
+        int notificationId = slot.hashCode();
         Intent open = new Intent(context, MainActivity.class)
             .setAction(Intent.ACTION_VIEW)
             .setData(Uri.parse("lifeos://open" + intent.getStringExtra("path")))
@@ -45,7 +47,8 @@ public class ReminderReceiver extends BroadcastReceiver {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         String channel = intent.getStringExtra("channel");
-        Notification.Builder builder = new Notification.Builder(context, channel == null ? Reminders.CHANNEL_ID : channel)
+        if (channel == null) channel = Reminders.CHANNEL_ID;
+        Notification.Builder builder = new Notification.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_stat_prayer)
             .setContentTitle(intent.getStringExtra("title"))
             .setContentText(intent.getStringExtra("body"))
@@ -72,6 +75,9 @@ public class ReminderReceiver extends BroadcastReceiver {
                     null, PrayerWidget.label(statuses[i]), pending).build());
             }
         }
+        long lifetime = ReminderSlots.lifetime(slot);
+        if (lifetime > 0) builder.setTimeoutAfter(lifetime);
+        NotificationTidy.beforePost(context, channel, notificationId);
         context.getSystemService(NotificationManager.class).notify(notificationId, builder.build());
     }
 }

@@ -16,7 +16,7 @@ if (!existsSync(bin("javac"))) throw new Error(`javac not found under ${javaHome
 const here = dirname(fileURLToPath(import.meta.url));
 const out = mkdtempSync(join(tmpdir(), "lifeos-java-"));
 // Only classes with no Android dependencies are tested here.
-const sources = [join(here, "src/app/lifeos/SpendingParser.java")];
+const sources = ["SpendingParser", "ReminderSlots"].map((name) => join(here, `src/app/lifeos/${name}.java`));
 const tests = readdirSync(join(here, "test")).filter((name) => name.endsWith("Test.java"));
 
 execFileSync(bin("javac"), ["-encoding", "UTF-8", "-d", out, ...sources, ...tests.map((t) => join(here, "test", t))], {

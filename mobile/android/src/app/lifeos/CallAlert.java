@@ -59,6 +59,7 @@ final class CallAlert {
         String call = message.optString("call", "");
         if (!call.isEmpty() && call.equals(ringingCall)) return;
         ringingCall = call.isEmpty() ? null : call;
+        ConnectLog.call(context, message);
         ensureChannels(context);
         String device = message.optString("device", "your SIM phone");
         ringingDevice = device;
@@ -108,6 +109,7 @@ final class CallAlert {
 
     static void answered(Context context, JSONObject message) {
         ringingCall = null;
+        ConnectLog.callOutcome(context, message.optString("call"), "answered");
         context.getSystemService(NotificationManager.class).cancel(RING_ID);
         IncomingCallActivity.close();
     }
@@ -117,8 +119,11 @@ final class CallAlert {
         manager.cancel(RING_ID);
         IncomingCallActivity.close();
         ringingCall = null;
+        ConnectLog.callOutcome(context, message.optString("call"),
+            message.optBoolean("missed") ? "missed" : "ended");
         if (!message.optBoolean("missed")) return;
         ensureChannels(context);
+        NotificationTidy.beforePost(context, CHANNEL_INFO, MISSED_ID);
         manager.notify(MISSED_ID, new Notification.Builder(context, CHANNEL_INFO)
             .setSmallIcon(R.drawable.ic_stat_prayer)
             .setContentTitle("Missed call: " + who(message))

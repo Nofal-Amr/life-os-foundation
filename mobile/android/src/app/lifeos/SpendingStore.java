@@ -202,6 +202,7 @@ final class SpendingStore {
             .addAction(action(context, id, "log", "Log it"))
             .addAction(action(context, id, "dismiss", "Not spending"))
             .build();
+        NotificationTidy.beforePost(context, CHANNEL, notificationId(id));
         manager.notify(notificationId(id), notification);
     }
 
