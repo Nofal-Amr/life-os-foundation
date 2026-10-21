@@ -1,6 +1,6 @@
 # Work: attendance and the monthly pay sheet (design)
 
-Status: ready for Amr's approval · 21 Oct 2026
+Status: **approved by Amr, 21 Oct 2026** ("start building")
 
 ## Why
 
@@ -57,6 +57,9 @@ His example is the sheet his own office (ADO Consult) uses: check-in and check-o
 9. Clocking in only works in the Android app (fingerprint + location). The website shows records and sheets but can't clock in.
 
 ### Rules (per company, all editable; defaults from the example sheet)
+
+> [!important] Rule making, not fixed rules (Amr, 21 Oct)
+> Everything below is an **example** of rules HR can make. The rules part is a small rule builder (thresholds, ladders by occurrence, rates, percentages, what counts as a day off), with the example sheet saved as one ready-made preset. Nothing in the calculation may assume these particular numbers.
 | Setting | Default (from the example) |
 |---|---|
 | Work days | Sunday to Thursday (Friday, Saturday off) |
