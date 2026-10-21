@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -2063,6 +2063,275 @@ export type Database = {
         }
         Relationships: []
       }
+      work_corrections: {
+        Row: {
+          created_at: string
+          day: string
+          field: string
+          id: string
+          made_by: string | null
+          org_id: string
+          reason: string
+          user_id: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          field: string
+          id?: string
+          made_by?: string | null
+          org_id: string
+          reason: string
+          user_id: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          field?: string
+          id?: string
+          made_by?: string | null
+          org_id?: string
+          reason?: string
+          user_id?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_corrections_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "work_orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_events: {
+        Row: {
+          accuracy_m: number | null
+          at: string
+          created_at: string
+          distance_m: number | null
+          id: string
+          kind: string
+          latitude: number | null
+          longitude: number | null
+          mock: boolean
+          org_id: string
+          place_id: string | null
+          place_kind: string | null
+          reason: string | null
+          sent_late: boolean | null
+          user_id: string
+          verified: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          at: string
+          created_at?: string
+          distance_m?: number | null
+          id?: string
+          kind: string
+          latitude?: number | null
+          longitude?: number | null
+          mock?: boolean
+          org_id: string
+          place_id?: string | null
+          place_kind?: string | null
+          reason?: string | null
+          sent_late?: boolean | null
+          user_id?: string
+          verified: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          at?: string
+          created_at?: string
+          distance_m?: number | null
+          id?: string
+          kind?: string
+          latitude?: number | null
+          longitude?: number | null
+          mock?: boolean
+          org_id?: string
+          place_id?: string | null
+          place_kind?: string | null
+          reason?: string | null
+          sent_late?: boolean | null
+          user_id?: string
+          verified?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "work_orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_events_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "work_places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_leaves: {
+        Row: {
+          created_at: string
+          day: string
+          id: string
+          note: string | null
+          org_id: string
+          status: string
+          type_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          id?: string
+          note?: string | null
+          org_id: string
+          status?: string
+          type_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          id?: string
+          note?: string | null
+          org_id?: string
+          status?: string
+          type_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_leaves_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "work_orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_members: {
+        Row: {
+          base_salary: number
+          display_name: string
+          joined_at: string
+          org_id: string
+          overtime_rate: number | null
+          place_ids: string[] | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          base_salary?: number
+          display_name: string
+          joined_at?: string
+          org_id: string
+          overtime_rate?: number | null
+          place_ids?: string[] | null
+          role?: string
+          user_id: string
+        }
+        Update: {
+          base_salary?: number
+          display_name?: string
+          joined_at?: string
+          org_id?: string
+          overtime_rate?: number | null
+          place_ids?: string[] | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "work_orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orgs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          invite_code: string
+          name: string
+          rules: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invite_code: string
+          name: string
+          rules: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invite_code?: string
+          name?: string
+          rules?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      work_places: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          latitude: number
+          longitude: number
+          name: string
+          org_id: string
+          radius_m: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          latitude: number
+          longitude: number
+          name: string
+          org_id: string
+          radius_m?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          org_id?: string
+          radius_m?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_places_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "work_orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2072,16 +2341,29 @@ export type Database = {
         Args: { my_name: string; pod_name: string }
         Returns: string
       }
+      create_work_org: {
+        Args: { my_name: string; org_name: string; org_rules: Json }
+        Returns: string
+      }
       delete_my_account: { Args: never; Returns: undefined }
       is_pod_member: { Args: { target: string }; Returns: boolean }
       is_pod_owner: { Args: { target: string }; Returns: boolean }
+      is_work_admin: { Args: { target: string }; Returns: boolean }
+      is_work_member: { Args: { target: string }; Returns: boolean }
+      is_work_owner: { Args: { target: string }; Returns: boolean }
       join_pod: { Args: { code: string; my_name: string }; Returns: string }
+      join_work_org: {
+        Args: { code: string; my_name: string }
+        Returns: string
+      }
       new_pod_code: { Args: never; Returns: string }
+      new_work_code: { Args: never; Returns: string }
       rename_me_in_pod: {
         Args: { my_name: string; target: string }
         Returns: undefined
       }
       renew_pod_code: { Args: { target: string }; Returns: string }
+      renew_work_code: { Args: { target: string }; Returns: string }
     }
     Enums: {
       account_type: "checking" | "savings" | "cash" | "credit"
