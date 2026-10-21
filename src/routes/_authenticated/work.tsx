@@ -188,7 +188,14 @@ function TodayTab({ org, rules, me }: { org: WorkOrg; rules: WorkRules; me: Work
   );
   return (
     <div className="space-y-6">
-      <ClockCard org={org} rules={rules} member={me} places={places.data ?? []} today={today} />
+      <ClockCard
+        org={org}
+        rules={rules}
+        member={me}
+        places={places.data ?? []}
+        today={today}
+        recent={events ?? []}
+      />
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-semibold">{t("Your month")}</h2>

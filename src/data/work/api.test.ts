@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 
 import {
+  nextClockKind,
   readRules,
   sheetInputFor,
   type WorkCorrection,
@@ -73,5 +74,19 @@ describe("work api helpers", () => {
     expect(input.corrections).toEqual([
       { day: "2026-10-07", field: "out", at: "2026-10-07T16:30:00+03:00", reason: "Forgot" },
     ]);
+  });
+  it("offers clock-out after midnight when the clock-in was last night", () => {
+    const now = Date.parse("2026-10-06T01:30:00+03:00");
+    expect(nextClockKind([event("in", "2026-10-05T20:00:00+03:00")], now)).toBe("out");
+    expect(
+      nextClockKind(
+        [event("in", "2026-10-05T08:00:00+03:00"), event("out", "2026-10-05T16:30:00+03:00")],
+        now,
+      ),
+    ).toBe("in");
+    // A clock-in older than a day was a forgotten clock-out: start fresh.
+    expect(nextClockKind([event("in", "2026-10-04T08:00:00+03:00")], now)).toBe("in");
+    // Attempts don't count.
+    expect(nextClockKind([event("attempt", "2026-10-06T01:00:00+03:00")], now)).toBe("in");
   });
 });

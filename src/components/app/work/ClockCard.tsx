@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  nextClockKind,
   recordEvent,
   workKeys,
   type EventInput,
@@ -40,6 +41,7 @@ export function ClockCard({
   member,
   places,
   today,
+  recent,
 }: {
   org: WorkOrg;
   rules: WorkRules;
@@ -47,13 +49,15 @@ export function ClockCard({
   places: WorkPlace[];
   /** Today's events (yours), oldest first. */
   today: WorkEvent[];
+  /** Your events from the last day or so, to tell clock-in from clock-out. */
+  recent: WorkEvent[];
 }) {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string | null>(null);
   const [asking, setAsking] = useState<{ check: Ok; event: EventInput } | null>(null);
   const [reason, setReason] = useState("");
   const clocks = today.filter((event) => event.kind !== "attempt");
-  const kind: "in" | "out" = clocks.at(-1)?.kind === "in" ? "out" : "in";
+  const kind = nextClockKind(recent, Date.now());
   const allowed = (member.place_ids?.length
     ? places.filter((place) => member.place_ids!.includes(place.id))
     : places) as unknown as PlaceLike[];

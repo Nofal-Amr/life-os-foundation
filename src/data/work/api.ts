@@ -250,6 +250,19 @@ export async function deleteLeave(id: string): Promise<void> {
   unwrap(await supabase.from("work_leaves").delete().eq("id", id).select());
 }
 
+/**
+ * Whether the button should clock in or out: out when the last clock event
+ * in the past 24 hours was a clock-in (so after midnight still offers
+ * clock-out), in otherwise. Attempts don't count.
+ */
+export function nextClockKind(events: Pick<WorkEvent, "kind" | "at">[], now: number): "in" | "out" {
+  const last = events
+    .filter((event) => event.kind !== "attempt" && now - Date.parse(event.at) <= 86_400_000)
+    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at))
+    .at(-1);
+  return last?.kind === "in" ? "out" : "in";
+}
+
 /* ------------------------------------------------------- rows → the engine */
 
 /**
