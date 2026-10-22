@@ -84,8 +84,27 @@ public class MainActivity extends Activity {
         applySystemBars();
 
         webView = new WebView(this);
-        webView.setBackgroundColor(isNightMode() ? Color.rgb(10, 12, 16) : Color.rgb(248, 249, 251));
-        setContentView(webView);
+        int canvas = isNightMode() ? Color.rgb(10, 12, 16) : Color.rgb(248, 249, 251);
+        webView.setBackgroundColor(canvas);
+        // Edge to edge (required from Android 15): the window draws behind the
+        // status and navigation bars, and the page is padded clear of them and
+        // of the keyboard (adjustResize no longer applies edge to edge).
+        android.widget.FrameLayout root = new android.widget.FrameLayout(this);
+        root.setBackgroundColor(canvas);
+        root.addView(webView, new android.widget.FrameLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            getWindow().setDecorFitsSystemWindows(false);
+            root.setOnApplyWindowInsetsListener((view, insets) -> {
+                android.graphics.Insets bars = insets.getInsets(
+                    android.view.WindowInsets.Type.systemBars() | android.view.WindowInsets.Type.displayCutout());
+                android.graphics.Insets ime = insets.getInsets(android.view.WindowInsets.Type.ime());
+                view.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+                return android.view.WindowInsets.CONSUMED;
+            });
+        }
+        setContentView(root);
+        setUpPredictiveBack();
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -111,6 +130,9 @@ public class MainActivity extends Activity {
             public boolean onConsoleMessage(ConsoleMessage message) {
                 // Visible with: adb logcat -s LifeOS
                 Log.i("LifeOS", message.messageLevel() + " " + message.message());
+                if (message.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                    CrashLog.webError(MainActivity.this, message.message() + " (" + message.sourceId() + ":" + message.lineNumber() + ")");
+                }
                 return true;
             }
 
@@ -175,8 +197,7 @@ public class MainActivity extends Activity {
 
         String callback = callbackUrl(getIntent());
         if (callback != null) webView.loadUrl(callback);
-        else if (savedInstanceState != null) webView.restoreState(savedInstanceState);
-        else webView.loadUrl(APP_URL);
+        else if (!restored(savedInstanceState)) webView.loadUrl(APP_URL);
     }
 
     @Override
@@ -217,10 +238,47 @@ public class MainActivity extends Activity {
             + (fragment != null ? "#" + fragment : "");
     }
 
+    /** Set when the page's renderer died: its state is worth nothing, start fresh. */
+    private boolean rendererGone;
+
+    /** Puts back the page's history after a rotation or restart; false if there was none. */
+    private boolean restored(Bundle state) {
+        if (state == null) return false;
+        android.webkit.WebBackForwardList list = webView.restoreState(state);
+        return list != null && list.getSize() > 0;
+    }
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        webView.saveState(outState);
+        if (!rendererGone) webView.saveState(outState);
+    }
+
+    private Object backCallback;
+    private boolean backRegistered;
+
+    /**
+     * Predictive back (Android 13+, the default from Android 16): while the
+     * page has somewhere to go back to, back steps back inside the app;
+     * otherwise the system shows its "back to home" peek animation.
+     */
+    private void setUpPredictiveBack() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return;
+        backCallback = (android.window.OnBackInvokedCallback) () -> {
+            if (webView != null && webView.canGoBack()) webView.goBack();
+            updateBackCallback();
+        };
+    }
+
+    void updateBackCallback() {
+        if (android.os.Build.VERSION.SDK_INT < 33 || backCallback == null || webView == null) return;
+        boolean want = webView.canGoBack();
+        if (want == backRegistered) return;
+        android.window.OnBackInvokedDispatcher dispatcher = getOnBackInvokedDispatcher();
+        android.window.OnBackInvokedCallback callback = (android.window.OnBackInvokedCallback) backCallback;
+        if (want) dispatcher.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback);
+        else dispatcher.unregisterOnBackInvokedCallback(callback);
+        backRegistered = want;
     }
 
     @Override
@@ -303,23 +361,62 @@ public class MainActivity extends Activity {
         return mode == Configuration.UI_MODE_NIGHT_YES;
     }
 
-    /** Status and navigation bars match the canvas of the device theme. */
+    /** Status and navigation bar icons readable on the device theme's canvas. */
     @SuppressWarnings("deprecation")
     private void applySystemBars() {
         Window window = getWindow();
         boolean night = isNightMode();
         int canvas = night ? Color.rgb(10, 12, 16) : Color.rgb(248, 249, 251);
-        window.setStatusBarColor(canvas);
-        window.setNavigationBarColor(canvas);
-        int flags = 0;
-        if (!night) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        window.getDecorView().setSystemUiVisibility(flags);
+        window.getDecorView().setBackgroundColor(canvas);
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            android.view.WindowInsetsController controller = window.getInsetsController();
+            if (controller != null) {
+                int light = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                    | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+                controller.setSystemBarsAppearance(night ? 0 : light, light);
+            }
+            if (android.os.Build.VERSION.SDK_INT < 35) {
+                window.setStatusBarColor(canvas);
+                window.setNavigationBarColor(canvas);
+            }
+        } else {
+            window.setStatusBarColor(canvas);
+            window.setNavigationBarColor(canvas);
+            int flags = 0;
+            if (!night) flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            window.getDecorView().setSystemUiVisibility(flags);
+        }
     }
 
     private final class AppClient extends WebViewClient {
         @Override
         public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
             currentHost = Uri.parse(url).getHost();
+        }
+
+        @Override
+        public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+            updateBackCallback();
+        }
+
+        /**
+         * The page's renderer crashed or was closed for memory. Without this,
+         * Android closes the whole app and leaves no crash report. Instead:
+         * note it, drop the dead WebView and start the screen again.
+         */
+        @Override
+        public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+            boolean crashed = detail != null && detail.didCrash();
+            CrashLog.note(MainActivity.this, crashed
+                ? "The page crashed (WebView renderer). Life OS reopened it."
+                : "The page was closed to free memory (WebView renderer). Life OS reopened it.");
+            if (view == webView) {
+                rendererGone = true;
+                if (view.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) view.getParent()).removeView(view);
+                view.destroy();
+                recreate();
+            }
+            return true;
         }
 
         @Override

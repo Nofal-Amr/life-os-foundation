@@ -445,7 +445,7 @@ export const connectLog = {
 /* ------------------------------------------------------- crash reports */
 
 export type CrashExit = { at: number; reason: string; description: string; trace?: string };
-export type CrashReport = { crash: string; exits: CrashExit[]; device: string };
+export type CrashReport = { crash: string; notes: string; exits: CrashExit[]; device: string };
 
 /** What the Android app kept about its last crash and recent stops; null on the web. */
 export function crashReport(): CrashReport | null {
@@ -453,7 +453,12 @@ export function crashReport(): CrashReport | null {
     const raw = bridge()?.crashReport?.();
     if (!raw) return null;
     const value = JSON.parse(raw) as Partial<CrashReport>;
-    return { crash: value.crash ?? "", exits: value.exits ?? [], device: value.device ?? "" };
+    return {
+      crash: value.crash ?? "",
+      notes: value.notes ?? "",
+      exits: value.exits ?? [],
+      device: value.device ?? "",
+    };
   } catch {
     return null;
   }

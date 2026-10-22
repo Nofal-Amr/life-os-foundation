@@ -25,6 +25,8 @@ import java.nio.file.Files;
  */
 final class CrashLog {
     private static final String FILE = "last-crash.txt";
+    private static final String NOTES = "app-notes.txt";
+    private static final int MAX_NOTES = 30;
     private static final int MAX_TRACE = 6000;
     private static volatile boolean installed;
 
@@ -50,12 +52,37 @@ final class CrashLog {
         });
     }
 
+    /** Something the app recovered from (the page renderer dying), kept for the report. */
+    static void note(Context context, String text) {
+        append(context, new java.util.Date() + " — " + text);
+    }
+
+    /** A JavaScript error from the page. */
+    static void webError(Context context, String text) {
+        append(context, new java.util.Date() + " — page error: " + (text.length() > 400 ? text.substring(0, 400) : text));
+    }
+
+    private static synchronized void append(Context context, String line) {
+        try {
+            File file = new File(context.getApplicationContext().getFilesDir(), NOTES);
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            if (file.exists()) lines.addAll(Files.readAllLines(file.toPath(), StandardCharsets.UTF_8));
+            lines.add(line.replace('\n', ' '));
+            while (lines.size() > MAX_NOTES) lines.remove(0);
+            Files.write(file.toPath(), lines, StandardCharsets.UTF_8);
+        } catch (Exception ignored) {
+            // Not kept.
+        }
+    }
+
     /** The saved crash plus the last few exits Android recorded, as JSON. */
     static String report(Context context) {
         JSONObject report = new JSONObject();
         try {
             File file = new File(context.getFilesDir(), FILE);
             report.put("crash", file.exists() ? new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8) : "");
+            File notes = new File(context.getFilesDir(), NOTES);
+            report.put("notes", notes.exists() ? new String(Files.readAllBytes(notes.toPath()), StandardCharsets.UTF_8) : "");
             JSONArray exits = new JSONArray();
             if (Build.VERSION.SDK_INT >= 30) {
                 ActivityManager manager = context.getSystemService(ActivityManager.class);
@@ -89,6 +116,7 @@ final class CrashLog {
 
     static void clear(Context context) {
         new File(context.getFilesDir(), FILE).delete();
+        new File(context.getFilesDir(), NOTES).delete();
     }
 
     private static String reasonName(int reason) {
@@ -99,6 +127,11 @@ final class CrashLog {
             case ApplicationExitInfo.REASON_LOW_MEMORY: return "closed for memory";
             case ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE: return "closed for battery use";
             case ApplicationExitInfo.REASON_INITIALIZATION_FAILURE: return "failed to start";
+            case ApplicationExitInfo.REASON_SIGNALED: return "stopped by the system";
+            case ApplicationExitInfo.REASON_DEPENDENCY_DIED: return "a part it needs stopped (e.g. WebView)";
+            case ApplicationExitInfo.REASON_OTHER: return "stopped (other)";
+            case ApplicationExitInfo.REASON_UNKNOWN: return "stopped (unknown)";
+            case ApplicationExitInfo.REASON_FREEZER: return "frozen in the background";
             default: return null;
         }
     }

@@ -41,6 +41,8 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreload: "intent",
+    // A gentle cross-fade between pages where the browser supports it.
+    defaultViewTransition: true,
     defaultPreloadStaleTime: 0,
   });
 

@@ -12,7 +12,7 @@ import { clearCrashReport, crashReport, type CrashReport } from "@/lib/native";
  */
 export function CrashReportCard() {
   const [report, setReport] = useState<CrashReport | null>(() => crashReport());
-  if (!report || (!report.crash && report.exits.length === 0)) return null;
+  if (!report || (!report.crash && !report.notes && report.exits.length === 0)) return null;
 
   const text = [
     `Life OS on ${report.device}`,
@@ -21,6 +21,7 @@ export function CrashReportCard() {
         `${new Date(exit.at).toLocaleString()} — ${exit.reason}${exit.description ? `: ${exit.description}` : ""}${exit.trace ? `\n${exit.trace}` : ""}`,
     ),
     report.crash ? `\nLast crash:\n${report.crash}` : "",
+    report.notes ? `\nNotes:\n${report.notes}` : "",
   ]
     .filter(Boolean)
     .join("\n");

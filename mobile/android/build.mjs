@@ -43,7 +43,7 @@ const latest = (dir, prefix = "") =>
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
     .pop();
 
-const platform = process.env.ANDROID_PLATFORM || "android-34";
+const platform = process.env.ANDROID_PLATFORM || "android-36";
 const buildTools = process.env.ANDROID_BUILD_TOOLS || latest(join(sdk, "build-tools"));
 const bt = (tool) => join(sdk, "build-tools", buildTools, tool + (win ? ".exe" : ""));
 // d8 and apksigner ship as jars behind .bat/.sh wrappers; call the jars directly
