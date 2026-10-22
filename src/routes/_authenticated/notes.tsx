@@ -679,8 +679,14 @@ function NoteEditor({
   return (
     <Dialog open onOpenChange={(open) => !open && close()}>
       <DialogContent
-        className="flex h-[100dvh] max-h-[100dvh] w-full max-w-full flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:rounded-2xl sm:border [&>button:last-child]:hidden"
-        style={{ background: noteBackground(note.color) ?? "var(--color-card)" }}
+        // The whole page, on every screen, and opaque: nothing of the other
+        // notes shows behind (privacy, e.g. at work).
+        className="flex h-[100dvh] max-h-[100dvh] w-full max-w-full flex-col gap-0 overflow-hidden rounded-none border-0 p-0 [&>button:last-child]:hidden"
+        style={{
+          background: noteBackground(note.color)
+            ? `linear-gradient(${noteBackground(note.color)}, ${noteBackground(note.color)}), var(--color-background)`
+            : "var(--color-background)",
+        }}
       >
         <DialogTitle className="sr-only">{note.title || "Note"}</DialogTitle>
         <div className="flex items-center gap-1 px-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
@@ -726,7 +732,7 @@ function NoteEditor({
 
         <div
           data-note-scroll
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6"
+          className="mx-auto min-h-0 w-full max-w-3xl flex-1 overflow-y-auto overscroll-contain px-5 pb-6"
         >
           <AutoTextarea
             value={note.title}
