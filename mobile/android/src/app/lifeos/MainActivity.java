@@ -982,10 +982,11 @@ public class MainActivity extends Activity {
         /** What the home-screen Today widget shows: {left, spent, tasks} as text. */
         @JavascriptInterface
         public void setTodayWidget(String json) {
-            if (!trusted() || json == null || json.length() > 4000) return;
+            if (!trusted() || json == null || json.length() > 8000) return;
             getSharedPreferences(PrayerWidget.PREFS, MODE_PRIVATE)
                 .edit().putString(TodayWidget.KEY_DATA, json).apply();
             TodayWidget.refresh(MainActivity.this);
+            MoreWidgets.refreshAll(MainActivity.this);
         }
 
         /** Prayers logged from notification buttons; handing them over clears them. */

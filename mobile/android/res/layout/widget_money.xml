@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/money_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="10dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Left to spend" android:textColor="#99FFFFFF" android:textSize="11sp" />
+    <TextView android:id="@+id/money_left" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:text="—" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" />
+    <TextView android:id="@+id/money_spent" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:text="" android:textColor="#99FFFFFF" android:textSize="11sp" />
+</LinearLayout>

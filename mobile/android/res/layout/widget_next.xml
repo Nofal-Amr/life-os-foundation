@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/next_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:gravity="center_vertical"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="10dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Next" android:textColor="#9930D5C8" android:textSize="11sp" android:textStyle="bold" />
+    <TextView android:id="@+id/next_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="2" android:text="Nothing to do right now" android:textColor="#FFFFFF" android:textSize="17sp" android:textStyle="bold" />
+    <TextView android:id="@+id/next_detail" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:ellipsize="end" android:text="Open Life OS to add a task" android:textColor="#99FFFFFF" android:textSize="12sp" />
+</LinearLayout>

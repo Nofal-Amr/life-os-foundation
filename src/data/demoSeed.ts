@@ -394,8 +394,15 @@ export function demoSeed(now = new Date()): DemoDb {
         monthly_budget: null,
       }),
     ],
+    // Stored like the app stores them: spending is negative.
     transactions: transactions.map((row) =>
-      base({ id: id("txn"), occurred_time: null, pocket_id: null, ...row }),
+      base({
+        id: id("txn"),
+        occurred_time: null,
+        pocket_id: null,
+        ...row,
+        amount: row["kind"] === "expense" ? -Math.abs(Number(row["amount"])) : row["amount"],
+      }),
     ),
     recurring_costs: [
       base({
