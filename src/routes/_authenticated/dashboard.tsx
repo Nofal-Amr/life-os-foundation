@@ -1067,20 +1067,6 @@ function DashboardPage() {
             {loading ? null : <TodayRing segments={ringSegments} />}
           </div>
           {loading ? null : <TodayRingLegend segments={ringSegments} />}
-          {loading || !isEnabled("do") ? null : (
-            <TodayCounts
-              className="mt-4"
-              counts={{
-                inbox: topLevelTasks(allTasks).filter((task) => task.status === "inbox").length,
-                dueToday: topLevelTasks(allTasks).filter(
-                  (task) => isOpen(task) && task.due_date === today,
-                ).length,
-                fromEarlier: overdueTasks,
-                activeProjects: (projects.data ?? []).filter((project) => project.status === "active")
-                  .length,
-              }}
-            />
-          )}
         </header>
 
         {loading ? (
@@ -1107,10 +1093,17 @@ function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     {primary ? (
-                      <div key={primary.item.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out">
+                      <div
+                        key={primary.item.id}
+                        className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out"
+                      >
                         <ActionBlock action={primary} large />
-                        {capacity != null && primary.parent.energy != null && fitsEnergy(primary.parent, capacity) ? (
-                          <p className="mt-3 text-xs text-muted-foreground">{t("Picked to fit your energy right now.")}</p>
+                        {capacity != null &&
+                        primary.parent.energy != null &&
+                        fitsEnergy(primary.parent, capacity) ? (
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            {t("Picked to fit your energy right now.")}
+                          </p>
                         ) : null}
                       </div>
                     ) : (
@@ -1139,11 +1132,36 @@ function DashboardPage() {
                   </div>
                 ) : null}
 
+                {/* The counts come after the one thing to do, not before it. */}
+                {!isEnabled("do") ? null : (
+                  <TodayCounts
+                    className="mt-5"
+                    counts={{
+                      inbox: topLevelTasks(allTasks).filter((task) => task.status === "inbox")
+                        .length,
+                      dueToday: topLevelTasks(allTasks).filter(
+                        (task) => isOpen(task) && task.due_date === today,
+                      ).length,
+                      fromEarlier: overdueTasks,
+                      activeProjects: (projects.data ?? []).filter(
+                        (project) => project.status === "active",
+                      ).length,
+                    }}
+                  />
+                )}
+
                 {focusRows.length ? (
                   <div className="mt-5 min-w-0">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <h2 className="text-sm font-semibold text-foreground">{t("Today's focus")}</h2>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => setQuickTask(true)}>
+                      <h2 className="text-sm font-semibold text-foreground">
+                        {t("Today's focus")}
+                      </h2>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setQuickTask(true)}
+                      >
                         Add task
                       </Button>
                     </div>

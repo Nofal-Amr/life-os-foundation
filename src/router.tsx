@@ -3,6 +3,7 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { supabase } from "./integrations/supabase/client";
 import { installOffline, isOffline } from "./lib/offline";
+import { installDemo } from "./lib/demo";
 import { installOfflineSession } from "./lib/session";
 import { applyLang } from "./lib/i18n";
 import { isOfflineError } from "@/lib/supabase-helpers";
@@ -25,12 +26,16 @@ export const getRouter = () => {
     },
   });
 
+  const supabaseUrl = String((supabase as unknown as { supabaseUrl: string | URL }).supabaseUrl);
+  // Demo mode answers every request from sample data in the browser, so the
+  // offline layer and the real session stay out of it.
+  const demo = installDemo(supabaseUrl);
   if (typeof window !== "undefined") {
-    installOfflineSession(isOffline);
+    if (!demo) installOfflineSession(isOffline);
     applyLang();
   }
-  installOffline({
-    supabaseUrl: String((supabase as unknown as { supabaseUrl: string | URL }).supabaseUrl),
+  if (!demo) installOffline({
+    supabaseUrl,
     getAccessToken: async () =>
       (await supabase.auth.getSession()).data.session?.access_token ?? null,
     onSynced: () => void queryClient.invalidateQueries(),
@@ -41,8 +46,6 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreload: "intent",
-    // A gentle cross-fade between pages where the browser supports it.
-    defaultViewTransition: true,
     defaultPreloadStaleTime: 0,
   });
 

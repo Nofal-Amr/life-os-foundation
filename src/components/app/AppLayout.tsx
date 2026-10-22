@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { DemoBanner } from "@/components/app/DemoBanner";
 import { LogOut, Moon, Search, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { MigrationNotice } from "./MigrationNotice";
@@ -84,6 +85,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </Button>
         </div>
       </aside>
+
+      <DemoBanner />
 
       {/* Phones: one menu, under "More" in the bottom bar. The header only orients. */}
       <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/90 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md md:hidden">

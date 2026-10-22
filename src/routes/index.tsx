@@ -1,4 +1,5 @@
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { TryDemoButton } from "@/components/app/DemoBanner";
 import {
   ArrowRight,
   BellRing,
@@ -150,6 +151,7 @@ function Hero() {
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </Button>
+          <TryDemoButton />
         </div>
       </div>
 

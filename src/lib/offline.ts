@@ -232,7 +232,7 @@ function matchOne(row: Row, column: string, expression: string): boolean | null 
   return negate ? !result : result;
 }
 
-function matches(row: Row, params: URLSearchParams): boolean | null {
+export function matches(row: Row, params: URLSearchParams): boolean | null {
   let known = true;
   for (const [key, value] of params) {
     if (RESERVED.has(key)) continue;
@@ -247,7 +247,7 @@ function matches(row: Row, params: URLSearchParams): boolean | null {
   return known ? true : null;
 }
 
-function applyOrder(rows: Row[], params: URLSearchParams) {
+export function applyOrder(rows: Row[], params: URLSearchParams) {
   const order = params.get("order");
   if (!order) return rows;
   const terms = order.split(",").map((term) => {
