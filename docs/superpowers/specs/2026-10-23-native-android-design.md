@@ -180,3 +180,32 @@ mode and online, screenshots beside the web app (demo mode, 375 px) for the owne
 
 Exact component APIs, animation curves within the motion rules above, whether a heavy table
 gets a typed Room entity, and test structure.
+
+## Added 2026-10-23 (owner requests during phase 1)
+
+- **Notes:** labels/#tags, a remembered focus ("only #Work" when opening Notes), search,
+  checklists, and locked notes encrypted on the phone (done in phase 1). Later: focus switches
+  on by itself while clocked in at work (Work phase); the web app opens locked notes with the
+  same passphrase (WebCrypto PBKDF2 + AES-GCM, format `lifeos-vault:v1:`).
+- **Spirit:** sunrise shown small under Fajr; Isha suggested points across the time from Isha
+  to the next Fajr: first third (best), half (if needed), until Fajr (only if necessary).
+- **Google sign-in:** Android's account picker (Credential Manager) → Supabase `id_token`
+  grant. Needs `GOOGLE_WEB_CLIENT_ID` in `.env` and an Android OAuth client in Google Cloud.
+
+## Widgets (phase 10, interactive, Jetpack Glance)
+
+Each acts in place (no app launch) and saves to the phone's database first, like the app.
+
+| Widget | Shows | Acts |
+|---|---|---|
+| Prayer | today's five with times, the next highlighted, Isha points | tap a prayer → In jamaah / On time / Late |
+| Next action | the one next task | Done (with haptic), Tomorrow |
+| Tasks | today's list | tick a task |
+| Habits | today's daily habits | tap to mark; RPG skin also shows its streak |
+| Money | left to spend, spent today | + opens a quick amount pad |
+| Calendar | the next few items, today and tomorrow | tap opens the day |
+| Work clock | clocked in/out, hours today | Clock in/out → fingerprint prompt (small activity), with location check |
+| Quick note | one-tap note, focus label applied | opens a tiny note sheet |
+
+Android 15+ widget features used where available: generated previews in the picker,
+resizable layouts, Material You colours, and haptics on in-widget actions.

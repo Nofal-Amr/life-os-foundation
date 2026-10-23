@@ -30,6 +30,8 @@ Where it is: `mobile/native` (Gradle), `npm run build:native` → `mobile/androi
 - Tested on the emulator (Pixel_8_Pro_API_35): opens offline with tasks in ~1.3 s (release),
   tasks added offline survive a force-stop, 401 → refresh → sign-in. Not yet tested with a real account.
 
+Phase 1 done (commit bba1767): architecture, refined flows, locked notes, prayer windows. Plan: docs/superpowers/specs/2026-10-23-native-android-design.md (widgets table at the end).
+
 Next, in order:
 1. Work: fingerprint clock in/out (`androidx.biometric` or the platform BiometricPrompt as in
    `mobile/android/src/app/lifeos/WorkClock.java`), add a site/workplace from current location
