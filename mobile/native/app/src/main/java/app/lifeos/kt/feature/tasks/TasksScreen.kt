@@ -130,12 +130,12 @@ class TasksViewModel @Inject constructor(private val repo: TaskRepository) : Vie
 }
 
 @Composable
-fun TasksScreen(model: TasksViewModel = hiltViewModel()) {
+fun TasksScreen(openTaskId: String? = null, model: TasksViewModel = hiltViewModel()) {
     val state by model.state.collectAsStateWithLifecycle()
     val sync = LocalSyncStatus.current
     val undo = rememberUndo()
     var adding by rememberSaveable { mutableStateOf(false) }
-    var openId by rememberSaveable { mutableStateOf<String?>(null) }
+    var openId by rememberSaveable { mutableStateOf(openTaskId) }
     var actionsId by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun toggle(task: Task) {
@@ -388,7 +388,7 @@ private fun ActionRow(label: String, icon: androidx.compose.ui.graphics.vector.I
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddTaskSheet(today: LocalDate, close: () -> Unit, add: (String, String?) -> Unit) {
+fun AddTaskSheet(today: LocalDate, close: () -> Unit, add: (String, String?) -> Unit) {
     val haptics = rememberHaptics()
     val sheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val focus = remember { FocusRequester() }

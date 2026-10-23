@@ -1,6 +1,9 @@
 package app.lifeos.kt.data
 
 import app.lifeos.kt.core.database.RowDao
+import app.lifeos.kt.core.database.RowEntity
+import app.lifeos.kt.core.datastore.SessionState
+import kotlinx.serialization.json.jsonPrimitive
 import app.lifeos.kt.core.datastore.AppSettings
 import app.lifeos.kt.core.datastore.Session
 import app.lifeos.kt.core.datastore.SessionStore
@@ -50,6 +53,21 @@ class AccountRepository @Inject constructor(
         session.save(fresh)
         sync.request()
     }
+
+    /** Demo mode: the website's sample month, on this phone only. Leaving it (sign out) forgets it. */
+    suspend fun startDemo() {
+        rows.clear()
+        for ((table, list) in DemoSeed.seed()) {
+            rows.upsertAll(list.map { row -> RowEntity(table, row["id"]!!.jsonPrimitive.content, row.toString()) })
+        }
+        settings.setOwner(DemoSeed.USER)
+        session.save(Session("demo", "demo", Long.MAX_VALUE / 2, DemoSeed.USER, null))
+    }
+
+    /** Back to the sample month as it was. */
+    suspend fun resetDemo() = startDemo()
+
+    val isDemo: Boolean get() = (session.state.value as? SessionState.SignedIn)?.session?.userId == DemoSeed.USER
 
     /** Signs out and forgets everything on this phone. */
     suspend fun signOut() {

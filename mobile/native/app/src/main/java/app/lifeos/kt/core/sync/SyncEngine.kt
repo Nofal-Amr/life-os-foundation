@@ -45,10 +45,17 @@ val SYNCED_TABLES = listOf(
     SyncedTable("finance_categories"),
     SyncedTable("transactions"),
     SyncedTable("payday_config"),
+    SyncedTable("recurring_costs"),
+    SyncedTable("account_pockets"),
     SyncedTable("prayer_settings", "user_id"),
     SyncedTable("prayer_logs", "user_id,prayer_date,prayer_name"),
     SyncedTable("health_logs", "user_id,log_date"),
     SyncedTable("medications"),
+    SyncedTable("medication_logs", "medication_id,log_date,time_slot"),
+    SyncedTable("food_logs"),
+    SyncedTable("daily_reviews", "user_id,review_date"),
+    SyncedTable("profiles", "user_id"),
+    SyncedTable("time_entries"),
     SyncedTable("notes"),
     SyncedTable("reminders"),
     SyncedTable("events"),
@@ -62,6 +69,8 @@ data class SyncState(
     val offline: Boolean = false,
     /** The server refused something; shown so it never fails silently. */
     val error: String? = null,
+    /** Demo mode: sample data on this phone only; nothing is sent. */
+    val demo: Boolean = false,
 )
 
 class ServerRefused(val code: Int, message: String) : IOException(message)
@@ -105,6 +114,10 @@ class SyncEngine @Inject constructor(
     /** One full sync. Returns false when it couldn't reach the server. */
     suspend fun run(): Boolean = lock.withLock {
         val userId = session.current()?.userId ?: return@withLock true
+        if (userId == app.lifeos.kt.data.DemoSeed.USER) {
+            _state.value = SyncState(demo = true)
+            return@withLock true
+        }
         _state.value = _state.value.copy(running = true)
         try {
             // One table failing (a column the server doesn't have yet) doesn't stop the others.

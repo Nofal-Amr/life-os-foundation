@@ -14,8 +14,27 @@ import java.util.Date
 /** The five prayers, as prayer_logs names them. */
 val PRAYERS = listOf("fajr" to "Fajr", "dhuhr" to "Dhuhr", "asr" to "Asr", "maghrib" to "Maghrib", "isha" to "Isha")
 
-/** How a prayer was prayed (prayer_logs.status), in the web app's words. */
-val PRAYER_STATUSES = listOf("jamaah" to "In jamaah", "on_time" to "On time", "late" to "Late", "missed" to "Missed")
+/** How a prayer was prayed (prayer_logs.status), in the web app's words and order. */
+val PRAYER_STATUSES = listOf("jamaah" to "In jamaah", "on_time" to "On time", "clutch" to "Clutch", "late" to "Late", "missed" to "Missed")
+
+/** The two sunnah prayers logged beside the five: before Fajr, and Witr after Isha. */
+val SUNNAH = listOf("sunnah_fajr" to "Sunnah", "witr" to "Witr")
+
+/** The day's order: the sunnah of Fajr first, Witr last. */
+val DAY_ORDER = listOf(SUNNAH[0]) + PRAYERS + listOf(SUNNAH[1])
+
+fun isSunnah(name: String) = name == "sunnah_fajr" || name == "witr"
+
+/** A prayer's name on a given day: Dhuhr on a Friday is Jumu'ah. */
+fun prayerLabel(name: String, day: LocalDate): String =
+    if (name == "dhuhr" && day.dayOfWeek == java.time.DayOfWeek.FRIDAY) "Jumu'ah" else (DAY_ORDER.firstOrNull { it.first == name }?.second ?: name)
+
+/** When to show a prayer's time: the sunnah of Fajr with Fajr's, Witr with Isha's. */
+fun timeKeyOf(name: String) = when (name) {
+    "sunnah_fajr" -> "fajr"
+    "witr" -> "isha"
+    else -> name
+}
 
 data class PrayerSlot(val key: String, val label: String, val at: Date)
 

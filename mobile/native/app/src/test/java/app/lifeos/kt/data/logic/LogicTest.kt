@@ -34,7 +34,7 @@ class TaskLogicTest {
         )
         assertEquals(
             listOf(
-                TaskGroup.Overdue to listOf("Before"),
+                TaskGroup.Earlier to listOf("Before"),
                 TaskGroup.Today to listOf("Now"),
                 TaskGroup.Upcoming to listOf("Later"),
                 TaskGroup.NoDate to listOf("Whenever"),
@@ -46,9 +46,9 @@ class TaskLogicTest {
 
     @Test
     fun detailStatesTheDateNotAVerdict() {
-        assertEquals("From 20 Oct", dueDetail(task("a", "2026-10-20"), today))
+        assertEquals("3 days ago", dueDetail(task("a", "2026-10-20"), today))
         assertEquals("Yesterday", dueDetail(task("a", "2026-10-22"), today))
-        assertEquals("11:00", dueDetail(task("a", "2026-10-23", time = "11:00:00"), today))
+        assertEquals("Today · 11:00", dueDetail(task("a", "2026-10-23", time = "11:00:00"), today))
         assertEquals("Today", dueDetail(task("a", "2026-10-23"), today))
         assertEquals("Tomorrow · 09:30", dueDetail(task("a", "2026-10-24", time = "09:30:00"), today))
         assertNull(dueDetail(task("a"), today))
@@ -56,7 +56,7 @@ class TaskLogicTest {
 
     @Test
     fun nextActionIsTheOldestDatedOpenTask() {
-        val next = nextAction(listOf(task("Soon", "2026-10-25"), task("Old", "2026-10-01"), task("Step", "2026-09-01", parent = "x"), task("Undated")))
+        val next = nextAction(listOf(task("Soon", "2026-10-25"), task("Old", "2026-10-01"), task("Step", "2026-09-01", parent = "x"), task("Undated")), today)
         assertEquals("Old", next?.title)
     }
 
@@ -157,5 +157,76 @@ class NoteLogicTest {
     @Test
     fun labelsAreListedMostUsedFirst() {
         assertEquals(listOf("Work", "Home"), allLabels(listOf(note("a", listOf("Work")), note("b", listOf("Work", "Home")))))
+    }
+}
+
+class TodayRulesTest {
+    private val today = LocalDate.parse("2026-10-23")
+    private fun task(id: String, due: String? = null, priority: String = "medium", energy: Int? = null, parent: String? = null, created: String = "2026-10-01T09:00:00Z", status: String = "todo", minutes: Int? = null, position: Int = 0, postponed: Int = 0, updated: String? = null) =
+        Task(id = id, title = id, dueDate = due, priority = priority, energy = energy, parentTaskId = parent, createdAt = created, status = status, estimatedMinutes = minutes, position = position, postponedCount = postponed, updatedAt = updated ?: created)
+
+    @Test
+    fun theNextActionIsTheFirstOpenStepOfTheMostUrgentTask() {
+        val tasks = listOf(task("Later", "2026-10-30", "critical"), task("Late", "2026-10-20"), task("s2", parent = "Late", position = 1), task("s1", parent = "Late", position = 0))
+        val first = nextActions(tasks, today).first()
+        assertEquals("s1", first.item.id)
+        assertEquals("Late", first.parent.id)
+    }
+
+    @Test
+    fun withinTheSameDayWhatFitsYourEnergyComesBeforePriority() {
+        val tasks = listOf(task("Heavy", "2026-10-23", "high", energy = 3), task("Light", "2026-10-23", "low", energy = 1))
+        assertEquals("Light", nextActions(tasks, today, capacity = energyCapacity(2)).first().item.id)
+        assertEquals("Heavy", nextActions(tasks, today, capacity = null).first().item.id)
+    }
+
+    @Test
+    fun aTaskMovedTwiceAndTwoWeeksOldIsStuckButNotOneWithARecentStep() {
+        val tasks = listOf(
+            task("Kaitech", created = "2026-09-20T09:00:00Z", postponed = 3),
+            task("Fresh", created = "2026-10-20T09:00:00Z", postponed = 5),
+            task("Moving", created = "2026-09-01T09:00:00Z", postponed = 2),
+            task("step", parent = "Moving", status = "completed").copy(completedAt = "2026-10-21T09:00:00Z"),
+        )
+        assertEquals(listOf("Kaitech"), stuckTasks(tasks, today).map { it.task.id })
+        assertEquals("Moved 3 times", stuckTasks(tasks, today).first().detail)
+    }
+
+    @Test
+    fun paydayOnThe31stFallsOnTheMonthsLastDay() {
+        val config = app.lifeos.kt.core.model.PaydayConfig(id = "p", schedule = "monthly", payDay = 31)
+        assertEquals(LocalDate.parse("2026-10-31"), nextPayday(config, today))
+        assertEquals(LocalDate.parse("2026-11-30"), nextPayday(config, LocalDate.parse("2026-11-02")))
+        assertEquals(LocalDate.parse("2026-09-30"), previousPayday(config, today))
+    }
+
+    @Test
+    fun leftBeforePaydayCountsEachTimeACostComesRoundAndSkipsCredit() {
+        val cash = Account(id = "cash", name = "Cash", openingBalance = 5000.0)
+        val card = Account(id = "card", name = "Card", type = "credit", openingBalance = 9000.0)
+        val gym = app.lifeos.kt.core.model.RecurringCost(id = "g", name = "Gym", amount = -100.0, frequency = "weekly", nextDueDate = "2026-10-24")
+        val totals = availableBeforePayday(listOf(cash, card), emptyList(), listOf(gym), LocalDate.parse("2026-11-07"), 500.0)
+        assertEquals(5000.0, totals.liquid, 0.0)
+        assertEquals(listOf("2026-10-24", "2026-10-31", "2026-11-07"), totals.upcoming.single().dates)
+        assertEquals(300.0, totals.committed, 0.0)
+        assertEquals(4200.0, totals.available, 0.0)
+    }
+
+    @Test
+    fun theRingCountsOnlyWhatWasPlannedForToday() {
+        val tasks = listOf(task("due", "2026-10-23"), task("done", "2026-10-23", status = "completed").copy(completedAt = "2026-10-23T08:00:00Z"), task("later", "2026-10-30"))
+        val ring = todayRing(today, tasks, emptyList(), emptyList(), 2, null, ZoneOffset.UTC)
+        assertEquals(listOf("tasks" to (1 to 2), "prayers" to (2 to 5)), ring.map { it.key to (it.done to it.total) })
+    }
+}
+
+class MoneyFormatTest {
+    @Test
+    fun matchesTheWebsite() {
+        val egp = app.lifeos.kt.core.common.MoneyFormatter("EGP", java.util.Locale.US)
+        assertEquals("EGP 13,439", egp.format(13439.0))
+        assertEquals("-EGP 600", egp.format(-600.0))
+        assertEquals("EGP 12.50", egp.format(12.5))
+        assertEquals("1,250", app.lifeos.kt.core.common.MoneyFormatter(null, java.util.Locale.US).format(1250.0))
     }
 }

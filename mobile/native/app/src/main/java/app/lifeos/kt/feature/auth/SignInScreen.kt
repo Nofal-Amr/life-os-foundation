@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,6 +62,8 @@ data class SignInState(val pending: Boolean = false, val error: String? = null)
 class SignInViewModel @Inject constructor(private val account: AccountRepository) : ViewModel() {
     private val _state = MutableStateFlow(SignInState())
     val state: StateFlow<SignInState> = _state
+
+    fun demo() = viewModelScope.launch { account.startDemo() }
 
     fun google(result: GoogleResult) {
         when (result) {
@@ -173,6 +176,8 @@ fun SignInScreen(model: SignInViewModel = hiltViewModel()) {
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text("Continue with Google") }
+            Spacer(Modifier.height(4.dp))
+            TextButton(onClick = { haptics.tick(); model.demo() }, modifier = Modifier.fillMaxWidth()) { Text("Try the demo — sample data, nothing sent") }
         }
     }
 }

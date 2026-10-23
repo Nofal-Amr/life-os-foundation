@@ -210,7 +210,95 @@ data class UserPreferences(
     @SerialName("time_format") val timeFormat: String = "24h",
     @SerialName("week_start") val weekStart: Int = 1,
     @SerialName("enabled_modules") val enabledModules: List<String> = emptyList(),
+    @SerialName("dimension_order") val dimensionOrder: List<String>? = null,
 ) : Row
 
 @Serializable
 data class ChecklistItem(val id: String, val text: String, val done: Boolean = false)
+
+@Serializable
+data class RecurringCost(
+    override val id: String,
+    val name: String,
+    /** Signed like transactions: what leaves the account is negative. */
+    val amount: Double,
+    val active: Boolean = true,
+    val frequency: String = "monthly",
+    @SerialName("interval_count") val intervalCount: Int = 1,
+    @SerialName("interval_unit") val intervalUnit: String? = null,
+    @SerialName("next_due_date") val nextDueDate: String,
+    @SerialName("account_id") val accountId: String? = null,
+    @SerialName("category_id") val categoryId: String? = null,
+) : Row
+
+@Serializable
+data class AccountPocket(
+    override val id: String,
+    @SerialName("account_id") val accountId: String,
+    val name: String,
+    val kind: String = "cash",
+    @SerialName("opening_balance") val openingBalance: Double = 0.0,
+) : Row
+
+@Serializable
+data class PaydayConfig(
+    override val id: String,
+    val schedule: String = "monthly",
+    @SerialName("pay_day") val payDay: Int? = null,
+    @SerialName("anchor_date") val anchorDate: String? = null,
+    @SerialName("interval_weeks") val intervalWeeks: Int? = null,
+    @SerialName("safety_buffer") val safetyBuffer: Double? = null,
+    @SerialName("expected_net_amount") val expectedNetAmount: Double? = null,
+) : Row
+
+@Serializable
+data class MedicationLog(
+    override val id: String,
+    @SerialName("medication_id") val medicationId: String,
+    @SerialName("log_date") val logDate: String,
+    @SerialName("time_slot") val timeSlot: String,
+    val taken: Boolean = true,
+) : Row
+
+@Serializable
+data class FoodLog(
+    override val id: String,
+    @SerialName("log_date") val logDate: String,
+    val name: String? = null,
+    val meal: String? = null,
+    /** Already multiplied by servings, as the web app stores it. */
+    val calories: Double = 0.0,
+    val servings: Double = 1.0,
+    @SerialName("protein_g") val proteinG: Double? = null,
+    @SerialName("carbs_g") val carbsG: Double? = null,
+    @SerialName("fat_g") val fatG: Double? = null,
+) : Row
+
+@Serializable
+data class DailyReview(
+    override val id: String,
+    @SerialName("review_date") val reviewDate: String,
+    val mood: Int? = null,
+    val energy: Int? = null,
+    val wins: String? = null,
+    val challenges: String? = null,
+    val gratitude: String? = null,
+    @SerialName("tomorrow_focus") val tomorrowFocus: String? = null,
+) : Row
+
+@Serializable
+data class Profile(
+    override val id: String,
+    @SerialName("display_name") val displayName: String? = null,
+) : Row
+
+@Serializable
+data class TimeEntry(
+    override val id: String,
+    @SerialName("started_at") val startedAt: String,
+    @SerialName("ended_at") val endedAt: String? = null,
+    @SerialName("task_id") val taskId: String? = null,
+    @SerialName("activity_id") val activityId: String? = null,
+    val label: String? = null,
+    val note: String? = null,
+) : Row

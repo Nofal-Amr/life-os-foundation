@@ -38,24 +38,31 @@ fun friendlyDate(iso: String?, today: LocalDate = LocalDate.now()): String? =
  * Money in the account's currency (Settings on the website), or a plain
  * number when none is set. Negative values keep their minus sign.
  */
-class MoneyFormatter(currencyCode: String?) {
+class MoneyFormatter(currencyCode: String?, private val locale: java.util.Locale = java.util.Locale.getDefault()) {
     private val code = currencyCode?.takeIf { it.isNotBlank() }
-    private val format: NumberFormat = if (code != null) {
-        NumberFormat.getCurrencyInstance().apply {
-            runCatching { currency = Currency.getInstance(code) }
-            maximumFractionDigits = 2
+
+    /**
+     * As the web's formatMoney: decimals only when there's a fraction, and
+     * then always two; a code without a symbol is spaced from the number
+     * ("EGP 13,439", "-EGP 600").
+     */
+    fun format(value: Double): String {
+        val rounded = Math.round(value * 100) / 100.0
+        val digits = if (rounded % 1.0 == 0.0) 0 else 2
+        val format = if (code != null) {
+            NumberFormat.getCurrencyInstance(locale).apply { runCatching { currency = Currency.getInstance(code) } }
+        } else {
+            NumberFormat.getNumberInstance(locale)
         }
-    } else {
-        NumberFormat.getNumberInstance().apply { maximumFractionDigits = 2 }
+        format.minimumFractionDigits = digits
+        format.maximumFractionDigits = digits
+        return format.format(rounded).replace(Regex("^(-?)([A-Z]{3})(?=\\d)"), "$1$2" + NBSP)
     }
 
-    fun format(value: Double): String = format.format(value)
+    /** The same, kept for older call sites. */
+    fun short(value: Double): String = format(value)
 
-    /** Without fractions when they're zero: 1,250 instead of 1,250.00. */
-    fun short(value: Double): String {
-        val copy = format.clone() as NumberFormat
-        if (value % 1.0 == 0.0) copy.minimumFractionDigits = 0
-        copy.maximumFractionDigits = if (value % 1.0 == 0.0) 0 else 2
-        return copy.format(value)
+    private companion object {
+        const val NBSP = ' '
     }
 }

@@ -54,6 +54,14 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) : Sy
     val vaultWrapped: Flow<String?> = store.data.map { it[VAULT_WRAPPED] }
     suspend fun setVaultWrapped(value: String?) = store.edit { if (value == null) it.remove(VAULT_WRAPPED) else it[VAULT_WRAPPED] = value }
 
+    /** A running focus session as JSON (startedAt, minutes, habit to tick); null when none. */
+    val focusSession: Flow<String?> = store.data.map { it[FOCUS_SESSION] }
+    suspend fun setFocusSession(json: String?) = store.edit { if (json == null) it.remove(FOCUS_SESSION) else it[FOCUS_SESSION] = json }
+
+    /** "Not today" on a stuck task: task id → the day it was hidden. */
+    val stuckSnoozes: Flow<String?> = store.data.map { it[STUCK_SNOOZE] }
+    suspend fun setStuckSnoozes(json: String) = store.edit { it[STUCK_SNOOZE] = json }
+
     suspend fun clearAccountData() = store.edit {
         it.remove(OWNER)
         it.remove(LAST_SYNCED)
@@ -68,5 +76,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) : Sy
         val HAPTICS = booleanPreferencesKey("haptics")
         val NOTES_FOCUS = stringPreferencesKey("notesFocus")
         val VAULT_WRAPPED = stringPreferencesKey("vaultWrapped")
+        val FOCUS_SESSION = stringPreferencesKey("focusSession")
+        val STUCK_SNOOZE = stringPreferencesKey("stuckSnooze")
     }
 }

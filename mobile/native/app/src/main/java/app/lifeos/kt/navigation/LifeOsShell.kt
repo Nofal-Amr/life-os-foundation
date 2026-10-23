@@ -8,6 +8,16 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.outlined.Science
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -52,6 +62,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import app.lifeos.kt.AppViewModel
 import app.lifeos.kt.core.designsystem.LocalSnackbar
+import app.lifeos.kt.core.designsystem.LocalStatusBarHandled
 import app.lifeos.kt.core.designsystem.LocalSyncStatus
 import app.lifeos.kt.core.designsystem.rememberHaptics
 import app.lifeos.kt.feature.body.BodyScreen
@@ -65,7 +76,8 @@ import kotlin.reflect.KClass
 import kotlinx.serialization.Serializable
 
 @Serializable data object TodayRoute
-@Serializable data object DoRoute
+/** Do; [openTaskId] opens that task's sheet straight away (from Today). */
+@Serializable data class DoRoute(val openTaskId: String? = null)
 @Serializable data object MoneyRoute
 @Serializable data object BodyRoute
 @Serializable data object SpiritRoute
@@ -75,7 +87,7 @@ import kotlinx.serialization.Serializable
 /** The five sections at the bottom, as in the web app, plus More for the tools. */
 enum class Section(val label: String, val route: Any, val routeClass: KClass<*>, val icon: ImageVector, val selectedIcon: ImageVector) {
     Today("Today", TodayRoute, TodayRoute::class, Icons.Outlined.Dashboard, Icons.Filled.Dashboard),
-    Do("Do", DoRoute, DoRoute::class, Icons.Outlined.CheckBox, Icons.Filled.CheckBox),
+    Do("Do", DoRoute(), DoRoute::class, Icons.Outlined.CheckBox, Icons.Filled.CheckBox),
     Money("Money", MoneyRoute, MoneyRoute::class, Icons.Outlined.AccountBalanceWallet, Icons.Filled.AccountBalanceWallet),
     Body("Body", BodyRoute, BodyRoute::class, Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite),
     Spirit("Spirit", SpiritRoute, SpiritRoute::class, Icons.Outlined.DarkMode, Icons.Filled.DarkMode),
@@ -100,7 +112,11 @@ fun LifeOsShell(app: AppViewModel) {
             snackbarHost = { SnackbarHost(snackbar) },
             bottomBar = { BottomBar(nav) },
         ) { padding ->
-            Box(Modifier.fillMaxSize().padding(padding)) {
+            val demo by app.isDemo.collectAsStateWithLifecycle()
+            Column(Modifier.fillMaxSize().padding(padding)) {
+                if (demo) DemoBar(reset = app::resetDemo, exit = app::exitDemo)
+            CompositionLocalProvider(LocalStatusBarHandled provides demo) {
+            Box(Modifier.weight(1f).fillMaxWidth()) {
                 NavHost(
                     navController = nav,
                     startDestination = TodayRoute,
@@ -109,8 +125,14 @@ fun LifeOsShell(app: AppViewModel) {
                     popEnterTransition = sectionEnter,
                     popExitTransition = sectionExit,
                 ) {
-                    composable<TodayRoute> { TodayScreen(open = { nav.goToSection(it) }) }
-                    composable<DoRoute> { TasksScreen() }
+                    composable<TodayRoute> {
+                        TodayScreen(
+                            open = { nav.goToSection(it) },
+                            openTool = { nav.navigate(ToolRoute(it)) },
+                            openTask = { nav.navigate(DoRoute(it)) { launchSingleTop = true } },
+                        )
+                    }
+                    composable<DoRoute> { entry -> TasksScreen(openTaskId = entry.toRoute<DoRoute>().openTaskId) }
                     composable<MoneyRoute> { MoneyScreen() }
                     composable<BodyRoute> { BodyScreen() }
                     composable<SpiritRoute> { SpiritScreen() }
@@ -122,6 +144,8 @@ fun LifeOsShell(app: AppViewModel) {
                         popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(260)) + fadeOut(tween(260)) },
                     ) { entry -> ToolScreen(entry.toRoute<ToolRoute>().key, close = { nav.popBackStack() }) }
                 }
+            }
+            }
             }
         }
     }
@@ -156,3 +180,18 @@ private fun BottomBar(nav: NavHostController) {
     }
 }
 
+
+/** Demo mode, said plainly at the top, with a way back to the start and a way out. */
+@Composable
+private fun DemoBar(reset: () -> Unit, exit: () -> Unit) {
+    val haptics = rememberHaptics()
+    androidx.compose.material3.Surface(color = MaterialTheme.colorScheme.secondaryContainer) {
+        Row(Modifier.fillMaxWidth().statusBarsPadding().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.Science, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Spacer(Modifier.width(8.dp))
+            Text("Demo · nothing is sent", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.weight(1f))
+            TextButton(onClick = { haptics.tick(); reset() }) { Text("Reset") }
+            TextButton(onClick = { haptics.tick(); exit() }) { Text("Exit demo") }
+        }
+    }
+}

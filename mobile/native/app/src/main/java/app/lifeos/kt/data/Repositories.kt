@@ -2,6 +2,14 @@ package app.lifeos.kt.data
 
 import app.lifeos.kt.core.common.nowIso
 import app.lifeos.kt.core.model.Account
+import app.lifeos.kt.core.model.AccountPocket
+import app.lifeos.kt.core.model.DailyReview
+import app.lifeos.kt.core.model.FoodLog
+import app.lifeos.kt.core.model.MedicationLog
+import app.lifeos.kt.core.model.PaydayConfig
+import app.lifeos.kt.core.model.Profile
+import app.lifeos.kt.core.model.RecurringCost
+import app.lifeos.kt.core.model.TimeEntry
 import app.lifeos.kt.core.model.CalendarEvent
 import app.lifeos.kt.core.model.FinanceCategory
 import app.lifeos.kt.core.model.Goal
@@ -21,6 +29,7 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 fun newId(): String = UUID.randomUUID().toString()
@@ -62,6 +71,11 @@ class PlanRepository @Inject constructor(private val store: LocalStore) {
     val goals: Flow<List<Goal>> = store.observe("goals", Goal.serializer())
     val habits: Flow<List<Habit>> = store.observe("habits", Habit.serializer())
     val habitLogs: Flow<List<HabitLog>> = store.observe("habit_logs", HabitLog.serializer())
+
+    /** Marks a habit done for a day if it isn't already (a finished focus session ticks it). */
+    suspend fun markHabitDone(habit: Habit, date: String) {
+        if (habitLogs.first().none { it.habitId == habit.id && it.logDate == date }) store.save("habit_logs", HabitLog.serializer(), HabitLog(newId(), habit.id, date))
+    }
 
     /** Marks a habit for a day, or clears the mark. */
     suspend fun toggleHabit(habit: Habit, date: String, logs: List<HabitLog>) {
@@ -128,4 +142,41 @@ class PlannerRepository @Inject constructor(private val store: LocalStore) {
 @Singleton
 class PreferencesRepository @Inject constructor(store: LocalStore) {
     val preferences: Flow<UserPreferences?> = store.observe("user_preferences", UserPreferences.serializer()).map { it.firstOrNull() }
+}
+
+@Singleton
+class TodayRepository @Inject constructor(private val store: LocalStore) {
+    val pockets: Flow<List<AccountPocket>> = store.observe("account_pockets", AccountPocket.serializer())
+    val recurring: Flow<List<RecurringCost>> = store.observe("recurring_costs", RecurringCost.serializer())
+    val payday: Flow<PaydayConfig?> = store.observe("payday_config", PaydayConfig.serializer()).map { it.firstOrNull() }
+    val medicationLogs: Flow<List<MedicationLog>> = store.observe("medication_logs", MedicationLog.serializer())
+    val foodLogs: Flow<List<FoodLog>> = store.observe("food_logs", FoodLog.serializer())
+    val reviews: Flow<List<DailyReview>> = store.observe("daily_reviews", DailyReview.serializer())
+    val profile: Flow<Profile?> = store.observe("profiles", Profile.serializer()).map { it.firstOrNull() }
+
+    /** Marks a scheduled dose taken, or not (the web keeps one row per medicine, day and time). */
+    suspend fun setDose(medicationId: String, date: String, slot: String, taken: Boolean, logs: List<MedicationLog>) {
+        val existing = logs.firstOrNull { it.medicationId == medicationId && it.logDate == date && it.timeSlot == slot }
+        store.save("medication_logs", MedicationLog.serializer(), (existing ?: MedicationLog(newId(), medicationId, date, slot)).copy(taken = taken))
+    }
+
+    /** The two-tap check-in: only mood and/or energy, so a written review for the day is never overwritten. */
+    suspend fun saveCheckIn(date: String, reviews: List<DailyReview>, change: (DailyReview) -> DailyReview) {
+        val existing = reviews.firstOrNull { it.reviewDate == date } ?: DailyReview(newId(), date)
+        store.save("daily_reviews", DailyReview.serializer(), change(existing))
+    }
+}
+
+@Singleton
+class TimerRepository @Inject constructor(private val store: LocalStore) {
+    val entries: Flow<List<TimeEntry>> = store.observe("time_entries", TimeEntry.serializer())
+    val running: Flow<TimeEntry?> = entries.map { list -> list.filter { it.endedAt == null }.maxByOrNull { it.startedAt } }
+
+    /** Starts timing; whatever was running stops first (one timer at a time, as on the web). */
+    suspend fun start(taskId: String?, label: String, all: List<TimeEntry>) {
+        all.filter { it.endedAt == null }.forEach { store.save("time_entries", TimeEntry.serializer(), it.copy(endedAt = nowIso())) }
+        store.save("time_entries", TimeEntry.serializer(), TimeEntry(newId(), startedAt = nowIso(), taskId = taskId, label = label))
+    }
+
+    suspend fun stop(entry: TimeEntry) = store.save("time_entries", TimeEntry.serializer(), entry.copy(endedAt = nowIso()))
 }
