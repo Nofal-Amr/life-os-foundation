@@ -21,6 +21,8 @@ export const GOOGLE_CLIENT_ID =
 /** Where the Android app sends Google sign-in (a real origin Google accepts). */
 export const WEB_ORIGIN = "https://lifeos0.vercel.app";
 export const ANDROID_CALLBACK = "lifeos://auth-callback";
+/** The native (Kotlin) Android app, which installs beside the web-view one. */
+export const NATIVE_CALLBACK = "lifeosnative://auth-callback";
 /** Query flag on /auth meaning "sign in here, then return to the app". */
 export const HANDOFF_PARAM = "handoff";
 
@@ -87,13 +89,16 @@ export async function makeNonce(): Promise<{ raw: string; hashed: string }> {
  * The deep link that gives a session to the Android app, in the fragment
  * format Supabase's own redirect used (the app's /auth page reads it).
  */
-export function handoffUrl(session: {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  expires_at?: number;
-  token_type: string;
-}): string {
+export function handoffUrl(
+  session: {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+    expires_at?: number;
+    token_type: string;
+  },
+  callback: string = ANDROID_CALLBACK,
+): string {
   const params = new URLSearchParams({
     access_token: session.access_token,
     refresh_token: session.refresh_token,
@@ -101,5 +106,5 @@ export function handoffUrl(session: {
     token_type: session.token_type,
   });
   if (session.expires_at) params.set("expires_at", String(session.expires_at));
-  return `${ANDROID_CALLBACK}#${params.toString()}`;
+  return `${callback}#${params.toString()}`;
 }

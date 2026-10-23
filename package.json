@@ -14,6 +14,7 @@
     "build:android": "node mobile/android/build.mjs",
     "build:android:full": "node mobile/android/build.mjs --full",
     "build:wear": "node mobile/wear/build.mjs",
+    "build:native": "node mobile/native/build.mjs",
     "test:android": "node mobile/android/test.mjs",
     "test:e2e": "playwright test"
   },

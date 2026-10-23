@@ -12,6 +12,7 @@ import {
   ANDROID_CALLBACK,
   GOOGLE_CLIENT_ID,
   HANDOFF_PARAM,
+  NATIVE_CALLBACK,
   WEB_ORIGIN,
   handoffUrl,
   loadGoogleIdentity,
@@ -63,10 +64,12 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
-  // Opened from the Android app: sign in here, then give the session back to it.
-  const [handoff] = useState(
-    () => new URLSearchParams(window.location.search).get(HANDOFF_PARAM) === "android",
-  );
+  // Opened from an Android app (web-view or native): sign in here, then give
+  // the session back to it.
+  const [handoff] = useState(() => {
+    const value = new URLSearchParams(window.location.search).get(HANDOFF_PARAM);
+    return value === "android" || value === "native" ? value : null;
+  });
   const [handedOff, setHandedOff] = useState<string | null>(null);
   const agent = typeof navigator !== "undefined" ? navigator.userAgent : "";
   const inAndroid = agent.includes(ANDROID_APP_UA);
@@ -77,7 +80,7 @@ function AuthPage() {
 
   /** Sends the session to the app and forgets it here, so only the app refreshes it. */
   async function returnToApp(session: Session) {
-    const url = handoffUrl(session);
+    const url = handoffUrl(session, handoff === "native" ? NATIVE_CALLBACK : ANDROID_CALLBACK);
     await supabase.auth.signOut({ scope: "local" });
     setHandedOff(url);
     window.location.href = url;

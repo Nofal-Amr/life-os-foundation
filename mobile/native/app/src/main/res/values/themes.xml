@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Life OS</string>
+    <!-- The window colour before Compose draws, so opening never flashes. -->
+    <style name="Theme.LifeOs" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#F8F9FB</item>
+    </style>
+</resources>

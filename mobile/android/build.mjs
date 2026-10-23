@@ -82,10 +82,10 @@ if (!existsSync(join(web, "index.html")))
 
 // Clear the contents rather than the folder, which Windows may hold open.
 if (existsSync(out)) {
-  // Keep the other builds' finished APKs (standard, Full and the watch app
+  // Keep the other builds' finished APKs (standard, Full, native and the watch app
   // share this folder).
   for (const entry of readdirSync(out)) {
-    if (/^life-os-(debug|full|wear)\.apk$/.test(entry)) continue;
+    if (/^life-os-(debug|full|wear|native)\.apk$/.test(entry)) continue;
     rmSync(join(out, entry), { recursive: true, force: true });
   }
 }
