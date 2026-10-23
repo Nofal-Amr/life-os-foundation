@@ -11,6 +11,9 @@ import app.lifeos.kt.core.model.Profile
 import app.lifeos.kt.core.model.RecurringCost
 import app.lifeos.kt.core.model.TimeEntry
 import app.lifeos.kt.core.model.CalendarEvent
+import app.lifeos.kt.core.model.Capability
+import app.lifeos.kt.core.model.Evidence
+import app.lifeos.kt.data.logic.nextRepeatDate
 import app.lifeos.kt.core.model.FinanceCategory
 import app.lifeos.kt.core.model.Goal
 import app.lifeos.kt.core.model.Habit
@@ -41,9 +44,51 @@ class TaskRepository @Inject constructor(private val store: LocalStore) {
     suspend fun add(title: String, dueDate: String?, projectId: String? = null, parentTaskId: String? = null) =
         save(Task(id = newId(), title = title.trim(), dueDate = dueDate, projectId = projectId, parentTaskId = parentTaskId))
 
-    suspend fun setDone(task: Task, done: Boolean) = save(
-        task.copy(status = if (done) "completed" else "todo", completedAt = if (done) nowIso() else null),
-    )
+    /**
+     * Finishing a task (as the web does): its evidence is logged, and a
+     * repeating one hands its repeat on to a new task on the next date.
+     * Returns what was created, so Undo can take it all back.
+     */
+    suspend fun setDone(task: Task, done: Boolean): Created {
+        val created = mutableListOf<Pair<String, String>>()
+        if (!done) {
+            save(task.copy(status = "todo", completedAt = null))
+            return Created(created)
+        }
+        val repeat = task.repeat?.takeIf { task.parentTaskId == null }
+        save(task.copy(status = "completed", completedAt = nowIso(), repeat = if (repeat != null) null else task.repeat))
+        val evidence = Evidence(newId(), taskId = task.id, capabilityId = task.capabilityId, projectId = task.projectId, goalId = task.goalId)
+        store.save("evidence", Evidence.serializer(), evidence)
+        created += "evidence" to evidence.id
+        if (repeat != null) {
+            val next = Task(
+                id = newId(), title = task.title, description = task.description, status = "todo", priority = task.priority,
+                dueDate = nextRepeatDate(task.dueDate ?: java.time.LocalDate.now().toString(), repeat), dueTime = task.dueTime, repeat = repeat,
+                projectId = task.projectId, capabilityId = task.capabilityId, goalId = task.goalId,
+                estimatedMinutes = task.estimatedMinutes, estimateUnit = task.estimateUnit, energy = task.energy,
+            )
+            save(next)
+            created += "tasks" to next.id
+        }
+        return Created(created)
+    }
+
+    /** Takes back what finishing created (Undo). */
+    suspend fun discard(created: Created) = created.rows.forEach { (table, id) -> store.delete(table, id) }
+
+    /** A copy starts clean: no dates, no completion, no move history; its steps come along. */
+    suspend fun duplicate(task: Task, steps: List<Task>): Task {
+        val copy = Task(
+            id = newId(), title = task.title, description = task.description, status = if (task.status == "completed") "todo" else task.status,
+            priority = task.priority, projectId = task.projectId, capabilityId = task.capabilityId, goalId = task.goalId,
+            estimatedMinutes = task.estimatedMinutes, estimateUnit = task.estimateUnit ?: "minutes", energy = task.energy,
+        )
+        save(copy)
+        steps.forEachIndexed { index, step ->
+            save(Task(id = newId(), title = step.title, status = "todo", parentTaskId = copy.id, position = index, estimatedMinutes = step.estimatedMinutes, projectId = copy.projectId))
+        }
+        return copy
+    }
 
     /** A new due date; moving it later is recorded as information only, as the web app does. */
     suspend fun moveTo(task: Task, date: String?) = save(postponed(task, date))
@@ -71,6 +116,22 @@ class PlanRepository @Inject constructor(private val store: LocalStore) {
     val goals: Flow<List<Goal>> = store.observe("goals", Goal.serializer())
     val habits: Flow<List<Habit>> = store.observe("habits", Habit.serializer())
     val habitLogs: Flow<List<HabitLog>> = store.observe("habit_logs", HabitLog.serializer())
+
+    suspend fun save(project: Project) = store.save("projects", Project.serializer(), project)
+    suspend fun delete(project: Project) = store.delete("projects", project.id)
+    suspend fun save(goal: Goal) = store.save("goals", Goal.serializer(), goal)
+    suspend fun delete(goal: Goal) = store.delete("goals", goal.id)
+    suspend fun save(habit: Habit) = store.save("habits", Habit.serializer(), habit)
+    suspend fun delete(habit: Habit) = store.delete("habits", habit.id)
+
+    /** A ready-made plan: an ordinary project and its dated tasks, from today. */
+    suspend fun startPlan(plan: app.lifeos.kt.data.logic.Plan, start: java.time.LocalDate): Int {
+        val tasks = app.lifeos.kt.data.logic.planTasks(plan, start)
+        val project = Project(newId(), plan.name, description = plan.summary, status = "active", startDate = start.toString(), dueDate = tasks.lastOrNull()?.second, icon = plan.icon)
+        save(project)
+        tasks.forEachIndexed { i, (title, due) -> store.save("tasks", Task.serializer(), Task(newId(), title, status = "todo", dueDate = due, projectId = project.id, position = i)) }
+        return tasks.size
+    }
 
     /** Marks a habit done for a day if it isn't already (a finished focus session ticks it). */
     suspend fun markHabitDone(habit: Habit, date: String) {
@@ -179,4 +240,22 @@ class TimerRepository @Inject constructor(private val store: LocalStore) {
     }
 
     suspend fun stop(entry: TimeEntry) = store.save("time_entries", TimeEntry.serializer(), entry.copy(endedAt = nowIso()))
+}
+
+/** What an action created, so Undo can remove it again. */
+data class Created(val rows: List<Pair<String, String>>)
+
+@Singleton
+class CapabilityRepository @Inject constructor(private val store: LocalStore) {
+    val capabilities: Flow<List<Capability>> = store.observe("capabilities", Capability.serializer())
+    val evidence: Flow<List<Evidence>> = store.observe("evidence", Evidence.serializer())
+
+    suspend fun save(capability: Capability) = store.save("capabilities", Capability.serializer(), capability)
+    suspend fun delete(capability: Capability) = store.delete("capabilities", capability.id)
+
+    /** "What did this build?": the evidence row for a finished task, with a capability and note. */
+    suspend fun linkEvidence(task: Task, capabilityId: String?, note: String?, all: List<Evidence>) {
+        val existing = all.firstOrNull { it.taskId == task.id }
+        store.save("evidence", Evidence.serializer(), (existing ?: Evidence(newId(), taskId = task.id, projectId = task.projectId, goalId = task.goalId)).copy(capabilityId = capabilityId, note = note))
+    }
 }

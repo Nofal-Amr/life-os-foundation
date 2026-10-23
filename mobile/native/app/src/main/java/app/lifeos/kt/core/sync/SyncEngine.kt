@@ -38,6 +38,8 @@ val SYNCED_TABLES = listOf(
     SyncedTable("user_preferences", "user_id"),
     SyncedTable("tasks"),
     SyncedTable("projects"),
+    SyncedTable("capabilities"),
+    SyncedTable("evidence"),
     SyncedTable("goals"),
     SyncedTable("habits"),
     SyncedTable("habit_logs", "habit_id,log_date"),

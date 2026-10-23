@@ -240,9 +240,14 @@ class TodayViewModel @Inject constructor(
 
     /* ------------------------------ actions ------------------------------ */
 
-    fun finish(task: Task) = viewModelScope.launch { tasks.setDone(task, true) }
+    private val created = mutableMapOf<String, app.lifeos.kt.data.Created>()
+    fun finish(task: Task) = viewModelScope.launch { created[task.id] = tasks.setDone(task, true) }
     fun add(title: String, due: String?) = viewModelScope.launch { tasks.add(title, due) }
-    fun restore(task: Task) = viewModelScope.launch { tasks.restore(task) }
+    /** Undo: the task as it was, and whatever finishing it created (its evidence, the next repeat). */
+    fun restore(task: Task) = viewModelScope.launch {
+        tasks.restore(task)
+        created.remove(task.id)?.let { tasks.discard(it) }
+    }
 
     fun setPrayer(name: String, status: String?) = viewModelScope.launch {
         val s = state.value ?: return@launch

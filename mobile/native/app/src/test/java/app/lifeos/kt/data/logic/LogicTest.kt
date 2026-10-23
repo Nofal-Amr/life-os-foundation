@@ -230,3 +230,62 @@ class MoneyFormatTest {
         assertEquals("1,250", app.lifeos.kt.core.common.MoneyFormatter(null, java.util.Locale.US).format(1250.0))
     }
 }
+
+class DoRulesTest {
+    private val today = LocalDate.parse("2026-10-23") // a Friday
+    private fun task(id: String, due: String? = null, status: String = "todo", completedAt: String? = null, parent: String? = null) =
+        Task(id = id, title = id, dueDate = due, status = status, completedAt = completedAt, parentTaskId = parent)
+
+    @Test
+    fun filtersMatchTheWebsite() {
+        val tasks = listOf(task("today", "2026-10-23"), task("later", "2026-10-30"), task("before", "2026-10-01"), task("unsorted", status = "inbox"), task("done", "2026-10-23", "completed"), task("step", "2026-10-23", parent = "today"))
+        assertEquals(listOf("today"), filterTasks(tasks, TaskFilter.Today, today).map { it.id })
+        assertEquals(listOf("later"), filterTasks(tasks, TaskFilter.Upcoming, today).map { it.id })
+        assertEquals(listOf("before"), filterTasks(tasks, TaskFilter.Earlier, today).map { it.id })
+        assertEquals(listOf("unsorted"), filterTasks(tasks, TaskFilter.Unsorted, today).map { it.id })
+        assertEquals(listOf("done"), filterTasks(tasks, TaskFilter.Completed, today).map { it.id })
+        assertEquals(5, filterTasks(tasks, TaskFilter.All, today).size)
+    }
+
+    @Test
+    fun repeatsLandOnTheNextRealDate() {
+        assertEquals("2026-10-25", nextRepeatDate("2026-10-23", "weekdays")) // Friday → Sunday, skipping the weekend
+        assertEquals("2026-02-28", nextRepeatDate("2026-01-31", "monthly"))
+        assertEquals("2026-10-30", nextRepeatDate("2026-10-23", "weekly"))
+        assertEquals("2026-10-24", nextRepeatDate("2026-10-23", "daily"))
+    }
+
+    @Test
+    fun aPastedListBecomesOneTaskPerLine() {
+        assertEquals(listOf("Milk", "Call the bank", "Pay rent"), splitTaskLines("- Milk\n2. Call the bank\n\n• Pay rent  "))
+    }
+
+    @Test
+    fun weeklyCountsDropLeadingEmptyWeeksAndSkipSteps() {
+        val tasks = listOf(
+            task("a", status = "completed", completedAt = "2026-10-21T10:00:00Z"),
+            task("b", status = "completed", completedAt = "2026-10-13T10:00:00Z"),
+            task("s", status = "completed", completedAt = "2026-10-13T10:00:00Z", parent = "b"),
+        )
+        val weeks = tasksCompletedPerWeek(tasks, today, zone = ZoneOffset.UTC)
+        assertEquals(listOf(LocalDate.parse("2026-10-12") to 1, LocalDate.parse("2026-10-19") to 1), weeks)
+    }
+
+    @Test
+    fun habitAreasAreGuessedFromTheName() {
+        assertEquals("home", guessHabitCategory("Water the plants"))
+        assertEquals("health", guessHabitCategory("Walk 30 minutes"))
+        assertEquals("mind", guessHabitCategory("Read 10 pages"))
+        assertEquals("other", guessHabitCategory("No phone after 11pm"))
+        assertEquals("spirit", habitCategory("Anything", "spirit"))
+    }
+
+    @Test
+    fun aPlanSpreadsItsTasksFromToday() {
+        val plan = PLANS.first { it.id == "declutter-7" }
+        val tasks = planTasks(plan, today)
+        assertEquals(7, tasks.size)
+        assertEquals("Clear the entrance and shoes" to "2026-10-23", tasks.first())
+        assertEquals("2026-10-29", tasks.last().second)
+    }
+}

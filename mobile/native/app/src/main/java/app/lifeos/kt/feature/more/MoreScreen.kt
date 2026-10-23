@@ -72,10 +72,8 @@ data class Tool(val key: String, val label: String, val icon: ImageVector, val n
 
 val TOOLS = listOf(
     Tool("calendar", "Calendar", Icons.Outlined.CalendarMonth, true, "/calendar"),
-    Tool("habits", "Habits", Icons.Outlined.Repeat, true, "/habits"),
     Tool("notes", "Notes", Icons.Outlined.EditNote, true, "/notes"),
     Tool("reminders", "Reminders", Icons.Outlined.Alarm, true, "/reminders"),
-    Tool("projects", "Projects & goals", Icons.Outlined.Flag, true, "/projects"),
     Tool("work", "Work", Icons.Outlined.Work, false, "/work"),
     Tool("study", "Study", Icons.Outlined.School, false, "/study"),
     Tool("messages", "Messages", Icons.Outlined.ChatBubbleOutline, false, "/messages"),
@@ -184,10 +182,8 @@ fun ToolScreen(key: String, close: () -> Unit) {
     val back: @Composable () -> Unit = { IconButton(onClick = close) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } }
     when (key) {
         "calendar" -> CalendarTool(back)
-        "habits" -> HabitsTool(back)
         "notes" -> app.lifeos.kt.feature.notes.NotesScreen(back)
         "reminders" -> RemindersTool(back)
-        "projects" -> ProjectsTool(back)
         else -> WebsiteOnly(tool, back)
     }
 }

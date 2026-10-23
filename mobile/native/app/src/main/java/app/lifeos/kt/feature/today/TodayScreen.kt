@@ -319,6 +319,6 @@ fun TodayScreen(open: (Section) -> Unit, openTool: (String) -> Unit, openTask: (
     }
     if (breathing) BreathingSheet(close = { breathing = false })
     if (breakdown && s.money.payday != null) MoneyBreakdownSheet(s.money.totals, s.money.payday, s.formatter, close = { breakdown = false })
-    if (adding) AddTaskSheet(s.today, close = { adding = false }, add = model::add)
+    if (adding) AddTaskSheet(s.today, close = { adding = false }, addMany = { titles, due -> titles.forEach { model.add(it, due) } })
 }
 

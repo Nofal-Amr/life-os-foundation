@@ -187,36 +187,6 @@ fun CalendarTool(back: @Composable () -> Unit, model: ToolsViewModel = hiltViewM
     }
 }
 
-/* -------------------------------- Habits -------------------------------- */
-
-/** Active habits: tap to mark today, tap again to undo. Weekly ones show this week's count. */
-@Composable
-fun HabitsTool(back: @Composable () -> Unit, model: ToolsViewModel = hiltViewModel()) {
-    val state by model.state.collectAsStateWithLifecycle()
-    val haptics = rememberHaptics()
-    LifePage(title = "Habits", navigationIcon = back) {
-        val s = state ?: run { items(4) { Skeleton(height = 64.dp) }; return@LifePage }
-        val today = LocalDate.now().toString()
-        val weekStart = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
-        val active = s.habits.filter { it.active }.sortedBy { it.name.lowercase() }
-        if (active.isEmpty()) item { EmptyState(Icons.Outlined.Repeat, "No habits yet", "Add habits on the website for now; you can mark them here, offline too.") }
-        items(active, key = { it.id }) { habit ->
-            val done = s.habitLogs.any { it.habitId == habit.id && it.logDate == today }
-            val thisWeek = s.habitLogs.count { it.habitId == habit.id && it.logDate >= weekStart }
-            LifeCard(Modifier.animateItem(), onClick = { if (!done) haptics.confirm(); model.toggleHabit(habit) }, color = if (done) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(if (done) Icons.Filled.CheckCircle else Icons.Outlined.Circle, null, tint = if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(habit.name, style = MaterialTheme.typography.bodyLarge)
-                        Muted(if (habit.frequency == "weekly") "$thisWeek of ${habit.target} this week" else if (done) "Done today" else "Today", style = MaterialTheme.typography.bodySmall)
-                    }
-                }
-            }
-        }
-    }
-}
-
 /* ------------------------------- Reminders ------------------------------ */
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -306,56 +276,3 @@ fun RemindersTool(back: @Composable () -> Unit, model: ToolsViewModel = hiltView
     }
 }
 
-/* --------------------------- Projects & goals --------------------------- */
-
-@Composable
-fun ProjectsTool(back: @Composable () -> Unit, model: ToolsViewModel = hiltViewModel()) {
-    val state by model.state.collectAsStateWithLifecycle()
-    LifePage(title = "Projects & goals", navigationIcon = back) {
-        val s = state ?: run { items(3) { Skeleton() }; return@LifePage }
-        val projects = s.projects.filter { it.status !in setOf("completed", "archived") }.sortedBy { it.name.lowercase() }
-        val goals = s.goals.filter { it.status !in setOf("completed", "archived") }.sortedBy { it.name.lowercase() }
-        item { SectionHeader("Projects") }
-        if (projects.isEmpty()) item { Muted("No open projects", Modifier.padding(start = 4.dp)) }
-        items(projects, key = { "p" + it.id }) { project ->
-            val open = s.tasks.filter { it.projectId == project.id && it.parentTaskId == null }
-            val done = open.count { !it.isOpen() }
-            LifeCard(Modifier.animateItem()) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconBadge(Icons.Outlined.Flag, size = 34.dp)
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(project.name, style = MaterialTheme.typography.bodyLarge)
-                        Muted(
-                            listOfNotNull(
-                                project.status.replace('_', ' ').replaceFirstChar { it.uppercase() },
-                                if (open.isNotEmpty()) "$done of ${open.size} tasks done" else null,
-                                project.dueDate?.let { "due ${friendlyDate(it)}" },
-                            ).joinToString(" · "),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-                // A real denominator: the project's own tasks.
-                if (open.isNotEmpty()) {
-                    Spacer(Modifier.height(10.dp))
-                    LinearProgressIndicator(progress = { done / open.size.toFloat() }, modifier = Modifier.fillMaxWidth())
-                }
-            }
-        }
-        item { SectionHeader("Goals") }
-        if (goals.isEmpty()) item { Muted("No open goals", Modifier.padding(start = 4.dp)) }
-        items(goals, key = { "g" + it.id }) { goal ->
-            LifeCard(Modifier.animateItem()) {
-                Eyebrow(goal.targetDate?.let { "By ${friendlyDate(it)}" } ?: "Goal")
-                Text(goal.name, style = MaterialTheme.typography.bodyLarge)
-                Spacer(Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    LinearProgressIndicator(progress = { (goal.progress / 100.0).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.weight(1f))
-                    Spacer(Modifier.width(10.dp))
-                    Text("${goal.progress.toInt()}%", style = MaterialTheme.typography.labelLarge)
-                }
-            }
-        }
-    }
-}

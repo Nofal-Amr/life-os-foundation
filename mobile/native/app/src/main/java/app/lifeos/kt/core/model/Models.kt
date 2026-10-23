@@ -29,6 +29,7 @@ data class Task(
     @SerialName("parent_task_id") val parentTaskId: String? = null,
     @SerialName("project_id") val projectId: String? = null,
     @SerialName("goal_id") val goalId: String? = null,
+    @SerialName("capability_id") val capabilityId: String? = null,
     @SerialName("estimated_minutes") val estimatedMinutes: Int? = null,
     @SerialName("estimate_unit") val estimateUnit: String? = null,
     val energy: Int? = null,
@@ -187,6 +188,7 @@ data class Project(
     @SerialName("start_date") val startDate: String? = null,
     val icon: String? = null,
     val color: String? = null,
+    @SerialName("image_url") val imageUrl: String? = null,
 ) : Row
 
 @Serializable
@@ -200,6 +202,7 @@ data class Goal(
     @SerialName("target_date") val targetDate: String? = null,
     val icon: String? = null,
     val color: String? = null,
+    val category: String? = null,
 ) : Row
 
 @Serializable
@@ -301,4 +304,26 @@ data class TimeEntry(
     @SerialName("activity_id") val activityId: String? = null,
     val label: String? = null,
     val note: String? = null,
+) : Row
+
+@Serializable
+data class Capability(
+    override val id: String,
+    val name: String,
+    val description: String? = null,
+    val icon: String? = null,
+    val color: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+) : Row
+
+/** Append-only: one row per finished task, linking it to what it built. */
+@Serializable
+data class Evidence(
+    override val id: String,
+    @SerialName("task_id") val taskId: String? = null,
+    @SerialName("capability_id") val capabilityId: String? = null,
+    @SerialName("project_id") val projectId: String? = null,
+    @SerialName("goal_id") val goalId: String? = null,
+    val note: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
 ) : Row

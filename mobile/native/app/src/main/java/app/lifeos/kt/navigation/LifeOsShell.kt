@@ -70,14 +70,14 @@ import app.lifeos.kt.feature.money.MoneyScreen
 import app.lifeos.kt.feature.more.MoreScreen
 import app.lifeos.kt.feature.more.ToolScreen
 import app.lifeos.kt.feature.spirit.SpiritScreen
-import app.lifeos.kt.feature.tasks.TasksScreen
+import app.lifeos.kt.feature.tasks.DoScreen
 import app.lifeos.kt.feature.today.TodayScreen
 import kotlin.reflect.KClass
 import kotlinx.serialization.Serializable
 
 @Serializable data object TodayRoute
 /** Do; [openTaskId] opens that task's sheet straight away (from Today). */
-@Serializable data class DoRoute(val openTaskId: String? = null)
+@Serializable data class DoRoute(val openTaskId: String? = null, val page: Int = 0)
 @Serializable data object MoneyRoute
 @Serializable data object BodyRoute
 @Serializable data object SpiritRoute
@@ -128,11 +128,11 @@ fun LifeOsShell(app: AppViewModel) {
                     composable<TodayRoute> {
                         TodayScreen(
                             open = { nav.goToSection(it) },
-                            openTool = { nav.navigate(ToolRoute(it)) },
+                            openTool = { if (it == "projects") nav.navigate(DoRoute(page = 1)) { launchSingleTop = true } else nav.navigate(ToolRoute(it)) },
                             openTask = { nav.navigate(DoRoute(it)) { launchSingleTop = true } },
                         )
                     }
-                    composable<DoRoute> { entry -> TasksScreen(openTaskId = entry.toRoute<DoRoute>().openTaskId) }
+                    composable<DoRoute> { entry -> entry.toRoute<DoRoute>().let { DoScreen(openTaskId = it.openTaskId, page = it.page) } }
                     composable<MoneyRoute> { MoneyScreen() }
                     composable<BodyRoute> { BodyScreen() }
                     composable<SpiritRoute> { SpiritScreen() }

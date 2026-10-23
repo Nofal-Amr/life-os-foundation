@@ -200,3 +200,64 @@ fun stuckTasks(tasks: List<Task>, today: LocalDate, zone: ZoneId = ZoneId.system
         StuckTask(task, age, reason)
     }.sortedByDescending { it.days }
 }
+
+/* ------------------------------ the Tasks list ------------------------------ */
+
+/** The Tasks page's filters, in the web's order; "From earlier" says what the web calls Overdue, without the verdict. */
+enum class TaskFilter(val label: String) { Today("Today"), Upcoming("Upcoming"), Earlier("From earlier"), Unsorted("Unsorted"), Completed("Completed"), All("All") }
+
+fun filterTasks(tasks: List<Task>, filter: TaskFilter, today: LocalDate): List<Task> {
+    val t = today.toString()
+    val top = topLevel(tasks)
+    return when (filter) {
+        TaskFilter.Today -> top.filter { it.isOpen() && it.dueDate == t }
+        TaskFilter.Upcoming -> top.filter { it.isOpen() && it.dueDate != null && it.dueDate > t }
+        TaskFilter.Earlier -> top.filter { it.isOpen() && it.dueDate != null && it.dueDate < t }
+        TaskFilter.Unsorted -> top.filter { it.status == "inbox" }
+        TaskFilter.Completed -> top.filter { it.status == "completed" }.sortedByDescending { it.completedAt ?: "" }
+        TaskFilter.All -> top
+    }.let { list -> if (filter == TaskFilter.Completed) list else list.sortedWith(compareBy({ it.dueDate ?: "9999" }, { it.dueTime ?: "99" }, { it.position })) }
+}
+
+/** The web's TASK_STATUSES labels. */
+val TASK_STATUSES = listOf("inbox" to "Unsorted", "todo" to "To do", "in_progress" to "In progress", "waiting" to "Waiting", "completed" to "Completed", "cancelled" to "Cancelled")
+val TASK_PRIORITIES = listOf("low" to "Low", "medium" to "Medium", "high" to "High", "critical" to "Urgent")
+val TASK_ENERGY = listOf(Triple(1, "Low", "Fine on a tired day"), Triple(2, "Medium", "Needs some focus"), Triple(3, "High", "Needs you at your best"))
+val TASK_REPEATS = listOf("daily" to "Every day", "weekdays" to "Weekdays", "weekly" to "Every week", "monthly" to "Every month")
+
+/** The next date of a repeating task. Weekdays skip Friday and Saturday (the weekend here); 31 Jan → end of Feb. */
+fun nextRepeatDate(from: String, repeat: String): String {
+    val d = LocalDate.parse(from.take(10))
+    return when (repeat) {
+        "daily" -> d.plusDays(1)
+        "weekly" -> d.plusWeeks(1)
+        "monthly" -> d.plusMonths(1)
+        else -> generateSequence(d.plusDays(1)) { it.plusDays(1) }.first { it.dayOfWeek != java.time.DayOfWeek.FRIDAY && it.dayOfWeek != java.time.DayOfWeek.SATURDAY }
+    }.toString()
+}
+
+/** Start, due and max must stay in that order. A plain message, or null. */
+fun dateOrderProblem(start: String?, due: String?, max: String?): String? = when {
+    start != null && due != null && start > due -> "Start date is after the due date."
+    due != null && max != null && due > max -> "Due date is after the max date."
+    start != null && max != null && start > max -> "Start date is after the max date."
+    else -> null
+}
+
+/** Several tasks typed or pasted at once, one per line; bullets and numbering from a copied list are dropped. */
+fun splitTaskLines(text: String, max: Int = 50): List<String> = text.split(Regex("""\r?\n"""))
+    .map { it.replace(Regex("""^\s*(?:[-*•–—]|\d+[.)])\s+"""), "").trim() }
+    .filter { it.isNotEmpty() }
+    .take(max)
+
+/** Top-level tasks completed per week (weeks from Monday), the last [count] weeks, leading empty weeks dropped. */
+fun tasksCompletedPerWeek(tasks: List<Task>, today: LocalDate, count: Int = 8, zone: ZoneId = ZoneId.systemDefault()): List<Pair<LocalDate, Int>> {
+    val current = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+    val weeks = (0 until count).map { current.minusWeeks((count - 1 - it).toLong()) }
+    val totals = tasks.filter { it.parentTaskId == null && it.status == "completed" }
+        .mapNotNull { localDateOf(it.completedAt, zone)?.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)) }
+        .groupingBy { it }.eachCount()
+    val rows = weeks.map { it to (totals[it] ?: 0) }
+    val first = rows.indexOfFirst { it.second > 0 }
+    return if (first == -1) emptyList() else rows.drop(first)
+}
