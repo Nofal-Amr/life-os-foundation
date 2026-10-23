@@ -5,4 +5,10 @@
     <style name="Theme.LifeOs" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">#F8F9FB</item>
     </style>
+    <!-- The splash: the app icon on the page colour, only while the session store opens. -->
+    <style name="Theme.LifeOs.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F8F9FB</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.LifeOs</item>
+    </style>
 </resources>

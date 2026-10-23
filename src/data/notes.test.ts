@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { toPoints } from "./notes";
+import { isLockedNote, toPoints } from "./notes";
 
 describe("toPoints", () => {
   it("makes one point per sentence and line", () => {
@@ -25,5 +25,13 @@ describe("toPoints", () => {
 
   it("ignores empty text", () => {
     expect(toPoints("  \n\n ")).toEqual([]);
+  });
+});
+
+describe("isLockedNote", () => {
+  it("knows a note the Android app encrypted, and nothing else", () => {
+    expect(isLockedNote({ body: "lifeos-vault:v1:abc.def" })).toBe(true);
+    expect(isLockedNote({ body: "my lifeos-vault:v1: note" })).toBe(false);
+    expect(isLockedNote({ body: null })).toBe(false);
   });
 });

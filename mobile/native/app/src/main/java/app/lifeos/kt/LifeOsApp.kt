@@ -1,40 +1,33 @@
 package app.lifeos.kt
 
 import android.app.Application
-import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
-import app.lifeos.kt.data.LifeOsDb
-import app.lifeos.kt.data.Rows
-import app.lifeos.kt.data.SessionData
-import app.lifeos.kt.data.SessionStore
-import app.lifeos.kt.data.Supabase
-import app.lifeos.kt.data.Sync
-import app.lifeos.kt.data.TaskRepo
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import app.lifeos.kt.core.sync.SyncEngine
+import app.lifeos.kt.core.sync.SyncWorker
+import app.lifeos.kt.core.vault.Vault
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.ProcessLifecycleOwner
+import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 
-/** Holds the app's single database, session and sync; screens get them from here. */
-class LifeOsApp : Application() {
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    lateinit var api: Supabase
-    lateinit var session: SessionStore
-    lateinit var db: LifeOsDb
-    lateinit var sync: Sync
-    lateinit var tasks: TaskRepo
-    lateinit var rows: Rows
+@HiltAndroidApp
+class LifeOsApp : Application(), Configuration.Provider {
+    @Inject lateinit var workerFactory: HiltWorkerFactory
+    @Inject lateinit var sync: SyncEngine
+    @Inject lateinit var vault: Vault
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
-        api = Supabase(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY)
-        session = SessionStore(this, api)
-        db = LifeOsDb.open(this)
-        sync = Sync(this, api, session, db.tasks(), db.rows(), scope)
-        tasks = TaskRepo(db.tasks(), sync)
-        rows = Rows(db.rows(), sync)
-
+        SyncWorker.schedule(this)
+        // Locked notes close as soon as the app leaves the screen.
+        ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) vault.lock() })
         // Back online: send what was saved on the phone meanwhile.
         getSystemService(ConnectivityManager::class.java).registerDefaultNetworkCallback(
             object : ConnectivityManager.NetworkCallback() {
@@ -42,32 +35,4 @@ class LifeOsApp : Application() {
             },
         )
     }
-
-    /** A new sign-in. Another account's data never mixes with this one's. */
-    fun signedIn(fresh: SessionData) {
-        val prefs = getSharedPreferences("owner", Context.MODE_PRIVATE)
-        val owner = prefs.getString("userId", null)
-        scope.launch {
-            if (owner != null && owner != fresh.userId) {
-                db.tasks().clear()
-                db.rows().clear()
-            }
-            prefs.edit().putString("userId", fresh.userId).apply()
-            session.save(fresh)
-            sync.request()
-        }
-    }
-
-    /** Signs out and forgets everything on this phone. */
-    fun signOut() {
-        scope.launch {
-            session.clear()
-            db.tasks().clear()
-            db.rows().clear()
-            getSharedPreferences("owner", Context.MODE_PRIVATE).edit().clear().apply()
-            getSharedPreferences("sync", Context.MODE_PRIVATE).edit().clear().apply()
-        }
-    }
 }
-
-val Context.app: LifeOsApp get() = applicationContext as LifeOsApp

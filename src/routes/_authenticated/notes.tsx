@@ -44,6 +44,7 @@ import {
   createNote,
   deleteNote,
   isEmptyNote,
+  isLockedNote,
   noteBackground,
   noteKeys,
   notesQuery,
@@ -88,6 +89,11 @@ function NotesPage() {
   const [term, setTerm] = useState("");
   const [label, setLabel] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ note: Note; isNew: boolean } | null>(null);
+  /** Locked notes open only in the Android app, where their key is. */
+  const openNote = (note: Note) =>
+    isLockedNote(note)
+      ? toast.info("This note is locked. Open it in the Life OS Android app.")
+      : setEditing({ note, isNew: false });
   const { open: openId } = Route.useSearch();
   const navigate = Route.useNavigate();
   useEffect(() => {
@@ -392,14 +398,14 @@ function NotesPage() {
             <NoteGrid
               title="Pinned"
               notes={pinned}
-              onOpen={(note) => setEditing({ note, isNew: false })}
+              onOpen={openNote}
               onPatch={patch}
             />
           ) : null}
           <NoteGrid
             title={pinned.length ? "Others" : null}
             notes={others}
-            onOpen={(note) => setEditing({ note, isNew: false })}
+            onOpen={openNote}
             onPatch={patch}
           />
         </div>
@@ -520,6 +526,8 @@ function NoteCard({
               <li className="pt-1 text-xs text-muted-foreground">+ {done.length} checked</li>
             ) : null}
           </ul>
+        ) : isLockedNote(note) ? (
+          <p className="text-sm text-muted-foreground">Locked. Open it in the Life OS Android app.</p>
         ) : note.body ? (
           <p className="line-clamp-[12] whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/85">
             {note.body}

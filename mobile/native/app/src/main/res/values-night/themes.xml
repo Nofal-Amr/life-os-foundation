@@ -3,4 +3,9 @@
     <style name="Theme.LifeOs" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">#0E1014</item>
     </style>
+    <style name="Theme.LifeOs.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0E1014</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.LifeOs</item>
+    </style>
 </resources>

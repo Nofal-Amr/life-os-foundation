@@ -36,6 +36,17 @@ export function noteBackground(color: string | null | undefined): string | undef
   return entry ? `color-mix(in oklch, var(${entry.var}) 18%, var(--color-card))` : undefined;
 }
 
+/**
+ * Notes locked in the Android app are encrypted there; the server (and this
+ * page) only ever see `lifeos-vault:v1:…`. They open in the app, never here,
+ * so editing can't break them.
+ */
+export const VAULT_PREFIX = "lifeos-vault:v1:";
+
+export function isLockedNote(note: Pick<Note, "body">): boolean {
+  return (note.body ?? "").startsWith(VAULT_PREFIX);
+}
+
 export function checklistOf(note: Pick<Note, "checklist">): ChecklistItem[] | null {
   return Array.isArray(note.checklist) ? (note.checklist as unknown as ChecklistItem[]) : null;
 }
