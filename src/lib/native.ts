@@ -537,7 +537,13 @@ export function focusLock(on: boolean): void {
 }
 
 /** Hands the Today widget its figures (already formatted text). */
-export function setTodayWidget(data: { left: string; spent: string; tasks: string }): void {
+export function setTodayWidget(data: {
+  left: string;
+  spent: string;
+  tasks: string;
+  next: string;
+  nextDetail: string;
+}): void {
   try {
     bridge()?.setTodayWidget?.(JSON.stringify(data));
   } catch {

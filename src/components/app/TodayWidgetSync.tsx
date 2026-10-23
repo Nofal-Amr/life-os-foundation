@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 import { useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { transactionsQuery } from "@/data/finance";
+import { widgetNextAction } from "@/data/widgets";
 import { isOpen, tasksQuery, topLevelTasks } from "@/data/tasks";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
@@ -10,7 +11,8 @@ import { isAndroidApp, setTodayWidget } from "@/lib/native";
 
 /**
  * Keeps the home-screen Today widget up to date (Android app only): left to
- * spend, spent today, and tasks due today or overdue with the first one.
+ * spend, spent today, tasks due today or overdue with the first one, and the
+ * one next action for the Next widget.
  * Mounted once in the app layout.
  */
 export function useTodayWidgetSync() {
@@ -32,10 +34,11 @@ export function useTodayWidgetSync() {
     ? `${due.length} ${due.length === 1 ? "task" : "tasks"} due · next: ${due[0]!.title}`
     : "Nothing due today.";
   const spentText = fmtMoney(spent);
+  const { next, nextDetail } = widgetNextAction(tasks.data ?? [], today);
   const ready = !tasks.isLoading && !transactions.isLoading && !money.isLoading;
 
   useEffect(() => {
     if (!android || !ready) return;
-    setTodayWidget({ left, spent: spentText, tasks: tasksText });
-  }, [android, ready, left, spentText, tasksText]);
+    setTodayWidget({ left, spent: spentText, tasks: tasksText, next, nextDetail });
+  }, [android, ready, left, spentText, tasksText, next, nextDetail]);
 }
