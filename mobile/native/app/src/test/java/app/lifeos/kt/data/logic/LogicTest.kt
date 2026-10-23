@@ -289,3 +289,40 @@ class DoRulesTest {
         assertEquals("2026-10-29", tasks.last().second)
     }
 }
+
+class MoneyOverviewTest {
+    private fun cost(amount: Double, unit: String, count: Int = 1, active: Boolean = true) =
+        app.lifeos.kt.core.model.RecurringCost("c", "Cost", amount, active = active, intervalCount = count, intervalUnit = unit, nextDueDate = "2026-10-30")
+
+    @Test fun monthlyEquivalentSpreadsEachInterval() {
+        assertEquals(600.0, monthlyEquivalent(cost(600.0, "month")), 0.001)
+        assertEquals(100.0 * 365.25 / 12 / 7, monthlyEquivalent(cost(100.0, "week")), 0.001)
+        assertEquals(1200.0 / 12, monthlyEquivalent(cost(1200.0, "year")), 0.001)
+        assertEquals(300.0, monthlyEquivalent(cost(600.0, "month", count = 2)), 0.001)
+        assertEquals(0.0, monthlyEquivalent(cost(600.0, "month", active = false)), 0.001)
+    }
+
+    @Test fun paydayCycleCountsFromTheLastPayday() {
+        val config = app.lifeos.kt.core.model.PaydayConfig("p", schedule = "monthly", payDay = 25)
+        val cycle = paydayCycle(config, LocalDate.of(2026, 10, 23))!!
+        assertEquals(LocalDate.of(2026, 9, 25), cycle.start)
+        assertEquals(LocalDate.of(2026, 10, 25), cycle.end)
+        assertEquals(28L, cycle.elapsed)
+        assertEquals(30L, cycle.total)
+        // On payday a new cycle starts.
+        assertEquals(0L, paydayCycle(config, LocalDate.of(2026, 10, 25))!!.elapsed)
+    }
+
+    @Test fun weeklySpendKeepsTheTopCategoriesAndGroupsTheRest() {
+        val cats = (1..7).map { app.lifeos.kt.core.model.FinanceCategory("k$it", "Cat $it") }
+        val today = LocalDate.of(2026, 10, 23) // a Friday; its week starts Monday 19 Oct
+        val tx = (1..7).map { Transaction("t$it", "a", -it * 10.0, categoryId = "k$it", date = "2026-10-20") } +
+            Transaction("u", "a", -5.0, date = "2026-10-13") +
+            Transaction("in", "a", 999.0, kind = "income", date = "2026-10-20")
+        val w = weeklySpendByCategory(tx, cats, today)
+        assertEquals(listOf(LocalDate.of(2026, 10, 12), LocalDate.of(2026, 10, 19)), w.weeks)
+        assertEquals(listOf("k7", "k6", "k5", "k4", "k3", "other"), w.series.map { it.first })
+        assertEquals(30.0, w.values[1]["other"]!!, 0.001) // 10 + 20 from the two smallest
+        assertEquals(5.0, w.values[0]["other"]!!, 0.001) // uncategorised falls outside the top five
+    }
+}

@@ -138,3 +138,72 @@ fun availableBeforePayday(
 
 /** Kept for screens that only need the plain figure. */
 fun leftToSpend(accounts: List<Account>, transactions: List<Transaction>): Double = liquidBalance(accounts, transactions)
+
+/* -------------------------- the Money overview -------------------------- */
+
+private val DAYS_PER_UNIT = mapOf("day" to 1.0, "week" to 7.0, "month" to 365.25 / 12, "year" to 365.25)
+
+/** A cost's size per month (its amount spread over its own interval); 0 when paused. */
+fun monthlyEquivalent(cost: RecurringCost): Double {
+    if (!cost.active) return 0.0
+    val (count, unit) = recurringInterval(cost)
+    val days = (DAYS_PER_UNIT[unit] ?: 30.4375) * count
+    return if (days > 0) (cost.amount * (365.25 / 12)) / days else 0.0
+}
+
+/** The web's legacy frequency for an interval, kept in step when a date rolls on. */
+fun legacyFrequency(unit: String, count: Int): String = when {
+    count == 1 && unit == "day" -> "daily"
+    count == 1 && unit == "week" -> "weekly"
+    count == 1 && unit == "month" -> "monthly"
+    count == 1 && unit == "year" -> "yearly"
+    else -> "custom"
+}
+
+fun pocketBalance(pocket: AccountPocket, transactions: List<Transaction>): Double =
+    pocket.openingBalance + transactions.filter { it.pocketId == pocket.id }.sumOf { it.amount }
+
+/** How far through the payday cycle today is: days since the last payday, of the days between paydays. */
+data class PaydayCycle(val start: LocalDate, val end: LocalDate, val elapsed: Long, val total: Long)
+
+fun paydayCycle(config: PaydayConfig?, today: LocalDate = LocalDate.now()): PaydayCycle? {
+    if (config == null || !hasPaydaySetup(config)) return null
+    // Strictly after today, so a payday that is today opens a new cycle.
+    val end = nextPayday(config, today.plusDays(1)) ?: return null
+    val start = if (config.schedule == "monthly") previousPayday(config, today) else (config.intervalWeeks ?: 0).takeIf { it > 0 }?.let { end.minusWeeks(it.toLong()) }
+    if (start == null || start.isAfter(today)) return null
+    val total = ChronoUnit.DAYS.between(start, end)
+    if (total <= 0) return null
+    return PaydayCycle(start, end, ChronoUnit.DAYS.between(start, today), total)
+}
+
+/** Money out per week (from Monday) by category: the five largest kept, the rest as "Other". */
+data class WeeklySpend(val weeks: List<LocalDate>, val series: List<Pair<String, String>>, val values: List<Map<String, Double>>)
+
+fun weeklySpendByCategory(transactions: List<Transaction>, categories: List<app.lifeos.kt.core.model.FinanceCategory>, today: LocalDate, count: Int = 8, top: Int = 5): WeeklySpend {
+    val current = today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+    val weeks = (0 until count).map { current.minusWeeks((count - 1 - it).toLong()) }
+    val inWindow = weeks.toSet()
+    val names = categories.associate { it.id to it.name }
+    val byWeek = mutableMapOf<LocalDate, MutableMap<String, Double>>()
+    val totals = mutableMapOf<String, Double>()
+    val labels = mutableMapOf<String, String>()
+    for (t in transactions.filter { it.kind == "expense" }) {
+        val week = runCatching { LocalDate.parse(t.date.take(10)) }.getOrNull()?.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY)) ?: continue
+        if (week !in inWindow) continue
+        val key = t.categoryId ?: "uncategorised"
+        labels[key] = t.categoryId?.let { names[it] ?: "Removed category" } ?: "Uncategorised"
+        byWeek.getOrPut(week) { mutableMapOf() }.merge(key, abs(t.amount), Double::plus)
+        totals.merge(key, abs(t.amount), Double::plus)
+    }
+    val ranked = totals.entries.sortedByDescending { it.value }
+    val kept = ranked.take(top).map { it.key }.toSet()
+    val series = ranked.take(top).map { it.key to labels.getValue(it.key) } + if (ranked.size > top) listOf("other" to "Other") else emptyList()
+    val values = weeks.map { w -> (byWeek[w] ?: emptyMap<String, Double>()).entries.groupBy({ if (it.key in kept) it.key else "other" }, { it.value }).mapValues { it.value.sum() } }
+    // Drop leading weeks with nothing, so a new person doesn't see a row of empty bars.
+    val first = values.indexOfFirst { it.isNotEmpty() }
+    return if (first == -1) WeeklySpend(emptyList(), series, emptyList()) else WeeklySpend(weeks.drop(first), series, values.drop(first))
+}
+
+/** The web's starter labels: names only, no amounts. */
+val STARTER_CATEGORIES = listOf("Groceries" to "expense", "Rent" to "expense", "Transport" to "expense", "Eating out" to "expense", "Utilities" to "expense", "Subscriptions" to "expense", "Health" to "expense", "Salary" to "income")

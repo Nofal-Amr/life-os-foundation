@@ -71,15 +71,17 @@ fun rememberToast(): (String) -> Unit {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DateChoice(value: String?, onChange: (String?) -> Unit, allowNone: Boolean = true) {
+fun DateChoice(value: String?, onChange: (String?) -> Unit, allowNone: Boolean = true, past: Boolean = false, extra: @Composable () -> Unit = {}) {
     val today = LocalDate.now()
-    val quick = listOf("Today" to today, "Tomorrow" to today.plusDays(1), "Next week" to today.plusWeeks(1))
+    // Things already done (spending) look back; plans look ahead.
+    val quick = if (past) listOf("Today" to today, "Yesterday" to today.minusDays(1)) else listOf("Today" to today, "Tomorrow" to today.plusDays(1), "Next week" to today.plusWeeks(1))
     var picking by remember { mutableStateOf(false) }
     val custom = value != null && quick.none { it.second.toString() == value }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         for ((label, date) in quick) SelectChip(value == date.toString(), label, { onChange(date.toString()) })
         if (allowNone) SelectChip(value == null, "No date", { onChange(null) })
         SelectChip(custom, if (custom) friendlyDate(value) ?: value!! else "Pick a date…", { picking = true }, leadingIcon = Icons.Outlined.CalendarMonth)
+        extra()
     }
     if (picking) {
         PickDate(initial = value?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: today, dismiss = { picking = false }) { onChange(it.toString()) }

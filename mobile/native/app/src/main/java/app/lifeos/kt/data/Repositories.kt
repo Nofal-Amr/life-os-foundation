@@ -14,6 +14,10 @@ import app.lifeos.kt.core.model.CalendarEvent
 import app.lifeos.kt.core.model.Capability
 import app.lifeos.kt.core.model.Evidence
 import app.lifeos.kt.data.logic.nextRepeatDate
+import app.lifeos.kt.data.logic.STARTER_CATEGORIES
+import app.lifeos.kt.data.logic.advanceDate
+import app.lifeos.kt.data.logic.legacyFrequency
+import app.lifeos.kt.data.logic.recurringInterval
 import app.lifeos.kt.core.model.FinanceCategory
 import app.lifeos.kt.core.model.Goal
 import app.lifeos.kt.core.model.Habit
@@ -34,6 +38,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlin.math.abs
 
 fun newId(): String = UUID.randomUUID().toString()
 
@@ -151,9 +156,58 @@ class MoneyRepository @Inject constructor(private val store: LocalStore) {
     val accounts: Flow<List<Account>> = store.observe("accounts", Account.serializer())
     val transactions: Flow<List<Transaction>> = store.observe("transactions", Transaction.serializer())
     val categories: Flow<List<FinanceCategory>> = store.observe("finance_categories", FinanceCategory.serializer())
+    val pockets: Flow<List<AccountPocket>> = store.observe("account_pockets", AccountPocket.serializer())
+    val recurring: Flow<List<RecurringCost>> = store.observe("recurring_costs", RecurringCost.serializer())
+    val payday: Flow<PaydayConfig?> = store.observe("payday_config", PaydayConfig.serializer()).map { it.firstOrNull() }
 
     suspend fun save(transaction: Transaction) = store.save("transactions", Transaction.serializer(), transaction)
     suspend fun delete(transaction: Transaction) = store.delete("transactions", transaction.id)
+    suspend fun save(account: Account) = store.save("accounts", Account.serializer(), account)
+    suspend fun delete(account: Account) = store.delete("accounts", account.id)
+    suspend fun save(pocket: AccountPocket) = store.save("account_pockets", AccountPocket.serializer(), pocket)
+    suspend fun delete(pocket: AccountPocket) = store.delete("account_pockets", pocket.id)
+    suspend fun save(category: FinanceCategory) = store.save("finance_categories", FinanceCategory.serializer(), category)
+    suspend fun delete(category: FinanceCategory) = store.delete("finance_categories", category.id)
+    suspend fun save(cost: RecurringCost) = store.save("recurring_costs", RecurringCost.serializer(), cost)
+    suspend fun delete(cost: RecurringCost) = store.delete("recurring_costs", cost.id)
+    suspend fun save(config: PaydayConfig) = store.save("payday_config", PaydayConfig.serializer(), config)
+
+    /**
+     * As the web's logRecurringCost: an expense, then the cost moves to its next
+     * date. Paid early, it's dated today (nothing is ever logged in the future);
+     * paid late, it keeps the date it was due.
+     */
+    suspend fun logRecurring(cost: RecurringCost, accountId: String, today: String = java.time.LocalDate.now().toString()): Created {
+        val transaction = Transaction(
+            id = newId(),
+            accountId = accountId,
+            amount = -abs(cost.amount),
+            kind = "expense",
+            categoryId = cost.categoryId,
+            date = minOf(cost.nextDueDate.take(10), today),
+            description = cost.name,
+        )
+        store.save("transactions", Transaction.serializer(), transaction)
+        skipRecurring(cost)
+        return Created(listOf("transactions" to transaction.id))
+    }
+
+    /** Moves the cost to its next date; nothing is logged. */
+    suspend fun skipRecurring(cost: RecurringCost) {
+        val (count, unit) = recurringInterval(cost)
+        val next = advanceDate(cost.nextDueDate, count, unit)
+        store.save("recurring_costs", RecurringCost.serializer(), cost.copy(nextDueDate = next, nextDueAt = "${next}T00:00:00", frequency = legacyFrequency(unit, count)))
+    }
+
+    /** The web's starter labels, skipping any name already there. */
+    suspend fun addStarterCategories(existing: List<FinanceCategory>) {
+        val names = existing.map { it.name.lowercase() }.toSet()
+        for ((name, kind) in STARTER_CATEGORIES) {
+            if (name.lowercase() !in names) store.save("finance_categories", FinanceCategory.serializer(), FinanceCategory(newId(), name, kind))
+        }
+    }
+
+    suspend fun remove(created: Created) = created.rows.forEach { (table, id) -> store.delete(table, id) }
 }
 
 @Singleton

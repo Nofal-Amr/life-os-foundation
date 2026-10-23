@@ -230,6 +230,7 @@ data class RecurringCost(
     @SerialName("interval_count") val intervalCount: Int = 1,
     @SerialName("interval_unit") val intervalUnit: String? = null,
     @SerialName("next_due_date") val nextDueDate: String,
+    @SerialName("next_due_at") val nextDueAt: String? = null,
     @SerialName("account_id") val accountId: String? = null,
     @SerialName("category_id") val categoryId: String? = null,
 ) : Row

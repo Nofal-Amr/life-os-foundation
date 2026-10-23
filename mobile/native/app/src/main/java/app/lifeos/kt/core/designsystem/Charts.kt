@@ -106,3 +106,82 @@ fun NotEnoughData(hint: String) {
         Muted(hint, style = MaterialTheme.typography.bodySmall)
     }
 }
+
+/**
+ * Stacked bars: one bar per period, split by series (largest at the base).
+ * Tap a bar to read that period's total and its parts; a legend sits below.
+ */
+@Composable
+fun StackedBarChart(
+    labels: List<String>,
+    series: List<Pair<String, String>>,
+    values: List<Map<String, Double>>,
+    format: (Double) -> String,
+    modifier: Modifier = Modifier,
+    height: androidx.compose.ui.unit.Dp = 140.dp,
+) {
+    val haptics = rememberHaptics()
+    val grow = remember { Animatable(0f) }
+    LaunchedEffect(values) { grow.snapTo(0f); grow.animateTo(1f, tween(650)) }
+    var selected by remember(values) { mutableStateOf(values.lastIndex) }
+    val palette = LifeTheme.colors.chart
+    val colors = series.mapIndexed { index, (key, _) -> key to if (key == "other") MaterialTheme.colorScheme.outline else palette[index % palette.size] }.toMap()
+    val totals = values.map { it.values.sum() }
+    val max = (totals.maxOrNull() ?: 0.0).coerceAtLeast(1.0)
+    Column(modifier.fillMaxWidth()) {
+        totals.getOrNull(selected)?.let { total ->
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(format(total), style = MaterialTheme.typography.titleLarge.merge(Numbers))
+                Spacer(Modifier.padding(start = 6.dp))
+                Muted(labels[selected], style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Canvas(
+            Modifier.fillMaxWidth().height(height).pointerInput(values) {
+                detectTapGestures { offset ->
+                    val index = (offset.x / (size.width / values.size)).toInt().coerceIn(0, values.lastIndex)
+                    if (index != selected) haptics.tick()
+                    selected = index
+                }
+            },
+        ) {
+            val slot = size.width / values.size
+            val width = slot * 0.62f
+            values.forEachIndexed { index, parts ->
+                val left = index * slot + (slot - width) / 2
+                var top = size.height
+                val alpha = if (index == selected) 1f else 0.45f
+                val ordered = series.map { it.first }.filter { (parts[it] ?: 0.0) > 0 }
+                ordered.forEachIndexed { i, key ->
+                    val h = ((parts[key] ?: 0.0) / max).toFloat() * size.height * grow.value
+                    top -= h
+                    val last = i == ordered.lastIndex
+                    drawRoundRect(
+                        color = (colors[key] ?: palette[0]).copy(alpha = alpha),
+                        topLeft = Offset(left, top),
+                        size = Size(width, h + if (last) 0f else 1f),
+                        cornerRadius = if (last) CornerRadius(6f, 6f) else CornerRadius.Zero,
+                    )
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+            val marks = setOf(0, labels.lastIndex / 2, labels.lastIndex)
+            labels.forEachIndexed { index, label ->
+                Text(if (index in marks) label else "", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, maxLines = 1, modifier = Modifier.weight(1f))
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        // The legend doubles as the selected week's breakdown.
+        val parts = values.getOrNull(selected).orEmpty()
+        for ((key, name) in series) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Dot(colors[key] ?: palette[0], size = 8.dp)
+                Spacer(Modifier.padding(start = 8.dp))
+                Text(name, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                Text(parts[key]?.let(format) ?: "—", style = MaterialTheme.typography.bodyMedium.merge(Numbers), color = if (parts[key] == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface)
+            }
+        }
+    }
+}

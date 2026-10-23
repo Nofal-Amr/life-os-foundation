@@ -515,7 +515,7 @@ fun CapabilityEditor(capability: Capability?, model: DoViewModel, close: () -> U
 /** A form sheet: fields, then Delete/Archive on the left and Save on the right. [onSave] returns false to keep it open. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EditorSheet(
+internal fun EditorSheet(
     title: String,
     close: () -> Unit,
     onSave: () -> Boolean,
@@ -526,14 +526,18 @@ private fun EditorSheet(
 ) {
     var confirmDelete by rememberSaveable { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = close, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding().imePadding().padding(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
-            fields()
-            if (confirmDelete && deleteNote != null) Muted(deleteNote, style = MaterialTheme.typography.bodySmall)
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        // Fields scroll; the actions stay pinned above the keyboard.
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().imePadding()) {
+            Column(
+                Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                fields()
+                if (confirmDelete && deleteNote != null) Muted(deleteNote, style = MaterialTheme.typography.bodySmall)
+            }
+            androidx.compose.material3.HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Row(Modifier.padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (delete != null) {
                     TextButton(onClick = { if (deleteNote != null && !confirmDelete) confirmDelete = true else delete() }) {
                         Icon(Icons.Outlined.Delete, null, tint = MaterialTheme.colorScheme.error)
