@@ -63,3 +63,8 @@ private fun completedOn(task: TaskEntity, zone: ZoneId): LocalDate? = try {
 } catch (e: Exception) {
     null
 }
+
+/** The one next thing to do: the oldest late task, then today's earliest, then the soonest coming up. */
+fun nextAction(tasks: List<TaskEntity>): TaskEntity? = tasks
+    .filter { it.isOpen() && it.parentTaskId == null && it.dueDate != null }
+    .minWithOrNull(compareBy({ it.dueDate }, { it.dueTime ?: "99" }))

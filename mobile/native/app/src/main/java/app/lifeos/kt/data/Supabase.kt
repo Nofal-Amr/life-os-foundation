@@ -84,9 +84,12 @@ class Supabase(private val baseUrl: String, private val key: String) {
     fun select(table: String, query: String, token: String): JSONArray =
         JSONArray(call("GET", "/rest/v1/$table?$query", token, null))
 
-    /** Inserts or updates by id; only the columns sent are written. Every row needs the same keys. */
-    fun upsert(table: String, rows: JSONArray, token: String) {
-        call("POST", "/rest/v1/$table?on_conflict=id", token, rows.toString(), "resolution=merge-duplicates,return=minimal")
+    /**
+     * Inserts or updates, matching on [conflict] (a unique key); only the
+     * columns sent are written. Every row needs the same keys.
+     */
+    fun upsert(table: String, rows: JSONArray, token: String, conflict: String = "id") {
+        call("POST", "/rest/v1/$table?on_conflict=$conflict", token, rows.toString(), "resolution=merge-duplicates,return=minimal")
     }
 
     fun delete(table: String, id: String, token: String) {

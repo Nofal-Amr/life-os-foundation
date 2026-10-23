@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import app.lifeos.kt.data.SessionData
 import app.lifeos.kt.ui.LifeOsTheme
 import app.lifeos.kt.ui.SignInScreen
-import app.lifeos.kt.ui.TasksScreen
+import app.lifeos.kt.ui.AppShell
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             LifeOsTheme {
                 val session by app.session.current.collectAsState()
-                if (session == null) SignInScreen() else TasksScreen()
+                if (session == null) SignInScreen() else AppShell()
             }
         }
     }

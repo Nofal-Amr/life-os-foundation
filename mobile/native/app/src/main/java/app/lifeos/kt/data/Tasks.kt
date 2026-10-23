@@ -10,6 +10,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 /** A row of public.tasks, as stored on the phone. Dates are ISO text, as the server sends them. */
@@ -79,12 +81,24 @@ abstract class TaskDao {
     }
 }
 
-@Database(entities = [TaskEntity::class], version = 1, exportSchema = false)
+@Database(entities = [TaskEntity::class, RowEntity::class], version = 2, exportSchema = false)
 abstract class LifeOsDb : RoomDatabase() {
     abstract fun tasks(): TaskDao
+    abstract fun rows(): RowDao
 
     companion object {
+        /** Version 2 adds the other tables; tasks waiting to be sent are kept. */
+        private val ADD_ROWS = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `synced_rows` (`tbl` TEXT NOT NULL, `id` TEXT NOT NULL, " +
+                        "`json` TEXT NOT NULL, `dirty` INTEGER NOT NULL, `deleted` INTEGER NOT NULL, " +
+                        "`stamp` TEXT NOT NULL, PRIMARY KEY(`tbl`, `id`))",
+                )
+            }
+        }
+
         fun open(context: Context): LifeOsDb =
-            Room.databaseBuilder(context, LifeOsDb::class.java, "lifeos.db").build()
+            Room.databaseBuilder(context, LifeOsDb::class.java, "lifeos.db").addMigrations(ADD_ROWS).build()
     }
 }

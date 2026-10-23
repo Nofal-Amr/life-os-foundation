@@ -33,6 +33,7 @@ class Sync(
     private val api: Supabase,
     private val session: SessionStore,
     private val tasks: TaskDao,
+    private val rows: RowDao,
     private val scope: CoroutineScope,
 ) {
     private val prefs = context.getSharedPreferences("sync", Context.MODE_PRIVATE)
@@ -84,6 +85,55 @@ class Sync(
         val userId = session.current.value?.userId ?: return
         push(token, userId)
         pull(token)
+        // One table failing (a column the server doesn't have yet) doesn't stop the others.
+        var refused: ServerError? = null
+        for (table in SYNCED_TABLES) {
+            try {
+                pushRows(table, token, userId)
+                pullRows(table, token)
+            } catch (e: ServerError) {
+                if (e.code == 401) throw e
+                refused = e
+            }
+        }
+        refused?.let { throw it }
+    }
+
+    private suspend fun pushRows(table: SyncedTable, token: String, userId: String) {
+        val pending = rows.pending(table.name)
+        for (row in pending.filter { it.deleted }) {
+            api.delete(table.name, row.id, token)
+            rows.remove(table.name, row.id)
+        }
+        // PostgREST wants the same keys on every row of one request.
+        val changed = pending.filter { !it.deleted }.map { row ->
+            row to JSONObject(row.json).apply {
+                remove("created_at")
+                remove("updated_at")
+                put("user_id", userId)
+            }
+        }
+        for (group in changed.groupBy { (_, json) -> json.keys().asSequence().sorted().joinToString(",") }.values) {
+            val body = JSONArray()
+            group.forEach { (_, json) -> body.put(json) }
+            api.upsert(table.name, body, token, table.conflict)
+            group.forEach { (row, _) -> rows.markSent(table.name, row.id, row.stamp) }
+        }
+    }
+
+    private suspend fun pullRows(table: SyncedTable, token: String) {
+        val all = mutableListOf<RowEntity>()
+        var offset = 0
+        while (true) {
+            val page = api.select(table.name, "select=*&order=id&limit=$PAGE&offset=$offset", token)
+            for (i in 0 until page.length()) {
+                val json = page.getJSONObject(i)
+                all += RowEntity(table.name, json.getString("id"), json.toString())
+            }
+            if (page.length() < PAGE) break
+            offset += PAGE
+        }
+        rows.replaceFromServer(table.name, all)
     }
 
     private suspend fun push(token: String, userId: String) {

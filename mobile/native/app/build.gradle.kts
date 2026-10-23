@@ -72,6 +72,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
+    // Prayer times: the same library the web and watch apps use.
+    implementation("com.batoulapps.adhan:adhan:1.2.1")
+
     testImplementation("junit:junit:4.13.2")
     // The real org.json; Android's is only a stub in JVM tests.
     testImplementation("org.json:json:20240303")

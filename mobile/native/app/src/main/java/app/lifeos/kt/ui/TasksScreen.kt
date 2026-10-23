@@ -74,16 +74,14 @@ fun TasksScreen() {
     val scope = rememberCoroutineScope()
     // Null only for the first moment, while the phone's database opens.
     val tasks by repo.tasks.collectAsState(initial = null)
-    val pending by repo.pending.collectAsState(initial = 0)
-    val sync by context.app.sync.state.collectAsState()
     val today = LocalDate.now()
     var deleting by remember { mutableStateOf<TaskEntity?>(null) }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(Modifier.fillMaxSize().imePadding()) {
-            Header(sync, pending, onSignOut = { context.app.signOut() })
+            PageHeader("Do")
             PullToRefreshBox(
-                isRefreshing = sync.running,
+                isRefreshing = context.app.sync.state.collectAsState().value.running,
                 onRefresh = { context.app.sync.request() },
                 modifier = Modifier.weight(1f),
             ) {
@@ -132,61 +130,6 @@ fun TasksScreen() {
             },
             dismissButton = { TextButton(onClick = { deleting = null }) { Text("Keep") } },
         )
-    }
-}
-
-@Composable
-private fun Header(sync: SyncState, pending: Int, onSignOut: () -> Unit) {
-    var menu by remember { mutableStateOf(false) }
-    var confirmSignOut by remember { mutableStateOf(false) }
-    Row(
-        Modifier.fillMaxWidth().statusBarsPadding().padding(start = 20.dp, end = 4.dp, top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text("Tasks", style = MaterialTheme.typography.headlineSmall)
-            Text(syncLine(sync, pending), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Box {
-            IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More") }
-            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(text = { Text("Sign out") }, onClick = {
-                    menu = false
-                    confirmSignOut = true
-                })
-            }
-        }
-    }
-    if (confirmSignOut) {
-        AlertDialog(
-            onDismissRequest = { confirmSignOut = false },
-            title = { Text("Sign out?") },
-            text = {
-                Text(
-                    if (pending > 0) "$pending ${if (pending == 1) "change hasn't" else "changes haven't"} reached the server yet and will be lost."
-                    else "Everything is kept on the server. This phone forgets it until you sign in again.",
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmSignOut = false
-                    onSignOut()
-                }) { Text("Sign out") }
-            },
-            dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
-        )
-    }
-}
-
-/** Says plainly where the data is: on the server, or only on this phone so far. */
-private fun syncLine(sync: SyncState, pending: Int): String {
-    val waiting = if (pending > 0) " · $pending saved on this phone" else ""
-    return when {
-        sync.running -> "Syncing…"
-        sync.error != null -> sync.error + waiting
-        sync.offline -> "Offline$waiting"
-        sync.lastSynced != null -> "Synced " + DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(sync.lastSynced)) + waiting
-        else -> "Not synced yet$waiting"
     }
 }
 
@@ -254,7 +197,7 @@ private fun AddBar(onAdd: (title: String, dueToday: Boolean) -> Unit) {
         title = ""
     }
     Surface(color = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 2.dp) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = title,
