@@ -326,3 +326,53 @@ class MoneyOverviewTest {
         assertEquals(5.0, w.values[0]["other"]!!, 0.001) // uncategorised falls outside the top five
     }
 }
+
+class BodyRulesTest {
+    private fun med(id: String, vararg times: String, active: Boolean = true) = app.lifeos.kt.core.model.Medication(id, id, active = active, scheduleTimes = times.toList())
+    private fun dose(med: String, slot: String, taken: Boolean = true) = app.lifeos.kt.core.model.MedicationLog("l$med$slot", med, "2026-10-24", slot, taken)
+
+    @Test fun dosesCountEachScheduledTimeOnce() {
+        val meds = listOf(med("iron", "09:00", "21:00", "09:00"), med("d", "09:00"), med("off", "08:00", active = false))
+        assertEquals(1 to 3, dosesOn(meds, listOf(dose("d", "09:00"), dose("iron", "21:00", taken = false)), "2026-10-24"))
+        assertNull(dosesOn(listOf(med("x")), emptyList(), "2026-10-24"))
+    }
+
+    @Test fun mealFollowsTheTimeOfDay() {
+        assertEquals("breakfast", mealForTime(java.time.LocalTime.of(7, 0)))
+        assertEquals("lunch", mealForTime(java.time.LocalTime.of(13, 0)))
+        assertEquals("snack", mealForTime(java.time.LocalTime.of(16, 30)))
+        assertEquals("dinner", mealForTime(java.time.LocalTime.of(20, 0)))
+        assertEquals("snack", mealForTime(java.time.LocalTime.of(2, 0)))
+    }
+
+    @Test fun bmiAndDurations() {
+        assertEquals(24.1, bmi(178.0, 76.5)!!, 0.05)
+        assertNull(bmi(null, 70.0))
+        assertEquals("7h 30m", formatDuration(450))
+        assertEquals("45m", formatDuration(45))
+        assertEquals("—", formatDuration(null))
+    }
+
+    @Test fun sleepUsesPreciseMinutesOverOldHours() {
+        val logs = listOf(
+            app.lifeos.kt.core.model.HealthLog("a", "2026-10-24", sleepHours = 6.0, actualSleepMinutes = 375),
+            app.lifeos.kt.core.model.HealthLog("b", "2026-10-23", sleepHours = 7.5),
+            app.lifeos.kt.core.model.HealthLog("c", "2026-09-01", sleepHours = 8.0),
+        )
+        val series = sleepSeries(logs, 14, LocalDate.of(2026, 10, 24))
+        assertEquals(listOf(7.5, 6.25), series.map { it.second })
+    }
+
+    @Test fun oneOffsAreNewestFirstAndOncePerName() {
+        fun log(id: String, name: String, at: String, food: String? = null) = app.lifeos.kt.core.model.FoodLog(id, foodId = food, createdAt = at, logDate = at.take(10), name = name)
+        val logs = listOf(log("1", "Koshari", "2026-10-20T10"), log("2", "koshari", "2026-10-22T10"), log("3", "Egg", "2026-10-23T10", food = "f"), log("4", "Croissant", "2026-10-21T10"))
+        assertEquals(listOf("2", "4"), recentOneOffs(logs).map { it.id })
+    }
+
+    @Test fun referenceSuggestionsPutCuisineDishesFirst() {
+        val breakfast = suggestionsFor("breakfast", listOf("egyptian")).map { it.name }
+        assertEquals(true, breakfast.indexOf("Ful sandwich") < breakfast.indexOf("Toast bread"))
+        assertEquals(false, "Oats, dry" in breakfast) // western only
+        assertEquals(50, FOOD_LIBRARY.size)
+    }
+}

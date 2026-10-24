@@ -185,3 +185,70 @@ fun StackedBarChart(
         }
     }
 }
+
+/**
+ * A line through dated values (e.g. hours slept each night), drawn to scale
+ * in time so gaps show as gaps. Tap anywhere to read the nearest point.
+ */
+@Composable
+fun TrendLine(
+    points: List<Pair<java.time.LocalDate, Double>>,
+    from: java.time.LocalDate,
+    to: java.time.LocalDate,
+    format: (Double) -> String,
+    modifier: Modifier = Modifier,
+    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary,
+    height: androidx.compose.ui.unit.Dp = 120.dp,
+) {
+    val haptics = rememberHaptics()
+    val grow = remember { Animatable(0f) }
+    LaunchedEffect(points) { grow.snapTo(0f); grow.animateTo(1f, tween(700)) }
+    var selected by remember(points) { mutableStateOf(points.lastIndex) }
+    val span = java.time.temporal.ChronoUnit.DAYS.between(from, to).coerceAtLeast(1).toFloat()
+    val lo = (points.minOfOrNull { it.second } ?: 0.0)
+    val hi = (points.maxOfOrNull { it.second } ?: 1.0)
+    val pad = ((hi - lo) * 0.2).coerceAtLeast(0.5)
+    val min = lo - pad
+    val max = hi + pad
+    val fmt = java.time.format.DateTimeFormatter.ofPattern("EEE d MMM")
+    val grid = MaterialTheme.colorScheme.outlineVariant
+    Column(modifier.fillMaxWidth()) {
+        points.getOrNull(selected)?.let { (date, value) ->
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(format(value), style = MaterialTheme.typography.titleLarge.merge(Numbers))
+                Spacer(Modifier.padding(start = 6.dp))
+                Muted(date.format(fmt), style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Canvas(
+            Modifier.fillMaxWidth().height(height).pointerInput(points) {
+                detectTapGestures { offset ->
+                    val index = points.indices.minByOrNull { i ->
+                        kotlin.math.abs(java.time.temporal.ChronoUnit.DAYS.between(from, points[i].first) / span * size.width - offset.x)
+                    } ?: return@detectTapGestures
+                    if (index != selected) haptics.tick()
+                    selected = index
+                }
+            },
+        ) {
+            fun x(date: java.time.LocalDate) = java.time.temporal.ChronoUnit.DAYS.between(from, date) / span * size.width
+            fun y(value: Double) = (size.height - ((value - min) / (max - min)).toFloat() * size.height)
+            for (line in 0..2) drawLine(grid, Offset(0f, size.height * line / 2f), Offset(size.width, size.height * line / 2f), strokeWidth = 1f)
+            val visible = (points.size * grow.value).toInt().coerceAtLeast(if (points.isEmpty()) 0 else 1)
+            for (i in 1 until visible) {
+                drawLine(color, Offset(x(points[i - 1].first), y(points[i - 1].second)), Offset(x(points[i].first), y(points[i].second)), strokeWidth = 5f, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            }
+            for (i in 0 until visible) {
+                val c = Offset(x(points[i].first), y(points[i].second))
+                drawCircle(color, radius = if (i == selected) 11f else 6f, center = c)
+                if (i == selected) drawCircle(androidx.compose.ui.graphics.Color.White, radius = 5f, center = c)
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp)) {
+            val short = java.time.format.DateTimeFormatter.ofPattern("d MMM")
+            Text(from.format(short), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            Text(to.format(short), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}

@@ -2,6 +2,8 @@ package app.lifeos.kt.data
 
 import app.lifeos.kt.core.common.nowIso
 import app.lifeos.kt.core.model.Account
+import app.lifeos.kt.core.model.BodyStats
+import app.lifeos.kt.core.model.Food
 import app.lifeos.kt.core.model.AccountPocket
 import app.lifeos.kt.core.model.DailyReview
 import app.lifeos.kt.core.model.FoodLog
@@ -214,8 +216,22 @@ class MoneyRepository @Inject constructor(private val store: LocalStore) {
 class BodyRepository @Inject constructor(private val store: LocalStore) {
     val healthLogs: Flow<List<HealthLog>> = store.observe("health_logs", HealthLog.serializer())
     val medications: Flow<List<Medication>> = store.observe("medications", Medication.serializer())
+    val foods: Flow<List<Food>> = store.observe("foods", Food.serializer())
+    val bodyStats: Flow<BodyStats?> = store.observe("body_stats", BodyStats.serializer()).map { it.firstOrNull() }
 
     suspend fun save(log: HealthLog) = store.save("health_logs", HealthLog.serializer(), log)
+    suspend fun save(medication: Medication) = store.save("medications", Medication.serializer(), medication)
+    suspend fun save(food: Food) = store.save("foods", Food.serializer(), food)
+    suspend fun delete(food: Food) = store.delete("foods", food.id)
+    suspend fun save(log: FoodLog) = store.save("food_logs", FoodLog.serializer(), log)
+    suspend fun delete(log: FoodLog) = store.delete("food_logs", log.id)
+    suspend fun save(stats: BodyStats) = store.save("body_stats", BodyStats.serializer(), stats.copy(updatedAt = nowIso()))
+
+    /** As on the web, a medication's daily taken records go with it. */
+    suspend fun delete(medication: Medication, logs: List<MedicationLog>) {
+        logs.filter { it.medicationId == medication.id }.forEach { store.delete("medication_logs", it.id) }
+        store.delete("medications", medication.id)
+    }
 }
 
 @Singleton
@@ -255,8 +271,12 @@ class PlannerRepository @Inject constructor(private val store: LocalStore) {
 }
 
 @Singleton
-class PreferencesRepository @Inject constructor(store: LocalStore) {
+class PreferencesRepository @Inject constructor(private val store: LocalStore) {
     val preferences: Flow<UserPreferences?> = store.observe("user_preferences", UserPreferences.serializer()).map { it.firstOrNull() }
+
+    /** The usual foods and cuisines (the web's food_prefs), kept beside the other preferences. */
+    suspend fun saveFoodPrefs(current: UserPreferences?, value: kotlinx.serialization.json.JsonObject) =
+        store.save("user_preferences", UserPreferences.serializer(), (current ?: UserPreferences(newId())).copy(foodPrefs = value))
 }
 
 @Singleton

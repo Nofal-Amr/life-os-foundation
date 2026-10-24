@@ -117,6 +117,30 @@ object DemoSeed {
             base("id" to id("health"), "log_date" to day(-back.toLong()), "sleep_hours" to 6 + ((back * 7) % 25) / 10.0, "mood" to 3 + back % 3, "trained" to (back % 3 == 0), "water_ok" to (back % 2 == 0), "note" to null)
         }
 
+        // Native demo extras (the web demo has none): a medication schedule, a weight and a few meals,
+        // so every part of Body can be tried. Food figures come from the reference list.
+        val vitD = id("med")
+        val iron = id("med")
+        val eggs = id("food")
+        val ful = id("food")
+        val tea = id("food")
+        val foods = listOf(
+            base("id" to eggs, "name" to "Egg, boiled", "serving_label" to "1 large (50 g)", "serving_grams" to 50, "calories" to 72, "protein_g" to 6.3, "carbs_g" to 0.4, "fat_g" to 5, "icon" to null),
+            base("id" to ful, "name" to "Ful sandwich", "serving_label" to "1 baladi sandwich", "serving_grams" to 150, "calories" to 300, "protein_g" to 12, "carbs_g" to 50, "fat_g" to 6, "icon" to null),
+            base("id" to tea, "name" to "Tea with sugar", "serving_label" to "1 cup", "serving_grams" to null, "calories" to 35, "protein_g" to 0, "carbs_g" to 9, "fat_g" to 0, "icon" to null),
+        )
+        val foodLogs = listOf(
+            base("id" to id("flog"), "food_id" to ful, "name" to "Ful sandwich", "log_date" to day(0), "meal" to "breakfast", "servings" to 1, "calories" to 300, "protein_g" to 12, "carbs_g" to 50, "fat_g" to 6, "created_at" to stamp(0)),
+            base("id" to id("flog"), "food_id" to tea, "name" to "Tea with sugar", "log_date" to day(0), "meal" to "breakfast", "servings" to 1, "calories" to 35, "protein_g" to 0, "carbs_g" to 9, "fat_g" to 0, "created_at" to stamp(0)),
+            base("id" to id("flog"), "food_id" to eggs, "name" to "Egg, boiled", "log_date" to day(-1), "meal" to "breakfast", "servings" to 2, "calories" to 144, "protein_g" to 12.6, "carbs_g" to 0.8, "fat_g" to 10, "created_at" to stamp(-1)),
+            base("id" to id("flog"), "food_id" to null, "name" to "Koshari", "log_date" to day(-1), "meal" to "lunch", "servings" to 1, "calories" to 450, "protein_g" to null, "carbs_g" to null, "fat_g" to null, "created_at" to stamp(-1)),
+        )
+        val medications = listOf(
+            base("id" to vitD, "name" to "Vitamin D", "dosage" to "1 capsule", "schedule_times" to listOf("09:00"), "notes" to null, "active" to true),
+            base("id" to iron, "name" to "Iron", "dosage" to null, "schedule_times" to listOf("09:00", "21:00"), "notes" to "With food", "active" to true),
+        )
+        val medicationLogs = listOf(base("id" to id("mlog"), "medication_id" to vitD, "log_date" to day(0), "time_slot" to "09:00", "taken" to true))
+
         return mapOf(
             "user_preferences" to listOf(
                 base(
@@ -154,6 +178,11 @@ object DemoSeed {
             "prayer_settings" to listOf(base("id" to id("pset"), "latitude" to 30.0444, "longitude" to 31.2357, "city" to "Cairo", "calc_method" to "Egyptian", "asr_school" to "shafi")),
             "prayer_logs" to prayerLogs,
             "health_logs" to healthLogs,
+            "medications" to medications,
+            "medication_logs" to medicationLogs,
+            "foods" to foods,
+            "food_logs" to foodLogs,
+            "body_stats" to listOf(base("id" to id("body"), "height_cm" to 178, "weight_kg" to 76.5, "target_weight_kg" to null, "birthdate" to null, "notes" to null, "updated_at" to stamp(-3))),
             "notes" to listOf(
                 base("id" to id("note"), "title" to "Ideas for the weekend", "body" to "Visit the Grand Egyptian Museum\nTry the new koshary place\nCall grandma", "tags" to listOf("Ideas"), "pinned" to true, "archived" to false, "color" to null, "checklist" to null),
                 base("id" to id("note"), "title" to "Meeting: budget review", "body" to "Who: Ahmed, Sara\n\nWhat was decided: cut travel by 10%\n\nWhat I have to do: update the sheet by Thursday", "tags" to listOf("Meeting"), "pinned" to false, "archived" to false, "color" to "blue", "checklist" to null),

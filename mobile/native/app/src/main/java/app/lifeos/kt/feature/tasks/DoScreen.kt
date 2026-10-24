@@ -133,11 +133,16 @@ fun DoScreen(openTaskId: String? = null, page: Int = 0, model: DoViewModel = hil
     val state by model.state.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
     val pager = rememberPagerState(initialPage = page) { PAGES.size }
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
     val scope = rememberCoroutineScope()
     var adding by rememberSaveable { mutableIntStateOf(-1) }
     LaunchedEffect(pager) {
         var first = true
-        snapshotFlow { pager.settledPage }.collect { if (first) first = false else haptics.tick() }
+        snapshotFlow { pager.settledPage }.collect { 
+            // A field left focused on one tab would keep the keyboard up on the next.
+            focus.clearFocus()
+            if (first) first = false else haptics.tick()
+        }
     }
 
     Box(Modifier.fillMaxSize()) {

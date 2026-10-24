@@ -112,7 +112,24 @@ data class HealthLog(
     @SerialName("stress_level") val stressLevel: Int? = null,
     @SerialName("sleep_score") val sleepScore: Int? = null,
     @SerialName("heart_rate_avg") val heartRateAvg: Double? = null,
-) : Row
+    @SerialName("food_quality") val foodQuality: Int? = null,
+    @SerialName("food_categories") val foodCategories: List<String>? = null,
+    @SerialName("sleep_source") val sleepSource: String? = null,
+    @SerialName("sleep_start_at") val sleepStartAt: String? = null,
+    @SerialName("sleep_end_at") val sleepEndAt: String? = null,
+    @SerialName("time_in_bed_minutes") val timeInBedMinutes: Int? = null,
+    @SerialName("actual_sleep_minutes") val actualSleepMinutes: Int? = null,
+    @SerialName("deep_sleep_minutes") val deepSleepMinutes: Int? = null,
+    @SerialName("rem_sleep_minutes") val remSleepMinutes: Int? = null,
+    @SerialName("light_sleep_minutes") val lightSleepMinutes: Int? = null,
+    @SerialName("awake_minutes") val awakeMinutes: Int? = null,
+    @SerialName("sleep_latency_minutes") val sleepLatencyMinutes: Int? = null,
+    @SerialName("blood_oxygen_avg") val bloodOxygenAvg: Double? = null,
+    @SerialName("respiratory_rate_avg") val respiratoryRateAvg: Double? = null,
+) : Row {
+    /** Minutes asleep: the precise figure when there is one, else the older hours field. */
+    val sleepMinutes: Int? get() = actualSleepMinutes ?: sleepHours?.let { Math.round(it * 60).toInt() }
+}
 
 @Serializable
 data class Medication(
@@ -214,6 +231,8 @@ data class UserPreferences(
     @SerialName("week_start") val weekStart: Int = 1,
     @SerialName("enabled_modules") val enabledModules: List<String> = emptyList(),
     @SerialName("dimension_order") val dimensionOrder: List<String>? = null,
+    @SerialName("unit_system") val unitSystem: String = "metric",
+    @SerialName("food_prefs") val foodPrefs: kotlinx.serialization.json.JsonObject? = null,
 ) : Row
 
 @Serializable
@@ -267,6 +286,8 @@ data class MedicationLog(
 @Serializable
 data class FoodLog(
     override val id: String,
+    @SerialName("food_id") val foodId: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
     @SerialName("log_date") val logDate: String,
     val name: String? = null,
     val meal: String? = null,
@@ -327,4 +348,27 @@ data class Evidence(
     @SerialName("goal_id") val goalId: String? = null,
     val note: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
+) : Row
+
+@Serializable
+data class BodyStats(
+    override val id: String,
+    @SerialName("height_cm") val heightCm: Double? = null,
+    @SerialName("weight_kg") val weightKg: Double? = null,
+    @SerialName("target_weight_kg") val targetWeightKg: Double? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+) : Row
+
+@Serializable
+data class Food(
+    override val id: String,
+    val name: String,
+    /** Per serving. */
+    val calories: Double = 0.0,
+    @SerialName("serving_label") val servingLabel: String? = null,
+    @SerialName("serving_grams") val servingGrams: Double? = null,
+    @SerialName("protein_g") val proteinG: Double? = null,
+    @SerialName("carbs_g") val carbsG: Double? = null,
+    @SerialName("fat_g") val fatG: Double? = null,
+    val icon: String? = null,
 ) : Row

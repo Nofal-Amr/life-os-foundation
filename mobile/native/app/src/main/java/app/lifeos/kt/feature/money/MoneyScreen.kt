@@ -118,13 +118,18 @@ fun MoneyScreen(model: MoneyViewModel = hiltViewModel()) {
     val state by model.state.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
     val pager = rememberPagerState { PAGES.size }
+    val focus = androidx.compose.ui.platform.LocalFocusManager.current
     val scope = rememberCoroutineScope()
     var adding by rememberSaveable { mutableStateOf<String?>(null) } // "expense", "income", "account", "cost", "category"
     var editingPayday by rememberSaveable { mutableStateOf(false) }
     var breakdown by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(pager) {
         var first = true
-        snapshotFlow { pager.settledPage }.collect { if (first) first = false else haptics.tick() }
+        snapshotFlow { pager.settledPage }.collect { 
+            // A field left focused on one tab would keep the keyboard up on the next.
+            focus.clearFocus()
+            if (first) first = false else haptics.tick()
+        }
     }
 
     Box(Modifier.fillMaxSize()) {
