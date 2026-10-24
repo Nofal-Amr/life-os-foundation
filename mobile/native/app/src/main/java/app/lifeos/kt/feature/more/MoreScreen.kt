@@ -177,11 +177,11 @@ private fun SwitchRow(title: String, caption: String, on: Boolean, set: (Boolean
 }
 
 @Composable
-fun ToolScreen(key: String, close: () -> Unit) {
+fun ToolScreen(key: String, close: () -> Unit, openTarget: (app.lifeos.kt.data.logic.Target) -> Unit = {}) {
     val tool = TOOLS.firstOrNull { it.key == key } ?: return
     val back: @Composable () -> Unit = { IconButton(onClick = close) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } }
     when (key) {
-        "calendar" -> CalendarTool(back)
+        "calendar" -> app.lifeos.kt.feature.calendar.CalendarScreen(back, openTarget)
         "notes" -> app.lifeos.kt.feature.notes.NotesScreen(back)
         "reminders" -> RemindersTool(back)
         else -> WebsiteOnly(tool, back)

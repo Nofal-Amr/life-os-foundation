@@ -133,60 +133,6 @@ class ToolsViewModel @Inject constructor(
 private val clock: DateFormat get() = DateFormat.getTimeInstance(DateFormat.SHORT)
 private fun timeOf(timestamp: String?): String? = instantOf(timestamp)?.let { clock.format(Date.from(it)) }
 
-/* ------------------------------- Calendar ------------------------------- */
-
-private data class Entry(val time: String?, val title: String, val kind: String, val icon: ImageVector)
-
-/** The next two weeks, day by day: events, tasks due and reminders. */
-@Composable
-fun CalendarTool(back: @Composable () -> Unit, model: ToolsViewModel = hiltViewModel()) {
-    val state by model.state.collectAsStateWithLifecycle()
-    LifePage(title = "Calendar", navigationIcon = back) {
-        val s = state ?: run { items(4) { Skeleton() }; return@LifePage }
-        val today = LocalDate.now()
-        val days = (0L until 14L).map { today.plusDays(it) }
-        val byDay = days.associateWith { mutableListOf<Entry>() }
-        s.events.forEach { e -> localDateOf(e.startAt)?.let { byDay[it]?.add(Entry(timeOf(e.startAt), e.title, "Event", Icons.Outlined.Event)) } }
-        s.tasks.filter { it.isOpen() && it.parentTaskId == null }.forEach { t ->
-            val day = t.dueDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return@forEach
-            byDay[if (day < today) today else day]?.add(Entry(t.dueTime?.take(5), t.title, if (day < today) "Task, from ${friendlyDate(day)}" else "Task", Icons.Outlined.TaskAlt))
-        }
-        s.reminders.filter { it.doneAt == null || it.repeat != "none" }.forEach { r ->
-            localDateOf(r.remindAt)?.let { byDay[it]?.add(Entry(timeOf(r.remindAt), r.title, "Reminder", Icons.Outlined.Alarm)) }
-        }
-        val shown = days.filter { it == today || byDay.getValue(it).isNotEmpty() }
-        if (shown.size == 1 && byDay.getValue(today).isEmpty()) {
-            item { EmptyState(Icons.Outlined.Event, "Nothing in the next two weeks", "Tasks with dates, events and reminders show here, day by day.") }
-            return@LifePage
-        }
-        for (day in shown) {
-            val entries = byDay.getValue(day).sortedBy { it.time ?: "99" }
-            item(key = day.toString()) {
-                SectionHeader(if (day == today) "Today" else if (day == today.plusDays(1)) "Tomorrow" else day.format(DateTimeFormatter.ofPattern("EEEE d MMM")))
-            }
-            item(key = "$day-items") {
-                if (entries.isEmpty()) {
-                    Muted("Nothing planned", Modifier.padding(start = 4.dp))
-                } else {
-                    LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                        for (entry in entries) {
-                            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                                IconBadge(entry.icon, size = 32.dp)
-                                Spacer(Modifier.width(12.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(entry.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                    Muted(entry.kind, style = MaterialTheme.typography.bodySmall)
-                                }
-                                entry.time?.let { Text(it, style = MaterialTheme.typography.labelLarge) }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 /* ------------------------------- Reminders ------------------------------ */
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)

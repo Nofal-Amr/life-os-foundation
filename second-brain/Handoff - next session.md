@@ -30,8 +30,8 @@ Where it is: `mobile/native` (Gradle), `npm run build:native` → `mobile/androi
 - Tested on the emulator (Pixel_8_Pro_API_35): opens offline with tasks in ~1.3 s (release),
   tasks added offline survive a force-stop, 401 → refresh → sign-in. Not yet tested with a real account.
 
-**Status 2026-10-24:** Today, Do, Money (pushed, 6a576e3), Body (f83f9fa) and Spirit (not pushed yet) are at website parity and remade (copy, critique, refine; see memory life-os-native-taste). 49 unit tests. Test in demo mode on the emulator against lifeos0.vercel.app demo; numbers must match.
-**Next:** Calendar and Week, then Work (fingerprint clock-in + sites from location), notifications (prayer + reminders + medication), widgets, then the remaining More tools. Then, Calendar/Week, Work (fingerprint + sites), notifications, widgets.
+**Status 2026-10-24:** Today, Do, Money (pushed, 6a576e3), Body, Spirit (pushed, d0e622c) and Calendar (not pushed yet) are at website parity and remade (copy, critique, refine; see memory life-os-native-taste). 49 unit tests. Test in demo mode on the emulator against lifeos0.vercel.app demo; numbers must match.
+**Next:** Week (web src/routes/_authenticated/week.tsx: a review of the week, day by day), then Work (fingerprint clock-in + sites from location), notifications (prayer + reminders + medication), widgets, then the remaining More tools. Then, Calendar/Week, Work (fingerprint + sites), notifications, widgets.
 **Owner wants work to continue automatically after a session reset: a new session should read this and keep going without asking.**
 
 Phase 1 done (commit bba1767): architecture, refined flows, locked notes, prayer windows. Plan: docs/superpowers/specs/2026-10-23-native-android-design.md (widgets table at the end).

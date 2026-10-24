@@ -66,6 +66,7 @@ import app.lifeos.kt.core.designsystem.LocalStatusBarHandled
 import app.lifeos.kt.core.designsystem.LocalSyncStatus
 import app.lifeos.kt.core.designsystem.rememberHaptics
 import app.lifeos.kt.feature.body.BodyScreen
+import app.lifeos.kt.data.logic.Target as CalTarget
 import app.lifeos.kt.feature.money.MoneyScreen
 import app.lifeos.kt.feature.more.MoreScreen
 import app.lifeos.kt.feature.more.ToolScreen
@@ -142,7 +143,19 @@ fun LifeOsShell(app: AppViewModel) {
                         exitTransition = { fadeOut(tween(120)) },
                         popEnterTransition = { fadeIn(tween(200)) },
                         popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(260)) + fadeOut(tween(260)) },
-                    ) { entry -> ToolScreen(entry.toRoute<ToolRoute>().key, close = { nav.popBackStack() }) }
+                    ) { entry ->
+                        ToolScreen(entry.toRoute<ToolRoute>().key, close = { nav.popBackStack() }, openTarget = { target ->
+                            // A calendar item opens where it lives.
+                            when (target) {
+                                is CalTarget.TaskT -> nav.navigate(DoRoute(target.id)) { launchSingleTop = true }
+                                CalTarget.ProjectsT -> nav.navigate(DoRoute(page = 1)) { launchSingleTop = true }
+                                CalTarget.GoalsT -> nav.navigate(DoRoute(page = 2)) { launchSingleTop = true }
+                                CalTarget.CostsT -> nav.goToSection(Section.Money)
+                                CalTarget.HealthT -> nav.goToSection(Section.Body)
+                                else -> Unit
+                            }
+                        })
+                    }
                 }
             }
             }

@@ -281,6 +281,8 @@ class PlannerRepository @Inject constructor(private val store: LocalStore) {
     suspend fun save(reminder: Reminder) = store.save("reminders", Reminder.serializer(), reminder)
     suspend fun save(note: Note) = store.save("notes", Note.serializer(), note)
     suspend fun deleteNote(note: Note) = store.delete("notes", note.id)
+    suspend fun save(event: CalendarEvent) = store.save("events", CalendarEvent.serializer(), event)
+    suspend fun delete(event: CalendarEvent) = store.delete("events", event.id)
 }
 
 @Singleton

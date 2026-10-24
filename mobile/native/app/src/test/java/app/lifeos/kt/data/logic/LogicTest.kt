@@ -407,3 +407,36 @@ class SpiritRulesTest {
         assertEquals(19, morning.size)
     }
 }
+
+class CalendarRulesTest {
+    private val day = LocalDate.of(2026, 10, 24)
+    private fun at(h: Int, m: Int = 0) = day.atTime(h, m)
+
+    @Test fun overlappingItemsSitSideBySide() {
+        val blocks = layoutTimed(listOf(Triple("a", at(10), at(11)), Triple("b", at(10, 30), at(11, 30)), Triple("c", at(12), null)), day).associateBy { it.id }
+        assertEquals(2, blocks.getValue("a").columns)
+        assertEquals(1, blocks.getValue("b").column)
+        assertEquals(1, blocks.getValue("c").columns)
+        assertEquals(MIN_MINUTES, blocks.getValue("c").height) // no end still gets a block
+    }
+
+    @Test fun weeksStartWhereThePersonChose() {
+        assertEquals(LocalDate.of(2026, 10, 24), weekDays(day, 6).first()) // Saturday
+        assertEquals(LocalDate.of(2026, 10, 19), weekDays(day, 1).first()) // Monday
+        assertEquals(LocalDate.of(2026, 10, 18), weekDays(day, 0).first()) // Sunday
+        assertEquals(0, monthGrid(day, 6).size % 7)
+    }
+
+    @Test fun islamicOccasionsFromUmmAlQura() {
+        val days = islamicDays(2027).associate { it.name to it.date }
+        assertEquals(LocalDate.of(2027, 2, 8), days["Ramadan begins"])
+        assertEquals(LocalDate.of(2027, 5, 16), days["Eid al-Adha"])
+    }
+
+    @Test fun midnightEventWithNoEndIsAllDay() {
+        val zone = java.time.ZoneId.systemDefault()
+        val midnight = day.atStartOfDay(zone).toInstant().toString()
+        val items = calendarItems(listOf(app.lifeos.kt.core.model.CalendarEvent("e", "Trip", startAt = midnight)), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), { it.toString() }, zone)
+        assertNull(items.single().start)
+    }
+}
