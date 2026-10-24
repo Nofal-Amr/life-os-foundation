@@ -486,8 +486,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        MediaAlert.onState = null;
         // The compass only runs while the Qibla finder is on screen.
         if (compass != null) compass.stop();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // While the app is open, a new music state from the SIM phone updates the remote on the page.
+        MediaAlert.onState = () -> runOnUiThread(() -> {
+            if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new Event('life-os-connect-media'))", null);
+        });
     }
 
     /** What each Life Connect role needs from Android (SMS only in the Full build). */
@@ -603,6 +613,19 @@ public class MainActivity extends Activity {
         }
 
         /* ----------------------------- spending from bank notifications */
+
+        /** Music remote (main phone): toggle, play, pause, next, previous, vol_up, vol_down, vol_set (level), status. */
+        @JavascriptInterface
+        public void connectMedia(String action, int level) {
+            if (!trusted() || action == null || !action.matches("toggle|play|pause|next|previous|vol_up|vol_down|vol_set|status")) return;
+            MediaAlert.send(MainActivity.this, action, level);
+        }
+
+        /** The last music state heard from the SIM phone, as JSON ("{}" if none yet). */
+        @JavascriptInterface
+        public String connectMediaState() {
+            return trusted() ? MediaAlert.last(MainActivity.this) : "{}";
+        }
 
         /** Life Connect's SMS and calls on this phone (the Messages page), as JSON. */
         @JavascriptInterface

@@ -27,6 +27,8 @@ type NativeBridge = {
   requestConnectPermissions?(): void;
   connectStatus?(): string;
   connectTest?(): void;
+  connectMedia?(action: string, level: number): void;
+  connectMediaState?(): string;
   openBatterySettings?(): void;
   openAutostartSettings?(): void;
   openFullScreenSettings?(): void;
@@ -301,6 +303,38 @@ export const lifeConnect = {
   openAutostartSettings(): void {
     bridge()?.openAutostartSettings?.();
   },
+  /** Music remote, main phone: a command for what's playing on the SIM phone. */
+  media(action: MediaAction, level = 0): void {
+    bridge()?.connectMedia?.(action, level);
+  },
+  /** The last music state heard from the SIM phone, or null. */
+  mediaState(): MediaState | null {
+    try {
+      const raw = bridge()?.connectMediaState?.();
+      const state = raw ? (JSON.parse(raw) as MediaState) : null;
+      return state && typeof state.volume === "number" ? state : null;
+    } catch {
+      return null;
+    }
+  },
+};
+
+export type MediaAction =
+  "toggle" | "play" | "pause" | "next" | "previous" | "vol_up" | "vol_down" | "vol_set" | "status";
+
+/** What's playing on the SIM phone. Title, artist and app need Life OS Full there (notification access). */
+export type MediaState = {
+  device: string;
+  playing: boolean;
+  /** Whether the song details could be read. */
+  known: boolean;
+  title?: string;
+  artist?: string;
+  app?: string;
+  volume: number;
+  max: number;
+  /** When the SIM phone sent it (ms). */
+  at?: number;
 };
 
 /* ------------------------------------------ spending from notifications */

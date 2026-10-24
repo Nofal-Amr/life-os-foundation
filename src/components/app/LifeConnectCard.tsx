@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildFeatures, lifeConnect, type ConnectRole, type ConnectStatus } from "@/lib/native";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { MusicRemote } from "@/components/app/MusicRemote";
 
 /** Per phone: which role this phone plays, and what to call it. */
 const ROLE_KEY = "life-connect:role";
@@ -244,6 +245,10 @@ export function LifeConnectCard() {
           <p className="text-xs text-muted-foreground">
             Shown on the main phone: "Calling {device || "SIM phone"}".
           </p>
+          <p className="text-xs text-muted-foreground">
+            Music playing here can be paused, skipped and turned up or down from the main phone.
+            {smsBuild ? " Song names are shared too, while the remote is in use." : ""}
+          </p>
           {!smsBuild ? (
             <p className="pt-2 text-xs text-muted-foreground">
               Passing SMS on needs Life OS Full on this phone (installed from a computer — Google
@@ -282,10 +287,13 @@ export function LifeConnectCard() {
         </div>
       ) : null}
       {role === "main" ? (
-        <p className="text-xs text-muted-foreground">
-          For your watch: in Galaxy Wearable → Watch settings → Notifications → App notifications,
-          turn on Life OS. Calls then ring on the watch with Decline.
-        </p>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            For your watch: in Galaxy Wearable → Watch settings → Notifications → App notifications,
+            turn on Life OS. Calls then ring on the watch with Decline.
+          </p>
+          {secret ? <MusicRemote /> : null}
+        </div>
       ) : null}
       {role === "sim" && /xiaomi|poco|redmi/.test(status?.brand ?? "") ? (
         <div className="space-y-2 rounded-lg bg-secondary p-3 text-xs text-muted-foreground">
