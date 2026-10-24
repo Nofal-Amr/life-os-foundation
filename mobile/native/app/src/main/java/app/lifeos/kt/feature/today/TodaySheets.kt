@@ -77,7 +77,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.delay
 
-private val STATUS_ICONS: Map<String, ImageVector> = mapOf(
+internal val STATUS_ICONS: Map<String, ImageVector> = mapOf(
     "jamaah" to Icons.Outlined.Groups,
     "on_time" to Icons.Filled.Check,
     "clutch" to Icons.Outlined.Bolt,

@@ -3,6 +3,7 @@ package app.lifeos.kt.data
 import app.lifeos.kt.core.common.nowIso
 import app.lifeos.kt.core.model.Account
 import app.lifeos.kt.core.model.BodyStats
+import app.lifeos.kt.core.model.DhikrLog
 import app.lifeos.kt.core.model.Food
 import app.lifeos.kt.core.model.AccountPocket
 import app.lifeos.kt.core.model.DailyReview
@@ -238,6 +239,18 @@ class BodyRepository @Inject constructor(private val store: LocalStore) {
 class SpiritRepository @Inject constructor(private val store: LocalStore) {
     val settings: Flow<PrayerSettings?> = store.observe("prayer_settings", PrayerSettings.serializer()).map { it.firstOrNull() }
     val logs: Flow<List<PrayerLog>> = store.observe("prayer_logs", PrayerLog.serializer())
+    val dhikr: Flow<List<DhikrLog>> = store.observe("dhikr_logs", DhikrLog.serializer())
+
+    /** Place, method and Asr school; one row per person, as the web upserts it. */
+    suspend fun save(settings: PrayerSettings) = store.save("prayer_settings", PrayerSettings.serializer(), settings)
+
+    suspend fun logDhikr(date: String, kind: String, count: Int, label: String? = null): DhikrLog {
+        val log = DhikrLog(newId(), date, kind, count, label, nowIso())
+        store.save("dhikr_logs", DhikrLog.serializer(), log)
+        return log
+    }
+
+    suspend fun delete(log: DhikrLog) = store.delete("dhikr_logs", log.id)
 
     /** Records how a prayer was prayed, or clears it with null; older columns kept in step as the web app does. */
     suspend fun setStatus(date: String, prayer: String, status: String?, logs: List<PrayerLog>) {

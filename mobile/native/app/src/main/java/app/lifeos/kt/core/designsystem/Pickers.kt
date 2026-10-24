@@ -26,6 +26,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.lifeos.kt.core.common.friendlyDate
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.outlined.ChevronLeft
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.MaterialTheme
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -120,4 +127,30 @@ fun PickTime(initial: LocalTime, dismiss: () -> Unit, pick: (LocalTime) -> Unit)
         dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } },
         text = { Column { TimePicker(state = state) } },
     )
+}
+
+/** ‹ Today › : step a day either way, or tap the date to jump. Never past [today]. */
+@Composable
+fun DayBar(date: LocalDate, today: LocalDate, set: (LocalDate) -> Unit) {
+    val haptics = rememberHaptics()
+    var picking by remember { mutableStateOf(false) }
+    androidx.compose.foundation.layout.Row(
+        androidx.compose.ui.Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.IconButton(onClick = { haptics.tick(); set(date.minusDays(1)) }) {
+            androidx.compose.material3.Icon(Icons.Outlined.ChevronLeft, "Previous day")
+        }
+        Text(
+            friendlyDate(date, today).let { if (it == "Today" || it == "Yesterday") "$it · ${date.format(java.time.format.DateTimeFormatter.ofPattern("EEE d MMM"))}" else it },
+            style = MaterialTheme.typography.titleSmall,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = androidx.compose.ui.Modifier.weight(1f).clip(MaterialTheme.shapes.medium).clickable { picking = true }.padding(vertical = 10.dp),
+        )
+        androidx.compose.material3.IconButton(onClick = { haptics.tick(); set(date.plusDays(1)) }, enabled = date < today) {
+            androidx.compose.material3.Icon(Icons.Outlined.ChevronRight, "Next day")
+        }
+        if (date != today) TextButton(onClick = { haptics.tick(); set(today) }) { Text("Today") }
+    }
+    if (picking) PickDate(date, dismiss = { picking = false }) { if (!it.isAfter(today)) set(it) }
 }

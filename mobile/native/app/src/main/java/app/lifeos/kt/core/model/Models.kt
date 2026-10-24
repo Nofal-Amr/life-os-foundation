@@ -372,3 +372,14 @@ data class Food(
     @SerialName("fat_g") val fatG: Double? = null,
     val icon: String? = null,
 ) : Row
+
+/** A finished azkar session (kind morning/evening) or a saved tasbih count (kind tasbih, label = the phrase). */
+@Serializable
+data class DhikrLog(
+    override val id: String,
+    @SerialName("log_date") val logDate: String,
+    val kind: String,
+    val count: Int,
+    val label: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+) : Row

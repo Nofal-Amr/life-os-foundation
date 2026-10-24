@@ -202,24 +202,8 @@ private fun BodyList(content: LazyListScope.() -> Unit) {
     }
 }
 
-/** ‹ Today › : step a day either way, or tap the date to jump. Never past today. */
 @Composable
-private fun DayBar(s: BodyState, model: BodyViewModel) {
-    val haptics = rememberHaptics()
-    var picking by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = { haptics.tick(); model.setDate(s.date.minusDays(1)) }) { Icon(Icons.Outlined.ChevronLeft, "Previous day") }
-        Text(
-            friendlyDate(s.date, s.today).let { if (it == "Today" || it == "Yesterday") "$it · ${s.date.format(DateTimeFormatter.ofPattern("EEE d MMM"))}" else it },
-            style = MaterialTheme.typography.titleSmall,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.weight(1f).clip(MaterialTheme.shapes.medium).clickable { picking = true }.padding(vertical = 10.dp),
-        )
-        IconButton(onClick = { haptics.tick(); model.setDate(s.date.plusDays(1)) }, enabled = s.date < s.today) { Icon(Icons.Outlined.ChevronRight, "Next day") }
-        if (s.date != s.today) TextButton(onClick = { haptics.tick(); model.setDate(s.today) }) { Text("Today") }
-    }
-    if (picking) PickDate(s.date, dismiss = { picking = false }) { if (!it.isAfter(s.today)) model.setDate(it) }
-}
+private fun DayBar(s: BodyState, model: BodyViewModel) = app.lifeos.kt.core.designsystem.DayBar(s.date, s.today, model::setDate)
 
 /* --------------------------------- Day --------------------------------- */
 

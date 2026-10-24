@@ -3,6 +3,8 @@ package app.lifeos.kt.data.logic
 import app.lifeos.kt.core.model.PrayerLog
 import app.lifeos.kt.core.model.PrayerSettings
 import com.batoulapps.adhan.CalculationMethod
+import com.batoulapps.adhan.CalculationParameters
+import com.batoulapps.adhan.PrayerAdjustments
 import com.batoulapps.adhan.Coordinates
 import com.batoulapps.adhan.Madhab
 import com.batoulapps.adhan.PrayerTimes
@@ -64,7 +66,7 @@ fun prayerWindows(settings: PrayerSettings?, day: LocalDate, zone: ZoneId = Zone
 private fun times(settings: PrayerSettings?, day: LocalDate, zone: ZoneId): PrayerTimes? {
     val latitude = settings?.latitude ?: return null
     val longitude = settings.longitude ?: return null
-    val params = method(settings.calcMethod).parameters
+    val params = parameters(settings.calcMethod)
     params.madhab = if (settings.asrSchool == "hanafi") Madhab.HANAFI else Madhab.SHAFI
     return PrayerTimes(Coordinates(latitude, longitude), DateComponents.from(Date.from(day.atTime(12, 0).atZone(zone).toInstant())), params)
 }
@@ -79,6 +81,18 @@ fun prayerStatus(log: PrayerLog?): String? = when {
 }
 
 /** The web app's method names (adhan.js) to adhan-java's; the web app's default when unset. */
+/**
+ * The web's method, by its adhan-js name. adhan-java 1.2.1 has no Turkey or
+ * Tehran: Turkey is rebuilt exactly (18 degrees/17 degrees with its minute adjustments);
+ * Tehran gets its angles (17.7 degrees/14 degrees) but this library can't set its 4.5 degrees
+ * Maghrib angle, so its Maghrib shows at sunset, a little earlier than the web.
+ */
+private fun parameters(name: String?): CalculationParameters = when (name) {
+    "Turkey" -> CalculationParameters(18.0, 17.0, CalculationMethod.OTHER).withMethodAdjustments(PrayerAdjustments(0, -7, 5, 4, 7, 0))
+    "Tehran" -> CalculationParameters(17.7, 14.0, CalculationMethod.OTHER)
+    else -> method(name).parameters
+}
+
 private fun method(name: String?): CalculationMethod = when (name) {
     "Egyptian" -> CalculationMethod.EGYPTIAN
     "Karachi" -> CalculationMethod.KARACHI

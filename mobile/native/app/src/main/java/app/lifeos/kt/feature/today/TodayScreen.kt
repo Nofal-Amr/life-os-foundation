@@ -193,7 +193,17 @@ fun TodayScreen(open: (Section) -> Unit, openTool: (String) -> Unit, openTask: (
                     onLink = { open(Section.Spirit) },
                     aside = if (s.prayerTimes != null) ({ Dots(s.prayedToday, 5) }) else null,
                 ) {
-                    if (s.prayerTimes != null) PrayerTiles(s.today, s.prayerLogs, s.prayerTimes) { haptics.tick(); prayerPick = it }
+                    if (s.prayerTimes != null) PrayerTiles(s.today, s.prayerLogs, s.prayerTimes) { name ->
+                        // The sunnah prayers have one status, as on the web: a tap marks it, another clears it.
+                        if (app.lifeos.kt.data.logic.isSunnah(name)) {
+                            val logged = prayerStatus(s.prayerLogs.firstOrNull { it.prayerDate == s.today.toString() && it.prayerName == name }) != null
+                            if (logged) haptics.tick() else haptics.confirm()
+                            model.setPrayer(name, if (logged) null else "on_time")
+                        } else {
+                            haptics.tick()
+                            prayerPick = name
+                        }
+                    }
                 }
             }
         }

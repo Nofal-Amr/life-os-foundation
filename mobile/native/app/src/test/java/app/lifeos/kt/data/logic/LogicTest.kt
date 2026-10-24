@@ -376,3 +376,34 @@ class BodyRulesTest {
         assertEquals(50, FOOD_LIBRARY.size)
     }
 }
+
+class SpiritRulesTest {
+    private fun log(date: String, name: String, status: String?) = app.lifeos.kt.core.model.PrayerLog("$date$name", date, name, status, completed = status != "missed")
+
+    @Test fun qiblaFromCairo() {
+        assertEquals(136.0, qiblaBearing(30.0444, 31.2357), 1.0)
+        assertEquals(1287.0, distanceToKaabaKm(30.0444, 31.2357), 10.0)
+        assertEquals(-10.0, turnTo(350.0, 0.0), 0.001)
+        assertEquals(20.0, turnTo(10.0, 350.0), 0.001)
+    }
+
+    @Test fun countsAreOfTheFiveOnly() {
+        val logs = listOf(log("2026-10-24", "fajr", "on_time"), log("2026-10-24", "sunnah_fajr", "on_time"), log("2026-10-24", "dhuhr", "missed"), log("2026-10-23", "isha", "jamaah"))
+        assertEquals(1, prayedOn(logs, "2026-10-24"))
+        assertEquals(2, prayedInWeek(logs, LocalDate.of(2026, 10, 24)))
+        val (counts, logged) = prayerStatusCounts(logs, "2026-10-23", "2026-10-24")
+        assertEquals(3, logged)
+        assertEquals(1, counts["missed"])
+    }
+
+    @Test fun azkarFileLoadsWithBothTimes() {
+        val data = parseAzkar(java.io.File("src/main/assets/azkar.json").readText(Charsets.UTF_8))
+        assertEquals(20, data.azkar.size)
+        assertEquals(listOf(33, 99, 100, 1000), data.tasbihTargets)
+        val morning = azkarFor(data, "morning").map { it.first.id }
+        val evening = azkarFor(data, "evening").map { it.first.id }
+        assertEquals(true, "ilman" in morning && "ilman" !in evening)
+        assertEquals(true, "kalimat" in evening && "kalimat" !in morning)
+        assertEquals(19, morning.size)
+    }
+}

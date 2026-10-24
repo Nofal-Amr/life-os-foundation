@@ -56,6 +56,7 @@ val SYNCED_TABLES = listOf(
     SyncedTable("medication_logs", "medication_id,log_date,time_slot"),
     SyncedTable("food_logs"),
     SyncedTable("foods"),
+    SyncedTable("dhikr_logs"),
     SyncedTable("body_stats", "user_id"),
     SyncedTable("daily_reviews", "user_id,review_date"),
     SyncedTable("profiles", "user_id"),
