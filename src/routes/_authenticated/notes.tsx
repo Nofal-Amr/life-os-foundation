@@ -103,7 +103,7 @@ function NotesPage() {
     void navigate({ search: {}, replace: true });
   }, [openId, notes.data, navigate]);
 
-  const all = notes.data ?? [];
+  const all = useMemo(() => notes.data ?? [], [notes.data]);
   const labels = useMemo(
     () => [...new Set(all.flatMap((note) => note.tags))].sort((a, b) => a.localeCompare(b)),
     [all],
