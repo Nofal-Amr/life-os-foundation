@@ -82,7 +82,7 @@ or Write and again when the agent stops. Findings from reading the files on `mai
 
 | Concern | Branch | Pull request | State |
 |---|---|---|---|
-| 1.0 preparation documents | `claude/elegant-hypatia-1enej8` | see the 1.0 checkpoint message | Open, documentation only |
+| 1.0 preparation documents | `claude/elegant-hypatia-1enej8` | [Nofal-Amr/life-os-foundation#1](https://github.com/Nofal-Amr/life-os-foundation/pull/1) | Draft, documentation only; gap analysis still to be added |
 
 ## Environment notes for whoever resumes
 
