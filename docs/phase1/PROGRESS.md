@@ -4,29 +4,101 @@ Read this first when resuming. Scope and rules are in `EXECUTION_PROMPT.md` (own
 verbatim). The audit this phase acts on is `../audits/PHASE_0_AUDIT.md`; the specification is
 `../MASTER_SPEC.md`; the comparison between the two is `../audits/PHASE_0_GAP_ANALYSIS.md`.
 
-Last updated: 2026-11-10, at the 1.0 checkpoint.
+Last updated: 2026-11-10, during 1.1 (three pull requests open, formatting not started).
 
 ## Where things stand
 
 | Sub-phase | State |
 |---|---|
-| 1.0 Preparation | **Complete, waiting for the owner's approval.** Audit saved, specification committed, gap analysis written, hook report done. |
-| 1.1 Delivery gate (A6, S13) | Not started. Do not start before 1.0 is approved. Needs a decision on the `at-a-glance` branch first (below). |
+| 1.0 Preparation | **Approved by the owner.** The owner will merge its pull request after reading the gap analysis. |
+| 1.1 Delivery gate (A6, S13) | **In progress.** Lint, CI and documentation pull requests are open. The formatting pull request, the hygiene cleanup and the `.env` change are not started; see "1.1 state". |
 | 1.2 Schema source of truth (A1) | Not started. Needs the staging answer. |
 | 1.3 Mobile sign-in and signing (S3, S1, S2) | Not started. Needs the production domain. |
 | 1.4 Data-exposure fixes (S4, S5, S7, S8 default, S12) | Not started. |
 
-**Next step:** wait for approval of 1.0. Then re-inspect the repository and begin 1.1 with the
-formatting-only pull request, once the `at-a-glance` question is answered.
+**Next step:** wait for the owner's answers under "Waiting on the owner". Then make the
+formatting-only pull request from whatever `main` is at that moment, followed by the hygiene
+cleanup and, last, the `.env` change.
 
 ## Waiting on the owner
 
-1. **Approval of 1.0** and of merging its pull request.
-2. **`at-a-glance` branch.** Merge into `main` before 1.1, keep open, or drop. See "New since the
-   audit". This blocks the formatting pull request.
-3. **Staging (decision 7).** Still template text in the owner's messages. Needed for 1.2: either
-   the staging project ref (no keys), or a request to be guided through creating it.
-4. **Production domain (decision 9).** Still template text. Needed for 1.3.
+1. **`at-a-glance` branch.** Merge or keep open. Only three of its files overlap with the
+   formatter (see "1.1 state"), so either works. The owner decides.
+2. **What the formatting pull request covers.** Four choices listed under "1.1 state".
+3. **Vercel build-time variables.** The owner confirms they are set for Production and Preview
+   before the tracked `.env` is replaced. That change is done last in 1.1.
+4. **Review of pull requests 2, 3 and 4**, and merging pull request 1 first.
+5. **Staging (decision 7).** Needed for 1.2: the staging project ref (no keys), or a request to be
+   guided through creating it.
+6. **Production domain (decision 9).** Needed for 1.3.
+
+## 1.1 state
+
+Owner's decisions for 1.1 (2026-11-10):
+
+- Nothing that needs a connector is delegated. The owner is disconnecting the Supabase connector
+  until 1.2 and the Lovable connector for good. No connector was used in 1.1 except GitHub, for
+  pull requests.
+- One branch per pull request, named `phase1/<topic>`. No force-push, no merge, no direct push to
+  `main`. The owner is enabling protection on `main` (require pull requests, block force-push).
+- Run `tsc`, `vitest` and `eslint` before every commit; never rely on a subagent's report.
+- CI must trigger on `pull_request`, pin actions to full commits, use minimal permissions and no
+  secrets. The owner sees the workflow files before they merge.
+- The `.env` change is last in 1.1 and only after the owner confirms the Vercel variables.
+
+Done so far:
+
+- **Lint** (`phase1/lint`): the 38 non-formatting issues are at 0. Three fixed, two suppressed
+  with the reason beside the line (both in sign-in code that 1.3 replaces), and the 33
+  fast-refresh export warnings listed as per-file exceptions in `eslint.config.js`. The owner
+  had expected those 33 to be fixed by moving exports; that was not done because the executor
+  could not be loaded (below). It remains available as a later task; the exception list then
+  shrinks.
+- **CI** (`phase1/ci`): `.github/workflows/ci.yml` with three jobs: web (types, unit tests, lint
+  with `--max-warnings 0`), native Android (unit tests, debug build), WebView Android (Java tests,
+  build). Its lint step stays red until the formatting and lint pull requests are merged.
+- **Documentation** (`phase1/agent-rules-and-docs`): README and `AGENTS.md` corrected, `CLAUDE.md`
+  added (imports `AGENTS.md`), `.claude/agents/phase1-executor.md` added.
+
+Executor findings:
+
+- A subagent definition's `tools` list is an allow-list; connectors are excluded unless listed.
+- The definition format cannot deny single shell commands. A `disallowedTools` entry such as
+  `Bash(git push *)` removes the whole shell tool. Deny rules in settings do work at command
+  level but apply to the main session too. A hook in the definition could block commands for
+  that subagent only; none was added, given the owner's position on hooks.
+- Definitions are read when a session starts. `phase1-executor` could not be used in the session
+  that created it, so nothing was delegated in 1.1 so far. A new session will have it once the
+  documentation pull request is merged.
+
+Formatting analysis (not started; `prettier --check .` on `main`):
+
+- 317 files would change: 142 under `.agents/` and `.claude/` (the design tool, due for removal),
+  92 under `src/`, 61 under `second-brain/`, 5 under `.lovable/`, 3 under `docs/superpowers/`,
+  3 under `mobile/ios/`, and 11 others (build scripts, `public/`, `e2e/`, `roadmap.md`,
+  `AGENTS.md`).
+- Choices for the owner: (1) remove the design-tool folders first, so 142 files are deleted
+  instead of formatted; (2) exclude `mobile/ios/`, since iOS is not to be touched; (3) exclude the
+  three documents saved "unchanged" or "verbatim" (`docs/MASTER_SPEC.md`,
+  `docs/audits/PHASE_0_AUDIT.md`, `docs/phase1/EXECUTION_PROMPT.md`); (4) format or exclude the
+  owner's notes in `second-brain/` and `.lovable/`.
+- `at-a-glance` overlaps the formatter in three files only: `src/components/app/LifeConnectCard.tsx`,
+  `src/lib/native.ts` and `second-brain/Handoff - next session.md`. Its Kotlin and Java files are
+  not formatted by Prettier.
+- The formatting pull request must be generated last among the source-changing ones, from the
+  `main` of that moment, so it cannot conflict with them.
+
+Read-only items delivered before 1.1 (2026-11-10):
+
+- `at-a-glance` summary: no schema, deployment or dependency changes. It adds 12 tables to the
+  native app's sync list (17 to 29), a demo mode with a placeholder session, coarse location in
+  the native app, and a Life Connect music remote in the WebView app and website. `tsc` and the
+  295 unit tests pass on it; Kotlin tests were not run. It is a fast-forward of `main`.
+- Hook scripts: static text scan of the committed Windows binary shows calls to
+  `impeccable.style/api`, an update check, telemetry with opt-out switches, and an OpenAI
+  image path used when `OPENAI_API_KEY` is set. Which of these `hook` triggers is unknown; the
+  binary was not run. Recommendation: remove in the hygiene cleanup, with the four
+  `.claude/agents/impeccable-*.md` files.
 
 ## Decisions made so far
 
@@ -99,7 +171,12 @@ or Write and again when the agent stops. Findings from reading the files on `mai
 
 | Concern | Branch | Pull request | State |
 |---|---|---|---|
-| 1.0 preparation documents | `claude/elegant-hypatia-1enej8` | [Nofal-Amr/life-os-foundation#1](https://github.com/Nofal-Amr/life-os-foundation/pull/1) | Open, documentation only, not merged |
+| 1.0 preparation documents | `claude/elegant-hypatia-1enej8` | [Nofal-Amr/life-os-foundation#1](https://github.com/Nofal-Amr/life-os-foundation/pull/1) | Open, approved, the owner merges it |
+| 1.1 CI | `phase1/ci` | [Nofal-Amr/life-os-foundation#2](https://github.com/Nofal-Amr/life-os-foundation/pull/2) | Open |
+| 1.1 lint | `phase1/lint` | [Nofal-Amr/life-os-foundation#3](https://github.com/Nofal-Amr/life-os-foundation/pull/3) | Open |
+| 1.1 README, agent rules, executor | `phase1/agent-rules-and-docs` | [Nofal-Amr/life-os-foundation#4](https://github.com/Nofal-Amr/life-os-foundation/pull/4) | Open; merge after pull request 1 |
+| 1.1 formatting | not created | | Waiting on the owner |
+| 1.1 hygiene cleanup and `.env` | not created | | Waiting on the owner |
 
 Commits on that branch, in order: audit with the progress record, pull request link, the
 specification, the gap analysis, this progress update. The audit shares its commit with the two
