@@ -125,7 +125,7 @@ function AuthPage() {
     return () => data.subscription.unsubscribe();
     // `returnToApp` is recreated on every render. Listing it would re-run this effect each
     // render, signing the browser out and re-subscribing every time. It reads only `handoff`,
-    // which is listed.
+    // which is listed. Phase 1.3 removes this hand-off, and this suppression with it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, handoff]);
 
