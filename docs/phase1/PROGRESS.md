@@ -4,7 +4,7 @@ Read this first when resuming. Scope and rules are in `EXECUTION_PROMPT.md` (own
 verbatim). The audit this phase acts on is `../audits/PHASE_0_AUDIT.md`; the specification is
 `../MASTER_SPEC.md`; the comparison between the two is `../audits/PHASE_0_GAP_ANALYSIS.md`.
 
-Last updated: 2026-11-11, during 1.1 (four 1.1 pull requests open, formatting waits on merges).
+Last updated: 2026-11-11, during 1.1 (four 1.1 pull requests open; third round of decisions recorded).
 
 ## Where things stand
 
@@ -23,18 +23,24 @@ last, do the `.env` change once the owner confirms the Vercel variables.
 ## Waiting on the owner
 
 1. **Merges, in this order:** pull request 1 (1.0 documents), 4 (README, rules, executor), 3
-   (lint), 5 (removal). Then the formatting pull request is prepared; after it merges, the CI
-   branch is updated and pull request 2 merges last. CI-based branch protection is turned on
+   (lint), 5 (removal). The owner smoke-tests the Notes and Together pages on pull request 3's
+   preview before merging it. Then the formatting pull request is prepared locally and **not
+   pushed until the owner gives the go-ahead**; after it merges, the CI branch is updated and
+   pull request 2 merges last. CI-based branch protection is turned on
    once CI is green on `main`.
-2. **A check on the owner's machine before pull request 5 merges:** whether `.impeccable` exists
-   in the user profile folder or in the repository folder. See "Hook report".
+2. **A check on the owner's machine:** whether `.impeccable` exists in the user profile folder or
+   in the repository folder, and which operating system the owner uses (left unfilled in the
+   owner's message). See "Hook report". Merging pull request 5 does not wait for this.
 3. **Vercel build-time variables.** The owner confirms they are set for Production and Preview
    before the tracked `.env` is replaced. That change is last in 1.1.
-4. **Connectors.** The owner's message left "I have disconnected / I will disconnect" unfilled.
-   Supabase and Lovable were still listed in the session on 2026-11-11. Neither was used.
-5. **Staging (decision 7).** Needed for 1.2: the staging project ref (no keys), or a request to be
+4. **Connectors.** Left unfilled in two owner messages. Supabase, Lovable and Vercel were still
+   listed in the session on 2026-11-11. The instruction is not to use Lovable or Supabase; none
+   of the three was used in 1.1.
+5. **Sub-phase "1.5".** The owner's message plans a component-test setup "for 1.5". The
+   execution prompt defines 1.0 to 1.4 only, so this needs the owner to add it to the scope.
+6. **Staging (decision 7).** Needed for 1.2: the staging project ref (no keys), or a request to be
    guided through creating it.
-6. **Production domain (decision 9).** Needed for 1.3.
+7. **Production domain (decision 9).** Needed for 1.3.
 
 ## 1.1 state
 
@@ -63,6 +69,66 @@ Owner's decisions, second round (2026-11-10):
   practical.
 - The 33 export warnings keep their per-file exception list. The executor is not used for the
   moves; it is saved for 1.2 (for example test scaffolding).
+
+Owner's decisions, third round (2026-11-11):
+
+- `skills-lock.json` removal approved. The CI cache entry stays as it is.
+- **The music remote must not merge to `main` until S8 is redesigned in Phase 3.**
+- Pull request 3 is accepted without a regression test for its two behaviour-preserving changes
+  (documented exception to operating rule 5, below).
+- The formatting pull request is prepared after pull requests 1, 4, 3 and 5 are merged and is
+  pushed only on the owner's go-ahead. 1.1 stops at its checkpoint after it.
+- No change to the Lovable build package now; the facts are recorded below for the hosting phase.
+
+`at-a-glance`, commit by commit (the branch is not to be changed):
+
+| Commit | What | Part |
+|---|---|---|
+| `ee601b0` | Native Today, demo mode | Native screens |
+| `ee5a6c9` | Native Do | Native screens |
+| `6a576e3` | Native Money | Native screens |
+| `f83f9fa` | Native Body | Native screens |
+| `d0e622c` | Native Spirit | Native screens |
+| `88ba18c` | Native Calendar | Native screens |
+| `8a1e2ec` | Life Connect music remote (12 WebView app files, 3 website files) | Music remote |
+| `568df72` | Hand-off note that describes the remote | Music remote |
+
+The six native commits come first and touch only `mobile/native/` and three notes files. Commit
+`88ba18c` is therefore a fast-forward of `main` that contains the screens and none of the remote.
+The screens still carry what was reported earlier: 12 more tables in the native sync list, a
+demo mode with a placeholder session, and coarse location.
+
+Exception to operating rule 5 (pull request 3):
+
+- `src/routes/_authenticated/notes.tsx` (notes list memoised) and
+  `src/routes/_authenticated/together.tsx` (`events.data` read into a local) have no test that
+  fails without the change. Both are written to behave identically. No unit test renders those
+  pages and the repository has no component-test library; adding one is a new dependency.
+- Cover in place: type check, the existing 295 unit tests, the lint step, and the owner's manual
+  check of both pages on the preview.
+- Planned, not started and not yet in scope: a component-test setup as a justified development
+  dependency (a DOM environment and a React testing library for Vitest), with first tests for
+  these two pages.
+
+The Lovable build package (`@lovable.dev/vite-tanstack-config` 2.20.0, MIT, a development
+dependency):
+
+- What it provides: the `defineConfig` used by `vite.config.ts`. It assembles the whole build
+  setup: TanStack Start, the React plugin, Tailwind, path aliases (`@`), `VITE_*` variable
+  injection, the server build through Nitro (its default target is Cloudflare when Nitro detects
+  no host), development tools and error logging, and behaviour for Lovable's own preview sandbox.
+  It also writes a `.lovable/output.json` file into the build output.
+- Does the build require it: yes. `vite.config.ts` imports nothing else, so the web build and the
+  WebView app's bundle both fail without it. No application code imports it.
+- What replacing it involves: a hand-written `vite.config.ts` that lists the same plugins
+  directly. They are already installed (`vite`, `@vitejs/plugin-react`, `@tailwindcss/vite`,
+  `vite-tsconfig-paths`, `@tanstack/react-start`, `nitro`). The work is choosing the Nitro target
+  for the host explicitly, keeping the `LIFE_OS_MOBILE` single-page mode for the WebView app,
+  then proving the build output and a preview deployment behave the same. After that the package,
+  its `bunfig.toml` exceptions and the `.lovable/` folder can go.
+- Related leftover, separate from the package: `src/integrations/supabase/previewAuthStorage.ts`
+  and its use in `client.ts` pass sign-in storage to Lovable's editor when the app runs inside
+  Lovable's preview. 1.3 decides whether it stays.
 
 Technical debt recorded:
 
