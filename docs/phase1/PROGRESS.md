@@ -4,7 +4,7 @@ Read this first when resuming. Scope and rules are in `EXECUTION_PROMPT.md` (own
 verbatim). The audit this phase acts on is `../audits/PHASE_0_AUDIT.md`; the specification is
 `../MASTER_SPEC.md`; the comparison between the two is `../audits/PHASE_0_GAP_ANALYSIS.md`.
 
-Last updated: 2026-11-11, during 1.1 (four 1.1 pull requests open; third round of decisions recorded).
+Last updated: 2026-11-11, during 1.1 (four 1.1 pull requests open; fourth round of decisions recorded).
 
 ## Where things stand
 
@@ -24,8 +24,8 @@ last, do the `.env` change once the owner confirms the Vercel variables.
 
 1. **Merges, in this order:** pull request 1 (1.0 documents), 4 (README, rules, executor), 3
    (lint), 5 (removal). The owner smoke-tests the Notes and Together pages on pull request 3's
-   preview before merging it. Then the formatting pull request is prepared locally and **not
-   pushed until the owner gives the go-ahead**; after it merges, the CI branch is updated and
+   preview before merging it. **The formatting pull request is neither prepared nor pushed until
+   all four are on `main` and the owner says go.** After it merges, the CI branch is updated and
    pull request 2 merges last. CI-based branch protection is turned on
    once CI is green on `main`.
 2. **A check on the owner's machine:** whether `.impeccable` exists in the user profile folder or
@@ -33,14 +33,12 @@ last, do the `.env` change once the owner confirms the Vercel variables.
    owner's message). See "Hook report". Merging pull request 5 does not wait for this.
 3. **Vercel build-time variables.** The owner confirms they are set for Production and Preview
    before the tracked `.env` is replaced. That change is last in 1.1.
-4. **Connectors.** Left unfilled in two owner messages. Supabase, Lovable and Vercel were still
-   listed in the session on 2026-11-11. The instruction is not to use Lovable or Supabase; none
-   of the three was used in 1.1.
-5. **Sub-phase "1.5".** The owner's message plans a component-test setup "for 1.5". The
-   execution prompt defines 1.0 to 1.4 only, so this needs the owner to add it to the scope.
-6. **Staging (decision 7).** Needed for 1.2: the staging project ref (no keys), or a request to be
+4. **Connectors.** Left unfilled in three owner messages. Supabase, Lovable and Vercel were still
+   listed in the session on 2026-11-11. The instruction is not to use any of the three; none was
+   used in 1.1. The owner disconnects Lovable and Vercel now and Supabase before 1.2.
+5. **Staging (decision 7).** Needed for 1.2: the staging project ref (no keys), or a request to be
    guided through creating it.
-7. **Production domain (decision 9).** Needed for 1.3.
+6. **Production domain (decision 9).** Needed for 1.3.
 
 ## 1.1 state
 
@@ -58,8 +56,8 @@ Owner's decisions for 1.1 (2026-11-10):
 
 Owner's decisions, second round (2026-11-10):
 
-- `at-a-glance` stays open and is rebased after the formatting pull request merges. It must not
-  merge before the music remote's use of the Life Connect channel is dealt with (below).
+- `at-a-glance` stays open. (Superseded on 2026-11-11: it is not rebased or merged in Phase 1;
+  see "Notes for later phases".)
 - Formatting scope: the design-tool folders are removed first; `mobile/ios/`, `second-brain/`,
   `.lovable/` and the three documents saved unchanged (`docs/MASTER_SPEC.md`,
   `docs/audits/PHASE_0_AUDIT.md`, `docs/phase1/EXECUTION_PROMPT.md`) are excluded. `.lovable/` is
@@ -106,9 +104,11 @@ Exception to operating rule 5 (pull request 3):
   pages and the repository has no component-test library; adding one is a new dependency.
 - Cover in place: type check, the existing 295 unit tests, the lint step, and the owner's manual
   check of both pages on the preview.
-- Planned, not started and not yet in scope: a component-test setup as a justified development
-  dependency (a DOM environment and a React testing library for Vitest), with first tests for
-  these two pages.
+- Planned for Phase 4 (hardening), next to the signed-in end-to-end tests: a component-test
+  setup as a justified development dependency (a DOM environment and a React testing library for
+  Vitest), with first tests for these two pages. It moves into Phase 2 if Phase 2 rewrites the
+  Notes or Together pages. There is no sub-phase 1.5; an earlier owner message named one by
+  mistake.
 
 The Lovable build package (`@lovable.dev/vite-tanstack-config` 2.20.0, MIT, a development
 dependency):
@@ -240,6 +240,16 @@ Read-only items delivered before 1.1 (2026-11-10):
   then the v1 feature modules.
 - Leave the client-side column stripping in `src/lib/offline.ts` alone in Phase 1; it is a Phase 2
   item.
+- **`at-a-glance` stays unmerged, all of it** (owner, 2026-11-11). The six native-screen commits
+  wait for Phase 2 because they add 12 tables to the native sync engine, which has the problems in
+  findings A2, A3 and A4, and they add coarse location, which needs a privacy review first. The
+  music remote waits for the S8 redesign in Phase 3. This replaces the earlier plan to rebase the
+  branch after the formatting pull request.
+- **The Phase 2 sync design must cover all 29 tables from the start**: the 17 synced on `main` and
+  the 12 that `at-a-glance` adds.
+- Component-test setup: Phase 4, or Phase 2 if it rewrites the Notes or Together pages.
+- Replacing `@lovable.dev/vite-tanstack-config` belongs to the hosting-move phase. No action
+  before then. The facts are under "1.1 state".
 
 ## Hook report (operating rule 9)
 
