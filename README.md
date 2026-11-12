@@ -1,24 +1,55 @@
-# Life OS Foundation
+# Life OS
 
-Build the initial foundation for Life OS: a clean, responsive personal productivity web application using Supabase for auth and database with strict RLS. Implement the persistent layout (sidebar on desktop, mobile navigation) and core pages: Dashboard (quick actions, today's summary, overview stats), Projects (planning/active/on hold/completed/archived, priorities), Tasks (statuses, priorities, project association, filters for today/upcoming/overdue/inbox), Habits (daily/weekly logging), Goals (status, progress tracking), Notes (tags, search), Calendar (month view, event management), and Daily Review (structured reflection form). Keep the design calm, minimal, and modular without sample data, AI features, or external services.
+A multi-user life-management product: tasks, projects, goals, habits, notes, calendar, money,
+health, study, work and shared spaces. Data and sign-in are on Supabase, with row-level security
+on every table.
 
-This project was built with [Lovable](https://lovable.dev).
+## What is in this repository
 
-## Build with Lovable
+| Path              | What it is                                                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| `src/`            | The web app: TanStack Start, React 19, TypeScript, Tailwind 4.                                           |
+| `mobile/native/`  | The native Android app (`app.lifeos.kt`): Kotlin and Jetpack Compose. This is the long-term Android app. |
+| `mobile/android/` | The older Android app (`app.lifeos`), which shows the web app in a WebView. Security fixes only.         |
+| `mobile/wear/`    | The Wear OS app.                                                                                         |
+| `mobile/ios/`     | The iPhone shell.                                                                                        |
+| `supabase/`       | Database migrations and SQL checks.                                                                      |
+| `e2e/`            | Playwright checks of the signed-out pages.                                                               |
+| `docs/`           | Specification (a roadmap of future features), audits and research.                                       |
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/f96e39e0-0606-45a6-aa2a-1a680bf64e8b).
+## Working on the web app
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+You need Node.js and [Bun](https://bun.sh). `bun.lock` is the lockfile.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+bun install
+bun run dev
 ```
+
+Build-time settings are read from `.env`; `.env.example` lists the optional ones.
+
+| Command            | What it does                                               |
+| ------------------ | ---------------------------------------------------------- |
+| `bun run dev`      | Starts the development server.                             |
+| `bun run build`    | Builds the web app.                                        |
+| `bun run lint`     | Runs ESLint, which includes the Prettier formatting check. |
+| `bun run format`   | Formats the code with Prettier.                            |
+| `bun run test`     | Runs the unit tests (Vitest).                              |
+| `npx tsc --noEmit` | Type-checks the code.                                      |
+| `bun run test:e2e` | Runs the Playwright checks. Needs Chrome installed.        |
+
+## Working on the Android apps
+
+Both need a JDK 17 and the Android SDK.
+
+| Command                 | What it does                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run build:native`  | Runs the native app's unit tests and builds it. Needs Gradle 8.11.1, which Android Studio downloads when the project is first opened. |
+| `bun run build:android` | Builds the WebView app with the SDK command-line tools.                                                                               |
+| `bun run test:android`  | Runs the WebView app's plain-Java tests.                                                                                              |
+| `bun run build:wear`    | Builds the Wear OS app.                                                                                                               |
+
+## Changes
+
+Work goes through pull requests into `main`. Every merge to `main` deploys to
+https://lifeos0.vercel.app through Vercel. Agents working in this repository follow `AGENTS.md`.
