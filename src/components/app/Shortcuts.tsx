@@ -36,6 +36,15 @@ export function openQuick(kind: "capture" | "task" | "money") {
   window.dispatchEvent(new CustomEvent("life-os-quick", { detail: kind }));
 }
 
+/**
+ * The + in the bottom bar and the side menu: the quick add menu, except on
+ * Notes, where + starts a new note (Notes listens for it).
+ */
+export function pressAdd(pathname: string) {
+  if (pathname.startsWith("/notes")) window.dispatchEvent(new Event("life-os-new-note"));
+  else openQuick("capture");
+}
+
 function typing(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null;
   if (!element) return false;
