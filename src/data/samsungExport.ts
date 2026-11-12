@@ -53,7 +53,7 @@ type Table = { rows: Record<string, string>[] };
 /** Samsung CSVs: line 1 is metadata, line 2 the header. Keys are the last dotted part. */
 export function parseSamsungCsv(text: string): Table {
   const lines = text
-    .replace(/^﻿/, "")
+    .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
     .filter((line) => line.trim());
   if (lines.length < 2) return { rows: [] };
