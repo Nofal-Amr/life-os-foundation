@@ -75,8 +75,8 @@ function RejectedChanges({ className }: { className: string }) {
         <div>
           <p className="text-sm font-semibold">Not saved yet</p>
           <p className="text-sm text-muted-foreground">
-            The server refused these. They're kept on this device until you try again or
-            discard them.
+            The server refused these. They're kept on this device until you try again or discard
+            them.
           </p>
         </div>
         <ul className="space-y-2">
