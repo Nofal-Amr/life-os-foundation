@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { replaysAs, userFromAuthorization } from "./offline";
+import { describeChange, replaysAs, userFromAuthorization } from "./offline";
 
 const jwt = (payload: object) =>
   `Bearer h.${btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}.s`;
@@ -30,5 +30,20 @@ describe("replaysAs", () => {
 
   it("lets changes queued before owners were kept go with whoever is signed in", () => {
     expect(replaysAs({}, "user-b")).toBe(true);
+  });
+});
+
+describe("describeChange", () => {
+  const url = (path: string) => `https://x.supabase.co/rest/v1/${path}`;
+  it("says what a refused change was, in words", () => {
+    expect(
+      describeChange({ method: "POST", url: url("tasks"), body: '{"title":"Buy printer ink"}' }),
+    ).toBe("Add to tasks: Buy printer ink");
+    expect(
+      describeChange({ method: "PATCH", url: url("food_logs?id=eq.1"), body: '{"name":"Ful"}' }),
+    ).toBe("Change in food logs: Ful");
+    expect(describeChange({ method: "DELETE", url: url("notes?id=eq.1"), body: "" })).toBe(
+      "Delete in notes",
+    );
   });
 });
