@@ -97,10 +97,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Phones: one menu, under "More" in the bottom bar. The header only orients. */}
       <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/90 px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md md:hidden">
-        <Link to="/dashboard" className="flex min-w-0 flex-col py-1">
-          <span className="truncate text-sm font-semibold tracking-tight">Life OS</span>
+        {/* The chip sits beside the link, not in it, so tapping it never navigates. */}
+        <div className="flex min-w-0 flex-col items-start py-1">
+          <Link to="/dashboard" className="truncate text-sm font-semibold tracking-tight">
+            Life OS
+          </Link>
           <SyncIndicator />
-        </Link>
+        </div>
         <div className="flex items-center">
           <Button variant="ghost" size="icon" aria-label="Search" onClick={openSearch}>
             <Search className="size-5" />
