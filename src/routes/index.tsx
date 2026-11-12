@@ -122,9 +122,17 @@ function Intro() {
 
       <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-6 text-sm text-muted-foreground md:px-8">
         <span>Life OS</span>
-        <Link to="/auth" className="underline-offset-4 hover:text-foreground hover:underline">
-          Sign in
-        </Link>
+        <nav className="flex flex-wrap gap-4">
+          <Link to="/privacy" className="underline-offset-4 hover:text-foreground hover:underline">
+            Privacy
+          </Link>
+          <Link to="/terms" className="underline-offset-4 hover:text-foreground hover:underline">
+            Terms
+          </Link>
+          <Link to="/auth" className="underline-offset-4 hover:text-foreground hover:underline">
+            Sign in
+          </Link>
+        </nav>
       </footer>
     </div>
   );
