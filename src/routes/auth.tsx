@@ -322,6 +322,18 @@ function AuthPage() {
             </Button>
           </form>
 
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            By continuing, you agree to the{" "}
+            <Link to="/terms" className="underline underline-offset-4 hover:text-foreground">
+              terms
+            </Link>{" "}
+            and the{" "}
+            <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground">
+              privacy policy
+            </Link>
+            .
+          </p>
+
           <div className="mt-4 text-center">
             <button
               type="button"
