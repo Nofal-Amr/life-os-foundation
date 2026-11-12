@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
+import { getGlobalStartContext } from "@tanstack/react-start";
 import { routeTree } from "./routeTree.gen";
 import { supabase } from "./integrations/supabase/client";
 import { installOffline, isOffline } from "./lib/offline";
@@ -7,6 +8,15 @@ import { installDemo } from "./lib/demo";
 import { installOfflineSession } from "./lib/session";
 import { applyLang } from "./lib/i18n";
 import { isOfflineError } from "@/lib/supabase-helpers";
+
+function serverNonce(): string | undefined {
+  try {
+    const nonce = (getGlobalStartContext() as { nonce?: unknown } | undefined)?.nonce;
+    return typeof nonce === "string" ? nonce : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
@@ -41,7 +51,10 @@ export const getRouter = () => {
     onSynced: () => void queryClient.invalidateQueries(),
   });
 
+  // On the server, this response's script nonce (see src/server.ts).
+  const nonce = typeof window === "undefined" ? serverNonce() : undefined;
   const router = createRouter({
+    ...(nonce ? { ssr: { nonce } } : {}),
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
