@@ -28,6 +28,8 @@ import {
   type ReviewInput,
 } from "@/data/reviews";
 import { todayISO } from "@/lib/date";
+import { notesQuery } from "@/data/notes";
+import { reflectionNotesOn } from "@/data/reflections";
 import { usePreferences } from "@/hooks/usePreferences";
 
 export const Route = createFileRoute("/_authenticated/review")({
@@ -97,6 +99,7 @@ function ReviewPage() {
       </div>
 
       <DaySummary date={date} className="mb-6" />
+      <DayIdeas date={date} />
 
       {review.isLoading ? (
         <LoadingState rows={3} />
@@ -222,5 +225,27 @@ function ReviewPage() {
         )}
       </section>
     </>
+  );
+}
+
+/** Ideas and notes captured with Reflect on this day; Wins, Challenges and Gratitude below already hold the rest. */
+function DayIdeas({ date }: { date: string }) {
+  const notes = useQuery(notesQuery());
+  const items = reflectionNotesOn(notes.data ?? [], date);
+  if (!items.length) return null;
+  return (
+    <section className="mb-6 rounded-xl border border-border bg-card p-5">
+      <h2 className="text-sm font-semibold text-foreground">Ideas and notes from this day</h2>
+      <ul className="mt-2 space-y-1.5">
+        {items.map((note) => (
+          <li key={note.id} className="flex gap-2 text-sm">
+            <span className="w-12 shrink-0 text-xs leading-5 text-muted-foreground">
+              {note.tags.includes("idea") ? "Idea" : "Note"}
+            </span>
+            <span className="min-w-0 break-words">{note.body ?? note.title}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
