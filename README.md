@@ -15,7 +15,7 @@ on every table.
 | `mobile/ios/`     | The iPhone shell.                                                                                        |
 | `supabase/`       | Database migrations and SQL checks.                                                                      |
 | `e2e/`            | Playwright checks of the signed-out pages.                                                               |
-| `docs/`           | Specification, audits and phase records.                                                                 |
+| `docs/`           | Specification (a roadmap of future features), audits and research.                                       |
 
 ## Working on the web app
 
@@ -51,5 +51,5 @@ Both need a JDK 17 and the Android SDK.
 
 ## Changes
 
-Work goes through pull requests into `main`. Agents working in this repository follow
-`AGENTS.md`.
+Work goes through pull requests into `main`. Every merge to `main` deploys to
+https://lifeos0.vercel.app through Vercel. Agents working in this repository follow `AGENTS.md`.
