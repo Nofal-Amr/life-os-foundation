@@ -8,6 +8,7 @@ import { Bell, Briefcase, MessageSquare,
   LineChart,
   LogOut,
   Menu,
+  Plus,
   Moon,
   NotebookPen,
   Sun,
@@ -16,7 +17,7 @@ import { Bell, Briefcase, MessageSquare,
   Users,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useSignOut } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -26,6 +27,7 @@ import { t } from "@/lib/i18n";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useQuery } from "@tanstack/react-query";
 import { workOrgsQuery } from "@/data/work/api";
+import { pressAdd } from "@/components/app/Shortcuts";
 
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard, module: null },
@@ -167,6 +169,20 @@ export function BottomNav() {
     `relative flex w-full flex-col items-center gap-1 px-1 pb-2 pt-2.5 text-xs transition-colors duration-150 active:scale-[0.96] ${
       active ? "font-medium text-foreground" : "text-muted-foreground"
     }`;
+  // + sits in the middle of the bar, part of it, so it never covers content.
+  const addAt = Math.ceil((navItems.length + 1) / 2);
+  const addItem = (
+    <li className="flex items-center justify-center">
+      <button
+        type="button"
+        onClick={() => pressAdd(pathname)}
+        aria-label={pathname.startsWith("/notes") ? "New note" : "Quick add"}
+        className="flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_6px_18px_-6px_color-mix(in_oklch,var(--color-primary)_55%,transparent)] transition-[scale] duration-150 ease-out active:scale-95"
+      >
+        <Plus className="size-6" aria-hidden="true" />
+      </button>
+    </li>
+  );
   const indicator = (
     <span
       className="absolute top-0 h-0.5 w-5 rounded-full bg-primary animate-in fade-in zoom-in-50 duration-200 ease-out"
@@ -177,12 +193,14 @@ export function BottomNav() {
     <nav className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 md:hidden" aria-label="Sections">
       <ul
         className="system-dock grid overflow-hidden px-1"
-        style={{ gridTemplateColumns: `repeat(${navItems.length + 1}, minmax(0, 1fr))` }}
+        style={{ gridTemplateColumns: `repeat(${navItems.length + 2}, minmax(0, 1fr))` }}
       >
-        {navItems.map(({ to, label, icon: Icon }) => {
+        {navItems.map(({ to, label, icon: Icon }, index) => {
           const active = pathname === to || activeSection === to;
           return (
-            <li key={to}>
+            <Fragment key={to}>
+              {index === addAt ? addItem : null}
+            <li>
               <Link to={to} aria-current={active ? "page" : undefined} className={tab(active)}>
                 {active ? indicator : null}
                 <Icon
@@ -193,6 +211,7 @@ export function BottomNav() {
                 {t(label)}
               </Link>
             </li>
+            </Fragment>
           );
         })}
         <li>

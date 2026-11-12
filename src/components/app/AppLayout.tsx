@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { DemoBanner } from "@/components/app/DemoBanner";
-import { LogOut, Moon, Search, Sun } from "lucide-react";
+import { LogOut, Moon, Plus, Search, Sun } from "lucide-react";
 import { SyncIndicator } from "./SyncIndicator";
 import { MigrationNotice } from "./MigrationNotice";
 import { TimerBar, useTimer } from "./Timer";
@@ -8,7 +8,7 @@ import { QuickAdd } from "./QuickAdd";
 import { useReminderSync } from "./PrayerReminders";
 import { useSpendingInbox } from "@/components/app/SpendingInbox";
 import { useTodayWidgetSync } from "@/components/app/TodayWidgetSync";
-import { KeyboardShortcuts } from "@/components/app/Shortcuts";
+import { KeyboardShortcuts, pressAdd } from "@/components/app/Shortcuts";
 import { trackScreen } from "@/lib/analytics";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
@@ -57,6 +57,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
             Search
             <kbd className="ml-auto rounded border border-border px-1.5 text-[0.6875rem]">Ctrl K</kbd>
           </button>
+          <Button className="-mt-4 h-10 w-full justify-start" onClick={() => pressAdd(pathname)}>
+            <Plus className="size-4" aria-hidden="true" />
+            {pathname.startsWith("/notes") ? "New note" : "Add"}
+            <kbd className="ml-auto rounded border border-primary-foreground/30 px-1.5 text-[0.6875rem]">
+              C
+            </kbd>
+          </Button>
           <SidebarNav />
         </div>
         <div className="space-y-2 px-1">
@@ -117,7 +124,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="min-w-0 overflow-x-clip px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom))+11.5rem)] pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
+      <main className="min-w-0 overflow-x-clip px-4 pb-[calc(max(0.75rem,env(safe-area-inset-bottom))+6.5rem)] pt-6 md:ml-60 md:px-6 md:pb-12 md:pt-8 lg:px-10">
         <div className="mx-auto w-full min-w-0 max-w-6xl">
           <MigrationNotice />
           <TimerBar />

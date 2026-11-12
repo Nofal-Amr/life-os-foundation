@@ -164,6 +164,15 @@ function NotesPage() {
     [queryClient],
   );
 
+  // The + in the bottom bar or side menu starts a note while you're here.
+  const startNoteRef = useRef<() => void>(() => {});
+  startNoteRef.current = () => startNote(false);
+  useEffect(() => {
+    const onNew = () => startNoteRef.current();
+    window.addEventListener("life-os-new-note", onNew);
+    return () => window.removeEventListener("life-os-new-note", onNew);
+  }, []);
+
   // Quick add → Note lands here with ?new, straight into a blank note.
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("new")) {
@@ -410,18 +419,6 @@ function NotesPage() {
           />
         </div>
       )}
-
-      {/* Floating new-note button on phones */}
-      {view === "notes" ? (
-        <button
-          type="button"
-          onClick={() => startNote(false)}
-          aria-label="New note"
-          className="fixed bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+6.75rem)] right-5 z-30 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 md:hidden"
-        >
-          <Plus className="size-6" />
-        </button>
-      ) : null}
 
       {editing ? (
         <NoteEditor
