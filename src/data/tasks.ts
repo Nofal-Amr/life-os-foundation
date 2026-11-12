@@ -137,7 +137,7 @@ export function notStartedYet(task: Task, today: string): boolean {
 }
 
 
-export type TaskFilter = "all" | "today" | "upcoming" | "overdue" | "inbox" | "completed";
+export type TaskFilter = "now" | "all" | "today" | "upcoming" | "overdue" | "inbox" | "completed";
 
 export const taskKeys = {
   all: ["tasks"] as const,
@@ -187,6 +187,15 @@ export function firstOpenStep(tasks: Task[], parentId: string): Task | undefined
 export function filterTasks(tasks: Task[], filter: TaskFilter): Task[] {
   const today = todayISO();
   switch (filter) {
+    case "now":
+      // What needs you now: from earlier, today, and anything not sorted yet.
+      return tasks
+        .filter(
+          (t) =>
+            isOpen(t) &&
+            ((!!t.due_date && t.due_date <= today) || (!t.due_date && t.status === "inbox")),
+        )
+        .sort((a, b) => (a.due_date ?? "9999").localeCompare(b.due_date ?? "9999"));
     case "today":
       return tasks.filter((t) => isOpen(t) && t.due_date === today);
     case "upcoming":

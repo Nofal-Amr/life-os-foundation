@@ -23,7 +23,7 @@ import { upcomingTimes, userRemindersQuery } from "@/data/userReminders";
 import { TodayCounts } from "@/components/app/TodayCounts";
 import { FocusDialog } from "@/components/app/FocusDialog";
 import { TodayFocus, type FocusRow } from "@/components/app/TodayFocus";
-import { focusGroup } from "@/data/focus";
+import { focusGroup, taskFocusGroup } from "@/data/focus";
 import { reviewByDateQuery } from "@/data/reviews";
 import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
@@ -501,7 +501,7 @@ function DashboardPage() {
   const projectById = new Map((projects.data ?? []).map((project) => [project.id, project]));
   const focusRows: FocusRow[] = [];
   for (const action of actions.slice(1)) {
-    const group = focusGroup(action.parent.due_date, today);
+    const group = taskFocusGroup(action.parent, today);
     if (!group) continue;
     const project = action.parent.project_id ? projectById.get(action.parent.project_id) : null;
     focusRows.push({
