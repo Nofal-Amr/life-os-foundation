@@ -63,7 +63,11 @@ export function QuickAdd() {
       const kind = (event as CustomEvent<string>).detail;
       if (kind === "task") setTask(true);
       else if (kind === "money") setMoney(true);
-      else setOpen(true);
+      else {
+        // Today's Log tiles open a panel straight away.
+        setPanel(kind === "prayer" || kind === "meal" ? kind : "menu");
+        setOpen(true);
+      }
     };
     window.addEventListener("life-os-quick", onQuick);
     return () => window.removeEventListener("life-os-quick", onQuick);
