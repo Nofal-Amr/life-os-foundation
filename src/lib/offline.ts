@@ -34,7 +34,14 @@ type OutboxEntry = {
   createdAt: string;
   /** Who made the change. It is only ever sent with that user's own session. */
   user?: string;
+  /** Why the server refused it. Refused changes are set aside, never deleted, until you choose. */
+  rejected?: string;
+  /** Server errors (5xx) in a row; after a few, the change is set aside so others can go. */
+  failures?: number;
 };
+
+/** A change the server refused, as shown to you: what it was and why. */
+export type RejectedChange = { id: number; what: string; why: string; when: string };
 type Row = Record<string, unknown>;
 
 export type SyncStatus = {
@@ -43,6 +50,8 @@ export type SyncStatus = {
   syncing: boolean;
   /** Last change the server refused (it was dropped from the queue). */
   lastRejected: string | null;
+  /** Your changes the server refused, kept until you try again or discard them. */
+  rejected: RejectedChange[];
 };
 
 const DB_NAME = "life-os-offline";
@@ -56,7 +65,13 @@ let onSynced: (() => void) | null = null;
 let getAccessToken: (() => Promise<string | null>) | null = null;
 let installed = false;
 
-let status: SyncStatus = { online: true, pending: 0, syncing: false, lastRejected: null };
+let status: SyncStatus = {
+  online: true,
+  pending: 0,
+  syncing: false,
+  lastRejected: null,
+  rejected: [],
+};
 const listeners = new Set<() => void>();
 function setStatus(patch: Partial<SyncStatus>) {
   status = { ...status, ...patch };
@@ -132,6 +147,65 @@ async function becomeUser(user: string) {
   await refreshPending();
 }
 
+/** After this many server errors in a row, a change is set aside so the rest can sync. */
+export const MAX_SERVER_FAILURES = 5;
+
+const VERBS: Record<string, string> = { POST: "Add", PATCH: "Change", DELETE: "Delete" };
+
+/** "Add to tasks: Buy printer ink", from a queued change. */
+export function describeChange(entry: { method: string; url: string; body: string }): string {
+  const table = decodeURIComponent(new URL(entry.url).pathname.split("/rest/v1/")[1] ?? "")
+    .split("/")[0]!
+    .replace(/_/g, " ");
+  const verb = VERBS[entry.method] ?? entry.method;
+  let name = "";
+  try {
+    const parsed = JSON.parse(entry.body || "null") as Row | Row[] | null;
+    const row = Array.isArray(parsed) ? parsed[0] : parsed;
+    const value = row?.["title"] ?? row?.["name"] ?? row?.["note"] ?? row?.["description"];
+    if (typeof value === "string" && value.trim()) name = value.trim().slice(0, 60);
+  } catch {
+    // No readable name.
+  }
+  const where = entry.method === "POST" ? `to ${table}` : `in ${table}`;
+  return name ? `${verb} ${where}: ${name}` : `${verb} ${where}`;
+}
+
+function describeRejected(entry: OutboxEntry): RejectedChange {
+  return { id: entry.id!, what: describeChange(entry), why: entry.rejected ?? "", when: entry.createdAt };
+}
+
+/** Puts every refused change back in the queue and tries again. */
+export async function retryRejected(): Promise<void> {
+  try {
+    const outbox = await store(OUTBOX, "readwrite");
+    const all = (await done(outbox.getAll())) as OutboxEntry[];
+    await Promise.all(
+      all
+        .filter((entry) => entry.rejected && replaysAs(entry, currentUser))
+        .map((entry) => {
+          const { rejected: _r, failures: _f, ...rest } = entry;
+          return done(outbox.put(rest));
+        }),
+    );
+  } catch {
+    return;
+  }
+  await refreshPending();
+  await syncNow();
+}
+
+/** Drops one refused change for good (your choice), and reloads the real data. */
+export async function discardRejected(id: number): Promise<void> {
+  try {
+    await done((await store(OUTBOX, "readwrite")).delete(id));
+  } catch {
+    // Already gone.
+  }
+  await refreshPending();
+  onSynced?.();
+}
+
 /* ---------------------------------------------------------------- IndexedDB */
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -168,7 +242,10 @@ async function refreshPending() {
   try {
     // Only this user's own waiting changes count.
     const mine = (await outboxEntries()).filter((entry) => replaysAs(entry, currentUser));
-    setStatus({ pending: mine.length });
+    setStatus({
+      pending: mine.filter((entry) => !entry.rejected).length,
+      rejected: mine.filter((entry) => entry.rejected).map(describeRejected),
+    });
   } catch {
     // IndexedDB unavailable (private mode); offline mode is simply off.
   }
@@ -182,7 +259,7 @@ export async function clearOfflineData() {
   } catch {
     // Nothing cached.
   }
-  setStatus({ pending: 0, lastRejected: null });
+  setStatus({ pending: 0, lastRejected: null, rejected: [] });
 }
 
 /* ---------------------------------------------------------- Request helpers */
@@ -685,7 +762,7 @@ async function flush() {
   const token = (await getAccessToken?.()) ?? null;
   const user = userFromAuthorization(token ? `Bearer ${token}` : null);
   // Signed out, or someone else's changes: they wait for their owner.
-  entries = entries.filter((entry) => replaysAs(entry, user));
+  entries = entries.filter((entry) => replaysAs(entry, user) && !entry.rejected);
   if (!entries.length) return;
   await becomeUser(user);
   setStatus({ syncing: true });
@@ -711,7 +788,22 @@ async function flush() {
       setStatus({ online: false });
       break;
     }
-    if (response.status === 401 || response.status >= 500) break; // Try again later.
+    if (response.status === 401) break; // Signed out or token expiring: try again later.
+    if (response.status >= 500) {
+      // The server is failing. Try again later, but after a few failures in a
+      // row set this change aside, so one bad change can't hold up the rest.
+      const failures = (entry.failures ?? 0) + 1;
+      const kept: OutboxEntry =
+        failures >= MAX_SERVER_FAILURES
+          ? { ...entry, failures, rejected: `The server kept failing (${response.status}).` }
+          : { ...entry, failures };
+      await done((await store(OUTBOX, "readwrite")).put(kept));
+      if (kept.rejected) {
+        setStatus({ lastRejected: `A change couldn't be saved: ${kept.rejected}` });
+        continue;
+      }
+      break;
+    }
     if (!response.ok) {
       let message = `A change couldn't be saved (${response.status}).`;
       let error: { message?: string } = {};
@@ -733,7 +825,11 @@ async function flush() {
         setStatus({ online: false });
         break;
       }
+      // Set it aside with the reason, instead of losing it.
+      await done((await store(OUTBOX, "readwrite")).put({ ...entry, rejected: message }));
       setStatus({ lastRejected: message });
+      synced = true;
+      continue;
     }
     await done((await store(OUTBOX, "readwrite")).delete(entry.id!));
     synced = true;
