@@ -8,6 +8,7 @@ import {
   Info,
   Moon,
   MoreHorizontal,
+  PenLine,
   Pill,
   Smile,
   Utensils,
@@ -27,6 +28,9 @@ import { TodayFocus, type FocusRow } from "@/components/app/TodayFocus";
 import { focusGroup, taskFocusGroup } from "@/data/focus";
 import { ENERGY_LABELS, MOOD_LABELS, reviewByDateQuery } from "@/data/reviews";
 import { TodayLog, type LogTile } from "@/components/app/TodayLog";
+import { ReflectSheet } from "@/components/app/ReflectSheet";
+import { reflectionCount } from "@/data/reflections";
+import { notesQuery } from "@/data/notes";
 import { openQuick } from "@/components/app/Shortcuts";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -437,6 +441,8 @@ function DashboardPage() {
   const [focusTask, setFocusTask] = useState<{ id: string; title: string } | null>(null);
   const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
   const [sheet, setSheet] = useState<"mood" | "medication" | null>(null);
+  const [reflecting, setReflecting] = useState(false);
+  const notes = useQuery(notesQuery());
 
   const onError = (error: unknown) =>
     toast.error(error instanceof Error ? error.message : "Something went wrong.");
@@ -1059,6 +1065,16 @@ function DashboardPage() {
           },
         ]
       : []),
+    {
+      key: "reflect",
+      icon: PenLine,
+      label: "Reflect",
+      detail: (() => {
+        const count = reflectionCount(todayReview.data, notes.data ?? [], today);
+        return count ? `${count} ${count === 1 ? "thing" : "things"} today` : "A good thing, an idea…";
+      })(),
+      onClick: () => setReflecting(true),
+    },
     ...(isEnabled("body") && scheduledDoses.length
       ? [
           {
@@ -1324,6 +1340,7 @@ function DashboardPage() {
       </div>
 
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
+      <ReflectSheet open={reflecting} onOpenChange={setReflecting} date={today} />
       <Sheet open={sheet !== null} onOpenChange={(open) => !open && setSheet(null)}>
         <SheetContent
           side="bottom"
