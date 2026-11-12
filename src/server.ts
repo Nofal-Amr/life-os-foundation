@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { withSecurityHeaders } from "./lib/security-headers";
+import { newNonce, withSecurityHeaders } from "./lib/security-headers";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -47,10 +47,16 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    // One nonce per response: the router stamps it on every script it renders,
+    // and the page's script policy allows only those. Production only: the dev
+    // server injects its own inline scripts.
+    const nonce = import.meta.env.PROD ? newNonce() : undefined;
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(response));
+      const options = env && typeof env === "object" ? (env as Record<string, unknown>) : {};
+      const context = { ...(options["context"] as object | undefined), nonce };
+      const response = await handler.fetch(request, { ...options, context }, ctx);
+      return withSecurityHeaders(await normalizeCatastrophicSsrResponse(response), nonce);
     } catch (error) {
       console.error(error);
       return withSecurityHeaders(
