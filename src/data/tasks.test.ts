@@ -6,12 +6,14 @@ import {
   estimateInUnit,
   estimateLabel,
   estimateToMinutes,
+  filterTasks,
   fitsEnergy,
   nextRepeatDate,
   notStartedYet,
   splitTaskLines,
   type Task,
 } from "./tasks";
+import { todayISO } from "@/lib/date";
 
 describe("task estimates", () => {
   it("stores the canonical minutes for the unit chosen", () => {
@@ -111,5 +113,26 @@ describe("energy matching", () => {
     expect(fitsEnergy({ energy: 1 }, 1)).toBe(true);
     expect(fitsEnergy({ energy: null }, 1)).toBe(true);
     expect(fitsEnergy({ energy: 3 }, null)).toBe(true);
+  });
+});
+
+describe("the Now view", () => {
+  it("shows what's from earlier, due today and not sorted yet, oldest first", () => {
+    const today = todayISO();
+    const t = (id: string, due_date: string | null, status: Task["status"]) =>
+      ({ id, due_date, status }) as Task;
+    const tasks = [
+      t("unsorted", null, "inbox"),
+      t("today", today, "todo"),
+      t("earlier", "2000-01-01", "in_progress"),
+      t("later", "2999-01-01", "todo"),
+      t("undated", null, "todo"),
+      t("done", "2000-01-01", "completed"),
+    ];
+    expect(filterTasks(tasks, "now").map((task) => task.id)).toEqual([
+      "earlier",
+      "today",
+      "unsorted",
+    ]);
   });
 });

@@ -36,7 +36,7 @@ export type FocusRow =
       amount: string;
     };
 
-const GROUP_ORDER: FocusGroup[] = ["earlier", "today", "soon"];
+const GROUP_ORDER: FocusGroup[] = ["earlier", "today", "soon", "unsorted"];
 
 /**
  * The rest of today after the one next action: grouped by when, each task one

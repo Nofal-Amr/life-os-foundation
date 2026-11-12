@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { focusGroup, relativeDay } from "./focus";
+import { focusGroup, relativeDay, taskFocusGroup } from "./focus";
 
 const today = "2026-09-25";
 
@@ -22,5 +22,18 @@ describe("focusGroup", () => {
     expect(focusGroup("2026-09-28", today)).toBe("soon");
     expect(focusGroup("2026-09-29", today)).toBeNull();
     expect(focusGroup(null, today)).toBeNull();
+  });
+});
+
+describe("taskFocusGroup", () => {
+  it("keeps a quick-added task (Unsorted, no day) on Today", () => {
+    expect(taskFocusGroup({ due_date: null, status: "inbox" }, today)).toBe("unsorted");
+  });
+  it("groups dated tasks by day, whatever their status", () => {
+    expect(taskFocusGroup({ due_date: "2026-09-20", status: "inbox" }, today)).toBe("earlier");
+    expect(taskFocusGroup({ due_date: today, status: "todo" }, today)).toBe("today");
+  });
+  it("leaves out sorted tasks with no day", () => {
+    expect(taskFocusGroup({ due_date: null, status: "todo" }, today)).toBeNull();
   });
 });

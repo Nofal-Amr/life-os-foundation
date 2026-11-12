@@ -87,7 +87,7 @@ export const Route = createFileRoute("/_authenticated/tasks")({
   validateSearch: (search: Record<string, unknown>): { filter?: TaskFilter } => {
     const filter = search["filter"];
     return typeof filter === "string" &&
-      ["all", "today", "upcoming", "overdue", "inbox", "completed"].includes(filter)
+      ["now", "all", "today", "upcoming", "overdue", "inbox", "completed"].includes(filter)
       ? { filter: filter as TaskFilter }
       : {};
   },
@@ -95,7 +95,7 @@ export const Route = createFileRoute("/_authenticated/tasks")({
 });
 
 const FILTERS: { value: TaskFilter; label: string }[] = [
-  { value: "today", label: "Today" },
+  { value: "now", label: "Now" },
   { value: "upcoming", label: "Upcoming" },
   { value: "overdue", label: "Overdue" },
   { value: "inbox", label: "Unsorted" },
@@ -135,7 +135,7 @@ function TasksPage() {
   const capabilities = useQuery(capabilitiesQuery());
   const goals = useQuery(goalsQuery());
   const search = Route.useSearch();
-  const [filter, setFilter] = useState<TaskFilter>(search.filter ?? "today");
+  const [filter, setFilter] = useState<TaskFilter>(search.filter ?? "now");
   useEffect(() => {
     if (search.filter) setFilter(search.filter);
   }, [search.filter]);

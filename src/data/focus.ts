@@ -4,12 +4,13 @@
  */
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
 
-export type FocusGroup = "earlier" | "today" | "soon";
+export type FocusGroup = "earlier" | "today" | "soon" | "unsorted";
 
 export const FOCUS_GROUP_LABELS: Record<FocusGroup, string> = {
   earlier: "From earlier",
   today: "Today",
   soon: "Coming up",
+  unsorted: "Unsorted",
 };
 
 /** "Today", "Tomorrow", "In 3 days", "Yesterday", "4 days ago", or a date. */
@@ -29,6 +30,20 @@ export function focusGroup(due: string | null, today: string, soonDays = 3): Foc
   if (due < today) return "earlier";
   if (due === today) return "today";
   return differenceInCalendarDays(parseISO(due), parseISO(today)) <= soonDays ? "soon" : null;
+}
+
+/**
+ * Where a task sits on Today: by its due day, or under Unsorted when it was
+ * captured quickly with no day yet, so a quick-added task never goes missing.
+ */
+export function taskFocusGroup(
+  task: { due_date: string | null; status: string },
+  today: string,
+): FocusGroup | null {
+  return (
+    focusGroup(task.due_date, today) ??
+    (!task.due_date && task.status === "inbox" ? "unsorted" : null)
+  );
 }
 
 export type Priority = "critical" | "high" | "medium";
