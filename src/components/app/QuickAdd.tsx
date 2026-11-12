@@ -25,7 +25,6 @@ import { useModules } from "@/hooks/useModules";
 import { todayISO } from "@/lib/date";
 import { useQuery } from "@tanstack/react-query";
 import { prayerLogsQuery } from "@/data/spirit";
-import { cn } from "@/lib/utils";
 
 type Panel = "menu" | "meal" | "timer" | "prayer";
 
@@ -34,7 +33,6 @@ type Panel = "menu" | "meal" | "timer" | "prayer";
  * is one or two taps; nothing needs navigating to first.
  */
 export function QuickAdd() {
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const { enabled } = useModules();
   const [open, setOpen] = useState(false);
@@ -43,7 +41,7 @@ export function QuickAdd() {
   const [task, setTask] = useState(false);
   const [reminder, setReminder] = useState(false);
   const [focus, setFocus] = useState(false);
-  const { activities, start, running } = useTimer();
+  const { activities, start } = useTimer();
   const prayerLogs = useQuery({ ...prayerLogsQuery(), enabled: open && panel === "prayer" });
 
   // Widget buttons open the app with ?quick=task|money|capture: go straight there.
@@ -65,14 +63,15 @@ export function QuickAdd() {
       const kind = (event as CustomEvent<string>).detail;
       if (kind === "task") setTask(true);
       else if (kind === "money") setMoney(true);
-      else setOpen(true);
+      else {
+        // Today's Log tiles open a panel straight away.
+        setPanel(kind === "prayer" || kind === "meal" ? kind : "menu");
+        setOpen(true);
+      }
     };
     window.addEventListener("life-os-quick", onQuick);
     return () => window.removeEventListener("life-os-quick", onQuick);
   }, []);
-
-  // Notes has its own new-note button in the same place.
-  if (pathname.startsWith("/notes")) return null;
 
   const close = () => {
     setOpen(false);
@@ -145,20 +144,8 @@ export function QuickAdd() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Quick add"
-        className={cn(
-          "fixed right-4 z-40 flex size-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_color-mix(in_oklch,var(--color-primary)_55%,transparent)] transition-[scale,rotate] duration-150 ease-out active:scale-95 md:bottom-8 md:right-8",
-          running
-            ? "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+11rem)]"
-            : "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+6.75rem)]",
-        )}
-      >
-        <Plus className={cn("size-6 transition-transform duration-200 ease-out", open && "rotate-45")} />
-      </button>
-
+      {/* The + itself sits in the bottom bar (phones) and the side menu (desktop),
+          so it never covers a row's buttons; they open this with pressAdd(). */}
       <Sheet open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
         <SheetContent
           side="bottom"

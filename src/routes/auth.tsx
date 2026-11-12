@@ -123,6 +123,10 @@ function AuthPage() {
       if (event === "SIGNED_IN" && session) navigate({ to: "/dashboard", replace: true });
     });
     return () => data.subscription.unsubscribe();
+    // `returnToApp` is recreated on every render. Listing it would re-run this effect each
+    // render, signing the browser out and re-subscribing every time. It reads only `handoff`,
+    // which is listed. Phase 1.3 removes this hand-off, and this suppression with it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, handoff]);
 
   async function signInWith(provider: "google") {
@@ -321,6 +325,18 @@ function AuthPage() {
                     : "Send reset link"}
             </Button>
           </form>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            By continuing, you agree to the{" "}
+            <Link to="/terms" className="underline underline-offset-4 hover:text-foreground">
+              terms
+            </Link>{" "}
+            and the{" "}
+            <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground">
+              privacy policy
+            </Link>
+            .
+          </p>
 
           <div className="mt-4 text-center">
             <button

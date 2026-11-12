@@ -609,14 +609,15 @@ function SharedCalendar({ pod }: { pod: Pod }) {
   const names = new Map(
     (members.data ?? []).filter((m) => m.pod_id === pod.id).map((m) => [m.user_id, m.display_name]),
   );
+  const podEvents = events.data;
   const byDay = useMemo(() => {
-    const groups = new Map<string, NonNullable<typeof events.data>>();
-    for (const event of (events.data ?? []).filter((item) => item.pod_id === pod.id)) {
+    const groups = new Map<string, NonNullable<typeof podEvents>>();
+    for (const event of (podEvents ?? []).filter((item) => item.pod_id === pod.id)) {
       const day = format(parseISO(event.starts_at), "yyyy-MM-dd");
       groups.set(day, [...(groups.get(day) ?? []), event]);
     }
     return [...groups.entries()];
-  }, [events.data, pod.id]);
+  }, [podEvents, pod.id]);
 
   if (events.isLoading) return <LoadingState rows={2} />;
 

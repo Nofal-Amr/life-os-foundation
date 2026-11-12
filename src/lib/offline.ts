@@ -17,6 +17,8 @@ import { reportMissingColumn } from "@/lib/supabase-helpers";
 
 type CachedResponse = {
   key: string;
+  /** Whose data this is (the signed-in user's id); absent on copies made before this was kept. */
+  user?: string;
   table: string;
   url: string;
   status: number;
@@ -30,7 +32,16 @@ type OutboxEntry = {
   headers: Record<string, string>;
   body: string;
   createdAt: string;
+  /** Who made the change. It is only ever sent with that user's own session. */
+  user?: string;
+  /** Why the server refused it. Refused changes are set aside, never deleted, until you choose. */
+  rejected?: string;
+  /** Server errors (5xx) in a row; after a few, the change is set aside so others can go. */
+  failures?: number;
 };
+
+/** A change the server refused, as shown to you: what it was and why. */
+export type RejectedChange = { id: number; what: string; why: string; when: string };
 type Row = Record<string, unknown>;
 
 export type SyncStatus = {
@@ -39,6 +50,8 @@ export type SyncStatus = {
   syncing: boolean;
   /** Last change the server refused (it was dropped from the queue). */
   lastRejected: string | null;
+  /** Your changes the server refused, kept until you try again or discard them. */
+  rejected: RejectedChange[];
 };
 
 const DB_NAME = "life-os-offline";
@@ -52,7 +65,13 @@ let onSynced: (() => void) | null = null;
 let getAccessToken: (() => Promise<string | null>) | null = null;
 let installed = false;
 
-let status: SyncStatus = { online: true, pending: 0, syncing: false, lastRejected: null };
+let status: SyncStatus = {
+  online: true,
+  pending: 0,
+  syncing: false,
+  lastRejected: null,
+  rejected: [],
+};
 const listeners = new Set<() => void>();
 function setStatus(patch: Partial<SyncStatus>) {
   status = { ...status, ...patch };
@@ -73,6 +92,118 @@ export function useSyncStatus(): SyncStatus {
     () => status,
     () => status,
   );
+}
+
+/* ------------------------------------------------------------------ Owner */
+
+/**
+ * The user a request is made as, from its bearer token (the JWT's "sub").
+ * Signed-out requests carry the anon key, which has no "sub", so they are "".
+ */
+export function userFromAuthorization(header: string | null | undefined): string {
+  const token = /^Bearer\s+(.+)$/i.exec(header ?? "")?.[1];
+  const payload = token?.split(".")[1];
+  if (!payload) return "";
+  try {
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    // JWTs drop the base64 padding; atob wants it back.
+    const json = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "="));
+    const sub = (JSON.parse(json) as { sub?: unknown }).sub;
+    return typeof sub === "string" ? sub : "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Queued changes replay only with their own user's session. Changes queued
+ * before owners were recorded have no user; they go with whoever is signed in,
+ * as they always did.
+ */
+export function replaysAs(entry: { user?: string }, current: string): boolean {
+  return Boolean(current) && (entry.user === undefined || entry.user === current);
+}
+
+/** The user the device copy currently holds data for. */
+let currentUser = "";
+
+/**
+ * A different person is using this browser: drop every cached read that isn't
+ * theirs (including copies from before owners were kept), so one account's data
+ * is never shown to another. Queued changes stay, for their owner's next visit.
+ */
+async function becomeUser(user: string) {
+  if (!user || user === currentUser) return;
+  currentUser = user;
+  try {
+    const responses = await store(RESPONSES, "readwrite");
+    const all = (await done(responses.getAll())) as CachedResponse[];
+    await Promise.all(
+      all.filter((entry) => entry.user !== user).map((entry) => done(responses.delete(entry.key))),
+    );
+  } catch {
+    // Nothing cached.
+  }
+  await refreshPending();
+}
+
+/** After this many server errors in a row, a change is set aside so the rest can sync. */
+export const MAX_SERVER_FAILURES = 5;
+
+const VERBS: Record<string, string> = { POST: "Add", PATCH: "Change", DELETE: "Delete" };
+
+/** "Add to tasks: Buy printer ink", from a queued change. */
+export function describeChange(entry: { method: string; url: string; body: string }): string {
+  const table = decodeURIComponent(new URL(entry.url).pathname.split("/rest/v1/")[1] ?? "")
+    .split("/")[0]!
+    .replace(/_/g, " ");
+  const verb = VERBS[entry.method] ?? entry.method;
+  let name = "";
+  try {
+    const parsed = JSON.parse(entry.body || "null") as Row | Row[] | null;
+    const row = Array.isArray(parsed) ? parsed[0] : parsed;
+    const value = row?.["title"] ?? row?.["name"] ?? row?.["note"] ?? row?.["description"];
+    if (typeof value === "string" && value.trim()) name = value.trim().slice(0, 60);
+  } catch {
+    // No readable name.
+  }
+  const where = entry.method === "POST" ? `to ${table}` : `in ${table}`;
+  return name ? `${verb} ${where}: ${name}` : `${verb} ${where}`;
+}
+
+function describeRejected(entry: OutboxEntry): RejectedChange {
+  return { id: entry.id!, what: describeChange(entry), why: entry.rejected ?? "", when: entry.createdAt };
+}
+
+/** Puts every refused change back in the queue and tries again. */
+export async function retryRejected(): Promise<void> {
+  try {
+    const outbox = await store(OUTBOX, "readwrite");
+    const all = (await done(outbox.getAll())) as OutboxEntry[];
+    await Promise.all(
+      all
+        .filter((entry) => entry.rejected && replaysAs(entry, currentUser))
+        .map((entry) => {
+          const { rejected: _r, failures: _f, ...rest } = entry;
+          return done(outbox.put(rest));
+        }),
+    );
+  } catch {
+    return;
+  }
+  await refreshPending();
+  await syncNow();
+}
+
+/** Drops one refused change for good (your choice), and reloads the real data. */
+export async function discardRejected(id: number): Promise<void> {
+  try {
+    await done((await store(OUTBOX, "readwrite")).delete(id));
+  } catch {
+    // Already gone.
+  }
+  await refreshPending();
+  onSynced?.();
 }
 
 /* ---------------------------------------------------------------- IndexedDB */
@@ -109,7 +240,12 @@ async function outboxEntries(): Promise<OutboxEntry[]> {
 
 async function refreshPending() {
   try {
-    setStatus({ pending: (await done((await store(OUTBOX)).count())) as number });
+    // Only this user's own waiting changes count.
+    const mine = (await outboxEntries()).filter((entry) => replaysAs(entry, currentUser));
+    setStatus({
+      pending: mine.filter((entry) => !entry.rejected).length,
+      rejected: mine.filter((entry) => entry.rejected).map(describeRejected),
+    });
   } catch {
     // IndexedDB unavailable (private mode); offline mode is simply off.
   }
@@ -123,7 +259,7 @@ export async function clearOfflineData() {
   } catch {
     // Nothing cached.
   }
-  setStatus({ pending: 0, lastRejected: null });
+  setStatus({ pending: 0, lastRejected: null, rejected: [] });
 }
 
 /* ---------------------------------------------------------- Request helpers */
@@ -134,8 +270,8 @@ function tableOf(url: URL): string | null {
   return decodeURIComponent(path.split("/")[0] ?? "");
 }
 
-function cacheKey(method: string, url: string, accept: string) {
-  return `${method} ${url} ${accept}`;
+function cacheKey(user: string, method: string, url: string, accept: string) {
+  return `${user} ${method} ${url} ${accept}`;
 }
 
 function headerObject(headers: Headers): Record<string, string> {
@@ -271,6 +407,8 @@ export function applyOrder(rows: Row[], params: URLSearchParams) {
 /* ------------------------------------------------- Apply writes to the cache */
 
 type Write = {
+  /** Only this user's cached reads are changed. */
+  user: string;
   kind: "insert" | "update" | "delete";
   table: string;
   params: URLSearchParams;
@@ -299,6 +437,7 @@ async function applyToCache(write: Write): Promise<Row[]> {
 
   const updated: CachedResponse[] = [];
   for (const entry of cached) {
+    if (entry.user !== write.user) continue;
     if (entry.status < 200 || entry.status >= 300 || !entry.body) continue;
     let data: unknown;
     try {
@@ -399,6 +538,7 @@ function scheduleRefresh() {
 async function revalidate(
   request: Request,
   key: string,
+  user: string,
   table: string,
   url: URL,
   previous: string,
@@ -413,8 +553,11 @@ async function revalidate(
     });
     const body = await response.text();
     if (body === previous) return;
+    // The user changed while this was in flight: don't keep it.
+    if (user !== currentUser) return;
     const entry: CachedResponse = {
       key,
+      user,
       table,
       url: url.href,
       status: response.status,
@@ -429,7 +572,9 @@ async function revalidate(
 }
 
 async function handleRead(request: Request, url: URL, table: string): Promise<Response> {
-  const key = cacheKey(request.method, url.href, request.headers.get("accept") ?? "");
+  const user = userFromAuthorization(request.headers.get("authorization"));
+  await becomeUser(user);
+  const key = cacheKey(user, request.method, url.href, request.headers.get("accept") ?? "");
   const pending = status.pending > 0;
 
   // Open instantly: answer from the device copy, then refresh it in the
@@ -438,7 +583,7 @@ async function handleRead(request: Request, url: URL, table: string): Promise<Re
   if (navigator.onLine && !pending && request.method === "GET") {
     const cached = await readCached(key);
     if (cached && cached.status >= 200 && cached.status < 300) {
-      void revalidate(request.clone(), key, table, url, cached.body);
+      void revalidate(request.clone(), key, user, table, url, cached.body);
       return cachedResponse(cached);
     }
   }
@@ -446,7 +591,8 @@ async function handleRead(request: Request, url: URL, table: string): Promise<Re
   if (navigator.onLine && !pending) {
     try {
       const response = await nativeFetch(request.clone());
-      if (response.ok) {
+      // Signed-out reads are never kept.
+      if (response.ok && user) {
         const headers: Record<string, string> = {};
         CACHED_HEADERS.forEach((name) => {
           const value = response.headers.get(name);
@@ -455,6 +601,7 @@ async function handleRead(request: Request, url: URL, table: string): Promise<Re
         const body = request.method === "HEAD" ? "" : await response.clone().text();
         const entry: CachedResponse = {
           key,
+          user,
           table,
           url: url.href,
           status: response.status,
@@ -486,6 +633,7 @@ async function queueWrite(
   url: URL,
   table: string,
   bodyText: string,
+  user: string,
 ): Promise<Response> {
   const method = request.method;
   const params = url.searchParams;
@@ -515,21 +663,21 @@ async function queueWrite(
       };
     });
     body = JSON.stringify(Array.isArray(parsed) ? sent : sent[0]);
-    result = await applyToCache({ kind: "insert", table, params, rows, patch: {}, conflict });
+    result = await applyToCache({ user, kind: "insert", table, params, rows, patch: {}, conflict });
   } else if (method === "PATCH") {
     const patch = bodyText ? (JSON.parse(bodyText) as Row) : {};
-    result = await applyToCache({ kind: "update", table, params, rows: [], patch });
+    result = await applyToCache({ user, kind: "update", table, params, rows: [], patch });
     if (!result.length) {
       const id = params.get("id");
       result = [{ ...patch, ...(id?.startsWith("eq.") ? { id: id.slice(3) } : {}) }];
     }
   } else if (method === "DELETE") {
-    result = await applyToCache({ kind: "delete", table, params, rows: [], patch: {} });
+    result = await applyToCache({ user, kind: "delete", table, params, rows: [], patch: {} });
   }
 
   const headers = headerObject(request.headers);
   delete headers["authorization"];
-  const entry: OutboxEntry = { url: url.href, method, headers, body, createdAt: now };
+  const entry: OutboxEntry = { url: url.href, method, headers, body, createdAt: now, user };
   await done((await store(OUTBOX, "readwrite")).add(entry));
   await refreshPending();
 
@@ -541,24 +689,27 @@ async function queueWrite(
 
 async function handleWrite(request: Request, url: URL, table: string): Promise<Response> {
   const bodyText = await request.clone().text();
+  const user = userFromAuthorization(request.headers.get("authorization"));
+  await becomeUser(user);
   // Keep order: once anything is queued, later writes queue behind it.
   if (navigator.onLine && status.pending === 0) {
     try {
       const response = await nativeFetch(request);
       if (!status.online) setStatus({ online: true });
       if (response.ok)
-        void mirrorOnlineWrite(request.method, url, table, bodyText, response.clone());
+        void mirrorOnlineWrite(user, request.method, url, table, bodyText, response.clone());
       return response;
     } catch (error) {
       if (!isNetworkError(error)) throw error;
       setStatus({ online: false });
     }
   }
-  return queueWrite(request, url, table, bodyText);
+  return queueWrite(request, url, table, bodyText, user);
 }
 
 /** Keeps the device copy in step with writes that reached the server. */
 async function mirrorOnlineWrite(
+  user: string,
   method: string,
   url: URL,
   table: string,
@@ -573,9 +724,10 @@ async function mirrorOnlineWrite(
         Row | Row[];
       const rows = Array.isArray(parsed) ? parsed : [parsed];
       if (rows.every((row) => row["id"] !== undefined))
-        await applyToCache({ kind: "insert", table, params, rows, patch: {} });
+        await applyToCache({ user, kind: "insert", table, params, rows, patch: {} });
     } else if (method === "PATCH") {
       await applyToCache({
+        user,
         kind: "update",
         table,
         params,
@@ -583,7 +735,7 @@ async function mirrorOnlineWrite(
         patch: bodyText ? (JSON.parse(bodyText) as Row) : {},
       });
     } else if (method === "DELETE") {
-      await applyToCache({ kind: "delete", table, params, rows: [], patch: {} });
+      await applyToCache({ user, kind: "delete", table, params, rows: [], patch: {} });
     }
   } catch {
     // The next online read refreshes the cache anyway.
@@ -607,9 +759,13 @@ async function flush() {
   } catch {
     return;
   }
-  if (!entries.length) return;
-  setStatus({ syncing: true });
   const token = (await getAccessToken?.()) ?? null;
+  const user = userFromAuthorization(token ? `Bearer ${token}` : null);
+  // Signed out, or someone else's changes: they wait for their owner.
+  entries = entries.filter((entry) => replaysAs(entry, user) && !entry.rejected);
+  if (!entries.length) return;
+  await becomeUser(user);
+  setStatus({ syncing: true });
   let synced = false;
 
   for (const entry of entries) {
@@ -632,7 +788,22 @@ async function flush() {
       setStatus({ online: false });
       break;
     }
-    if (response.status === 401 || response.status >= 500) break; // Try again later.
+    if (response.status === 401) break; // Signed out or token expiring: try again later.
+    if (response.status >= 500) {
+      // The server is failing. Try again later, but after a few failures in a
+      // row set this change aside, so one bad change can't hold up the rest.
+      const failures = (entry.failures ?? 0) + 1;
+      const kept: OutboxEntry =
+        failures >= MAX_SERVER_FAILURES
+          ? { ...entry, failures, rejected: `The server kept failing (${response.status}).` }
+          : { ...entry, failures };
+      await done((await store(OUTBOX, "readwrite")).put(kept));
+      if (kept.rejected) {
+        setStatus({ lastRejected: `A change couldn't be saved: ${kept.rejected}` });
+        continue;
+      }
+      break;
+    }
     if (!response.ok) {
       let message = `A change couldn't be saved (${response.status}).`;
       let error: { message?: string } = {};
@@ -654,7 +825,11 @@ async function flush() {
         setStatus({ online: false });
         break;
       }
+      // Set it aside with the reason, instead of losing it.
+      await done((await store(OUTBOX, "readwrite")).put({ ...entry, rejected: message }));
       setStatus({ lastRejected: message });
+      synced = true;
+      continue;
     }
     await done((await store(OUTBOX, "readwrite")).delete(entry.id!));
     synced = true;
