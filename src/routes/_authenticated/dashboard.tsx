@@ -7,7 +7,10 @@ import {
   HeartPulse,
   Info,
   Moon,
+  MoreHorizontal,
+  PenLine,
   Pill,
+  Smile,
   Utensils,
   Wallet,
   type LucideIcon,
@@ -20,20 +23,29 @@ import { toast } from "sonner";
 import { MoneyBreakdownDialog, useAvailableBeforePayday } from "@/components/app/MoneyBreakdown";
 import { TodayRing, TodayRingLegend, useTodaySegments } from "@/components/app/TodayRing";
 import { upcomingTimes, userRemindersQuery } from "@/data/userReminders";
-import { TodayCounts } from "@/components/app/TodayCounts";
 import { FocusDialog } from "@/components/app/FocusDialog";
 import { TodayFocus, type FocusRow } from "@/components/app/TodayFocus";
 import { focusGroup, taskFocusGroup } from "@/data/focus";
-import { reviewByDateQuery } from "@/data/reviews";
+import { ENERGY_LABELS, MOOD_LABELS, reviewByDateQuery } from "@/data/reviews";
+import { TodayLog, type LogTile } from "@/components/app/TodayLog";
+import { ReflectSheet } from "@/components/app/ReflectSheet";
+import { reflectionCount } from "@/data/reflections";
+import { notesQuery } from "@/data/notes";
+import { openQuick } from "@/components/app/Shortcuts";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
 import { DaySummary } from "@/components/app/DaySummary";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { useHolidays } from "@/components/app/Holidays";
-import { HubCard } from "@/components/app/HubCard";
 import { TaskTimerButton } from "@/components/app/Timer";
 import { PrayerTiles } from "@/components/app/PrayerLog";
-import { ShrinkItButton } from "@/components/app/ShrinkIt";
 import { StuckCard, StuckHelperDialog } from "@/components/app/StuckHelper";
 import { isSnoozed, snoozeForToday, stuckTasks } from "@/data/stuck";
 
@@ -428,6 +440,9 @@ function DashboardPage() {
   const [quickTask, setQuickTask] = useState(false);
   const [focusTask, setFocusTask] = useState<{ id: string; title: string } | null>(null);
   const [shrinkTask, setShrinkTask] = useState<Task | null>(null);
+  const [sheet, setSheet] = useState<"mood" | "medication" | null>(null);
+  const [reflecting, setReflecting] = useState(false);
+  const notes = useQuery(notesQuery());
 
   const onError = (error: unknown) =>
     toast.error(error instanceof Error ? error.message : "Something went wrong.");
@@ -979,6 +994,100 @@ function DashboardPage() {
       </div>
     ) : null;
 
+  /*
+   * Today's log: one tile per thing you log, showing where it stands and
+   * opening its quick panel. Prayer first (the daily anchor); medication only
+   * on days with doses scheduled.
+   */
+  const mood = todayReview.data?.mood ?? null;
+  const energy = todayReview.data?.energy ?? null;
+  const nextPrayerTime =
+    prayerTimes && nextPrayer && nextPrayer !== "none"
+      ? (prayerTimes as unknown as Record<string, Date>)[nextPrayer]
+      : null;
+  const logTiles: LogTile[] = [
+    ...(isEnabled("spirit")
+      ? [
+          hasPrayerLocation
+            ? {
+                key: "prayer",
+                icon: Moon,
+                label: "Prayer",
+                detail:
+                  nextPrayer && nextPrayerTime && nextPrayer !== "sunrise"
+                    ? `${nextPrayer[0]!.toUpperCase()}${nextPrayer.slice(1)} ${fmtTime(nextPrayerTime)}`
+                    : `${todayPrayerLogs.length} of 5 logged`,
+                onClick: () => openQuick("prayer"),
+              }
+            : {
+                key: "prayer",
+                icon: Moon,
+                label: "Prayer",
+                detail: "Set your location",
+                to: "/spirit",
+              },
+        ]
+      : []),
+    {
+      key: "mood",
+      icon: Smile,
+      label: "Mood",
+      detail:
+        mood && energy
+          ? `${MOOD_LABELS[mood - 1]} · ${ENERGY_LABELS[energy - 1]}`
+          : "How are you?",
+      onClick: () => setSheet("mood"),
+    },
+    ...(isEnabled("food")
+      ? [
+          {
+            key: "meal",
+            icon: Utensils,
+            label: "Meal",
+            detail: todayFoodLogs.length ? `${todayCalories} kcal today` : "Nothing yet today",
+            onClick: () => openQuick("meal"),
+          },
+        ]
+      : []),
+    ...(isEnabled("money")
+      ? [
+          {
+            key: "money",
+            icon: Wallet,
+            label: "Spending",
+            detail:
+              paydayReady && payday
+                ? money.available >= 0
+                  ? `${fmtMoney(money.available)} left`
+                  : `Short by ${fmtMoney(Math.abs(money.available))}`
+                : `${fmtMoney(money.liquid)} now`,
+            onClick: () => openQuick("money"),
+          },
+        ]
+      : []),
+    {
+      key: "reflect",
+      icon: PenLine,
+      label: "Reflect",
+      detail: (() => {
+        const count = reflectionCount(todayReview.data, notes.data ?? [], today);
+        return count ? `${count} ${count === 1 ? "thing" : "things"} today` : "A good thing, an idea…";
+      })(),
+      onClick: () => setReflecting(true),
+    },
+    ...(isEnabled("body") && scheduledDoses.length
+      ? [
+          {
+            key: "medication",
+            icon: Pill,
+            label: "Medication",
+            detail: dosesDue.length ? `${dosesDue.length} of ${scheduledDoses.length} left` : "All taken",
+            onClick: () => setSheet("medication"),
+          },
+        ]
+      : []),
+  ];
+
   /* Prayers are the daily anchor and stay first; the rest follows the saved order. */
   const strips: { dimension: string; node: ReactNode }[] = [
     ...(isEnabled("body") || isEnabled("food") ? [{ dimension: "health", node: bodyRows }] : []),
@@ -1028,25 +1137,36 @@ function DashboardPage() {
             <Check className="size-4" />
             Done
           </Button>
-          {large ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setFocusTask({ id: action.item.id, title: action.item.title })}
-            >
-              Focus
-            </Button>
-          ) : null}
-          <TaskTimerButton task={action.item} withLabel size={large ? "default" : "sm"} />
-          <ShrinkItButton
-            size={large ? "default" : "sm"}
-            onClick={() => setShrinkTask(action.parent)}
-          />
-          <Button asChild variant="ghost" size={large ? "default" : "sm"}>
-            <Link to="/tasks" hash={action.parent.id}>
-              Open task
-            </Link>
-          </Button>
+          <TaskTimerButton task={action.item} />
+          {/* One clear action; the rest one tap away. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={large ? "size-10" : "size-9"}
+                aria-label="More for this task"
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                onSelect={() => setFocusTask({ id: action.item.id, title: action.item.title })}
+              >
+                Focus on it
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setShrinkTask(action.parent)}>
+                This feels hard
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/tasks" hash={action.parent.id}>
+                  Open task
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     );
@@ -1132,26 +1252,8 @@ function DashboardPage() {
                   </div>
                 ) : null}
 
-                {/* The counts come after the one thing to do, not before it. */}
-                {!isEnabled("do") ? null : (
-                  <TodayCounts
-                    className="mt-5"
-                    counts={{
-                      inbox: topLevelTasks(allTasks).filter((task) => task.status === "inbox")
-                        .length,
-                      dueToday: topLevelTasks(allTasks).filter(
-                        (task) => isOpen(task) && task.due_date === today,
-                      ).length,
-                      fromEarlier: overdueTasks,
-                      activeProjects: (projects.data ?? []).filter(
-                        (project) => project.status === "active",
-                      ).length,
-                    }}
-                  />
-                )}
-
                 {focusRows.length ? (
-                  <div className="mt-5 min-w-0">
+                  <div className="mt-8 min-w-0">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <h2 className="text-sm font-semibold text-foreground">
                         {t("Today's focus")}
@@ -1176,100 +1278,80 @@ function DashboardPage() {
               </section>
             ) : null}
 
-            {/* The life snapshot comes after the one thing to do, so opening the
-                app shows what to do first (ADHD: one clear focus). */}
+            {/* Log: one tile per thing you track, each showing where it stands. */}
             <div className="min-w-0 xl:col-start-2 xl:row-start-1">
-              <HubCard />
-            </div>
+              <TodayLog tiles={logTiles} />
 
-            {/* How you feel, in two taps, with a one-minute reset beside it. */}
-            <div className="min-w-0 xl:col-start-1 xl:row-start-2">
-              <CheckIn />
-            </div>
-
-            {/* Zone 2 — one block for everything today, each row acting on itself. */}
-            <section className="min-w-0 xl:col-start-2 xl:row-start-2">
-              <h2 className="text-base font-semibold text-foreground">{t("Today")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("Your own figures, and the logging beside them.")}
-              </p>
-              {strips.length === 0 ? (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  {t("No modules are switched on yet. Choose what to track in Settings.")}
-                </p>
-              ) : null}
-              <div className="mt-3 min-w-0 divide-y divide-border">
-                {strips.map((strip, index) => (
-                  <div key={index} className="min-w-0 py-2 first:pt-0 last:pb-0">
-                    {strip.node}
+              {/* Everything else about today, folded away until you want it. */}
+              <details className="group mt-8 min-w-0 border-t border-border/60 pt-4">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
+                  <span>
+                    {t("More about today")}
+                    {quotaAlerts.length ? (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        {quotaAlerts.length} {quotaAlerts.length === 1 ? "alert" : "alerts"}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="text-muted-foreground transition-transform duration-200 group-open:rotate-90"
+                  >
+                    ›
+                  </span>
+                </summary>
+                <div className="mt-3 min-w-0 space-y-6 text-sm">
+                  <div className="min-w-0 divide-y divide-border">
+                    {strips.map((strip, index) => (
+                      <div key={index} className="min-w-0 py-2 first:pt-0 last:pb-0">
+                        {strip.node}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Zone 3 — quiet footer: what is ahead, what is done, small tools. */}
-            <section className="min-w-0 border-t border-border/60 pt-5 text-xs text-muted-foreground xl:col-span-2">
-              <div className="grid min-w-0 gap-6 sm:grid-cols-2">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-medium text-foreground">{t("Coming up")}</h2>
-                  {visibleComingUp.length ? (
-                    <div className="mt-1 divide-y divide-border/50">
-                      {visibleComingUp.slice(0, 6).map((item) => (
-                        <Link
-                          key={item.id}
-                          to={item.to}
-                          className="flex min-h-11 min-w-0 flex-col justify-center py-2"
-                        >
-                          <p className="truncate text-xs font-medium text-foreground/90">
-                            <span className="mr-1 font-normal text-muted-foreground">
-                              {item.kind === "commitment" ? "You do ·" : "Happens ·"}
-                            </span>
-                            {item.title}
-                          </p>
-                          <p className="mt-0.5 truncate">{item.detail}</p>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-1">{t("Nothing due soon.")}</p>
-                  )}
-                </div>
-
-                <div className="min-w-0 space-y-4">
+                  <div className="min-w-0 text-xs text-muted-foreground">
+                    <h2 className="text-sm font-medium text-foreground">{t("Coming up")}</h2>
+                    {visibleComingUp.length ? (
+                      <div className="mt-1 divide-y divide-border/50">
+                        {visibleComingUp.slice(0, 6).map((item) => (
+                          <Link
+                            key={item.id}
+                            to={item.to}
+                            className="flex min-h-11 min-w-0 flex-col justify-center py-2"
+                          >
+                            <p className="truncate text-sm font-medium text-foreground/90">
+                              {item.title}
+                            </p>
+                            <p className="mt-0.5 truncate">{item.detail}</p>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-1">{t("Nothing due soon.")}</p>
+                    )}
+                  </div>
                   <DaySummary className="min-w-0" />
                   <OnThisDay className="min-w-0" />
+                  <ReflectionNudge />
                 </div>
-              </div>
-              <ReflectionNudge className="mt-4" />
-
-              <div className="mt-5 flex min-w-0 flex-wrap items-center gap-1">
-                {isEnabled("calendar") ? (
-                  <Button
-                    asChild
-                    variant="link"
-                    size="sm"
-                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
-                  >
-                    <Link to="/calendar">{t("Calendar")}</Link>
-                  </Button>
-                ) : null}
-                {isEnabled("notes") ? (
-                  <Button
-                    asChild
-                    variant="link"
-                    size="sm"
-                    className="h-auto min-h-11 px-2 text-xs text-muted-foreground"
-                  >
-                    <Link to="/notes">{t("Notes")}</Link>
-                  </Button>
-                ) : null}
-              </div>
-            </section>
+              </details>
+            </div>
           </main>
         )}
       </div>
 
       <QuickAddTaskDialog open={quickTask} onOpenChange={setQuickTask} />
+      <ReflectSheet open={reflecting} onOpenChange={setReflecting} date={today} />
+      <Sheet open={sheet !== null} onOpenChange={(open) => !open && setSheet(null)}>
+        <SheetContent
+          side="bottom"
+          className="max-h-[85vh] overflow-y-auto rounded-t-3xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6"
+        >
+          <SheetTitle className="sr-only">
+            {sheet === "mood" ? "How are you right now?" : "Medication today"}
+          </SheetTitle>
+          {sheet === "mood" ? <CheckIn /> : sheet === "medication" ? medicationRow : null}
+        </SheetContent>
+      </Sheet>
       <FocusDialog
         open={!!focusTask}
         task={focusTask}

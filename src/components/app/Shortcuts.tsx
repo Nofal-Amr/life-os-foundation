@@ -32,7 +32,7 @@ const ACTIONS: { keys: string; label: string }[] = [
 ];
 
 /** Asks the + button to open something (see QuickAdd). */
-export function openQuick(kind: "capture" | "task" | "money") {
+export function openQuick(kind: "capture" | "task" | "money" | "prayer" | "meal") {
   window.dispatchEvent(new CustomEvent("life-os-quick", { detail: kind }));
 }
 

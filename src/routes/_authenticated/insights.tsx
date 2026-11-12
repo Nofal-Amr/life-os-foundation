@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { format, parseISO } from "date-fns";
 import { ArrowLeftRight, CalendarRange, Repeat } from "lucide-react";
 
-import { useHub } from "@/components/app/HubCard";
+import { HubCard, useHub } from "@/components/app/HubCard";
 import { PageHeader } from "@/components/app/PageHeader";
 import { LoadingState } from "@/components/app/States";
 import { habitsQuery } from "@/data/habits";
@@ -54,6 +54,8 @@ function InsightsPage() {
         description="Only what you logged: counts, and patterns with how many days they're based on."
       />
       <div className="space-y-8">
+        {/* The last 7 days across every area (moved here from Today). */}
+        <HubCard />
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <CalendarRange className="size-5" /> Month by month
