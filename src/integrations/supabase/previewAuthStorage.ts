@@ -35,6 +35,10 @@ export function brokeredPreviewStorage() {
     new Promise((resolve) => {
       const requestId = newId();
       let done = false;
+      // Assigned once, below: `finish` has to exist first, and it clears this timer.
+      // Lovable's preview sign-in storage, kept as generated. Phase 1.3 (sign-in) decides
+      // whether this file stays.
+      // eslint-disable-next-line prefer-const
       let timer: ReturnType<typeof setTimeout>;
       const finish = (r: { ok: boolean; value?: string | null } | null) => {
         if (done) return;

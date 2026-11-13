@@ -47,3 +47,6 @@ public/ai/
 
 # Local Vercel build output
 .vercel/
+
+# Per-machine agent settings (hooks, permissions)
+.claude/settings.local.json
