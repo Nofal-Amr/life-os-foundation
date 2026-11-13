@@ -5,6 +5,18 @@ updated: 2026-11-13
 
 # Handoff for the next session
 
+## Web simplification (redesign draft steps), 2026-11-13
+Plan: `docs/superpowers/specs/2026-11-12-today-tasks-navigation-redesign.md`. Each step is its own branch and PR, cut from `origin/main`, checked green (tsc, vitest, eslint, build, headless demo at 375/1280).
+- Done, merged: one row pattern on seven list screens (`ListRow`, PR #17).
+- **Open, green, waiting to be merged** (the merge was refused by this session's permission check, so the owner or a session allowed to merge must do it):
+  - #28 `ux/short-forms`: New task = Title, Due, Project; habit and project = Name; the rest under "More options" (`MoreOptions`, "3 set" hint, opens when editing).
+  - #29 `ux/nav-groups`: More sheet and side menu grouped Plan / Library / Shared (`src/data/navGroups.ts`); Week and Time moved from Today's tabs into Plan; Import a plan listed. No address changed, so no redirects.
+  - #31 `ux/week-ahead`: Week = the next seven days (tasks, events, bills expected) with "+ Plan" per day; the look back moved to Insights as "Week by week" (`WeekReview`).
+  - #34 `ux/goal-links`: goals show linked habits with days logged in the last seven; tick habits in the goal's edit dialog. **Needs the owner to approve `supabase/migrations/20261114090000_habit_goals.sql`** (nullable `habits.goal_id`); hidden until then, safe to merge before.
+- The four touch different files; #31 also touches `ListRow.tsx` (padding only).
+- Next: opt-in areas at sign-up; evening ritual (move unfinished to tomorrow + day summary); then text sizes, Capabilities into goals, Categories opened from Transactions, Messages shown only once Life Connect is set up.
+- Worktrees: `../lo-forms`, `../lo-nav`, `../lo-week`, `../lo-goals` (each with its own `bun install`). Python isn't installed; use node or sed for scripted edits.
+
 ## Relationships — demo-only, 2026-11-13
 - `/relationships`: people map (Me in the centre, rings; select someone and their side glows), list view, person sheet (log, goal, birthday, check-in rhythm), reminder rules with exceptions, People card in Today (max 3 check-ins).
 - Opt-in area: Settings → Areas → Relationships. On in the demo.

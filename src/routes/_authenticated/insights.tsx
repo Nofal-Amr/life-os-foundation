@@ -10,6 +10,7 @@ import { habitsQuery } from "@/data/habits";
 import { byMonth, dailySeries, habitByWeekday, pairings } from "@/data/insights";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+import { WeekReview } from "@/components/app/WeekReview";
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "History & insights · Life OS" }] }),
@@ -56,6 +57,8 @@ function InsightsPage() {
       <div className="space-y-8">
         {/* The last 7 days across every area (moved here from Today). */}
         <HubCard />
+        {/* Week by week: what was due and what you logged (moved here from Week). */}
+        <WeekReview />
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <CalendarRange className="size-5" /> Month by month

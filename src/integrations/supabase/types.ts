@@ -838,6 +838,7 @@ export type Database = {
           created_at: string;
           description: string | null;
           frequency: Database["public"]["Enums"]["habit_frequency"];
+          goal_id: string | null;
           icon: string | null;
           id: string;
           name: string;
@@ -852,6 +853,7 @@ export type Database = {
           created_at?: string;
           description?: string | null;
           frequency?: Database["public"]["Enums"]["habit_frequency"];
+          goal_id?: string | null;
           icon?: string | null;
           id?: string;
           name: string;
@@ -866,6 +868,7 @@ export type Database = {
           created_at?: string;
           description?: string | null;
           frequency?: Database["public"]["Enums"]["habit_frequency"];
+          goal_id?: string | null;
           icon?: string | null;
           id?: string;
           name?: string;
