@@ -22,6 +22,7 @@ import { Route as AuthenticatedFoodRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
 import { Route as AuthenticatedHabitsRouteImport } from './routes/_authenticated/habits'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
+import { Route as AuthenticatedImportPlanRouteImport } from './routes/_authenticated/import-plan'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
@@ -108,6 +109,11 @@ const AuthenticatedHabitsRoute = AuthenticatedHabitsRouteImport.update({
 const AuthenticatedHealthRoute = AuthenticatedHealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportPlanRoute = AuthenticatedImportPlanRouteImport.update({
+  id: '/import-plan',
+  path: '/import-plan',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/import-plan': typeof AuthenticatedImportPlanRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notes': typeof AuthenticatedNotesRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/import-plan': typeof AuthenticatedImportPlanRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notes': typeof AuthenticatedNotesRoute
@@ -312,6 +320,7 @@ export interface FileRoutesById {
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
   '/_authenticated/habits': typeof AuthenticatedHabitsRoute
   '/_authenticated/health': typeof AuthenticatedHealthRoute
+  '/_authenticated/import-plan': typeof AuthenticatedImportPlanRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
@@ -350,6 +359,7 @@ export interface FileRouteTypes {
     | '/goals'
     | '/habits'
     | '/health'
+    | '/import-plan'
     | '/insights'
     | '/messages'
     | '/notes'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
     | '/goals'
     | '/habits'
     | '/health'
+    | '/import-plan'
     | '/insights'
     | '/messages'
     | '/notes'
@@ -422,6 +433,7 @@ export interface FileRouteTypes {
     | '/_authenticated/goals'
     | '/_authenticated/habits'
     | '/_authenticated/health'
+    | '/_authenticated/import-plan'
     | '/_authenticated/insights'
     | '/_authenticated/messages'
     | '/_authenticated/notes'
@@ -545,6 +557,13 @@ declare module '@tanstack/react-router' {
       path: '/health'
       fullPath: '/health'
       preLoaderRoute: typeof AuthenticatedHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/import-plan': {
+      id: '/_authenticated/import-plan'
+      path: '/import-plan'
+      fullPath: '/import-plan'
+      preLoaderRoute: typeof AuthenticatedImportPlanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/insights': {
@@ -732,6 +751,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
   AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRoute
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
+  AuthenticatedImportPlanRoute: typeof AuthenticatedImportPlanRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
@@ -759,6 +779,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
   AuthenticatedHabitsRoute: AuthenticatedHabitsRoute,
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
+  AuthenticatedImportPlanRoute: AuthenticatedImportPlanRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,

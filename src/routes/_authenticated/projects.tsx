@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -156,9 +156,12 @@ function ProjectsPage() {
         title="Projects"
         description="Everything you're moving forward, grouped by status."
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setPlansOpen(true)}>
               From a plan
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/import-plan">Import a plan</Link>
             </Button>
             <Button onClick={openCreate}>New project</Button>
           </div>
