@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_DISPLAY_PREFERENCES, formatMoney, formatSignedMoney, isValidCurrencyCode } from "./format";
+import {
+  DEFAULT_DISPLAY_PREFERENCES,
+  formatMoney,
+  formatSignedMoney,
+  isValidCurrencyCode,
+} from "./format";
 
 describe("money formatting", () => {
   it("omits decimals for whole numbers", () => {
@@ -9,7 +14,7 @@ describe("money formatting", () => {
 
   it("always shows two digits when a fraction exists", () => {
     expect(formatMoney(1200.5, DEFAULT_DISPLAY_PREFERENCES)).toBe("1,200.50");
-    expect(formatMoney(1200.50, DEFAULT_DISPLAY_PREFERENCES)).toBe("1,200.50");
+    expect(formatMoney(1200.5, DEFAULT_DISPLAY_PREFERENCES)).toBe("1,200.50");
     expect(formatMoney(1200.55, DEFAULT_DISPLAY_PREFERENCES)).toBe("1,200.55");
   });
 

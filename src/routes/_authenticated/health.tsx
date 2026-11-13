@@ -963,131 +963,132 @@ function HealthPage() {
 
         <MoreSections id="health">
           <Section id="health-history" title="History and devices">
-          <div className="space-y-5">
-        <SamsungHealthCard />
+            <div className="space-y-5">
+              <SamsungHealthCard />
 
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Weight</CardTitle>
-            <CardDescription>
-              {heightCm != null
-                ? `Height ${fmtHeight(heightCm)}, set in Settings.`
-                : "Add your height in Settings to see your BMI here."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="flex flex-wrap items-end gap-3"
-              onSubmit={(event) => {
-                event.preventDefault();
-                saveWeight.mutate();
-              }}
-            >
-              <div className="space-y-2">
-                <Label htmlFor="weight">Current weight ({weightUnit})</Label>
-                <Input
-                  id="weight"
-                  type="number"
-                  inputMode="decimal"
-                  step="0.1"
-                  className="h-12 w-40 text-base"
-                  value={weightInput ?? ""}
-                  onChange={(event) => setWeightInput(num(event.target.value))}
-                />
-              </div>
-              <Button type="submit" className="h-12" disabled={saveWeight.isPending}>
-                {saveWeight.isPending ? "Saving…" : "Save weight"}
-              </Button>
-              {!heightCm ? null : (
-                <Button asChild variant="ghost" className="h-12">
-                  <Link to="/settings">Body setup</Link>
-                </Button>
-              )}
-            </form>
-            <div className="mt-4 rounded-xl border border-border px-4 py-3">
-              {bmiValue != null ? (
-                <>
-                  <p className="text-sm font-medium tabular-nums text-foreground">
-                    BMI {bmiValue.toFixed(1)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Weight in kg ÷ height in m², from {fmtHeight(heightCm ?? 0)} and the weight
-                    saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}.
-                  </p>
-                </>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {heightCm == null
-                    ? "Add your height in Settings and save a weight to see your BMI here."
-                    : "Save a weight to see your BMI here."}
-                </p>
-              )}
+              <Card className="system-card">
+                <CardHeader>
+                  <CardTitle className="text-base">Weight</CardTitle>
+                  <CardDescription>
+                    {heightCm != null
+                      ? `Height ${fmtHeight(heightCm)}, set in Settings.`
+                      : "Add your height in Settings to see your BMI here."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form
+                    className="flex flex-wrap items-end gap-3"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      saveWeight.mutate();
+                    }}
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="weight">Current weight ({weightUnit})</Label>
+                      <Input
+                        id="weight"
+                        type="number"
+                        inputMode="decimal"
+                        step="0.1"
+                        className="h-12 w-40 text-base"
+                        value={weightInput ?? ""}
+                        onChange={(event) => setWeightInput(num(event.target.value))}
+                      />
+                    </div>
+                    <Button type="submit" className="h-12" disabled={saveWeight.isPending}>
+                      {saveWeight.isPending ? "Saving…" : "Save weight"}
+                    </Button>
+                    {!heightCm ? null : (
+                      <Button asChild variant="ghost" className="h-12">
+                        <Link to="/settings">Body setup</Link>
+                      </Button>
+                    )}
+                  </form>
+                  <div className="mt-4 rounded-xl border border-border px-4 py-3">
+                    {bmiValue != null ? (
+                      <>
+                        <p className="text-sm font-medium tabular-nums text-foreground">
+                          BMI {bmiValue.toFixed(1)}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Weight in kg ÷ height in m², from {fmtHeight(heightCm ?? 0)} and the
+                          weight saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}.
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        {heightCm == null
+                          ? "Add your height in Settings and save a weight to see your BMI here."
+                          : "Save a weight to see your BMI here."}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-
-          </div>
           </Section>
           <Section id="health-recent" title="Recent days">
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Recent days</CardTitle>
-            <CardDescription>Your last entries, most recent first.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recent.length === 0 ? (
-              <EmptyState
-                title="No other entries yet"
-                description="A daily log keeps a record of how you felt and slept, in your own words and numbers."
-              />
-            ) : (
-              <ul className="divide-y divide-border">
-                {recent.map((log) => (
-                  <li
-                    key={log.id}
-                    className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
-                  >
-                    <button
-                      type="button"
-                      className="font-medium text-foreground hover:underline"
-                      onClick={() => setDate(log.log_date)}
-                    >
-                      {fmtDate(log.log_date)}
-                    </button>
-                    <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {log.trained ? <SemanticBadge tone="positive">Trained</SemanticBadge> : null}
-                      {log.actual_sleep_minutes != null || log.sleep_hours != null ? (
-                        <span className="tabular-nums">
-                          {formatDuration(
-                            log.actual_sleep_minutes ?? Math.round(Number(log.sleep_hours) * 60),
-                          )}{" "}
-                          sleep
-                        </span>
-                      ) : null}
-                      {log.sleep_score != null ? (
-                        <span className="tabular-nums">Sleep score {log.sleep_score}</span>
-                      ) : null}
-                      {log.mood != null ? (
-                        <SemanticBadge tone={scaleTone("mood", log.mood)}>
-                          Mood {log.mood} of 5
-                        </SemanticBadge>
-                      ) : null}
-                      {log.stress_level != null ? (
-                        <SemanticBadge
-                          tone={scaleTone("stress", log.stress_level)}
-                          className="hidden sm:inline-flex"
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Recent days</CardTitle>
+                <CardDescription>Your last entries, most recent first.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {recent.length === 0 ? (
+                  <EmptyState
+                    title="No other entries yet"
+                    description="A daily log keeps a record of how you felt and slept, in your own words and numbers."
+                  />
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {recent.map((log) => (
+                      <li
+                        key={log.id}
+                        className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
+                      >
+                        <button
+                          type="button"
+                          className="font-medium text-foreground hover:underline"
+                          onClick={() => setDate(log.log_date)}
                         >
-                          Stress {log.stress_level} of 5
-                        </SemanticBadge>
-                      ) : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
+                          {fmtDate(log.log_date)}
+                        </button>
+                        <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          {log.trained ? (
+                            <SemanticBadge tone="positive">Trained</SemanticBadge>
+                          ) : null}
+                          {log.actual_sleep_minutes != null || log.sleep_hours != null ? (
+                            <span className="tabular-nums">
+                              {formatDuration(
+                                log.actual_sleep_minutes ??
+                                  Math.round(Number(log.sleep_hours) * 60),
+                              )}{" "}
+                              sleep
+                            </span>
+                          ) : null}
+                          {log.sleep_score != null ? (
+                            <span className="tabular-nums">Sleep score {log.sleep_score}</span>
+                          ) : null}
+                          {log.mood != null ? (
+                            <SemanticBadge tone={scaleTone("mood", log.mood)}>
+                              Mood {log.mood} of 5
+                            </SemanticBadge>
+                          ) : null}
+                          {log.stress_level != null ? (
+                            <SemanticBadge
+                              tone={scaleTone("stress", log.stress_level)}
+                              className="hidden sm:inline-flex"
+                            >
+                              Stress {log.stress_level} of 5
+                            </SemanticBadge>
+                          ) : null}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
           </Section>
         </MoreSections>
       </div>

@@ -83,7 +83,10 @@ export function timePattern(preference: TimeFormat): string {
 }
 
 /** Format an ISO date (yyyy-MM-dd) using the user's date preference. */
-export function formatDatePref(value: string | null | undefined, prefs: DisplayPreferences): string {
+export function formatDatePref(
+  value: string | null | undefined,
+  prefs: DisplayPreferences,
+): string {
   if (!value) return "—";
   try {
     return format(parseISO(value), datePattern(prefs.date_format));
@@ -99,7 +102,8 @@ export function formatShortDatePref(
 ): string {
   if (!value) return "—";
   try {
-    const pattern = prefs.date_format === "iso" ? "MM-dd" : prefs.date_format === "mdy" ? "MMM d" : "d MMM";
+    const pattern =
+      prefs.date_format === "iso" ? "MM-dd" : prefs.date_format === "mdy" ? "MMM d" : "d MMM";
     return format(parseISO(value), pattern);
   } catch {
     return value;
@@ -135,7 +139,10 @@ export function formatDateTimePref(
 ): string {
   if (!value) return "—";
   try {
-    return format(new Date(value), `${datePattern(prefs.date_format)}, ${timePattern(prefs.time_format)}`);
+    return format(
+      new Date(value),
+      `${datePattern(prefs.date_format)}, ${timePattern(prefs.time_format)}`,
+    );
   } catch {
     return value;
   }
@@ -254,7 +261,6 @@ export function formatMoney(value: number | null | undefined, prefs: DisplayPref
     maximumFractionDigits: digits,
   }).format(amount);
 }
-
 
 /** Signed amounts always carry a word, so meaning never rests on colour. */
 export function formatSignedMoney(

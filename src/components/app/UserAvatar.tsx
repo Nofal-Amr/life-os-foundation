@@ -14,8 +14,7 @@ const SIZES = {
 export function useDisplayName() {
   const { user } = useAuth();
   const profile = useQuery(profileQuery());
-  const displayName =
-    profile.data?.display_name?.trim() || user?.email?.split("@")[0] || "there";
+  const displayName = profile.data?.display_name?.trim() || user?.email?.split("@")[0] || "there";
   return {
     displayName,
     firstName: displayName.split(/\s+/)[0] ?? displayName,

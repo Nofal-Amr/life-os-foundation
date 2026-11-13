@@ -220,7 +220,8 @@ function ResourcesPage() {
       const value = Number(readingValue);
       if (readingValue === "" || Number.isNaN(value)) throw new Error("Enter the reading.");
       const at = readingAt ? localInputToISO(readingAt) : new Date().toISOString();
-      if (editingReading) return updateReading(editingReading.id, { reading: value, reading_at: at });
+      if (editingReading)
+        return updateReading(editingReading.id, { reading: value, reading_at: at });
       return addReading({ resource_id: readingFor.id, reading: value, reading_at: at, note: null });
     },
     onSuccess: () => {
@@ -338,21 +339,32 @@ function ResourcesPage() {
         const facts = quotaFacts(resource, readings.data ?? []);
         if (!ring && facts) {
           return (
-            <StatCard key={resource.id} title={`${resource.name} left`} icon={entityIconOf(resource.icon)} tone={2}>
+            <StatCard
+              key={resource.id}
+              title={`${resource.name} left`}
+              icon={entityIconOf(resource.icon)}
+              tone={2}
+            >
               <p className="figure">
-                {plain(facts.remaining)} <span className="text-base font-medium text-muted-foreground">{resource.unit}</span>
+                {plain(facts.remaining)}{" "}
+                <span className="text-base font-medium text-muted-foreground">{resource.unit}</span>
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
                 {facts.owed > 0
                   ? `${plain(facts.owed)} ${resource.unit} owed; your next top-up pays it back first.`
                   : facts.perDay != null && facts.daysLeft != null
-                  ? facts.daysLeft < 1
-                    ? `Less than a day left at ${plain(facts.perDay)} ${resource.unit} a day.`
-                    : `About ${Math.floor(facts.daysLeft)} ${Math.floor(facts.daysLeft) === 1 ? "day" : "days"} left at ${plain(facts.perDay)} ${resource.unit} a day.`
-                  : "Add readings on a few different days to see how long it lasts."}
-                {" "}From your reading on {fmtDate(facts.latest.reading_at.slice(0, 10))}.
+                    ? facts.daysLeft < 1
+                      ? `Less than a day left at ${plain(facts.perDay)} ${resource.unit} a day.`
+                      : `About ${Math.floor(facts.daysLeft)} ${Math.floor(facts.daysLeft) === 1 ? "day" : "days"} left at ${plain(facts.perDay)} ${resource.unit} a day.`
+                    : "Add readings on a few different days to see how long it lasts."}{" "}
+                From your reading on {fmtDate(facts.latest.reading_at.slice(0, 10))}.
               </p>
-              <Button size="sm" variant="outline" className="mt-4" onClick={() => openReading(resource)}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-4"
+                onClick={() => openReading(resource)}
+              >
                 <Plus className="size-4" />
                 Add reading
               </Button>
@@ -361,7 +373,11 @@ function ResourcesPage() {
         }
         if (!ring) {
           return (
-            <StatCard key={resource.id} title={`${resource.name} left`} icon={entityIconOf(resource.icon)}>
+            <StatCard
+              key={resource.id}
+              title={`${resource.name} left`}
+              icon={entityIconOf(resource.icon)}
+            >
               <p className="text-sm text-muted-foreground">
                 Add a quota amount and a reading to see this.
               </p>
@@ -390,7 +406,11 @@ function ResourcesPage() {
       }
       if (resource.unit_cost == null) {
         return (
-          <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={entityIconOf(resource.icon)}>
+          <StatCard
+            key={resource.id}
+            title={`${resource.name} cost per day`}
+            icon={entityIconOf(resource.icon)}
+          >
             <p className="text-sm text-muted-foreground">Set a unit cost to see this.</p>
           </StatCard>
         );
@@ -412,7 +432,11 @@ function ResourcesPage() {
           summary={`Per day, between readings · ${points.length} intervals`}
         />
       ) : (
-        <StatCard key={resource.id} title={`${resource.name} cost per day`} icon={entityIconOf(resource.icon)}>
+        <StatCard
+          key={resource.id}
+          title={`${resource.name} cost per day`}
+          icon={entityIconOf(resource.icon)}
+        >
           <NotEnoughData hint="Needs readings on at least three different days." />
         </StatCard>
       );
@@ -529,134 +553,136 @@ function ResourcesPage() {
                       onUpdateKm={() => openReading(resource)}
                     />
                   ) : (
-                  <div className="mt-4 space-y-2 text-sm">
-                    {latest ? (
-                      <p className="text-muted-foreground">
-                        Last reading {round(Number(latest.reading))} {resource.unit} ·{" "}
-                        {fmtDate(latest.reading_at.slice(0, 10))}
-                      </p>
-                    ) : (
-                      <p className="text-muted-foreground">No readings yet.</p>
-                    )}
+                    <div className="mt-4 space-y-2 text-sm">
+                      {latest ? (
+                        <p className="text-muted-foreground">
+                          Last reading {round(Number(latest.reading))} {resource.unit} ·{" "}
+                          {fmtDate(latest.reading_at.slice(0, 10))}
+                        </p>
+                      ) : (
+                        <p className="text-muted-foreground">No readings yet.</p>
+                      )}
 
-                    {needsMore ? (
-                      <p className="text-muted-foreground">
-                        Add at least two readings and usage can be worked out.
-                      </p>
-                    ) : meter ? (
-                      <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
-                        <div>
-                          <dt className="text-muted-foreground">Used since last reading</dt>
-                          <dd className="tabular-nums">
-                            {meter.lastConsumption == null
-                              ? "—"
-                              : `${round(meter.lastConsumption)} ${resource.unit}`}
-                            {meter.lastCost == null ? "" : ` · ${fmtMoney(meter.lastCost)}`}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-muted-foreground">Average a day</dt>
-                          <dd className="tabular-nums">
-                            {meter.perDay == null ? "—" : `${round(meter.perDay)} ${resource.unit}`}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-muted-foreground">This cycle so far</dt>
-                          <dd className="tabular-nums">
-                            {meter.cycleConsumption == null
-                              ? "—"
-                              : `${round(meter.cycleConsumption)} ${resource.unit}`}
-                            {meter.cycleCost == null ? "" : ` · ${fmtMoney(meter.cycleCost)}`}
-                          </dd>
-                        </div>
-                        {meter.tier?.current ? (
-                          <div className="sm:col-span-3">
-                            <TierMeter
-                              tariff={meter.tier.tariff}
-                              kwh={meter.cycleConsumption ?? 0}
-                              unit={resource.unit}
-                              projectedTier={meter.tier.projected?.tier ?? null}
-                            />
-                          </div>
-                        ) : null}
-                        {meter.projectedCycleCost != null ? (
-                          <div className="sm:col-span-3">
-                            <dt className="text-muted-foreground">
-                              Projected cost for the full cycle
-                              {meter.cycleEnd ? ` to ${fmtDate(meter.cycleEnd)}` : ""}
-                            </dt>
-                            <dd className="tabular-nums">{fmtMoney(meter.projectedCycleCost)}</dd>
-                          </div>
-                        ) : null}
-                      </dl>
-                    ) : quota ? (
-                      <>
-                        {quota.tier ? (
-                          <TierMeter
-                            tariff={quota.tier.tariff}
-                            kwh={quota.tier.used}
-                            unit={resource.unit}
-                            projectedTier={null}
-                          />
-                        ) : null}
+                      {needsMore ? (
+                        <p className="text-muted-foreground">
+                          Add at least two readings and usage can be worked out.
+                        </p>
+                      ) : meter ? (
                         <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
                           <div>
-                            <dt className="text-muted-foreground">
-                              {quota.owed > 0 ? "Owed" : "Left"}
-                            </dt>
+                            <dt className="text-muted-foreground">Used since last reading</dt>
                             <dd className="tabular-nums">
-                              {round(quota.remaining)} {resource.unit}
+                              {meter.lastConsumption == null
+                                ? "—"
+                                : `${round(meter.lastConsumption)} ${resource.unit}`}
+                              {meter.lastCost == null ? "" : ` · ${fmtMoney(meter.lastCost)}`}
                             </dd>
-                            {quota.owed > 0 ? (
-                              <p className="mt-0.5 text-xs text-muted-foreground">
-                                Paid back first from your next top-up.
-                              </p>
-                            ) : null}
                           </div>
                           <div>
                             <dt className="text-muted-foreground">Average a day</dt>
                             <dd className="tabular-nums">
-                              {quota.perDay == null
+                              {meter.perDay == null
                                 ? "—"
-                                : `${round(quota.perDay)} ${resource.unit}`}
+                                : `${round(meter.perDay)} ${resource.unit}`}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-muted-foreground">At that rate</dt>
+                            <dt className="text-muted-foreground">This cycle so far</dt>
                             <dd className="tabular-nums">
-                              {quota.daysLeft == null
+                              {meter.cycleConsumption == null
                                 ? "—"
-                                : `about ${Math.floor(quota.daysLeft)} ${Math.floor(quota.daysLeft) === 1 ? "day" : "days"} left`}
+                                : `${round(meter.cycleConsumption)} ${resource.unit}`}
+                              {meter.cycleCost == null ? "" : ` · ${fmtMoney(meter.cycleCost)}`}
                             </dd>
                           </div>
-                          {quota.runsOutOn && quota.cycleEnd ? (
-                            <div className="sm:col-span-3 text-muted-foreground">
-                              {quota.runsOutBeforeCycleEnd
-                                ? `At this rate it reaches zero around ${fmtDate(quota.runsOutOn)}, before the cycle ends on ${fmtDate(quota.cycleEnd)}.`
-                                : `At this rate it lasts past the cycle end on ${fmtDate(quota.cycleEnd)}.`}
+                          {meter.tier?.current ? (
+                            <div className="sm:col-span-3">
+                              <TierMeter
+                                tariff={meter.tier.tariff}
+                                kwh={meter.cycleConsumption ?? 0}
+                                unit={resource.unit}
+                                projectedTier={meter.tier.projected?.tier ?? null}
+                              />
+                            </div>
+                          ) : null}
+                          {meter.projectedCycleCost != null ? (
+                            <div className="sm:col-span-3">
+                              <dt className="text-muted-foreground">
+                                Projected cost for the full cycle
+                                {meter.cycleEnd ? ` to ${fmtDate(meter.cycleEnd)}` : ""}
+                              </dt>
+                              <dd className="tabular-nums">{fmtMoney(meter.projectedCycleCost)}</dd>
                             </div>
                           ) : null}
                         </dl>
-                      </>
-                    ) : null}
+                      ) : quota ? (
+                        <>
+                          {quota.tier ? (
+                            <TierMeter
+                              tariff={quota.tier.tariff}
+                              kwh={quota.tier.used}
+                              unit={resource.unit}
+                              projectedTier={null}
+                            />
+                          ) : null}
+                          <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
+                            <div>
+                              <dt className="text-muted-foreground">
+                                {quota.owed > 0 ? "Owed" : "Left"}
+                              </dt>
+                              <dd className="tabular-nums">
+                                {round(quota.remaining)} {resource.unit}
+                              </dd>
+                              {quota.owed > 0 ? (
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  Paid back first from your next top-up.
+                                </p>
+                              ) : null}
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">Average a day</dt>
+                              <dd className="tabular-nums">
+                                {quota.perDay == null
+                                  ? "—"
+                                  : `${round(quota.perDay)} ${resource.unit}`}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground">At that rate</dt>
+                              <dd className="tabular-nums">
+                                {quota.daysLeft == null
+                                  ? "—"
+                                  : `about ${Math.floor(quota.daysLeft)} ${Math.floor(quota.daysLeft) === 1 ? "day" : "days"} left`}
+                              </dd>
+                            </div>
+                            {quota.runsOutOn && quota.cycleEnd ? (
+                              <div className="sm:col-span-3 text-muted-foreground">
+                                {quota.runsOutBeforeCycleEnd
+                                  ? `At this rate it reaches zero around ${fmtDate(quota.runsOutOn)}, before the cycle ends on ${fmtDate(quota.cycleEnd)}.`
+                                  : `At this rate it lasts past the cycle end on ${fmtDate(quota.cycleEnd)}.`}
+                              </div>
+                            ) : null}
+                          </dl>
+                        </>
+                      ) : null}
 
-                    {meter && meter.cycleCost != null && resource.category_id ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={logCost.isPending}
-                        onClick={() =>
-                          logCost.mutate({
-                            resource,
-                            amount: meter.cycleCost as number,
-                            label: `${resource.name} · ${round(meter.cycleConsumption ?? 0)} ${resource.unit}`,
-                          })
-                        }
-                      >
-                        Log {fmtMoney(meter.cycleCost)} as a transaction
-                      </Button>
-                    ) : null}
-                  </div>
+                      {meter && meter.cycleCost != null && resource.category_id ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={logCost.isPending}
+                          onClick={() =>
+                            logCost.mutate({
+                              resource,
+                              amount: meter.cycleCost as number,
+                              label: `${resource.name} · ${round(meter.cycleConsumption ?? 0)} ${resource.unit}`,
+                            })
+                          }
+                        >
+                          Log {fmtMoney(meter.cycleCost)} as a transaction
+                        </Button>
+                      ) : null}
+                    </div>
                   )}
                   {own.length >= 2 && resource.kind !== "vehicle" ? (
                     <ResourceUsage
@@ -831,7 +857,9 @@ function ResourcesPage() {
                     })
                   }
                 />
-                <p className="text-xs text-muted-foreground">Optional. With it, km left follows your real consumption.</p>
+                <p className="text-xs text-muted-foreground">
+                  Optional. With it, km left follows your real consumption.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="resource-full-tank">A full tank lasts about (km)</Label>
@@ -850,7 +878,9 @@ function ResourcesPage() {
                     })
                   }
                 />
-                <p className="text-xs text-muted-foreground">Your own figure, used until two full-tank fill-ups give the real one.</p>
+                <p className="text-xs text-muted-foreground">
+                  Your own figure, used until two full-tank fill-ups give the real one.
+                </p>
               </div>
             </>
           ) : null}

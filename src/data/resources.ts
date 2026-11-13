@@ -429,7 +429,8 @@ export function topUpPlan(args: {
   const { balance, paid } = args;
   let credited = args.credited ?? null;
   let balanceAfter = args.balanceAfter ?? null;
-  if (credited == null && balanceAfter != null && balance != null) credited = balanceAfter - balance;
+  if (credited == null && balanceAfter != null && balance != null)
+    credited = balanceAfter - balance;
   if (balanceAfter == null && credited != null) balanceAfter = (balance ?? 0) + credited;
   const fees =
     args.moneyUnit && credited != null ? Math.round((paid - credited) * 100) / 100 : null;

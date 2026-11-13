@@ -26,8 +26,14 @@ const tasks = [
   task("d", { goal_id: "g1", due_date: "2026-09-30" }),
   task("e", { project_id: "p2" }),
 ];
-const projects = [{ id: "p1", name: "Site" }, { id: "p2", name: "Other" }] as Project[];
-const goals = [{ id: "g1", name: "Freelance" }, { id: "g2", name: "Other" }] as Goal[];
+const projects = [
+  { id: "p1", name: "Site" },
+  { id: "p2", name: "Other" },
+] as Project[];
+const goals = [
+  { id: "g1", name: "Freelance" },
+  { id: "g2", name: "Other" },
+] as Goal[];
 
 describe("projectProgress", () => {
   it("counts top-level, non-cancelled tasks", () => {

@@ -41,7 +41,13 @@ export function SemanticBadge({
 
 export function SemanticDot({ tone, label }: { tone: Tone; label: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-xs", TONE_CLASS[tone], "border-0 bg-transparent")}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs",
+        TONE_CLASS[tone],
+        "border-0 bg-transparent",
+      )}
+    >
       <span aria-hidden="true" className="size-2 rounded-full bg-current" />
       <span className="text-foreground">{label}</span>
     </span>

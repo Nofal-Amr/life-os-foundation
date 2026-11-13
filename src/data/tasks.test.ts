@@ -35,7 +35,11 @@ describe("task estimates", () => {
 describe("task dates", () => {
   it("accepts start ≤ due ≤ max", () => {
     expect(
-      dateOrderProblem({ start_date: "2026-01-01", due_date: "2026-01-05", max_date: "2026-01-09" }),
+      dateOrderProblem({
+        start_date: "2026-01-01",
+        due_date: "2026-01-05",
+        max_date: "2026-01-09",
+      }),
     ).toBeNull();
   });
 

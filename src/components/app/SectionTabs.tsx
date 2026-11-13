@@ -87,7 +87,9 @@ export function SectionTabs() {
       setBar(active ? { x: active.offsetLeft, w: active.offsetWidth, animate } : null);
     };
     measure(sameSection);
-    list.querySelector('[data-status="active"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    list
+      .querySelector('[data-status="active"]')
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
     // Widths change once the web font arrives and when the window resizes.
     const observer = new ResizeObserver(() => measure(false));
     observer.observe(list);

@@ -66,8 +66,7 @@ export function TaskStepsEditor({ parent }: { parent: Task }) {
   });
 
   const rename = useMutation({
-    mutationFn: ({ id, value }: { id: string; value: string }) =>
-      updateTask(id, { title: value }),
+    mutationFn: ({ id, value }: { id: string; value: string }) => updateTask(id, { title: value }),
     onSuccess: invalidate,
     onError,
   });

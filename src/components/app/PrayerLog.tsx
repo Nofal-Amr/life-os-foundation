@@ -545,7 +545,9 @@ function PrayerHeatRow({
             style={{
               width: cell,
               height: cell,
-              ...(sunnah ? { boxShadow: `inset 0 0 0 ${cell > 10 ? 1.5 : 1}px ${SUNNAH_COLOR}` } : {}),
+              ...(sunnah
+                ? { boxShadow: `inset 0 0 0 ${cell > 10 ? 1.5 : 1}px ${SUNNAH_COLOR}` }
+                : {}),
               background: status
                 ? status === "missed"
                   ? "color-mix(in oklch, var(--color-muted-foreground) 45%, transparent)"

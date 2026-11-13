@@ -84,7 +84,10 @@ export function Details({
       {open ? (
         <div
           id={`details-${id}`}
-          className={cn("pt-3", ready && "animate-in fade-in slide-in-from-top-1 duration-200 ease-out")}
+          className={cn(
+            "pt-3",
+            ready && "animate-in fade-in slide-in-from-top-1 duration-200 ease-out",
+          )}
         >
           {children}
         </div>

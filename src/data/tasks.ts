@@ -76,17 +76,25 @@ export function nextRepeatDate(from: string, repeat: TaskRepeat): string {
     do date.setDate(date.getDate() + 1);
     while (date.getDay() === 5 || date.getDay() === 6);
   }
-  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 export type EstimateUnit = "minutes" | "hours" | "days";
 
-export const ESTIMATE_UNITS: { value: EstimateUnit; label: string; short: string; minutes: number }[] =
-  [
-    { value: "minutes", label: "minutes", short: "min", minutes: 1 },
-    { value: "hours", label: "hours", short: "h", minutes: 60 },
-    { value: "days", label: "days", short: "d", minutes: 1440 },
-  ];
+export const ESTIMATE_UNITS: {
+  value: EstimateUnit;
+  label: string;
+  short: string;
+  minutes: number;
+}[] = [
+  { value: "minutes", label: "minutes", short: "min", minutes: 1 },
+  { value: "hours", label: "hours", short: "h", minutes: 60 },
+  { value: "days", label: "days", short: "d", minutes: 1440 },
+];
 
 function unitInfo(unit: string | null | undefined) {
   return ESTIMATE_UNITS.find((item) => item.value === unit) ?? ESTIMATE_UNITS[0]!;
@@ -135,7 +143,6 @@ export function dateOrderProblem(input: {
 export function notStartedYet(task: Task, today: string): boolean {
   return Boolean(task.start_date) && String(task.start_date) > today;
 }
-
 
 export type TaskFilter = "now" | "all" | "today" | "upcoming" | "overdue" | "inbox" | "completed";
 

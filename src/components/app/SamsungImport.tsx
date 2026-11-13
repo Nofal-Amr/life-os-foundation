@@ -91,16 +91,20 @@ export function SamsungImport() {
   return (
     <div className="space-y-3 rounded-xl border border-dashed border-border p-4 text-sm">
       <details className="rounded-lg bg-secondary px-3 py-2 text-xs">
-        <summary className="min-h-8 cursor-pointer py-1 font-medium">Which health apps work, and how</summary>
+        <summary className="min-h-8 cursor-pointer py-1 font-medium">
+          Which health apps work, and how
+        </summary>
         <ul className="mt-2 space-y-2 text-muted-foreground">
           <li>
-            <span className="text-foreground">Samsung Health, Mi Fitness (Xiaomi), Fitbit, Google Fit and others</span>{" "}
-            that write to Health Connect: turn on sharing in that app's Health Connect settings,
-            and the Android app reads it with Sync.
+            <span className="text-foreground">
+              Samsung Health, Mi Fitness (Xiaomi), Fitbit, Google Fit and others
+            </span>{" "}
+            that write to Health Connect: turn on sharing in that app's Health Connect settings, and
+            the Android app reads it with Sync.
           </li>
           <li>
-            <span className="text-foreground">Zepp Life (Mi Band 1 to 7)</span>: it syncs to Google Fit
-            rather than Health Connect, so import its data export here.
+            <span className="text-foreground">Zepp Life (Mi Band 1 to 7)</span>: it syncs to Google
+            Fit rather than Health Connect, so import its data export here.
           </li>
           <li>
             <span className="text-foreground">Huawei Health</span>: it doesn't share with Health

@@ -335,9 +335,7 @@ function TimePage() {
                       background: perDay[index] ? "var(--chart-1)" : "var(--color-border)",
                     }}
                   />
-                  <span className="axis-label">
-                    {format(new Date(`${day}T12:00:00`), "EEEEE")}
-                  </span>
+                  <span className="axis-label">{format(new Date(`${day}T12:00:00`), "EEEEE")}</span>
                 </div>
               );
             })}

@@ -1033,9 +1033,7 @@ function DashboardPage() {
       icon: Smile,
       label: "Mood",
       detail:
-        mood && energy
-          ? `${MOOD_LABELS[mood - 1]} · ${ENERGY_LABELS[energy - 1]}`
-          : "How are you?",
+        mood && energy ? `${MOOD_LABELS[mood - 1]} · ${ENERGY_LABELS[energy - 1]}` : "How are you?",
       onClick: () => setSheet("mood"),
     },
     ...(isEnabled("food")
@@ -1071,7 +1069,9 @@ function DashboardPage() {
       label: "Reflect",
       detail: (() => {
         const count = reflectionCount(todayReview.data, notes.data ?? [], today);
-        return count ? `${count} ${count === 1 ? "thing" : "things"} today` : "A good thing, an idea…";
+        return count
+          ? `${count} ${count === 1 ? "thing" : "things"} today`
+          : "A good thing, an idea…";
       })(),
       onClick: () => setReflecting(true),
     },
@@ -1081,7 +1081,9 @@ function DashboardPage() {
             key: "medication",
             icon: Pill,
             label: "Medication",
-            detail: dosesDue.length ? `${dosesDue.length} of ${scheduledDoses.length} left` : "All taken",
+            detail: dosesDue.length
+              ? `${dosesDue.length} of ${scheduledDoses.length} left`
+              : "All taken",
             onClick: () => setSheet("medication"),
           },
         ]

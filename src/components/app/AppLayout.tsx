@@ -55,7 +55,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             <Search className="size-4" aria-hidden="true" />
             Search
-            <kbd className="ml-auto rounded border border-border px-1.5 text-[0.6875rem]">Ctrl K</kbd>
+            <kbd className="ml-auto rounded border border-border px-1.5 text-[0.6875rem]">
+              Ctrl K
+            </kbd>
           </button>
           <Button className="-mt-4 h-10 w-full justify-start" onClick={() => pressAdd(pathname)}>
             <Plus className="size-4" aria-hidden="true" />

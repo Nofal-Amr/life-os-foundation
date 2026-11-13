@@ -29,7 +29,13 @@ export const goalsQuery = () =>
 
 export async function createGoal(input: GoalInput) {
   const user_id = await currentUserId();
-  return unwrap(await supabase.from("goals").insert({ ...input, user_id }).select().single());
+  return unwrap(
+    await supabase
+      .from("goals")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
+  );
 }
 
 export async function updateGoal(id: string, input: Partial<GoalInput>) {

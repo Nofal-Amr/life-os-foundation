@@ -62,7 +62,8 @@ export function MigrationNotice() {
       .select("category")
       .limit(1)
       .then(({ error }) => {
-        if (error?.code === "42703") setMissing((current) => [...new Set([...current, "category"])]);
+        if (error?.code === "42703")
+          setMissing((current) => [...new Set([...current, "category"])]);
       });
     return () => void stop();
   }, []);

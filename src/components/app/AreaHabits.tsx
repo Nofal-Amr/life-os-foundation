@@ -48,7 +48,10 @@ export function AreaHabits({
       queryClient.setQueryData<HabitLog[]>(habitKeys.logs, (rows = []) =>
         done
           ? rows.filter((row) => !(row.habit_id === habitId && row.log_date === date))
-          : [{ id: `local-${habitId}-${date}`, habit_id: habitId, log_date: date } as HabitLog, ...rows],
+          : [
+              { id: `local-${habitId}-${date}`, habit_id: habitId, log_date: date } as HabitLog,
+              ...rows,
+            ],
       );
       return previous;
     },
@@ -88,7 +91,12 @@ export function AreaHabits({
                 className="system-card flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left transition-[scale,background-color] duration-150 ease-out hover:bg-accent active:scale-[0.99]"
               >
                 <EntityIcon icon={habit.icon} color={habit.color} />
-                <span className={cn("min-w-0 flex-1 truncate text-sm font-medium", done && "text-muted-foreground line-through")}>
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate text-sm font-medium",
+                    done && "text-muted-foreground line-through",
+                  )}
+                >
                   {habit.name}
                 </span>
                 <span
@@ -98,7 +106,9 @@ export function AreaHabits({
                   )}
                   aria-hidden="true"
                 >
-                  {done ? <Check className="size-4 animate-in zoom-in-50 duration-200 ease-out" /> : null}
+                  {done ? (
+                    <Check className="size-4 animate-in zoom-in-50 duration-200 ease-out" />
+                  ) : null}
                 </span>
               </button>
             </li>

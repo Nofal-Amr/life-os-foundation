@@ -16,7 +16,13 @@ import {
 } from "@/components/ui/select";
 import { accountsQuery, createTransaction, financeKeys } from "@/data/finance";
 import { usePreferences } from "@/hooks/usePreferences";
-import { buildFeatures, lifeConnect, spendingInbox, type PendingSpend, type SpendingStatus } from "@/lib/native";
+import {
+  buildFeatures,
+  lifeConnect,
+  spendingInbox,
+  type PendingSpend,
+  type SpendingStatus,
+} from "@/lib/native";
 import { cn } from "@/lib/utils";
 
 /** Per phone: which account spending from notifications goes to. */

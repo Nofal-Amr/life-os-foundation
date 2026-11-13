@@ -77,7 +77,8 @@ export function sameDayPreviousYears(date: string, years = 5): string[] {
   return Array.from({ length: years }, (_, i) => {
     const year = y - 1 - i;
     // 29 Feb falls back to 28 Feb in years without it.
-    const day = m === 2 && d === 29 && !(year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 28 : d;
+    const day =
+      m === 2 && d === 29 && !(year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 28 : d;
     return `${year}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   });
 }

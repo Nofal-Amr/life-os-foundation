@@ -5,7 +5,9 @@ import { missingColumnOf, withoutColumn } from "./offline";
 describe("missingColumnOf", () => {
   it("reads the column out of PostgREST's message", () => {
     expect(
-      missingColumnOf("Could not find the 'updated_at' column of 'resource_readings' in the schema cache"),
+      missingColumnOf(
+        "Could not find the 'updated_at' column of 'resource_readings' in the schema cache",
+      ),
     ).toBe("updated_at");
     expect(missingColumnOf("some other error")).toBeNull();
     expect(missingColumnOf(undefined)).toBeNull();
@@ -20,7 +22,10 @@ describe("withoutColumn", () => {
   });
 
   it("drops it from every row of a list", () => {
-    const body = JSON.stringify([{ a: 1, bad: 2 }, { a: 2, bad: 3 }]);
+    const body = JSON.stringify([
+      { a: 1, bad: 2 },
+      { a: 2, bad: 3 },
+    ]);
     expect(withoutColumn(body, "bad")).toBe(JSON.stringify([{ a: 1 }, { a: 2 }]));
   });
 

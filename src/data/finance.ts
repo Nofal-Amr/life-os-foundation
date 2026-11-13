@@ -559,7 +559,7 @@ export function upcomingCostsBefore(costs: RecurringCost[], before: Date | null)
     if (!cost.active || cost.next_due_date > last) continue;
     const { count, unit } = recurringInterval(cost);
     const dates: string[] = [];
-    for (let date = cost.next_due_date; date <= last && dates.length < 400; ) {
+    for (let date = cost.next_due_date; date <= last && dates.length < 400;) {
       dates.push(date);
       date = advanceDate(date, count, unit);
     }

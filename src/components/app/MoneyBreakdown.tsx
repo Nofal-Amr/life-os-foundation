@@ -75,7 +75,11 @@ export function MoneyBreakdownDialog({ trigger }: { trigger: ReactNode }) {
           <DialogDescription>
             {paydayDate
               ? `Up to your next payday on ${fmtDate(format(paydayDate, "yyyy-MM-dd"))}${
-                  days == null ? "" : days === 0 ? " · today" : ` · in ${days} ${days === 1 ? "day" : "days"}`
+                  days == null
+                    ? ""
+                    : days === 0
+                      ? " · today"
+                      : ` · in ${days} ${days === 1 ? "day" : "days"}`
                 }.`
               : "Add your payday in Settings to include upcoming costs."}
           </DialogDescription>

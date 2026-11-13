@@ -12,7 +12,15 @@
 // Env overrides: ANDROID_HOME, JAVA_HOME, ANDROID_PLATFORM (e.g. android-34),
 // ANDROID_BUILD_TOOLS (e.g. 35.0.0), SKIP_WEB=1 to reuse an existing web build.
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { delimiter, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -100,7 +108,9 @@ function manifestPath() {
   if (full) return join(here, "AndroidManifest.xml");
   const stripped = source.replace(/[ \t]*<!-- full:start[\s\S]*?<!-- full:end -->\r?\n?/g, "");
   if (/RECEIVE_SMS|NotificationListenerService/.test(stripped)) {
-    throw new Error("Full-only parts of the manifest aren't all inside full:start/full:end markers");
+    throw new Error(
+      "Full-only parts of the manifest aren't all inside full:start/full:end markers",
+    );
   }
   const target = join(out, "AndroidManifest.standard.xml");
   writeFileSync(target, stripped);

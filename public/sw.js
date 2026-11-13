@@ -30,7 +30,11 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // /ocr/: the on-device photo reader's engine, kept so it works offline.
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/ocr/") || /\.(png|svg|ico|webmanifest|woff2?)$/.test(url.pathname)) {
+  if (
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.startsWith("/ocr/") ||
+    /\.(png|svg|ico|webmanifest|woff2?)$/.test(url.pathname)
+  ) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(CACHE);

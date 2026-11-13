@@ -70,8 +70,7 @@ function CapabilitiesPage() {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: capabilityKeys.all });
 
   const save = useMutation({
-    mutationFn: async () =>
-      editing ? updateCapability(editing.id, form) : createCapability(form),
+    mutationFn: async () => (editing ? updateCapability(editing.id, form) : createCapability(form)),
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
@@ -98,7 +97,12 @@ function CapabilitiesPage() {
 
   function openEdit(capability: Capability) {
     setEditing(capability);
-    setForm({ name: capability.name, description: capability.description, icon: capability.icon, color: capability.color });
+    setForm({
+      name: capability.name,
+      description: capability.description,
+      icon: capability.icon,
+      color: capability.color,
+    });
     setDialogOpen(true);
   }
 
@@ -138,26 +142,26 @@ function CapabilitiesPage() {
             return (
               <li key={capability.id} className="rounded-xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                   <div className="flex min-w-0 gap-3">
-                     <EntityIcon icon={capability.icon} color={capability.color} />
-                     <div className="min-w-0">
-                     <p className="truncate font-medium">{capability.name}</p>
-                    {capability.description ? (
-                      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                        {capability.description}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <SemanticBadge tone={count > 0 ? "positive" : "quiet"}>
-                        {count} evidence {count === 1 ? "event" : "events"}
-                      </SemanticBadge>
-                      {count > 0 ? (
-                        <Button size="sm" variant="ghost" onClick={() => setViewing(capability)}>
-                          View evidence
-                        </Button>
+                  <div className="flex min-w-0 gap-3">
+                    <EntityIcon icon={capability.icon} color={capability.color} />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{capability.name}</p>
+                      {capability.description ? (
+                        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                          {capability.description}
+                        </p>
                       ) : null}
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <SemanticBadge tone={count > 0 ? "positive" : "quiet"}>
+                          {count} evidence {count === 1 ? "event" : "events"}
+                        </SemanticBadge>
+                        {count > 0 ? (
+                          <Button size="sm" variant="ghost" onClick={() => setViewing(capability)}>
+                            View evidence
+                          </Button>
+                        ) : null}
+                      </div>
                     </div>
-                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" onClick={() => openEdit(capability)}>
@@ -173,7 +177,6 @@ function CapabilitiesPage() {
           })}
         </ul>
       )}
-
 
       <FormDialog
         open={dialogOpen}
@@ -192,7 +195,10 @@ function CapabilitiesPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
-        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
+        <EntityIdentityPicker
+          value={{ icon: form.icon, color: form.color }}
+          onChange={(identity) => setForm({ ...form, ...identity })}
+        />
         <div className="space-y-2">
           <Label htmlFor="capability-description">Description (optional)</Label>
           <Textarea

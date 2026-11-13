@@ -211,9 +211,7 @@ function WeekPage() {
                     {trackPrayers ? <Tile label="Prayers" value={week.prayers} /> : null}
                     {trackMoney ? (
                       <div className="rounded-lg bg-secondary px-2.5 py-1.5">
-                        <p className="text-xs text-muted-foreground">
-                          Spent
-                        </p>
+                        <p className="text-xs text-muted-foreground">Spent</p>
                         <p className="text-sm font-semibold tabular-nums">{fmtMoney(week.spent)}</p>
                       </div>
                     ) : null}

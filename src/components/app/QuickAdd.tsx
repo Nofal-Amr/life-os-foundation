@@ -1,5 +1,6 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Bell,
+import {
+  Bell,
   ArrowLeft,
   CheckSquare,
   Moon,
@@ -200,7 +201,9 @@ export function QuickAdd() {
                 <Timer className="size-5 text-primary" aria-hidden="true" />
                 <span>
                   <span className="block text-sm font-medium">Focus session</span>
-                  <span className="block text-xs text-muted-foreground">25 minutes on one thing, with a chime at the end</span>
+                  <span className="block text-xs text-muted-foreground">
+                    25 minutes on one thing, with a chime at the end
+                  </span>
                 </span>
               </button>
               <div className="grid grid-cols-2 gap-2">

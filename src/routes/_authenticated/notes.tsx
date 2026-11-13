@@ -374,7 +374,13 @@ function NotesPage() {
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button type="button" variant="ghost" size="icon" aria-label="From a template" title="From a template">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="From a template"
+                title="From a template"
+              >
                 <LayoutTemplate className="size-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -404,12 +410,7 @@ function NotesPage() {
       ) : (
         <div className="space-y-6">
           {pinned.length ? (
-            <NoteGrid
-              title="Pinned"
-              notes={pinned}
-              onOpen={openNote}
-              onPatch={patch}
-            />
+            <NoteGrid title="Pinned" notes={pinned} onOpen={openNote} onPatch={patch} />
           ) : null}
           <NoteGrid
             title={pinned.length ? "Others" : null}
@@ -524,7 +525,9 @@ function NoteCard({
             ) : null}
           </ul>
         ) : isLockedNote(note) ? (
-          <p className="text-sm text-muted-foreground">Locked. Open it in the Life OS Android app.</p>
+          <p className="text-sm text-muted-foreground">
+            Locked. Open it in the Life OS Android app.
+          </p>
         ) : note.body ? (
           <p className="line-clamp-[12] whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/85">
             {note.body}
@@ -840,7 +843,9 @@ function NoteEditor({
                   goal_id: null,
                 });
               }
-              toast.success(`${titles.length} ${titles.length === 1 ? "task" : "tasks"} added to Unsorted.`);
+              toast.success(
+                `${titles.length} ${titles.length === 1 ? "task" : "tasks"} added to Unsorted.`,
+              );
             }}
           />
           <Button

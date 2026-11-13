@@ -142,7 +142,11 @@ export type MedicationInput = {
 export async function createMedication(input: MedicationInput): Promise<Medication> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("medications").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("medications")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as Medication;
 }
 

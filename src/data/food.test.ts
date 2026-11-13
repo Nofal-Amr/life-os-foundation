@@ -28,10 +28,8 @@ describe("quick meals", () => {
 });
 
 describe("suggestedFoods by meal", () => {
-  const food = (id: string, name: string) =>
-    ({ id, name, calories: 100 }) as unknown as Food;
-  const log = (food_id: string, meal: string) =>
-    ({ food_id, meal }) as unknown as FoodLog;
+  const food = (id: string, name: string) => ({ id, name, calories: 100 }) as unknown as Food;
+  const log = (food_id: string, meal: string) => ({ food_id, meal }) as unknown as FoodLog;
 
   it("puts what you usually have at this meal first", () => {
     const foods = [food("ful", "Ful"), food("rice", "Rice")];
