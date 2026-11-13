@@ -8,6 +8,8 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
+import { MoreOptions } from "@/components/app/MoreOptions";
+import { taskExtrasSet } from "@/data/formExtras";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -613,59 +615,7 @@ function TasksPage() {
             onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="task-description">Description</Label>
-          <Textarea
-            id="task-description"
-            value={form.description ?? ""}
-            onChange={(e) => setForm({ ...form, description: e.target.value || null })}
-          />
-        </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <Select
-              value={form.status}
-              onValueChange={(v) => setForm({ ...form, status: v as Task["status"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TASK_STATUSES.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Priority</Label>
-            <Select
-              value={form.priority}
-              onValueChange={(v) => setForm({ ...form, priority: v as Task["priority"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-start">Start date (optional)</Label>
-            <DatePicker
-              id="task-start"
-              value={form.start_date ?? null}
-              onChange={(value) => setForm({ ...form, start_date: value || null })}
-            />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="task-due">Due date</Label>
             <DatePicker
@@ -674,127 +624,6 @@ function TasksPage() {
               onChange={(value) => setForm({ ...form, due_date: value || null })}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-time">Time (optional)</Label>
-            <Input
-              id="task-time"
-              type="time"
-              className="h-12 tabular-nums"
-              value={form.due_time ?? ""}
-              onChange={(event) => setForm({ ...form, due_time: event.target.value || null })}
-            />
-            <p className="text-xs text-muted-foreground">
-              The Android app reminds you at this time.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label>Energy it needs</Label>
-            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Energy it needs">
-              {TASK_ENERGY.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={form.energy === option.value}
-                  title={option.hint}
-                  onClick={() =>
-                    setForm({ ...form, energy: form.energy === option.value ? null : option.value })
-                  }
-                  className={`min-h-9 rounded-full border px-3 text-sm transition-colors ${form.energy === option.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent"}`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Optional. On a low day, Today puts low-energy tasks first.
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label>Repeat</Label>
-            <Select
-              value={form.repeat ?? "none"}
-              onValueChange={(value) =>
-                setForm({ ...form, repeat: value === "none" ? null : (value as TaskRepeat) })
-              }
-            >
-              <SelectTrigger className="h-12">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Doesn't repeat</SelectItem>
-                {TASK_REPEATS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {form.repeat ? (
-              <p className="text-xs text-muted-foreground">
-                When you tick it off, the next one appears on its next date.
-              </p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-max">Max date (optional)</Label>
-            <DatePicker
-              id="task-max"
-              value={form.max_date ?? null}
-              onChange={(value) => setForm({ ...form, max_date: value || null })}
-            />
-            <p className="text-xs text-muted-foreground">The date this cannot pass.</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="task-estimate">Estimate (optional)</Label>
-            <div className="flex gap-2">
-              <Input
-                id="task-estimate"
-                type="number"
-                min={1}
-                inputMode="numeric"
-                className="w-24 tabular-nums"
-                value={estimateInUnit(form.estimated_minutes, form.estimate_unit) ?? ""}
-                onChange={(event) =>
-                  setForm({
-                    ...form,
-                    estimated_minutes: estimateToMinutes(
-                      event.target.value ? Number(event.target.value) : null,
-                      form.estimate_unit ?? "minutes",
-                    ),
-                  })
-                }
-              />
-              <Select
-                value={form.estimate_unit ?? "minutes"}
-                onValueChange={(value) => {
-                  const unit = value as EstimateUnit;
-                  const shown = estimateInUnit(form.estimated_minutes, form.estimate_unit);
-                  setForm({
-                    ...form,
-                    estimate_unit: unit,
-                    estimated_minutes: estimateToMinutes(shown, unit),
-                  });
-                }}
-              >
-                <SelectTrigger className="flex-1" aria-label="Estimate unit">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ESTIMATE_UNITS.map((unit) => (
-                    <SelectItem key={unit.value} value={unit.value}>
-                      {unit.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {dateOrderProblem(form) ? (
-            <p className="text-sm text-destructive sm:col-span-2" role="alert">
-              {dateOrderProblem(form)}
-            </p>
-          ) : null}
           <div className="space-y-2">
             <Label>Project</Label>
             <Select
@@ -854,125 +683,312 @@ function TasksPage() {
               </div>
             ) : null}
           </div>
-          <div className="space-y-2">
-            <Label>Capability (optional)</Label>
-            <Select
-              value={form.capability_id ?? NONE}
-              onValueChange={(v) => {
-                if (v === NEW_CAPABILITY) {
-                  setShowNewCapability(true);
-                  return;
-                }
-                setShowNewCapability(false);
-                setForm({ ...form, capability_id: v === NONE ? null : v });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="No capability" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NEW_CAPABILITY}>+ New capability</SelectItem>
-                <SelectItem value={NONE}>No capability</SelectItem>
-                {(capabilities.data ?? []).map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    <span className="flex items-center gap-2">
-                      <EntityIcon
-                        icon={c.icon}
-                        color={c.color}
-                        containerClassName="size-5 rounded"
-                        className="size-3"
-                      />
-                      {c.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {showNewCapability ? (
-              <div className="flex gap-2">
-                <Input
-                  aria-label="New capability name"
-                  placeholder="Capability name"
-                  value={newCapabilityName}
-                  onChange={(event) => setNewCapabilityName(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      if (newCapabilityName.trim()) addCapability.mutate();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={!newCapabilityName.trim() || addCapability.isPending}
-                  onClick={() => addCapability.mutate()}
-                >
-                  Add
-                </Button>
-              </div>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label>Goal (optional)</Label>
-            <Select
-              value={form.goal_id ?? NONE}
-              onValueChange={(v) => {
-                if (v === NEW_GOAL) {
-                  setShowNewGoal(true);
-                  return;
-                }
-                setShowNewGoal(false);
-                setForm({ ...form, goal_id: v === NONE ? null : v });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="No goal" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NEW_GOAL}>+ New goal</SelectItem>
-                <SelectItem value={NONE}>No goal</SelectItem>
-                {(goals.data ?? []).map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    <span className="flex items-center gap-2">
-                      <EntityIcon
-                        icon={g.icon}
-                        color={g.color}
-                        containerClassName="size-5 rounded"
-                        className="size-3"
-                      />
-                      {g.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {showNewGoal ? (
-              <div className="flex gap-2">
-                <Input
-                  aria-label="New goal name"
-                  placeholder="Goal name"
-                  value={newGoalName}
-                  onChange={(event) => setNewGoalName(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      if (newGoalName.trim()) addGoal.mutate();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={!newGoalName.trim() || addGoal.isPending}
-                  onClick={() => addGoal.mutate()}
-                >
-                  Add
-                </Button>
-              </div>
-            ) : null}
-          </div>
         </div>
+        {dateOrderProblem(form) ? (
+          <p className="text-sm text-destructive" role="alert">
+            {dateOrderProblem(form)}
+          </p>
+        ) : null}
+        <MoreOptions
+          defaultOpen={Boolean(editing) && taskExtrasSet(form) > 0}
+          setCount={taskExtrasSet(form)}
+        >
+          <div className="space-y-2">
+            <Label htmlFor="task-description">Description</Label>
+            <Textarea
+              id="task-description"
+              value={form.description ?? ""}
+              onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={form.status}
+                onValueChange={(v) => setForm({ ...form, status: v as Task["status"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TASK_STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select
+                value={form.priority}
+                onValueChange={(v) => setForm({ ...form, priority: v as Task["priority"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-start">Start date (optional)</Label>
+              <DatePicker
+                id="task-start"
+                value={form.start_date ?? null}
+                onChange={(value) => setForm({ ...form, start_date: value || null })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-time">Time (optional)</Label>
+              <Input
+                id="task-time"
+                type="time"
+                className="h-12 tabular-nums"
+                value={form.due_time ?? ""}
+                onChange={(event) => setForm({ ...form, due_time: event.target.value || null })}
+              />
+              <p className="text-xs text-muted-foreground">
+                The Android app reminds you at this time.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Energy it needs</Label>
+              <div
+                className="flex flex-wrap gap-1.5"
+                role="radiogroup"
+                aria-label="Energy it needs"
+              >
+                {TASK_ENERGY.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={form.energy === option.value}
+                    title={option.hint}
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        energy: form.energy === option.value ? null : option.value,
+                      })
+                    }
+                    className={`min-h-9 rounded-full border px-3 text-sm transition-colors ${form.energy === option.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent"}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Optional. On a low day, Today puts low-energy tasks first.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Repeat</Label>
+              <Select
+                value={form.repeat ?? "none"}
+                onValueChange={(value) =>
+                  setForm({ ...form, repeat: value === "none" ? null : (value as TaskRepeat) })
+                }
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Doesn't repeat</SelectItem>
+                  {TASK_REPEATS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.repeat ? (
+                <p className="text-xs text-muted-foreground">
+                  When you tick it off, the next one appears on its next date.
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-max">Max date (optional)</Label>
+              <DatePicker
+                id="task-max"
+                value={form.max_date ?? null}
+                onChange={(value) => setForm({ ...form, max_date: value || null })}
+              />
+              <p className="text-xs text-muted-foreground">The date this cannot pass.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="task-estimate">Estimate (optional)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="task-estimate"
+                  type="number"
+                  min={1}
+                  inputMode="numeric"
+                  className="w-24 tabular-nums"
+                  value={estimateInUnit(form.estimated_minutes, form.estimate_unit) ?? ""}
+                  onChange={(event) =>
+                    setForm({
+                      ...form,
+                      estimated_minutes: estimateToMinutes(
+                        event.target.value ? Number(event.target.value) : null,
+                        form.estimate_unit ?? "minutes",
+                      ),
+                    })
+                  }
+                />
+                <Select
+                  value={form.estimate_unit ?? "minutes"}
+                  onValueChange={(value) => {
+                    const unit = value as EstimateUnit;
+                    const shown = estimateInUnit(form.estimated_minutes, form.estimate_unit);
+                    setForm({
+                      ...form,
+                      estimate_unit: unit,
+                      estimated_minutes: estimateToMinutes(shown, unit),
+                    });
+                  }}
+                >
+                  <SelectTrigger className="flex-1" aria-label="Estimate unit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ESTIMATE_UNITS.map((unit) => (
+                      <SelectItem key={unit.value} value={unit.value}>
+                        {unit.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Capability (optional)</Label>
+              <Select
+                value={form.capability_id ?? NONE}
+                onValueChange={(v) => {
+                  if (v === NEW_CAPABILITY) {
+                    setShowNewCapability(true);
+                    return;
+                  }
+                  setShowNewCapability(false);
+                  setForm({ ...form, capability_id: v === NONE ? null : v });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="No capability" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NEW_CAPABILITY}>+ New capability</SelectItem>
+                  <SelectItem value={NONE}>No capability</SelectItem>
+                  {(capabilities.data ?? []).map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="flex items-center gap-2">
+                        <EntityIcon
+                          icon={c.icon}
+                          color={c.color}
+                          containerClassName="size-5 rounded"
+                          className="size-3"
+                        />
+                        {c.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {showNewCapability ? (
+                <div className="flex gap-2">
+                  <Input
+                    aria-label="New capability name"
+                    placeholder="Capability name"
+                    value={newCapabilityName}
+                    onChange={(event) => setNewCapabilityName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        if (newCapabilityName.trim()) addCapability.mutate();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!newCapabilityName.trim() || addCapability.isPending}
+                    onClick={() => addCapability.mutate()}
+                  >
+                    Add
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <Label>Goal (optional)</Label>
+              <Select
+                value={form.goal_id ?? NONE}
+                onValueChange={(v) => {
+                  if (v === NEW_GOAL) {
+                    setShowNewGoal(true);
+                    return;
+                  }
+                  setShowNewGoal(false);
+                  setForm({ ...form, goal_id: v === NONE ? null : v });
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="No goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NEW_GOAL}>+ New goal</SelectItem>
+                  <SelectItem value={NONE}>No goal</SelectItem>
+                  {(goals.data ?? []).map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      <span className="flex items-center gap-2">
+                        <EntityIcon
+                          icon={g.icon}
+                          color={g.color}
+                          containerClassName="size-5 rounded"
+                          className="size-3"
+                        />
+                        {g.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {showNewGoal ? (
+                <div className="flex gap-2">
+                  <Input
+                    aria-label="New goal name"
+                    placeholder="Goal name"
+                    value={newGoalName}
+                    onChange={(event) => setNewGoalName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        if (newGoalName.trim()) addGoal.mutate();
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={!newGoalName.trim() || addGoal.isPending}
+                    onClick={() => addGoal.mutate()}
+                  >
+                    Add
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </MoreOptions>
         {editing && editing.parent_task_id ? null : editing ? (
           <div className="border-t border-border pt-4">
             <TaskStepsEditor parent={editing} />
