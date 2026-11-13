@@ -30,6 +30,11 @@ public class ConnectActionReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if (action == null || !action.startsWith("app.lifeos.CONNECT_")) return;
         String what = action.substring("app.lifeos.CONNECT_".length());
+        // Stop on a find works on either phone, and needs nothing sent.
+        if ("findstop".equals(what)) {
+            FindPhone.stop(context);
+            return;
+        }
         ConnectConfig config = ConnectConfig.load(context);
         if (config == null || !"main".equals(config.role)) return;
         if ("reply".equals(what)) {

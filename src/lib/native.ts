@@ -27,6 +27,8 @@ type NativeBridge = {
   requestConnectPermissions?(): void;
   connectStatus?(): string;
   connectTest?(): void;
+  connectFind?(ring: boolean, flash: boolean): void;
+  connectFindStop?(): void;
   openBatterySettings?(): void;
   openAutostartSettings?(): void;
   openFullScreenSettings?(): void;
@@ -255,7 +257,15 @@ export type ConnectStatus = {
   fullScreen: boolean;
   /** Phone maker, lower case (e.g. "xiaomi", "samsung"). */
   brand?: string;
+  /** Main phone: the SIM phone's name, once it has introduced itself. */
+  peer?: string;
 };
+
+/** "Find POCO" on the main phone, "Find main phone" on the SIM phone. */
+export function findTarget(role: ConnectRole, peer?: string): string {
+  if (role === "sim") return "main phone";
+  return peer?.trim() || "SIM phone";
+}
 
 /**
  * Whether the SIM phone forwards one-time codes (OTPs, verification codes),
@@ -300,6 +310,14 @@ export const lifeConnect = {
   },
   test(): void {
     bridge()?.connectTest?.();
+  },
+  /** Find my phone: the other phone rings loudly and/or flashes; result as a 'life-os-connect-find' event. */
+  find(options: { ring: boolean; flash: boolean }): void {
+    if (!options.ring && !options.flash) return;
+    bridge()?.connectFind?.(options.ring, options.flash);
+  },
+  stopFind(): void {
+    bridge()?.connectFindStop?.();
   },
   openFullScreenSettings(): void {
     bridge()?.openFullScreenSettings?.();
