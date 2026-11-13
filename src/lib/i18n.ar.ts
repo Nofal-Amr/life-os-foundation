@@ -639,4 +639,5 @@ export const AR: Record<string, string> = {
   "Month by month": "شهرًا بشهر",
   "What went together": "ما تغيّر معًا",
   "Habits by weekday": "العادات حسب اليوم",
+  Tomorrow: "غدًا",
 };
