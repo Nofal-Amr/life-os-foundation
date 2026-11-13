@@ -8,6 +8,8 @@ import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { ListRow, RowList } from "@/components/app/ListRow";
 import { FormDialog } from "@/components/app/FormDialog";
+import { MoreOptions } from "@/components/app/MoreOptions";
+import { projectExtrasSet } from "@/data/formExtras";
 import { ProjectCover, ProjectCoverPicker } from "@/components/app/ProjectCover";
 import { PlansDialog } from "@/components/app/PlansDialog";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -267,82 +269,87 @@ function ProjectsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
-        <ProjectCoverPicker
-          file={coverFile}
-          currentPath={editing?.image_url ?? null}
-          removeCurrent={removeCover}
-          onFileChange={(file) => {
-            setCoverFile(file);
-            if (file) setRemoveCover(false);
-          }}
-          onRemoveCurrent={() => setRemoveCover(true)}
-        />
-        <EntityIdentityPicker
-          value={{ icon: form.icon, color: form.color }}
-          onChange={(identity) => setForm({ ...form, ...identity })}
-        />
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={form.description ?? ""}
-            onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+        <MoreOptions
+          defaultOpen={Boolean(editing) && (projectExtrasSet(form) > 0 || Boolean(coverFile))}
+          setCount={projectExtrasSet(form) + (coverFile ? 1 : 0)}
+        >
+          <ProjectCoverPicker
+            file={coverFile}
+            currentPath={editing?.image_url ?? null}
+            removeCurrent={removeCover}
+            onFileChange={(file) => {
+              setCoverFile(file);
+              if (file) setRemoveCover(false);
+            }}
+            onRemoveCurrent={() => setRemoveCover(true)}
           />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
+          <EntityIdentityPicker
+            value={{ icon: form.icon, color: form.color }}
+            onChange={(identity) => setForm({ ...form, ...identity })}
+          />
           <div className="space-y-2">
-            <Label>Status</Label>
-            <Select
-              value={form.status}
-              onValueChange={(v) => setForm({ ...form, status: v as Project["status"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PROJECT_STATUSES.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Priority</Label>
-            <Select
-              value={form.priority}
-              onValueChange={(v) => setForm({ ...form, priority: v as Project["priority"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRIORITIES.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="start">Start date</Label>
-            <DatePicker
-              id="start"
-              value={form.start_date}
-              onChange={(value) => setForm({ ...form, start_date: value || null })}
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={form.description ?? ""}
+              onChange={(e) => setForm({ ...form, description: e.target.value || null })}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="due">Due date</Label>
-            <DatePicker
-              id="due"
-              value={form.due_date}
-              onChange={(value) => setForm({ ...form, due_date: value || null })}
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={form.status}
+                onValueChange={(v) => setForm({ ...form, status: v as Project["status"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROJECT_STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select
+                value={form.priority}
+                onValueChange={(v) => setForm({ ...form, priority: v as Project["priority"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="start">Start date</Label>
+              <DatePicker
+                id="start"
+                value={form.start_date}
+                onChange={(value) => setForm({ ...form, start_date: value || null })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="due">Due date</Label>
+              <DatePicker
+                id="due"
+                value={form.due_date}
+                onChange={(value) => setForm({ ...form, due_date: value || null })}
+              />
+            </div>
           </div>
-        </div>
+        </MoreOptions>
       </FormDialog>
 
       <ConfirmDialog
