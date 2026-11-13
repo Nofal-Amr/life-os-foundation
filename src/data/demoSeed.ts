@@ -165,7 +165,7 @@ export function demoSeed(now = new Date()): DemoDb {
 
   const habits = [
     { name: "Read 10 pages", icon: "book-open", color: "chart-2" },
-    { name: "Walk 30 minutes", icon: "footprints", color: "chart-1" },
+    { name: "Walk 30 minutes", icon: "footprints", color: "chart-1", goal_id: fit },
     { name: "No phone after 11pm", icon: "moon", color: "chart-3" },
   ].map((habit) =>
     base({
@@ -174,6 +174,7 @@ export function demoSeed(now = new Date()): DemoDb {
       frequency: "daily",
       target: 1,
       category: null,
+      goal_id: null as string | null,
       description: null,
       ...habit,
     }),
