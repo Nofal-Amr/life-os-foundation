@@ -35,7 +35,7 @@ final class ConnectConfig {
     final String device;
     /** SIM phone: send each SMS on to the main phone. */
     final boolean forwardSms;
-    /** ...including one-time codes (off: those stay on the SIM phone). */
+    /** ...including one-time codes (off by default: those stay on the SIM phone). */
     final boolean forwardCodes;
     private final String secret;
 
@@ -81,7 +81,7 @@ final class ConnectConfig {
                 value.getString("anonKey"),
                 value.optString("device", "SIM phone"),
                 value.optBoolean("sms", true),
-                value.optBoolean("codes", true));
+                value.optBoolean("codes", SmsFilter.CODES_DEFAULT));
         } catch (Exception e) {
             return null;
         }

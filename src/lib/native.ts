@@ -257,6 +257,15 @@ export type ConnectStatus = {
   brand?: string;
 };
 
+/**
+ * Whether the SIM phone forwards one-time codes (OTPs, verification codes),
+ * from this phone's saved choice ("1" on, "0" off, null never chosen). Off
+ * unless you switched it on: codes stay on the phone that received them.
+ */
+export function forwardsOneTimeCodes(saved: string | null): boolean {
+  return saved === "1";
+}
+
 /** Life Connect in the Android app; every call is a no-op on the website. */
 export const lifeConnect = {
   available(): boolean {
