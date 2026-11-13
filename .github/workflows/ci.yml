@@ -1,0 +1,98 @@
+name: CI
+
+# Checks every pull request and every push to main: the web app (types, unit
+# tests, lint) and both Android apps (build, unit tests). Nothing is signed,
+# uploaded or deployed, and no secrets are used.
+#
+# Actions are pinned to a full commit; the comment after each gives the release.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web (types, unit tests, lint)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      - name: Install dependencies
+        id: install
+        run: bun install --frozen-lockfile
+      - name: Type check
+        run: ./node_modules/.bin/tsc --noEmit
+      # The next two still run when an earlier check fails, so one run shows everything.
+      - name: Unit tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: ./node_modules/.bin/vitest run
+      - name: Lint (includes the formatting check)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: ./node_modules/.bin/eslint . --max-warnings 0
+
+  android-native:
+    name: Android native app (unit tests, build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 17
+      # The project has no Gradle wrapper; this installs the version it is built with.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          gradle-version: 8.11.1
+          cache-disabled: true
+      - name: Unit tests and debug build
+        working-directory: mobile/native
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
+
+  android-webview:
+    name: Android WebView app (Java tests, build)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ANDROID_PLATFORM: android-36
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - name: Java tests
+        run: node mobile/android/test.mjs
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Install the Android platform the build compiles against
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;$ANDROID_PLATFORM"
+      # Builds the web bundle and packages it. The APK is not kept.
+      - name: Build
+        run: node mobile/android/build.mjs
