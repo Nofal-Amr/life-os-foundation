@@ -59,6 +59,7 @@ public class ConnectService extends Service {
         status.setShowBadge(false);
         manager.createNotificationChannel(status);
         CallAlert.ensureChannels(this);
+        FindPhone.ensureChannel(this);
     }
 
     @Override
@@ -160,6 +161,19 @@ public class ConnectService extends Service {
         lock.acquire(10_000);
         try {
             String type = message.optString("type");
+            // Remember the other phone's name, for "Find POCO".
+            String peer = message.optString("device", "");
+            if ("main".equals(current.role) && !peer.isEmpty()) ConnectConfig.savePeer(this, peer);
+            // Find my phone works both ways.
+            if ("find".equals(type)) {
+                FindPhone.start(this, message.optBoolean("ring", true), message.optBoolean("flash", false),
+                    "main".equals(current.role) ? peer : "your main phone");
+                return;
+            }
+            if ("find_stop".equals(type)) {
+                FindPhone.stop(this);
+                return;
+            }
             if ("main".equals(current.role)) {
                 switch (type) {
                     case "ring": CallAlert.ring(this, message); break;
