@@ -24,7 +24,7 @@ import {
 } from "@/data/relationships";
 import type { RuleInput } from "@/data/relationshipsApi";
 
-import { selectClass } from "./PersonForm";
+import { selectClass } from "./personFormHelpers";
 
 const SCOPES: { value: ScopeType; label: string }[] = [
   { value: "everyone", label: "Everyone" },

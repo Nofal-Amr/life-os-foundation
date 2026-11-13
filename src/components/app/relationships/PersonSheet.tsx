@@ -23,7 +23,7 @@ import {
   type PersonLink,
 } from "@/data/relationships";
 
-import { selectClass } from "./PersonForm";
+import { selectClass } from "./personFormHelpers";
 
 /**
  * Everything about one person: who they are, the rhythm you chose, your goal,
