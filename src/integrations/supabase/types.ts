@@ -652,6 +652,93 @@ export type Database = {
           },
         ];
       };
+      google_calendar_connections: {
+        Row: {
+          account_email: string | null;
+          created_at: string;
+          last_error: string | null;
+          last_sync_at: string | null;
+          read_calendar_ids: string[];
+          refresh_token_enc: string;
+          scopes: string;
+          sync_enabled: boolean;
+          sync_tokens: Json;
+          updated_at: string;
+          user_id: string;
+          write_calendar_id: string | null;
+        };
+        Insert: {
+          account_email?: string | null;
+          created_at?: string;
+          last_error?: string | null;
+          last_sync_at?: string | null;
+          read_calendar_ids?: string[];
+          refresh_token_enc: string;
+          scopes: string;
+          sync_enabled?: boolean;
+          sync_tokens?: Json;
+          updated_at?: string;
+          user_id: string;
+          write_calendar_id?: string | null;
+        };
+        Update: {
+          account_email?: string | null;
+          created_at?: string;
+          last_error?: string | null;
+          last_sync_at?: string | null;
+          read_calendar_ids?: string[];
+          refresh_token_enc?: string;
+          scopes?: string;
+          sync_enabled?: boolean;
+          sync_tokens?: Json;
+          updated_at?: string;
+          user_id?: string;
+          write_calendar_id?: string | null;
+        };
+        Relationships: [];
+      };
+      google_event_links: {
+        Row: {
+          all_day: boolean;
+          calendar_id: string;
+          created_at: string;
+          etag: string | null;
+          event_id: string | null;
+          google_event_id: string;
+          google_updated_at: string | null;
+          id: string;
+          lifeos_synced_at: string | null;
+          origin: string;
+          user_id: string;
+        };
+        Insert: {
+          all_day?: boolean;
+          calendar_id: string;
+          created_at?: string;
+          etag?: string | null;
+          event_id?: string | null;
+          google_event_id: string;
+          google_updated_at?: string | null;
+          id?: string;
+          lifeos_synced_at?: string | null;
+          origin: string;
+          user_id: string;
+        };
+        Update: {
+          all_day?: boolean;
+          calendar_id?: string;
+          created_at?: string;
+          etag?: string | null;
+          event_id?: string | null;
+          google_event_id?: string;
+          google_updated_at?: string | null;
+          id?: string;
+          lifeos_synced_at?: string | null;
+          origin?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       goals: {
         Row: {
           category: string | null;
