@@ -5,6 +5,7 @@
  */
 import { addDays, format, subDays } from "date-fns";
 
+import { relationshipsSeed } from "./relationshipsDemo";
 import { ADO_PRESET } from "./work/rules";
 
 export const DEMO_USER = "00000000-0000-4000-8000-00000000de30";
@@ -279,6 +280,7 @@ export function demoSeed(now = new Date()): DemoDb {
           "study",
           "food",
           "resources",
+          "relationships",
         ],
         skin: "serious",
         currency: "EGP",
@@ -576,5 +578,6 @@ export function demoSeed(now = new Date()): DemoDb {
       },
     ],
     work_events: workEvents,
+    ...relationshipsSeed(now, DEMO_USER),
   };
 }
