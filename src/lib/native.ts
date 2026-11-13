@@ -31,6 +31,7 @@ type NativeBridge = {
   connectMediaState?(): string;
   connectFind?(ring: boolean, flash: boolean): void;
   connectFindStop?(): void;
+  setAlarm?(hour: number, minute: number, label: string): boolean;
   openBatterySettings?(): void;
   openAutostartSettings?(): void;
   openFullScreenSettings?(): void;
@@ -612,5 +613,22 @@ export function setTodayWidget(data: {
     bridge()?.setTodayWidget?.(JSON.stringify(data));
   } catch {
     // No widget here.
+  }
+}
+
+/** Whether this phone can set wake-up alarms in its own Clock app. */
+export function canSetAlarm(): boolean {
+  return typeof bridge()?.setAlarm === "function";
+}
+
+/**
+ * A one-off wake-up alarm in the phone's Clock app at that time of day.
+ * False when there's no Android app or no Clock app that takes alarms.
+ */
+export function setPhoneAlarm(at: Date, label: string): boolean {
+  try {
+    return bridge()?.setAlarm?.(at.getHours(), at.getMinutes(), label) ?? false;
+  } catch {
+    return false;
   }
 }
