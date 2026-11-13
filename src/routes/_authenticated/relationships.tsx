@@ -291,7 +291,9 @@ function RelationshipsPage() {
         links={data.links}
         interactions={data.interactions}
         today={today}
-        onOpenChange={(open) => !open && setSheetId(null)}
+        onOpenChange={(open) => {
+          if (!open) setSheetId(null);
+        }}
         onEdit={(person) => setForm({ open: true, person })}
         onDelete={(person) => setToDelete(person)}
         onLog={(input) => log.mutate(input)}
@@ -310,11 +312,15 @@ function RelationshipsPage() {
       />
       <ConfirmDialog
         open={!!toDelete}
-        onOpenChange={(open) => !open && setToDelete(null)}
-        title={toDelete ? `Delete ${toDelete.name}?` : undefined}
+        onOpenChange={(open) => {
+          if (!open) setToDelete(null);
+        }}
+        title={`Delete ${toDelete?.name ?? "this person"}?`}
         description="Their log and links go too. This can't be undone."
         confirmLabel="Delete"
-        onConfirm={() => toDelete && removePerson.mutate(toDelete)}
+        onConfirm={() => {
+          if (toDelete) removePerson.mutate(toDelete);
+        }}
       />
     </>
   );

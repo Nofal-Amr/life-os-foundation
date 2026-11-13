@@ -4,7 +4,7 @@ Research: `docs/research/2026-11-13-relationships-benchmark.md`.
 
 ## What it is
 
-Relationships is a ninth area, **People**, at `/relationships`. It opens on a map of the
+Relationships is a ninth area at `/relationships`. It opens on a map of the
 people in your life:
 
 - **Me** in the centre;
@@ -22,7 +22,7 @@ nothing disappears and nothing pops up. A separate "Details" button opens the pe
   "neglected" or "you missed". "Not now" moves an item to tomorrow and nothing is counted.
 - **Never a pile.** Today shows at most **3** check-ins (oldest contact first) and any
   birthdays within the next 3 days.
-- **Opt-in area.** It is off until the user turns on **People** in Settings → Areas (it is on in
+- **Opt-in area.** It is off until the user turns on **Relationships** in Settings → Areas (it is on in
   the demo). This also means no request reaches a database that doesn't have the tables yet.
 
 ## The map
@@ -103,7 +103,7 @@ was set, if nothing is logged) are at least the rhythm. 29 February birthdays fa
 
 ## Today
 
-A small "People" card in Today lists the items that fire. Each item has:
+A small "People" card in Today (under the Log tiles) lists the items that fire. Each item has:
 
 - **Logged a call**: adds an interaction today, and the item goes away.
 - **Make a task**: "Call Ahmed" or "Congratulate Ahmed", due today.

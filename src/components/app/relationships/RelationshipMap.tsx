@@ -71,8 +71,12 @@ export function RelationshipMap({
   const gesture = useRef<{ moved: number; pinch: number | null }>({ moved: 0, pinch: null });
 
   const lit = useMemo(() => litSet(layout, links, selectedId), [layout, links, selectedId]);
-  const half = Math.max(2, layout.rings + 0.75) * RING_GAP;
   const nodes = [...layout.nodes.values()];
+  // Fit the people, not the empty outer ring: room for the furthest name.
+  const half = Math.max(
+    1.5 * RING_GAP,
+    ...nodes.map((node) => Math.max(Math.abs(node.x), Math.abs(node.y)) + 48),
+  );
 
   // Screen pixels → map units.
   const unit = useCallback(() => {
@@ -167,7 +171,8 @@ export function RelationshipMap({
               <circle
                 r={ring * RING_GAP}
                 fill="none"
-                stroke="var(--border)"
+                stroke="var(--muted-foreground)"
+                strokeOpacity={0.25}
                 strokeDasharray="2 6"
               />
               {RING_NAMES[ring] ? (

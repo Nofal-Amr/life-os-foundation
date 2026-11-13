@@ -5,6 +5,13 @@ updated: 2026-10-23
 
 # Handoff for the next session
 
+## Relationships — demo-only, 2026-11-13
+- `/relationships`: people map (Me in the centre, rings; select someone and their side glows), list view, person sheet (log, goal, birthday, check-in rhythm), reminder rules with exceptions, People card in Today (max 3 check-ins).
+- Opt-in area: Settings → Areas → Relationships. On in the demo.
+- **Waiting on the owner:** `supabase/migrations/20261113120000_relationships.sql` is not applied. Approve the exact SQL, staging first. Until then the page says it needs a one-time update.
+- Follow-up: on a phone the full family map draws small; pinch to read outer names. Consider a closer default zoom.
+- Docs: `docs/research/2026-11-13-relationships-benchmark.md`, `docs/superpowers/specs/2026-11-13-relationships-design.md`.
+
 ## Native Android app (Kotlin + Compose) — started 2026-10-23
 Owner said yes to the rewrite: the web-view app "fails miserably". Pain, in order:
 1. **Offline loading** (black screen, "trying to load") — worst.

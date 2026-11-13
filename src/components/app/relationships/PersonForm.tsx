@@ -157,7 +157,7 @@ export function PersonForm({
       onOpenChange={onOpenChange}
       title={person ? `Edit ${person.name}` : "Add a person"}
       submitLabel={person ? "Save" : "Add"}
-      pending={pending}
+      pending={pending ?? false}
       onSubmit={submit}
     >
       <Field label="Name" htmlFor="person-name">
