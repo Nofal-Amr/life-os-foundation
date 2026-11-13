@@ -24,6 +24,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import { toast } from "sonner";
 
+import { DailyNote } from "@/components/app/DailyNote";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { AiSuggestDialog, useLocalAi } from "@/components/app/LocalAi";
 import { createTask } from "@/data/tasks";
@@ -55,11 +56,11 @@ import {
   type Note,
   type NoteInput,
 } from "@/data/notes";
+import { dailyDateOf, isDailyNote, isISODate } from "@/data/dailyNotes";
 import { track } from "@/lib/analytics";
+import { todayISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
-/** Diary pages are ordinary notes with this label, so they show up under it. */
-const DIARY_TAG = "Diary";
 const RANT_TAG = "Rant";
 
 export const Route = createFileRoute("/_authenticated/notes")({
@@ -69,11 +70,80 @@ export const Route = createFileRoute("/_authenticated/notes")({
       { name: "description", content: "Quick notes and checklists that save as you type." },
     ],
   }),
-  // ?open=<id> opens that note (search results link here).
-  validateSearch: (search: Record<string, unknown>): { open?: string } =>
-    typeof search["open"] === "string" ? { open: search["open"] } : {},
+  // ?open=<id> opens that note (search results link here). ?view=all shows
+  // all notes; otherwise the day's note (?day=YYYY-MM-DD, today by default).
+  validateSearch: (search: Record<string, unknown>): NotesSearch => {
+    const out: NotesSearch = {};
+    if (typeof search["open"] === "string") out.open = search["open"];
+    if (search["view"] === "all") out.view = "all";
+    if (typeof search["day"] === "string" && isISODate(search["day"])) out.day = search["day"];
+    return out;
+  },
   component: NotesPage,
 });
+
+type NotesSearch = { open?: string; view?: "all"; day?: string };
+
+/** Notes opens on the day's note; every other note is under "All notes". */
+function NotesPage() {
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const notes = useQuery(notesQuery());
+  const [startNew] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("new"),
+  );
+  // A link to a daily note (search, On this day) opens that day.
+  const linkedDay = useMemo(() => {
+    if (!search.open || !notes.data) return null;
+    const found = notes.data.find((note) => note.id === search.open);
+    return found ? dailyDateOf(found) : null;
+  }, [search.open, notes.data]);
+  useEffect(() => {
+    if (linkedDay) void navigate({ search: { day: linkedDay }, replace: true });
+  }, [linkedDay, navigate]);
+
+  const showAll = search.view === "all" || startNew || (!!search.open && !linkedDay);
+  const day = search.day ?? todayISO();
+  const tabs = [
+    { key: "day", label: "Today", active: !showAll, search: {} },
+    { key: "all", label: "All notes", active: showAll, search: { view: "all" as const } },
+  ];
+  return (
+    <div className="space-y-4">
+      <div
+        role="tablist"
+        aria-label="Notes"
+        className="mx-auto flex max-w-xs rounded-full border border-border bg-card p-1"
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            role="tab"
+            aria-selected={tab.active}
+            onClick={() => void navigate({ search: tab.search })}
+            className={cn(
+              "h-9 flex-1 rounded-full text-sm font-medium transition-colors",
+              tab.active
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      {showAll ? (
+        <AllNotes onToday={() => void navigate({ search: {} })} />
+      ) : (
+        <DailyNote
+          date={day}
+          onDate={(next) => void navigate({ search: next === todayISO() ? {} : { day: next } })}
+        />
+      )}
+    </div>
+  );
+}
 
 type View = "notes" | "archive";
 
@@ -82,7 +152,7 @@ const newId = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-function NotesPage() {
+function AllNotes({ onToday }: { onToday: () => void }) {
   const notes = useQuery(notesQuery());
   const queryClient = useQueryClient();
   const [view, setView] = useState<View>("notes");
@@ -100,10 +170,11 @@ function NotesPage() {
     if (!openId || !notes.data) return;
     const found = notes.data.find((note) => note.id === openId);
     if (found) setEditing({ note: found, isNew: false });
-    void navigate({ search: {}, replace: true });
+    void navigate({ search: { view: "all" }, replace: true });
   }, [openId, notes.data, navigate]);
 
-  const all = useMemo(() => notes.data ?? [], [notes.data]);
+  // Daily notes live on the Today tab.
+  const all = useMemo(() => (notes.data ?? []).filter((note) => !isDailyNote(note)), [notes.data]);
   const labels = useMemo(
     () => [...new Set(all.flatMap((note) => note.tags))].sort((a, b) => a.localeCompare(b)),
     [all],
@@ -177,7 +248,7 @@ function NotesPage() {
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has("new")) {
       startNote(false);
-      window.history.replaceState(null, "", "/notes");
+      window.history.replaceState(null, "", "/notes?view=all");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -222,35 +293,6 @@ function NotesPage() {
           : null,
         created_at: iso,
         updated_at: iso,
-        user_id: "",
-      },
-    });
-  }
-
-  /** Today's diary page: opens it if it exists, otherwise starts it. */
-  function openDiary() {
-    const title = format(new Date(), "EEEE d MMMM yyyy");
-    const existing = (notes.data ?? []).find(
-      (note) => note.title === title && (note.tags ?? []).includes(DIARY_TAG),
-    );
-    if (existing) {
-      setEditing({ note: existing, isNew: false });
-      return;
-    }
-    const now = new Date().toISOString();
-    setEditing({
-      isNew: true,
-      note: {
-        id: newId(),
-        title,
-        body: "",
-        tags: [DIARY_TAG],
-        pinned: false,
-        archived: false,
-        color: null,
-        checklist: null,
-        created_at: now,
-        updated_at: now,
         user_id: "",
       },
     });
@@ -357,9 +399,9 @@ function NotesPage() {
             type="button"
             variant="ghost"
             size="icon"
-            aria-label="Today's diary"
-            title="Today's diary"
-            onClick={openDiary}
+            aria-label="Today's note"
+            title="Today's note"
+            onClick={onToday}
           >
             <BookOpen className="size-5" />
           </Button>

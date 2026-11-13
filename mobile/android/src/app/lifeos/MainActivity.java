@@ -608,7 +608,8 @@ public class MainActivity extends Activity {
                         || getSystemService(android.app.NotificationManager.class).canUseFullScreenIntent())
                     .put("battery", getSystemService(android.os.PowerManager.class)
                         .isIgnoringBatteryOptimizations(getPackageName()))
-                    .put("brand", android.os.Build.MANUFACTURER.toLowerCase(java.util.Locale.ROOT));
+                    .put("brand", android.os.Build.MANUFACTURER.toLowerCase(java.util.Locale.ROOT))
+                    .put("peer", ConnectConfig.peer(MainActivity.this));
                 return status.toString();
             } catch (Exception e) {
                 return "{}";
@@ -626,6 +627,40 @@ public class MainActivity extends Activity {
                     new org.json.JSONObject().put("type", "test").put("device", config.device),
                     ok -> runOnUiThread(() -> webView.evaluateJavascript(
                         "window.dispatchEvent(new CustomEvent('life-os-connect-test',{detail:" + ok + "}))", null)));
+            } catch (Exception ignored) {
+                // Nothing sent.
+            }
+        }
+
+        /**
+         * Find my phone: asks the other phone to ring loudly and/or flash.
+         * The result comes back as a 'life-os-connect-find' event.
+         */
+        @JavascriptInterface
+        public void connectFind(boolean ring, boolean flash) {
+            if (!trusted() || !FindTiming.anything(ring, flash)) return;
+            sendFind(new org.json.JSONObject(), ring, flash);
+        }
+
+        @JavascriptInterface
+        public void connectFindStop() {
+            if (!trusted()) return;
+            sendFind(null, false, false);
+        }
+
+        private void sendFind(org.json.JSONObject find, boolean ring, boolean flash) {
+            ConnectConfig config = ConnectConfig.load(MainActivity.this);
+            if (config == null) return;
+            String kind = find == null ? "stop" : "find";
+            try {
+                org.json.JSONObject message = find == null
+                    ? new org.json.JSONObject().put("type", "find_stop")
+                    : find.put("type", "find").put("ring", ring).put("flash", flash);
+                if ("sim".equals(config.role)) message.put("device", config.device);
+                ConnectSender.send(config, message,
+                    ok -> runOnUiThread(() -> webView.evaluateJavascript(
+                        "window.dispatchEvent(new CustomEvent('life-os-connect-find',{detail:{kind:'"
+                            + kind + "',ok:" + ok + "}}))", null)));
             } catch (Exception ignored) {
                 // Nothing sent.
             }

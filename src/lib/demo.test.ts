@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { handleDemoRequest } from "./demo";
+import { adoptSavedDb, handleDemoRequest } from "./demo";
 
 const REST = "https://x.supabase.co/rest/v1/";
 const db = () => ({
@@ -11,6 +11,17 @@ const db = () => ({
 });
 
 describe("demo mode database", () => {
+  it("takes in a change another tab saved", async () => {
+    const store: Record<string, Record<string, unknown>[]> = db();
+    const other = { tasks: [{ id: "9", title: "From the other tab" }], notes: [] };
+    expect(adoptSavedDb(store, JSON.stringify(other))).toBe(true);
+    const response = await handleDemoRequest(store, new Request(`${REST}tasks?select=*`));
+    expect((await response.json()).map((row: { id: string }) => row.id)).toEqual(["9"]);
+    expect(adoptSavedDb(store, "not json")).toBe(false);
+    expect(adoptSavedDb(store, null)).toBe(false);
+    expect(store["tasks"]).toHaveLength(1);
+  });
+
   it("reads with filters and order", async () => {
     const store = db();
     const response = await handleDemoRequest(

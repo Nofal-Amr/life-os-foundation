@@ -92,6 +92,18 @@ final class ConnectConfig {
         return config == null ? "off" : config.role;
     }
 
+    /** The SIM phone's name as it last introduced itself (main phone only). */
+    static void savePeer(Context context, String name) {
+        String trimmed = name.trim();
+        if (trimmed.isEmpty() || trimmed.length() > 40) return;
+        if (trimmed.equals(prefs(context).getString("peer", ""))) return;
+        prefs(context).edit().putString("peer", trimmed).apply();
+    }
+
+    static String peer(Context context) {
+        return prefs(context).getString("peer", "");
+    }
+
     private static SharedPreferences prefs(Context context) {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
