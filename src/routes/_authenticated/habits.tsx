@@ -15,6 +15,8 @@ import { HabitDots } from "@/components/app/HabitDots";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { ListRow, RowCheck, RowList } from "@/components/app/ListRow";
 import { FormDialog } from "@/components/app/FormDialog";
+import { MoreOptions } from "@/components/app/MoreOptions";
+import { habitExtrasSet } from "@/data/formExtras";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -286,82 +288,87 @@ function HabitsPage() {
             }
           />
         </div>
-        <div className="space-y-2">
-          <Label>Part of life</Label>
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Part of life">
-            {HABIT_CATEGORIES.map(({ value, label }) => {
-              const selected = (form.category ?? guessHabitCategory(form.name)) === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => {
-                    setCategoryTouched(true);
-                    setForm({ ...form, category: value });
-                  }}
-                  className={`min-h-9 rounded-full border px-3 text-sm transition-colors duration-150 ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-accent"}`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+        <MoreOptions
+          defaultOpen={Boolean(editing) && habitExtrasSet(form) > 0}
+          setCount={habitExtrasSet(form)}
+        >
+          <div className="space-y-2">
+            <Label>Part of life</Label>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Part of life">
+              {HABIT_CATEGORIES.map(({ value, label }) => {
+                const selected = (form.category ?? guessHabitCategory(form.name)) === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => {
+                      setCategoryTouched(true);
+                      setForm({ ...form, category: value });
+                    }}
+                    className={`min-h-9 rounded-full border px-3 text-sm transition-colors duration-150 ${selected ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-accent"}`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              It shows up in that part of the app, like Health habits on the Health page.
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            It shows up in that part of the app, like Health habits on the Health page.
-          </p>
-        </div>
-        <EntityIdentityPicker
-          value={{ icon: form.icon, color: form.color }}
-          onChange={(identity) => setForm({ ...form, ...identity })}
-        />
-        <div className="space-y-2">
-          <Label htmlFor="habit-description">Description</Label>
-          <Textarea
-            id="habit-description"
-            value={form.description ?? ""}
-            onChange={(e) => setForm({ ...form, description: e.target.value || null })}
+          <EntityIdentityPicker
+            value={{ icon: form.icon, color: form.color }}
+            onChange={(identity) => setForm({ ...form, ...identity })}
           />
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Frequency</Label>
-            <Select
-              value={form.frequency}
-              onValueChange={(v) => setForm({ ...form, frequency: v as Habit["frequency"] })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {HABIT_FREQUENCIES.map((f) => (
-                  <SelectItem key={f.value} value={f.value}>
-                    {f.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="habit-target">Target per period</Label>
-            <Input
-              id="habit-target"
-              type="number"
-              min={1}
-              value={form.target}
-              onChange={(e) => setForm({ ...form, target: Number(e.target.value) || 1 })}
+            <Label htmlFor="habit-description">Description</Label>
+            <Textarea
+              id="habit-description"
+              value={form.description ?? ""}
+              onChange={(e) => setForm({ ...form, description: e.target.value || null })}
             />
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Switch
-            id="habit-active"
-            checked={form.active}
-            onCheckedChange={(v) => setForm({ ...form, active: v })}
-          />
-          <Label htmlFor="habit-active">Active</Label>
-        </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Frequency</Label>
+              <Select
+                value={form.frequency}
+                onValueChange={(v) => setForm({ ...form, frequency: v as Habit["frequency"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HABIT_FREQUENCIES.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>
+                      {f.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="habit-target">Target per period</Label>
+              <Input
+                id="habit-target"
+                type="number"
+                min={1}
+                value={form.target}
+                onChange={(e) => setForm({ ...form, target: Number(e.target.value) || 1 })}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="habit-active"
+              checked={form.active}
+              onCheckedChange={(v) => setForm({ ...form, active: v })}
+            />
+            <Label htmlFor="habit-active">Active</Label>
+          </div>
+        </MoreOptions>
       </FormDialog>
 
       <ConfirmDialog

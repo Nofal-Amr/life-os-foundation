@@ -4,6 +4,9 @@ import {
   Briefcase,
   MessageSquare,
   CalendarDays,
+  CalendarRange,
+  FileInput,
+  Timer,
   CheckSquare,
   GraduationCap,
   HeartPulse,
@@ -26,12 +29,15 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useSignOut } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import type { ModuleKey } from "@/data/modules";
+import type { FileRoutesByTo } from "@/routeTree.gen";
 import { useModules } from "@/hooks/useModules";
 import { t } from "@/lib/i18n";
 import { usePreferences } from "@/hooks/usePreferences";
 import { useQuery } from "@tanstack/react-query";
 import { workOrgsQuery } from "@/data/work/api";
 import { pressAdd } from "@/components/app/Shortcuts";
+import { cn } from "@/lib/utils";
+import { visibleToolGroups } from "@/data/navGroups";
 
 export const NAV_ITEMS = [
   { to: "/dashboard", label: "Today", icon: LayoutDashboard, module: null },
@@ -41,28 +47,8 @@ export const NAV_ITEMS = [
   { to: "/spirit", label: "Spirit", icon: Moon, module: "spirit" },
 ] as const;
 
-const TOOLS = [
-  { to: "/calendar" as const, label: "Calendar", icon: CalendarDays, module: "calendar" as const },
-  { to: "/notes" as const, label: "Notes", icon: NotebookPen, module: "notes" as const },
-  { to: "/study" as const, label: "Study", icon: GraduationCap, module: "study" as const },
-  { to: "/reminders" as const, label: "Reminders", icon: Bell, module: null },
-  { to: "/messages" as const, label: "Messages", icon: MessageSquare, module: null },
-  { to: "/work" as const, label: "Work", icon: Briefcase, module: null },
-  { to: "/insights" as const, label: "Insights", icon: LineChart, module: null },
-  { to: "/together" as const, label: "Together", icon: Users, module: null },
-  {
-    to: "/relationships" as const,
-    label: "Relationships",
-    icon: Network,
-    module: "relationships" as const,
-  },
-  { to: "/quests" as const, label: "Quests", icon: Swords, module: null },
-  { to: "/review" as const, label: "Daily review", icon: Sunset, module: null },
-];
-
 function sectionFor(pathname: string) {
-  if (["/dashboard", "/week", "/time"].some((path) => pathname.startsWith(path)))
-    return "/dashboard";
+  if (pathname.startsWith("/dashboard")) return "/dashboard";
   if (
     ["/tasks", "/projects", "/goals", "/habits", "/capabilities"].some((path) =>
       pathname.startsWith(path),
@@ -80,16 +66,11 @@ function useVisible() {
   const { skin } = usePreferences();
   // Work shows once you're in a company.
   const inCompany = (useQuery(workOrgsQuery()).data ?? []).length > 0;
-  const allows = (module: ModuleKey | null) => !module || enabled.includes(module);
+  const groups = visibleToolGroups({ enabled, skin, inCompany });
   return {
-    navItems: NAV_ITEMS.filter((item) => allows(item.module as ModuleKey | null)),
-    // Quests belong to the RPG skin.
-    tools: TOOLS.filter(
-      (item) =>
-        allows(item.module) &&
-        (item.to !== "/quests" || skin === "rpg") &&
-        (item.to !== "/work" || inCompany),
-    ),
+    navItems: NAV_ITEMS.filter((item) => !item.module || enabled.includes(item.module)),
+    groups,
+    tools: groups.flatMap((group) => group.tools),
   };
 }
 
@@ -142,27 +123,31 @@ function ToolLinks({
   className?: string;
 }) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const { tools } = useVisible();
+  const { groups } = useVisible();
   return (
-    <div className={className}>
-      <p className="mb-1 px-3 text-xs font-medium text-muted-foreground">Tools</p>
-      <div className="flex flex-col gap-0.5">
-        {tools.map(({ to, label, icon: Icon }) => {
-          const active = pathname.startsWith(to);
-          return (
-            <Link
-              key={to}
-              to={to}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={itemClass(active)}
-            >
-              <Icon className={iconClass(active)} strokeWidth={1.75} aria-hidden="true" />
-              {t(label)}
-            </Link>
-          );
-        })}
-      </div>
+    <div className={cn("flex flex-col gap-4", className)}>
+      {groups.map((group) => (
+        <section key={group.label} aria-label={t(group.label)}>
+          <h2 className="mb-1 px-3 text-xs font-medium text-muted-foreground">{t(group.label)}</h2>
+          <div className="flex flex-col gap-0.5">
+            {group.tools.map(({ to, label, icon: Icon }) => {
+              const active = pathname.startsWith(to);
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={itemClass(active)}
+                >
+                  <Icon className={iconClass(active)} strokeWidth={1.75} aria-hidden="true" />
+                  {t(label)}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ))}
     </div>
   );
 }

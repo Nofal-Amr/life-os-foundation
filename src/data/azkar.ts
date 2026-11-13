@@ -12,6 +12,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { getLang } from "@/lib/i18n";
+import type { PrayerName } from "@/data/spirit";
 import { currentUserId, unwrap } from "@/lib/supabase-helpers";
 
 export type DhikrLog = Database["public"]["Tables"]["dhikr_logs"]["Row"];
@@ -186,6 +187,105 @@ export function azkarFor(time: AzkarTime): { zikr: Zikr; text: string }[] {
     const text = zikr.text ?? (time === "morning" ? zikr.morning : zikr.evening);
     return text ? [{ zikr, text }] : [];
   });
+}
+
+/* ------------------------------------------------------ after the prayer */
+
+/** Which azkar the Azkar tab shows: the two daily sets, or after a prayer. */
+export type AzkarSet = AzkarTime | "after_prayer";
+
+type AfterPrayerZikr = Zikr & {
+  /** Said only after these prayers. */
+  only?: PrayerName[];
+  /** A different count after these prayers. */
+  countAfter?: Partial<Record<PrayerName, number>>;
+};
+
+const quran = (id: string) => AZKAR.find((zikr) => zikr.id === id)!;
+const TAHLIL = "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير";
+
+/**
+ * Said after the salam of each of the five (Hisn al-Muslim). The counts are
+ * the ones the hadith give; the three Quls are said three times after Fajr
+ * and Maghrib.
+ */
+const AFTER_PRAYER: AfterPrayerZikr[] = [
+  { id: "ap-istighfar", title: "Seeking forgiveness", text: "أستغفر الله", count: 3 },
+  {
+    id: "ap-salam",
+    title: "You are Peace",
+    text: "اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام",
+    count: 1,
+  },
+  {
+    id: "ap-mani",
+    title: "None can withhold",
+    text: `${TAHLIL}، اللهم لا مانع لما أعطيت، ولا معطي لما منعت، ولا ينفع ذا الجد منك الجد`,
+    count: 1,
+  },
+  {
+    id: "ap-nabud",
+    title: "We worship none but Him",
+    text: `${TAHLIL}، لا حول ولا قوة إلا بالله، لا إله إلا الله، ولا نعبد إلا إياه، له النعمة وله الفضل وله الثناء الحسن، لا إله إلا الله مخلصين له الدين ولو كره الكافرون`,
+    count: 1,
+  },
+  { id: "ap-subhan", title: "SubhanAllah", text: "سبحان الله", count: 33 },
+  { id: "ap-hamd", title: "Alhamdulillah", text: "الحمد لله", count: 33 },
+  { id: "ap-takbir", title: "Allahu akbar", text: "الله أكبر", count: 33 },
+  { id: "ap-tamam", title: "Completing the hundred", text: TAHLIL, count: 1 },
+  { ...quran("kursi"), id: "ap-kursi", count: 1 },
+  { ...quran("ikhlas"), id: "ap-ikhlas", count: 1, countAfter: { fajr: 3, maghrib: 3 } },
+  { ...quran("falaq"), id: "ap-falaq", count: 1, countAfter: { fajr: 3, maghrib: 3 } },
+  { ...quran("nas"), id: "ap-nas", count: 1, countAfter: { fajr: 3, maghrib: 3 } },
+  {
+    id: "ap-yuhyi",
+    title: "He gives life and death",
+    text: "لا إله إلا الله وحده لا شريك له، له الملك وله الحمد يحيي ويميت وهو على كل شيء قدير",
+    count: 10,
+    only: ["fajr", "maghrib"],
+  },
+  {
+    id: "ap-ilman",
+    title: "Beneficial knowledge",
+    text: "اللهم إني أسألك علما نافعا، ورزقا طيبا، وعملا متقبلا",
+    count: 1,
+    only: ["fajr"],
+  },
+];
+
+/** The after-prayer azkar for one prayer, with that prayer's counts. */
+export function afterPrayerAzkar(
+  prayer: PrayerName | null,
+): { zikr: Zikr; text: string; count: number }[] {
+  return AFTER_PRAYER.filter((zikr) => !zikr.only || (prayer && zikr.only.includes(prayer))).map(
+    (zikr) => {
+      const count = (prayer && zikr.countAfter?.[prayer]) ?? zikr.count;
+      return { zikr: { ...zikr, count }, text: zikr.text!, count };
+    },
+  );
+}
+
+const ORDER: readonly PrayerName[] = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
+/** How long after a prayer's time its azkar are offered first. */
+const AFTER_WINDOW_MS = 30 * 60_000;
+
+/**
+ * Which azkar fit this moment: the after-prayer set in the half hour after a
+ * prayer's time, otherwise morning or evening. Also the last prayer whose
+ * time has come (before Fajr, that is last night's Isha).
+ */
+export function azkarMoment(
+  now: Date,
+  times: Record<PrayerName, Date> | null,
+): { set: AzkarSet; prayer: PrayerName | null } {
+  if (!times) return { set: azkarTimeAt(now, null), prayer: null };
+  const passed = ORDER.filter((name) => times[name] <= now);
+  const prayer = passed.at(-1) ?? "isha";
+  const last = passed.length ? times[prayer] : null;
+  if (last && now.getTime() - last.getTime() < AFTER_WINDOW_MS) {
+    return { set: "after_prayer", prayer };
+  }
+  return { set: azkarTimeAt(now, times), prayer };
 }
 
 /** Phrases for the tasbih counter. */

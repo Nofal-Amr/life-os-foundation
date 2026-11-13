@@ -4,7 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { azkarFor, dhikrKeys, logDhikr, sourceLabel, type AzkarTime } from "@/data/azkar";
+import {
+  afterPrayerAzkar,
+  azkarFor,
+  dhikrKeys,
+  logDhikr,
+  sourceLabel,
+  type AzkarSet,
+} from "@/data/azkar";
+import { prayerLabel, type PrayerName } from "@/data/spirit";
 import { t } from "@/lib/i18n";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
@@ -44,33 +52,55 @@ const buzz = (pattern: number | number[]) => {
   }
 };
 
+const SETS = [
+  { value: "morning", label: "Morning" },
+  { value: "evening", label: "Evening" },
+  { value: "after_prayer", label: "After prayer" },
+] as const;
+
 /**
- * Morning or evening azkar, one card each. Tap a card to count it down; a
- * finished card folds away and the next one comes up. Finishing them all
- * logs the session — or log it straight away if you read from a book.
+ * Morning, evening or after-prayer azkar, one card each. Tap a card to count
+ * it down; a finished card folds away and the next one comes up. Finishing
+ * the morning or evening set logs it — or log it straight away if you read
+ * from a book. The after-prayer set isn't logged; its counts start fresh
+ * after each prayer.
  */
 export function AzkarSession({
   date,
   time,
+  prayer = null,
   onTimeChange,
   done,
 }: {
   date: string;
-  time: AzkarTime;
-  onTimeChange: (time: AzkarTime) => void;
+  time: AzkarSet;
+  /** For the after-prayer set: the prayer just prayed (Fajr and Maghrib add to it). */
+  prayer?: PrayerName | null;
+  onTimeChange: (time: AzkarSet) => void;
   /** Already logged for this date and time. */
   done: boolean;
 }) {
   const queryClient = useQueryClient();
-  const items = useMemo(() => azkarFor(time), [time]);
-  const [left, setLeft] = useProgress(`azkar:${date}:${time}`);
+  const after = time === "after_prayer";
+  const items = useMemo(
+    () => (time === "after_prayer" ? afterPrayerAzkar(prayer) : azkarFor(time)),
+    [time, prayer],
+  );
+  const [left, setLeft] = useProgress(
+    after ? `azkar:${date}:after:${prayer ?? "any"}` : `azkar:${date}:${time}`,
+  );
   const cardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const remaining = (id: string, count: number) => left[id] ?? count;
   const finished = items.filter(({ zikr }) => remaining(zikr.id, zikr.count) === 0).length;
 
   const log = useMutation({
-    mutationFn: () => logDhikr({ log_date: date, kind: time, count: items.length }),
+    mutationFn: () =>
+      logDhikr({
+        log_date: date,
+        kind: time === "evening" ? "evening" : "morning",
+        count: items.length,
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: dhikrKeys.logs });
       toast.success(time === "morning" ? "Morning azkar logged." : "Evening azkar logged.");
@@ -102,23 +132,19 @@ export function AzkarSession({
     const allDone = items.every(({ zikr }) =>
       zikr.id === id ? true : (next[zikr.id] ?? zikr.count) === 0,
     );
-    if (allDone && !done && !log.isPending) log.mutate();
+    if (allDone && after) toast.success(t("Azkar after the prayer finished."));
+    else if (allDone && !done && !log.isPending) log.mutate();
   }
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="space-y-2">
         <div
           className="flex gap-1 rounded-lg bg-secondary p-1"
           role="radiogroup"
           aria-label="Which azkar"
         >
-          {(
-            [
-              { value: "morning", label: "Morning · الصباح" },
-              { value: "evening", label: "Evening · المساء" },
-            ] as const
-          ).map((option) => (
+          {SETS.map((option) => (
             <button
               key={option.value}
               type="button"
@@ -126,23 +152,24 @@ export function AzkarSession({
               aria-checked={time === option.value}
               onClick={() => onTimeChange(option.value)}
               className={cn(
-                "min-h-10 rounded-md px-3 text-sm font-medium transition-colors",
+                "min-h-10 flex-1 rounded-md px-2 text-sm font-medium transition-colors",
                 time === option.value
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground",
               )}
             >
-              {option.label}
+              {t(option.label)}
             </button>
           ))}
         </div>
         <p className="text-sm text-muted-foreground tabular-nums">
-          {done ? (
+          {after && prayer ? `${t("After")} ${prayerLabel(prayer, date)} · ` : null}
+          {done && !after ? (
             <span className="inline-flex items-center gap-1 text-foreground">
               <Check className="size-4" /> Logged today
             </span>
           ) : (
-            `${finished} of ${items.length} read`
+            `${finished} ${t("of")} ${items.length} ${t("read")}`
           )}
         </p>
       </div>
@@ -213,7 +240,7 @@ export function AzkarSession({
       </ol>
 
       <div className="flex flex-wrap gap-2">
-        {!done ? (
+        {!done && !after ? (
           <Button
             type="button"
             variant="outline"
