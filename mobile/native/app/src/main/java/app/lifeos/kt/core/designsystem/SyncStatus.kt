@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -37,6 +38,7 @@ val LocalSnackbar = staticCompositionLocalOf { SnackbarHostState() }
 
 /** Says plainly where the data is: on the server, or only on this phone so far. */
 fun syncLine(sync: SyncState, pending: Int): String {
+    if (sync.demo) return "Demo · sample data on this phone only"
     val waiting = if (pending > 0) " · $pending ${if (pending == 1) "change" else "changes"} saved on this phone" else ""
     return when {
         sync.running -> "Syncing…"
@@ -65,8 +67,10 @@ fun SyncAction() {
             snackbar.showSnackbar(syncLine(sync, status.pending))
         }
     }) {
-        BadgedBox(badge = { if (status.pending > 0) Badge { Text("${status.pending}") } }) {
+        // Demo never syncs, so a count of "unsent" changes would mean nothing there.
+        BadgedBox(badge = { if (status.pending > 0 && !sync.demo) Badge { Text("${status.pending}") } }) {
             when {
+                sync.demo -> Icon(Icons.Outlined.Science, "Demo", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 sync.running -> Icon(Icons.Outlined.CloudSync, "Syncing", Modifier.graphicsLayer { alpha = pulse })
                 sync.error != null -> Icon(Icons.Outlined.ErrorOutline, "Sync problem", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 sync.offline -> Icon(Icons.Outlined.CloudOff, "Offline", tint = MaterialTheme.colorScheme.onSurfaceVariant)

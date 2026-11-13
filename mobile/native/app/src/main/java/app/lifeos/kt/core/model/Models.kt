@@ -29,6 +29,7 @@ data class Task(
     @SerialName("parent_task_id") val parentTaskId: String? = null,
     @SerialName("project_id") val projectId: String? = null,
     @SerialName("goal_id") val goalId: String? = null,
+    @SerialName("capability_id") val capabilityId: String? = null,
     @SerialName("estimated_minutes") val estimatedMinutes: Int? = null,
     @SerialName("estimate_unit") val estimateUnit: String? = null,
     val energy: Int? = null,
@@ -111,7 +112,24 @@ data class HealthLog(
     @SerialName("stress_level") val stressLevel: Int? = null,
     @SerialName("sleep_score") val sleepScore: Int? = null,
     @SerialName("heart_rate_avg") val heartRateAvg: Double? = null,
-) : Row
+    @SerialName("food_quality") val foodQuality: Int? = null,
+    @SerialName("food_categories") val foodCategories: List<String>? = null,
+    @SerialName("sleep_source") val sleepSource: String? = null,
+    @SerialName("sleep_start_at") val sleepStartAt: String? = null,
+    @SerialName("sleep_end_at") val sleepEndAt: String? = null,
+    @SerialName("time_in_bed_minutes") val timeInBedMinutes: Int? = null,
+    @SerialName("actual_sleep_minutes") val actualSleepMinutes: Int? = null,
+    @SerialName("deep_sleep_minutes") val deepSleepMinutes: Int? = null,
+    @SerialName("rem_sleep_minutes") val remSleepMinutes: Int? = null,
+    @SerialName("light_sleep_minutes") val lightSleepMinutes: Int? = null,
+    @SerialName("awake_minutes") val awakeMinutes: Int? = null,
+    @SerialName("sleep_latency_minutes") val sleepLatencyMinutes: Int? = null,
+    @SerialName("blood_oxygen_avg") val bloodOxygenAvg: Double? = null,
+    @SerialName("respiratory_rate_avg") val respiratoryRateAvg: Double? = null,
+) : Row {
+    /** Minutes asleep: the precise figure when there is one, else the older hours field. */
+    val sleepMinutes: Int? get() = actualSleepMinutes ?: sleepHours?.let { Math.round(it * 60).toInt() }
+}
 
 @Serializable
 data class Medication(
@@ -187,6 +205,7 @@ data class Project(
     @SerialName("start_date") val startDate: String? = null,
     val icon: String? = null,
     val color: String? = null,
+    @SerialName("image_url") val imageUrl: String? = null,
 ) : Row
 
 @Serializable
@@ -200,6 +219,7 @@ data class Goal(
     @SerialName("target_date") val targetDate: String? = null,
     val icon: String? = null,
     val color: String? = null,
+    val category: String? = null,
 ) : Row
 
 @Serializable
@@ -210,7 +230,156 @@ data class UserPreferences(
     @SerialName("time_format") val timeFormat: String = "24h",
     @SerialName("week_start") val weekStart: Int = 1,
     @SerialName("enabled_modules") val enabledModules: List<String> = emptyList(),
+    @SerialName("dimension_order") val dimensionOrder: List<String>? = null,
+    @SerialName("unit_system") val unitSystem: String = "metric",
+    @SerialName("food_prefs") val foodPrefs: kotlinx.serialization.json.JsonObject? = null,
 ) : Row
 
 @Serializable
 data class ChecklistItem(val id: String, val text: String, val done: Boolean = false)
+
+@Serializable
+data class RecurringCost(
+    override val id: String,
+    val name: String,
+    /** Signed like transactions: what leaves the account is negative. */
+    val amount: Double,
+    val active: Boolean = true,
+    val frequency: String = "monthly",
+    @SerialName("interval_count") val intervalCount: Int = 1,
+    @SerialName("interval_unit") val intervalUnit: String? = null,
+    @SerialName("next_due_date") val nextDueDate: String,
+    @SerialName("next_due_at") val nextDueAt: String? = null,
+    @SerialName("account_id") val accountId: String? = null,
+    @SerialName("category_id") val categoryId: String? = null,
+) : Row
+
+@Serializable
+data class AccountPocket(
+    override val id: String,
+    @SerialName("account_id") val accountId: String,
+    val name: String,
+    val kind: String = "cash",
+    @SerialName("opening_balance") val openingBalance: Double = 0.0,
+) : Row
+
+@Serializable
+data class PaydayConfig(
+    override val id: String,
+    val schedule: String = "monthly",
+    @SerialName("pay_day") val payDay: Int? = null,
+    @SerialName("anchor_date") val anchorDate: String? = null,
+    @SerialName("interval_weeks") val intervalWeeks: Int? = null,
+    @SerialName("safety_buffer") val safetyBuffer: Double? = null,
+    @SerialName("expected_net_amount") val expectedNetAmount: Double? = null,
+) : Row
+
+@Serializable
+data class MedicationLog(
+    override val id: String,
+    @SerialName("medication_id") val medicationId: String,
+    @SerialName("log_date") val logDate: String,
+    @SerialName("time_slot") val timeSlot: String,
+    val taken: Boolean = true,
+) : Row
+
+@Serializable
+data class FoodLog(
+    override val id: String,
+    @SerialName("food_id") val foodId: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("log_date") val logDate: String,
+    val name: String? = null,
+    val meal: String? = null,
+    /** Already multiplied by servings, as the web app stores it. */
+    val calories: Double = 0.0,
+    val servings: Double = 1.0,
+    @SerialName("protein_g") val proteinG: Double? = null,
+    @SerialName("carbs_g") val carbsG: Double? = null,
+    @SerialName("fat_g") val fatG: Double? = null,
+) : Row
+
+@Serializable
+data class DailyReview(
+    override val id: String,
+    @SerialName("review_date") val reviewDate: String,
+    val mood: Int? = null,
+    val energy: Int? = null,
+    val wins: String? = null,
+    val challenges: String? = null,
+    val gratitude: String? = null,
+    @SerialName("tomorrow_focus") val tomorrowFocus: String? = null,
+) : Row
+
+@Serializable
+data class Profile(
+    override val id: String,
+    @SerialName("display_name") val displayName: String? = null,
+) : Row
+
+@Serializable
+data class TimeEntry(
+    override val id: String,
+    @SerialName("started_at") val startedAt: String,
+    @SerialName("ended_at") val endedAt: String? = null,
+    @SerialName("task_id") val taskId: String? = null,
+    @SerialName("activity_id") val activityId: String? = null,
+    val label: String? = null,
+    val note: String? = null,
+) : Row
+
+@Serializable
+data class Capability(
+    override val id: String,
+    val name: String,
+    val description: String? = null,
+    val icon: String? = null,
+    val color: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+) : Row
+
+/** Append-only: one row per finished task, linking it to what it built. */
+@Serializable
+data class Evidence(
+    override val id: String,
+    @SerialName("task_id") val taskId: String? = null,
+    @SerialName("capability_id") val capabilityId: String? = null,
+    @SerialName("project_id") val projectId: String? = null,
+    @SerialName("goal_id") val goalId: String? = null,
+    val note: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+) : Row
+
+@Serializable
+data class BodyStats(
+    override val id: String,
+    @SerialName("height_cm") val heightCm: Double? = null,
+    @SerialName("weight_kg") val weightKg: Double? = null,
+    @SerialName("target_weight_kg") val targetWeightKg: Double? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+) : Row
+
+@Serializable
+data class Food(
+    override val id: String,
+    val name: String,
+    /** Per serving. */
+    val calories: Double = 0.0,
+    @SerialName("serving_label") val servingLabel: String? = null,
+    @SerialName("serving_grams") val servingGrams: Double? = null,
+    @SerialName("protein_g") val proteinG: Double? = null,
+    @SerialName("carbs_g") val carbsG: Double? = null,
+    @SerialName("fat_g") val fatG: Double? = null,
+    val icon: String? = null,
+) : Row
+
+/** A finished azkar session (kind morning/evening) or a saved tasbih count (kind tasbih, label = the phrase). */
+@Serializable
+data class DhikrLog(
+    override val id: String,
+    @SerialName("log_date") val logDate: String,
+    val kind: String,
+    val count: Int,
+    val label: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+) : Row

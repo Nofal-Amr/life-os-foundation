@@ -1,17 +1,33 @@
 ---
 tags: [handoff]
-updated: 2026-10-23
+updated: 2026-11-13
 ---
 
 # Handoff for the next session
 
+## 2026-11-13: `at-a-glance` is merged into `main`
+
+- The owner approved it. `at-a-glance` (native Kotlin app at website parity for Today, Do, Money,
+  Body, Spirit and Calendar, plus the Life Connect music remote) is now on `main` through a pull
+  request. The branch itself is kept, not deleted.
+- **Work continues on `main`:** branch every change from `origin/main`, one pull request per
+  concern. Don't add new work to `at-a-glance`.
+- **The native app (`mobile/native`) is still paused** until the owner approves the web design
+  (see the `life-os` skill). Ship the website first. The notes below on the native app are kept
+  for when it resumes.
+- The music remote (`MediaRemote.java`, `MediaAlert.java`, `MusicRemote.tsx`) sits beside the
+  security gate in `MainActivity` (`AuthCallbackGate`); it still needs a try on two real phones.
+
 ## Native Android app (Kotlin + Compose) — started 2026-10-23
+
 Owner said yes to the rewrite: the web-view app "fails miserably". Pain, in order:
+
 1. **Offline loading** (black screen, "trying to load") — worst.
 2. Fingerprint clock-in.
 3. Adding a location for a site / workplace.
 
 Where it is: `mobile/native` (Gradle), `npm run build:native` → `mobile/android/build/life-os-native.apk`.
+
 - Own app id `app.lifeos.kt`, installs beside the old app (`app.lifeos`) until it covers enough.
 - Offline-first: Room database on the phone; screens only read it. `data/Sync.kt` pushes local
   changes (dirty rows) then pulls the server copy, on launch, resume, back-online and after each edit.
@@ -30,9 +46,15 @@ Where it is: `mobile/native` (Gradle), `npm run build:native` → `mobile/androi
 - Tested on the emulator (Pixel_8_Pro_API_35): opens offline with tasks in ~1.3 s (release),
   tasks added offline survive a force-stop, 401 → refresh → sign-in. Not yet tested with a real account.
 
+**Status 2026-10-24:** Today, Do, Money (pushed, 6a576e3), Body, Spirit (pushed, d0e622c) and Calendar (not pushed yet) are at website parity and remade (copy, critique, refine; see memory life-os-native-taste). 49 unit tests. Test in demo mode on the emulator against lifeos0.vercel.app demo; numbers must match.
+**Next:** Week (web src/routes/_authenticated/week.tsx: a review of the week, day by day), then Work (fingerprint clock-in + sites from location), notifications (prayer + reminders + medication), widgets, then the remaining More tools. Then, Calendar/Week, Work (fingerprint + sites), notifications, widgets.
+**Life Connect music remote (8a1e2ec, old web-view app):** main phone controls play/pause/skip/volume on the SIM phone (MediaRemote.java, MediaAlert.java, MusicRemote.tsx). Compiled, not yet tried on two real phones. Port it with the rest of Life Connect into the native app (phase 10).
+**Owner wants work to continue automatically after a session reset: a new session should read this and keep going without asking.**
+
 Phase 1 done (commit bba1767): architecture, refined flows, locked notes, prayer windows. Plan: docs/superpowers/specs/2026-10-23-native-android-design.md (widgets table at the end).
 
 Next, in order:
+
 1. Work: fingerprint clock in/out (`androidx.biometric` or the platform BiometricPrompt as in
    `mobile/android/src/app/lifeos/WorkClock.java`), add a site/workplace from current location
    (`work_places`: org_id, name, kind office|site, latitude, longitude, radius_m 20–500), `work_events` saved offline.
@@ -41,6 +63,7 @@ Next, in order:
 4. Port the Java extras (widgets, SMS spending).
 
 ## Ideas / open
+
 - Today (web) still dense ("Coming up" twice) — simplify.
 - Google Calendar sync needs an OAuth client ID.
 - Keep sessions short: one request at a time.
