@@ -161,6 +161,24 @@ function loadDb(): DemoDb {
   return demoSeed();
 }
 
+/**
+ * Takes in the copy another tab saved, so two demo tabs behave like two
+ * devices on one account. Returns false when the saved copy can't be read.
+ */
+export function adoptSavedDb(db: DemoDb, saved: string | null): boolean {
+  if (!saved) return false;
+  let next: DemoDb;
+  try {
+    next = JSON.parse(saved) as DemoDb;
+  } catch {
+    return false;
+  }
+  if (!next || typeof next !== "object") return false;
+  for (const table of Object.keys(db)) if (!(table in next)) delete db[table];
+  Object.assign(db, next);
+  return true;
+}
+
 function saveDb(db: DemoDb) {
   try {
     localStorage.setItem(STORE, JSON.stringify(db));
@@ -207,6 +225,11 @@ export function installDemo(supabaseUrl: string): boolean {
     exitDemo();
     return { error: null };
   };
+
+  // Another demo tab saved a change: use it here too.
+  window.addEventListener("storage", (event) => {
+    if (event.key === STORE) adoptSavedDb(db, event.newValue);
+  });
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const href = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
