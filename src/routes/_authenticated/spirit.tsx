@@ -12,6 +12,8 @@ import { Tasbih } from "@/components/app/Tasbih";
 import { DateNav } from "@/components/app/DateNav";
 import { PrayerDayList, PrayerStats } from "@/components/app/PrayerLog";
 import { PrayerReminderSettings } from "@/components/app/PrayerReminders";
+import { WakeAlarmSettings } from "@/components/app/WakeAlarm";
+import { useCanSetAlarm, wakeAlarmHandler } from "@/hooks/useWakeAlarm";
 import { PageHeader } from "@/components/app/PageHeader";
 import { GlanceSection, RingStat } from "@/components/app/StatCards";
 import { ErrorState, LoadingState } from "@/components/app/States";
@@ -93,6 +95,7 @@ function lastSevenDates(from: string): Set<string> {
 function SpiritPage() {
   const queryClient = useQueryClient();
   const settings = useQuery(prayerSettingsQuery());
+  const canAlarm = useCanSetAlarm();
   const logs = useQuery(prayerLogsQuery());
   const { fmtTime, fmtDate } = usePreferences();
   const [date, setDate] = useState(todayISO());
@@ -159,6 +162,23 @@ function SpiritPage() {
       )
     : null;
   const nextPrayer = date === todayISO() && times ? String(times.nextPrayer()).toLowerCase() : null;
+  // Wake-up alarms: from today's view only, using today's and tomorrow's times.
+  const tomorrowTimes =
+    hasLocation && date === todayISO()
+      ? prayerTimesFor(
+          Number(config.latitude),
+          Number(config.longitude),
+          config.calc_method,
+          config.asr_school,
+          format(addDays(new Date(`${date}T12:00:00`), 1), "yyyy-MM-dd"),
+        )
+      : null;
+  const onAlarm = wakeAlarmHandler(
+    canAlarm,
+    times && tomorrowTimes ? { ...prayerDates(times), sunrise: times.sunrise } : null,
+    tomorrowTimes ? { ...prayerDates(tomorrowTimes), sunrise: tomorrowTimes.sunrise } : null,
+    fmtTime,
+  );
 
   const dayLogs = (logs.data ?? []).filter((log) => log.prayer_date === date);
   const doneCount = dayLogs.filter((log) => prayerCounts(log)).length;
@@ -209,17 +229,7 @@ function SpiritPage() {
           <PrayerClock
             date={date}
             times={times ? prayerDates(times) : null}
-            tomorrowFajr={
-              hasLocation && date === todayISO()
-                ? prayerTimesFor(
-                    Number(config.latitude),
-                    Number(config.longitude),
-                    config.calc_method,
-                    config.asr_school,
-                    format(addDays(new Date(`${date}T12:00:00`), 1), "yyyy-MM-dd"),
-                  ).fajr
-                : null
-            }
+            tomorrowFajr={tomorrowTimes?.fajr ?? null}
             formatTime={fmtTime}
           />
           <DateNav value={date} onChange={setDate} />
@@ -283,7 +293,9 @@ function SpiritPage() {
                 next={nextPrayer as PrayerName | null}
                 formatTime={fmtTime}
                 sunrise={showSunrise && times ? times.sunrise : null}
+                onAlarm={onAlarm}
               />
+              {date === todayISO() ? <WakeAlarmSettings /> : null}
               <MethodNote
                 method={config?.calc_method ?? null}
                 school={config?.asr_school ?? null}

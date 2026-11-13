@@ -1,7 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
-import { Check, Clock, Users, X, Zap, type LucideIcon } from "lucide-react";
+import { AlarmClock, Check, Clock, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useXp } from "@/hooks/useXp";
@@ -236,6 +236,7 @@ export function PrayerDayList({
   formatTime,
   disabled,
   sunrise,
+  onAlarm,
 }: {
   date: string;
   logs: PrayerLog[];
@@ -245,16 +246,31 @@ export function PrayerDayList({
   disabled?: boolean | undefined;
   /** Shown after Fajr when given: when Fajr's time ends. Nothing to log. */
   sunrise?: Date | null | undefined;
+  /** When given, a wake-up alarm button beside the five and sunrise. */
+  onAlarm?: ((name: PrayerName | "sunrise") => void) | undefined;
 }) {
   const setStatus = usePrayerStatus();
   const dayLogs = useDayLogs(logs);
+  const alarmButton = (name: PrayerName | "sunrise", label: string) =>
+    onAlarm ? (
+      <button
+        type="button"
+        onClick={() => onAlarm(name)}
+        aria-label={`${t("Wake-up alarm before")} ${label}`}
+        title={`${t("Wake-up alarm before")} ${label}`}
+        className="stat-card flex w-12 shrink-0 items-center justify-center text-muted-foreground transition-transform active:scale-95"
+      >
+        <AlarmClock className="size-5" />
+      </button>
+    ) : null;
   const sunriseRow = sunrise ? (
-    <li key="sunrise">
-      <div className="flex min-h-11 items-baseline gap-3 rounded-xl border border-dashed border-border px-4 py-2.5">
+    <li key="sunrise" className="flex gap-2">
+      <div className="flex min-h-11 flex-1 items-baseline gap-3 rounded-xl border border-dashed border-border px-4 py-2.5">
         <span className="w-20 text-sm text-muted-foreground">{t("Sunrise")}</span>
         <span className="text-sm tabular-nums text-muted-foreground">{formatTime(sunrise)}</span>
         <span className="text-xs text-muted-foreground">{t("Fajr's time ends")}</span>
       </div>
+      {alarmButton("sunrise", t("Sunrise"))}
     </li>
   ) : null;
   return (
@@ -266,60 +282,69 @@ export function PrayerDayList({
         const time = timeOf(times, name);
         const sunnah = isSunnah(name);
         const row = (
-          <li key={name}>
-            <StatusControl
-              name={name}
-              current={status}
-              disabled={disabled}
-              label={`${t("How was it prayed?")} ${prayerLabel(name, date)}`}
-              onPick={(value) => setStatus.mutate({ date, name, status: value })}
-            >
-              <button
-                type="button"
-                className="stat-card flex min-h-16 w-full items-center gap-3 overflow-hidden p-0 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
-                style={sunnah ? { boxShadow: SUNNAH_RING } : undefined}
+          <li key={name} className="flex gap-2">
+            <div className="min-w-0 flex-1">
+              <StatusControl
+                name={name}
+                current={status}
+                disabled={disabled}
+                label={`${t("How was it prayed?")} ${prayerLabel(name, date)}`}
+                onPick={(value) => setStatus.mutate({ date, name, status: value })}
               >
-                <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-3">
-                  <span className={cn("text-sm font-semibold", sunnah ? "min-w-20" : "w-20")}>
-                    {prayerLabel(name, date)}
-                  </span>
-                  <span className="text-sm tabular-nums text-muted-foreground">
-                    {time ? formatTime(time) : "—"}
-                  </span>
-                  {sunnah ? (
-                    <span className="text-xs text-muted-foreground">{t(SUNNAH_HINT[name]!)}</span>
-                  ) : null}
-                  {next === name && !status ? (
-                    <span className="text-2xs font-semibold uppercase tracking-wide text-primary">
-                      {t("Next")}
-                    </span>
-                  ) : null}
-                </span>
-                <span
-                  className={cn(
-                    "flex h-full min-h-16 w-28 shrink-0 flex-col items-center justify-center gap-1 text-xs font-medium",
-                    status ? "text-white" : "border-l border-border text-muted-foreground",
-                  )}
-                  style={
-                    status
-                      ? {
-                          background: STATUS_STYLE[status].color,
-                          clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)",
-                        }
-                      : undefined
-                  }
+                <button
+                  type="button"
+                  className="stat-card flex min-h-16 w-full items-center gap-3 overflow-hidden p-0 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
+                  style={sunnah ? { boxShadow: SUNNAH_RING } : undefined}
                 >
-                  {status ? (
-                    <>
-                      <StatusMark status={status} size="size-5" />
-                      {t(PRAYER_STATUS_LABELS[status])}
-                    </>
-                  ) : (
-                    t("Log")
-                  )}
-                </span>
-              </button>
-            </StatusControl>
+                  <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-3">
+                    <span className={cn("text-sm font-semibold", sunnah ? "min-w-20" : "w-20")}>
+                      {prayerLabel(name, date)}
+                    </span>
+                    <span className="text-sm tabular-nums text-muted-foreground">
+                      {time ? formatTime(time) : "—"}
+                    </span>
+                    {sunnah ? (
+                      <span className="text-xs text-muted-foreground">{t(SUNNAH_HINT[name]!)}</span>
+                    ) : null}
+                    {next === name && !status ? (
+                      <span className="text-2xs font-semibold uppercase tracking-wide text-primary">
+                        {t("Next")}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex h-full min-h-16 w-28 shrink-0 flex-col items-center justify-center gap-1 text-xs font-medium",
+                      status ? "text-white" : "border-l border-border text-muted-foreground",
+                    )}
+                    style={
+                      status
+                        ? {
+                            background: STATUS_STYLE[status].color,
+                            clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)",
+                          }
+                        : undefined
+                    }
+                  >
+                    {status ? (
+                      <>
+                        <StatusMark status={status} size="size-5" />
+                        {t(PRAYER_STATUS_LABELS[status])}
+                      </>
+                    ) : (
+                      t("Log")
+                    )}
+                  </span>
+                </button>
+              </StatusControl>
+            </div>
+            {sunnah ? (
+              onAlarm ? (
+                <span className="w-12 shrink-0" />
+              ) : null
+            ) : (
+              alarmButton(name as PrayerName, prayerLabel(name, date))
+            )}
           </li>
         );
         return name === "fajr" && sunriseRow ? [row, sunriseRow] : [row];

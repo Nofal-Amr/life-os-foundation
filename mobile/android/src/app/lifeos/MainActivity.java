@@ -658,6 +658,36 @@ public class MainActivity extends Activity {
             sendFind(null, false, false);
         }
 
+        /**
+         * A one-off wake-up alarm in the phone's own Clock app (e.g. before
+         * Fajr). Not a prayer reminder or adhan. Set silently when the Clock
+         * app allows it; otherwise its alarm screen opens, filled in.
+         * Returns false when the phone has no Clock app that takes alarms.
+         */
+        @JavascriptInterface
+        public boolean setAlarm(int hour, int minute, String label) {
+            if (!trusted() || !WakeAlarm.validTime(hour, minute)) return false;
+            Intent intent = new Intent(android.provider.AlarmClock.ACTION_SET_ALARM)
+                    .putExtra(android.provider.AlarmClock.EXTRA_HOUR, hour)
+                    .putExtra(android.provider.AlarmClock.EXTRA_MINUTES, minute)
+                    .putExtra(android.provider.AlarmClock.EXTRA_MESSAGE, WakeAlarm.label(label))
+                    .putExtra(android.provider.AlarmClock.EXTRA_VIBRATE, true)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            if (intent.resolveActivity(getPackageManager()) == null) return false;
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(intent).putExtra(android.provider.AlarmClock.EXTRA_SKIP_UI, true));
+                } catch (Exception silent) {
+                    try {
+                        startActivity(intent);
+                    } catch (Exception ignored) {
+                        // No Clock app took it after all.
+                    }
+                }
+            });
+            return true;
+        }
+
         private void sendFind(org.json.JSONObject find, boolean ring, boolean flash) {
             ConnectConfig config = ConnectConfig.load(MainActivity.this);
             if (config == null) return;
