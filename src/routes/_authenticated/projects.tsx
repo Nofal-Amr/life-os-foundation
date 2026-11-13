@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
+import { ListRow, RowList } from "@/components/app/ListRow";
 import { FormDialog } from "@/components/app/FormDialog";
 import { ProjectCover, ProjectCoverPicker } from "@/components/app/ProjectCover";
 import { PlansDialog } from "@/components/app/PlansDialog";
@@ -89,7 +90,8 @@ function ProjectsPage() {
     mutationFn: async () => {
       const project = editing ? await updateProject(editing.id, form) : await createProject(form);
       if (coverFile) await uploadProjectCover(project.id, coverFile, editing?.image_url);
-      else if (removeCover && editing?.image_url) await removeProjectCover(project.id, editing.image_url);
+      else if (removeCover && editing?.image_url)
+        await removeProjectCover(project.id, editing.image_url);
       return project;
     },
     onSuccess: () => {
@@ -183,61 +185,63 @@ function ProjectsPage() {
                 <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
                   <SemanticBadge tone={projectStatusTone(value)}>{label}</SemanticBadge>
                 </h2>
-                <ul className="space-y-3">
+                <RowList>
                   {group.map((project) => (
-                    <li
+                    <ListRow
                       key={project.id}
-                      className="overflow-hidden rounded-xl border border-border bg-card"
-                    >
-                      <ProjectCover path={project.image_url} name={project.name} icon={project.icon} color={project.color} />
-                      <div className="flex flex-wrap items-start justify-between gap-3 p-4">
-                       <div className="flex min-w-0 gap-3">
-                         <EntityIcon icon={project.icon} color={project.color} />
-                         <div className="min-w-0">
-                           <p className="truncate font-medium">{project.name}</p>
-                          {project.description ? (
-                            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                              {project.description}
-                            </p>
-                          ) : null}
-                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      muted={project.status === "archived"}
+                      header={
+                        <ProjectCover
+                          path={project.image_url}
+                          name={project.name}
+                          icon={project.icon}
+                          color={project.color}
+                        />
+                      }
+                      leading={
+                        <span className="flex size-11 items-center justify-center">
+                          <EntityIcon icon={project.icon} color={project.color} />
+                        </span>
+                      }
+                      title={<span className="truncate">{project.name}</span>}
+                      openLabel={`Open ${project.name}`}
+                      onOpen={() => openEdit(project)}
+                      meta={
+                        <>
+                          {project.priority !== "low" && project.priority !== "medium" ? (
                             <SemanticBadge tone={priorityTone(project.priority)}>
                               {priorityLabel(project.priority)} priority
                             </SemanticBadge>
-                            <span>Start {fmtDate(project.start_date)}</span>
-                            <span>Due {fmtDate(project.due_date)}</span>
-                          </div>
-                          <div className="mt-4 max-w-md space-y-3">
-                            <CountBar count={projectProgress(tasks.data ?? [], project.id)} label="tasks" />
-                            <GoalChips goals={projectGoals(tasks.data ?? [], goals.data ?? [], project.id)} />
-                          </div>
-                         </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => openEdit(project)}>
-                            Edit
-                          </Button>
-                          {project.status !== "archived" ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => archive.mutate(project.id)}
-                            >
-                              Archive
-                            </Button>
                           ) : null}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setToDelete(project)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
+                          {project.due_date ? <span>Due {fmtDate(project.due_date)}</span> : null}
+                          {project.description ? (
+                            <span className="line-clamp-1 max-w-xl">{project.description}</span>
+                          ) : null}
+                        </>
+                      }
+                      actions={[
+                        ...(project.status !== "archived"
+                          ? [{ label: "Archive", onSelect: () => archive.mutate(project.id) }]
+                          : []),
+                        {
+                          label: "Delete",
+                          destructive: true,
+                          onSelect: () => setToDelete(project),
+                        },
+                      ]}
+                    >
+                      <div className="max-w-md space-y-3 pl-0 sm:pl-14">
+                        <CountBar
+                          count={projectProgress(tasks.data ?? [], project.id)}
+                          label="tasks"
+                        />
+                        <GoalChips
+                          goals={projectGoals(tasks.data ?? [], goals.data ?? [], project.id)}
+                        />
                       </div>
-                    </li>
+                    </ListRow>
                   ))}
-                </ul>
+                </RowList>
               </section>
             );
           })}
@@ -260,8 +264,20 @@ function ProjectsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
-        <ProjectCoverPicker file={coverFile} currentPath={editing?.image_url ?? null} removeCurrent={removeCover} onFileChange={(file) => { setCoverFile(file); if (file) setRemoveCover(false); }} onRemoveCurrent={() => setRemoveCover(true)} />
-        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
+        <ProjectCoverPicker
+          file={coverFile}
+          currentPath={editing?.image_url ?? null}
+          removeCurrent={removeCover}
+          onFileChange={(file) => {
+            setCoverFile(file);
+            if (file) setRemoveCover(false);
+          }}
+          onRemoveCurrent={() => setRemoveCover(true)}
+        />
+        <EntityIdentityPicker
+          value={{ icon: form.icon, color: form.color }}
+          onChange={(identity) => setForm({ ...form, ...identity })}
+        />
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
           <Textarea
@@ -309,15 +325,22 @@ function ProjectsPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="start">Start date</Label>
-            <DatePicker id="start" value={form.start_date} onChange={(value) => setForm({ ...form, start_date: value || null })} />
+            <DatePicker
+              id="start"
+              value={form.start_date}
+              onChange={(value) => setForm({ ...form, start_date: value || null })}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="due">Due date</Label>
-            <DatePicker id="due" value={form.due_date} onChange={(value) => setForm({ ...form, due_date: value || null })} />
+            <DatePicker
+              id="due"
+              value={form.due_date}
+              onChange={(value) => setForm({ ...form, due_date: value || null })}
+            />
           </div>
         </div>
       </FormDialog>
-
 
       <ConfirmDialog
         open={!!toDelete}

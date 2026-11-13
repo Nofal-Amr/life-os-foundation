@@ -55,10 +55,10 @@ import {
   TASK_ENERGY,
   type TaskEnergy,
 } from "@/data/tasks";
-import { ShrinkItButton } from "@/components/app/ShrinkIt";
+import { ListRow, RowCheck, RowList } from "@/components/app/ListRow";
 import { StuckHelperDialog } from "@/components/app/StuckHelper";
 import { stuckTasks } from "@/data/stuck";
-import { TaskTimerButton } from "@/components/app/Timer";
+import { TaskTimerButton, useTimer } from "@/components/app/Timer";
 import { formatMinutes, minutesByTask, timeEntriesQuery } from "@/data/time";
 import {
   GlanceSection,
@@ -290,6 +290,8 @@ function TasksPage() {
     setEvidenceTask(null);
   }
 
+  const { running, start: startTimer, stop: stopTimer } = useTimer();
+
   /** A copy starts clean: no dates, no completion, no move history. */
   const duplicate = useMutation({
     mutationFn: async (task: Task) => {
@@ -377,7 +379,9 @@ function TasksPage() {
   }, [navigate, taskHash, tasks.data]);
 
   const allTasks = tasks.data ?? [];
-  const stuckDays = new Map(stuckTasks(allTasks, todayISO()).map((item) => [item.task.id, item.days]));
+  const stuckDays = new Map(
+    stuckTasks(allTasks, todayISO()).map((item) => [item.task.id, item.days]),
+  );
   const visible = filterTasks(topLevelTasks(allTasks), filter);
   const weekly = tasksCompletedPerWeek(allTasks);
   const weeklyTotal = weekly.reduce((sum, week) => sum + week.total, 0);
@@ -433,184 +437,164 @@ function TasksPage() {
           action={<Button onClick={openCreate}>New task</Button>}
         />
       ) : (
-        <ul className="space-y-3">
+        <RowList>
           {visible.map((task) => {
             const completed = task.status === "completed";
             const steps = stepsOf(allTasks, task.id);
             const progress = stepProgress(steps);
             const isExpanded = Boolean(expanded[task.id]);
+            const timing = running?.task_id === task.id;
+            const project = task.project_id
+              ? (projects.data ?? []).find((item) => item.id === task.project_id)
+              : undefined;
+            const stuck = !completed && stuckDays.has(task.id);
+            const moved = (task.postponed_count ?? 0) >= 3;
             return (
-              <li key={task.id} className="rounded-xl border border-border bg-card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <button type="button" className="text-left" onClick={() => openEdit(task)}>
-                      <p
-                        className={`font-medium ${completed ? "text-muted-foreground line-through" : ""}`}
-                      >
-                        {task.title}
-                        {task.estimated_minutes ? (
-                          <span className="ml-1 text-sm font-normal text-muted-foreground">
-                            · {estimateLabel(task)}
-                          </span>
-                        ) : null}
-                        {tracked.get(task.id) ? (
-                          <span className="ml-1 text-sm font-normal tabular-nums text-muted-foreground">
-                            · {formatMinutes(tracked.get(task.id)!)} tracked
-                          </span>
-                        ) : null}
-                      </p>
-                    </button>
-                    {task.description ? (
-                      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                        {task.description}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <ListRow
+                key={task.id}
+                muted={completed}
+                title={
+                  <span className={`min-w-0 ${completed ? "line-through" : ""}`}>{task.title}</span>
+                }
+                openLabel={`Open ${task.title}`}
+                onOpen={() => openEdit(task)}
+                leading={
+                  <RowCheck
+                    done={completed}
+                    disabled={toggle.isPending}
+                    label={completed ? `Reopen ${task.title}` : `Complete ${task.title}`}
+                    onToggle={() => toggle.mutate({ task, completed })}
+                  />
+                }
+                trailing={timing ? <TaskTimerButton task={task} /> : undefined}
+                meta={
+                  <>
+                    {task.status !== "todo" && !completed ? (
                       <SemanticBadge tone={taskStatusTone(task.status)}>
                         {taskStatusLabel(task.status)}
                       </SemanticBadge>
-                      <PriorityBadge priority={task.priority} />
-                      {!completed && task.due_date && task.due_date < todayISO() ? (
-                        <SemanticBadge tone="neutral">From earlier</SemanticBadge>
-                      ) : null}
-                      {task.due_date ? (
-                        <span>
-                          Due {fmtDate(task.due_date)}
-                          {task.due_time ? ` · ${task.due_time.slice(0, 5)}` : ""}
-                        </span>
-                      ) : null}
-                      {task.repeat ? (
-                        <span>{TASK_REPEATS.find((option) => option.value === task.repeat)?.label}</span>
-                      ) : null}
-                      {task.project_id
-                        ? (() => {
-                            const project = (projects.data ?? []).find(
-                              (item) => item.id === task.project_id,
-                            );
-                            return project ? (
-                              <span className="inline-flex items-center gap-1.5">
-                                <EntityIcon
-                                  icon={project.icon}
-                                  color={project.color}
-                                  containerClassName="size-5 rounded"
-                                  className="size-3"
-                                />
-                                {project.name}
-                              </span>
-                            ) : null;
-                          })()
-                        : null}
-                    </div>
-                    {steps.length ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="mt-2 h-8 px-0 text-xs text-muted-foreground"
-                        aria-expanded={isExpanded}
-                        onClick={() =>
-                          setExpanded((current) => ({ ...current, [task.id]: !current[task.id] }))
-                        }
-                      >
-                        <Ring
-                          done={progress.done}
-                          total={progress.total}
-                          tone={4}
-                          size={22}
-                          stroke={4}
-                          label={`${progress.done} of ${progress.total} steps done`}
+                    ) : null}
+                    <PriorityBadge priority={task.priority} />
+                    {task.due_date ? (
+                      <span>
+                        {!completed && task.due_date < todayISO() ? "From " : ""}
+                        {fmtDate(task.due_date)}
+                        {task.due_time ? ` · ${task.due_time.slice(0, 5)}` : ""}
+                      </span>
+                    ) : null}
+                    {task.repeat ? (
+                      <span>
+                        {TASK_REPEATS.find((option) => option.value === task.repeat)?.label}
+                      </span>
+                    ) : null}
+                    {project ? (
+                      <span className="inline-flex min-w-0 items-center gap-1.5">
+                        <EntityIcon
+                          icon={project.icon}
+                          color={project.color}
+                          containerClassName="size-4 rounded"
+                          className="size-2.5"
                         />
-                        <span className="ml-2">
-                          {stepsLine(progress.done, progress.total)} ·{" "}
-                          {isExpanded ? "Hide steps" : "Show steps"}
-                        </span>
-                      </Button>
+                        <span className="truncate">{project.name}</span>
+                      </span>
                     ) : null}
-                    {!completed && stuckDays.has(task.id) ? (
-                      <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                        <span>Waiting {stuckDays.get(task.id)} days.</span>
-                        <button
-                          type="button"
-                          className="font-medium text-primary underline-offset-2 hover:underline"
-                          onClick={() => setShrinkTask(task)}
-                        >
-                          Help me start
-                        </button>
-                      </p>
+                    {task.estimated_minutes ? <span>{estimateLabel(task)}</span> : null}
+                    {tracked.get(task.id) ? (
+                      <span className="tabular-nums">
+                        {formatMinutes(tracked.get(task.id)!)} tracked
+                      </span>
                     ) : null}
-                    {(task.postponed_count ?? 0) >= 3 ? (
-                      <p className="mt-2 text-xs text-muted-foreground">
+                    {stuck ? <span>Waiting {stuckDays.get(task.id)} days</span> : null}
+                    {moved ? (
+                      <span>
                         Moved {task.postponed_count} times
-                        {task.original_due_date ? ` since ${fmtDate(task.original_due_date)}` : ""}.
-                      </p>
+                        {task.original_due_date ? ` since ${fmtDate(task.original_due_date)}` : ""}
+                      </span>
                     ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+                  </>
+                }
+                actions={[
+                  ...(completed
+                    ? []
+                    : [
+                        {
+                          label: timing ? "Stop timer" : "Start timer",
+                          onSelect: () =>
+                            timing && running
+                              ? stopTimer.mutate(running)
+                              : startTimer.mutate({
+                                  activity_id: null,
+                                  task_id: task.id,
+                                  label: task.title,
+                                }),
+                        },
+                        { label: "This feels hard", onSelect: () => setShrinkTask(task) },
+                      ]),
+                  {
+                    label: "Duplicate",
+                    disabled: duplicate.isPending,
+                    onSelect: () => duplicate.mutate(task),
+                  },
+                  { label: "Delete", destructive: true, onSelect: () => setToDelete(task) },
+                ]}
+              >
+                {steps.length ? (
+                  <>
                     <Button
+                      type="button"
                       size="sm"
                       variant="ghost"
-                      onClick={() => toggle.mutate({ task, completed })}
+                      className="-ml-2 h-11 px-2 text-xs text-muted-foreground"
+                      aria-expanded={isExpanded}
+                      onClick={() =>
+                        setExpanded((current) => ({ ...current, [task.id]: !current[task.id] }))
+                      }
                     >
-                      {completed ? "Reopen" : "Complete"}
+                      <Ring
+                        done={progress.done}
+                        total={progress.total}
+                        tone={4}
+                        size={20}
+                        stroke={4}
+                        label={`${progress.done} of ${progress.total} steps done`}
+                      />
+                      <span className="ml-2">
+                        {stepsLine(progress.done, progress.total)} ·{" "}
+                        {isExpanded ? "Hide steps" : "Show steps"}
+                      </span>
                     </Button>
-                    {completed ? null : (
-                      <>
-                        <TaskTimerButton task={task} />
-                        <ShrinkItButton onClick={() => setShrinkTask(task)} />
-                      </>
-                    )}
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(task)}>
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={duplicate.isPending}
-                      onClick={() => duplicate.mutate(task)}
-                    >
-                      Duplicate
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setToDelete(task)}>
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-                {isExpanded && steps.length ? (
-                  <ul className="mt-3 divide-y divide-border border-t border-border pt-1">
-                    {steps.map((step) => {
-                      const stepDone = step.status === "completed";
-                      return (
-                        <li
-                          key={step.id}
-                          className="flex min-w-0 items-center justify-between gap-3 py-2"
-                        >
-                          <span
-                            className={`min-w-0 truncate text-sm ${stepDone ? "text-muted-foreground line-through" : "text-foreground"}`}
-                          >
-                            {step.title}
-                            {step.estimated_minutes ? (
-                              <span className="ml-1 text-xs text-muted-foreground">
-                                {minutesLabel(step.estimated_minutes)}
+                    {isExpanded ? (
+                      <ul className="divide-y divide-border border-t border-border">
+                        {steps.map((step) => {
+                          const stepDone = step.status === "completed";
+                          return (
+                            <li key={step.id} className="flex min-w-0 items-center gap-1">
+                              <RowCheck
+                                done={stepDone}
+                                label={stepDone ? `Reopen ${step.title}` : `Done: ${step.title}`}
+                                onToggle={() => toggle.mutate({ task: step, completed: stepDone })}
+                              />
+                              <span
+                                className={`min-w-0 truncate text-sm ${stepDone ? "text-muted-foreground line-through" : "text-foreground"}`}
+                              >
+                                {step.title}
+                                {step.estimated_minutes ? (
+                                  <span className="ml-1 text-xs text-muted-foreground">
+                                    {minutesLabel(step.estimated_minutes)}
+                                  </span>
+                                ) : null}
                               </span>
-                            ) : null}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="shrink-0"
-                            onClick={() => toggle.mutate({ task: step, completed: stepDone })}
-                          >
-                            {stepDone ? "Reopen" : "Done"}
-                          </Button>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    ) : null}
+                  </>
                 ) : null}
-              </li>
+              </ListRow>
             );
           })}
-        </ul>
+        </RowList>
       )}
 
       <FormDialog
@@ -699,7 +683,9 @@ function TasksPage() {
               value={form.due_time ?? ""}
               onChange={(event) => setForm({ ...form, due_time: event.target.value || null })}
             />
-            <p className="text-xs text-muted-foreground">The Android app reminds you at this time.</p>
+            <p className="text-xs text-muted-foreground">
+              The Android app reminds you at this time.
+            </p>
           </div>
           <div className="space-y-2">
             <Label>Energy it needs</Label>

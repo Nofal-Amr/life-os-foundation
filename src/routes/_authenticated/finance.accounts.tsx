@@ -6,9 +6,9 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
+import { ListRow, RowList } from "@/components/app/ListRow";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
-import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -206,47 +206,43 @@ function AccountsPage() {
               action={<Button onClick={openCreate}>Add an account</Button>}
             />
           ) : (
-            <ul className="space-y-3">
+            <RowList>
               {(accounts.data ?? []).map((account) => {
                 const accountPockets = (pockets.data ?? []).filter(
                   (pocket) => pocket.account_id === account.id,
                 );
                 return (
-                  <li key={account.id} className="rounded-xl border border-border bg-card p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
+                  <ListRow
+                    key={account.id}
+                    muted={!account.active}
+                    leading={
+                      <span className="flex size-11 items-center justify-center">
                         <EntityIcon icon={account.icon} color={account.color} />
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{account.name}</p>
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <SemanticBadge tone={account.type === "credit" ? "info" : "neutral"}>
-                              {ACCOUNT_TYPES.find((t) => t.value === account.type)?.label}
-                            </SemanticBadge>
-                            {!account.active ? (
-                              <SemanticBadge tone="quiet">Inactive</SemanticBadge>
-                            ) : null}
-                            {!countsTowardSpendable(account) ? (
-                              <SemanticBadge tone="quiet">Kept separate</SemanticBadge>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-medium tabular-nums">
-                          {fmtMoney(
-                            accountBalance(account, transactions.data ?? [], pockets.data ?? []),
-                          )}
-                        </span>
-                        <Button size="sm" variant="ghost" onClick={() => openEdit(account)}>
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setToDelete(account)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
+                      </span>
+                    }
+                    title={<span className="truncate">{account.name}</span>}
+                    openLabel={`Edit ${account.name}`}
+                    onOpen={() => openEdit(account)}
+                    meta={
+                      <>
+                        <span>{ACCOUNT_TYPES.find((t) => t.value === account.type)?.label}</span>
+                        {!account.active ? <span>Inactive</span> : null}
+                        {!countsTowardSpendable(account) ? <span>Kept separate</span> : null}
+                      </>
+                    }
+                    trailing={
+                      <span className="font-medium">
+                        {fmtMoney(
+                          accountBalance(account, transactions.data ?? [], pockets.data ?? []),
+                        )}
+                      </span>
+                    }
+                    actions={[
+                      { label: "Delete", destructive: true, onSelect: () => setToDelete(account) },
+                    ]}
+                  >
                     {accountPockets.length ? (
-                      <ul className="mt-3 space-y-1.5 border-l border-border pl-3">
+                      <ul className="space-y-1.5 border-l border-border pl-3 sm:ml-12">
                         {accountPockets.map((pocket) => (
                           <li
                             key={pocket.id}
@@ -265,10 +261,10 @@ function AccountsPage() {
                         ))}
                       </ul>
                     ) : null}
-                  </li>
+                  </ListRow>
                 );
               })}
-            </ul>
+            </RowList>
           )}
         </>
       )}

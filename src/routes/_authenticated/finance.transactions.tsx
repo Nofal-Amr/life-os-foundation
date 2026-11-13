@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon } from "@/components/app/EntityIdentity";
+import { ListRow, RowList } from "@/components/app/ListRow";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { QuickAddTransactionDialog } from "@/components/app/QuickAddTransaction";
@@ -248,45 +249,36 @@ function TransactionsPage() {
           {groups.map(([date, items]) => (
             <section key={date}>
               <h2 className="mb-2 text-sm font-medium text-muted-foreground">{fmtDate(date)}</h2>
-              <ul className="space-y-2">
+              <RowList>
                 {items.map((t) => {
                   const money = fmtSignedMoney(Number(t.amount));
                   const tone = amountTone(Number(t.amount));
+                  const category = (categories.data ?? []).find(
+                    (item) => item.id === t.category_id,
+                  );
+                  const name = t.description || categoryName(t.category_id);
                   return (
-                    <li
+                    <ListRow
                       key={t.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="min-w-0">
-                        <p className="flex min-w-0 items-center gap-2 font-medium">
-                          {(() => {
-                            const category = (categories.data ?? []).find(
-                              (item) => item.id === t.category_id,
-                            );
-                            return category ? (
-                              <EntityIcon
-                                icon={category.icon}
-                                color={category.color}
-                                containerClassName="size-6 rounded"
-                                className="size-3"
-                              />
-                            ) : null;
-                          })()}
-                          <span className="truncate">
-                            {t.description || categoryName(t.category_id)}
-                          </span>
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
+                      leading={
+                        <span className="flex size-11 items-center justify-center">
+                          <EntityIcon icon={category?.icon} color={category?.color} />
+                        </span>
+                      }
+                      title={<span className="truncate">{name}</span>}
+                      openLabel={`Edit ${name}`}
+                      onOpen={() => openEdit(t)}
+                      meta={
+                        <span className="min-w-0 truncate">
                           {t.occurred_time
                             ? `${fmtTime(new Date(`${t.date}T${t.occurred_time}`))} · `
                             : ""}
                           {categoryName(t.category_id)} · {accountName(t.account_id)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-3">
+                        </span>
+                      }
+                      trailing={
                         <span
                           className={cn(
-                            "text-right tabular-nums",
                             tone === "warning" ? "tone-warning" : "tone-positive",
                             "border-0 bg-transparent px-0",
                           )}
@@ -296,17 +288,14 @@ function TransactionsPage() {
                             {amountDirectionLabel(Number(t.amount))}
                           </span>
                         </span>
-                        <Button size="sm" variant="ghost" onClick={() => openEdit(t)}>
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setToDelete(t)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </li>
+                      }
+                      actions={[
+                        { label: "Delete", destructive: true, onSelect: () => setToDelete(t) },
+                      ]}
+                    />
                   );
                 })}
-              </ul>
+              </RowList>
             </section>
           ))}
         </div>

@@ -3,15 +3,20 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useXp } from "@/hooks/useXp";
-import { HABIT_CATEGORIES, categoryLabel, guessHabitCategory, habitCategory } from "@/data/habitCategories";
+import {
+  HABIT_CATEGORIES,
+  categoryLabel,
+  guessHabitCategory,
+  habitCategory,
+} from "@/data/habitCategories";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { HabitDots } from "@/components/app/HabitDots";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
+import { ListRow, RowCheck, RowList } from "@/components/app/ListRow";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -182,68 +187,74 @@ function HabitsPage() {
             return (
               <section key={category} className="space-y-3">
                 <h2 className="section-title">{categoryName}</h2>
-        <ul className="space-y-3">
-          {group.map((habit) => {
-            const habitLogs = allLogs.filter((l) => l.habit_id === habit.id);
-            const done = habitLogs.some((l) => l.log_date === today);
-            return (
-              <li key={habit.id} className="rounded-xl border border-border bg-card p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                   <div className="flex min-w-0 gap-3">
-                     <EntityIcon icon={habit.icon} color={habit.color} />
-                     <div className="min-w-0">
-                    <p className="font-medium">
-                      {habit.name}
-                      {!habit.active ? (
-                        <span className="ml-2 text-xs text-muted-foreground">Archived</span>
-                      ) : null}
-                    </p>
-                    {habit.description ? (
-                      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                        {habit.description}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="secondary">
-                        {labelOf(HABIT_FREQUENCIES, habit.frequency)}
-                      </Badge>
-                      <span>Target {habit.target}×</span>
-                      {!habit.category ? <span>{categoryLabel(habitCategory(habit))} (guessed)</span> : null}
-                       <span>{habitLogs.length} {habitLogs.length === 1 ? "entry" : "entries"} logged</span>
-                     </div>
-                   </div>
-                    <HabitDots
-                      logs={habitLogs}
-                      today={today}
-                      color={habit.color}
-                      className="mt-3"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={done ? "outline" : "default"}
-                      onClick={() => toggleLog.mutate({ habitId: habit.id, done })}
-                    >
-                      {done ? "Undo today" : "Log today"}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(habit)}>
-                      Edit
-                    </Button>
-                    {habit.active ? (
-                      <Button size="sm" variant="ghost" onClick={() => archive.mutate(habit.id)}>
-                        Archive
-                      </Button>
-                    ) : null}
-                    <Button size="sm" variant="ghost" onClick={() => setToDelete(habit)}>
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                <RowList>
+                  {group.map((habit) => {
+                    const habitLogs = allLogs.filter((l) => l.habit_id === habit.id);
+                    const done = habitLogs.some((l) => l.log_date === today);
+                    return (
+                      <ListRow
+                        key={habit.id}
+                        muted={!habit.active}
+                        leading={
+                          <RowCheck
+                            done={done}
+                            color={habit.color}
+                            disabled={toggleLog.isPending}
+                            label={
+                              done ? `Undo today for ${habit.name}` : `Log ${habit.name} today`
+                            }
+                            onToggle={() => toggleLog.mutate({ habitId: habit.id, done })}
+                          />
+                        }
+                        title={
+                          <>
+                            <EntityIcon
+                              icon={habit.icon}
+                              color={habit.color}
+                              containerClassName="size-6 shrink-0 rounded"
+                              className="size-3.5"
+                            />
+                            <span className="min-w-0 truncate">{habit.name}</span>
+                          </>
+                        }
+                        openLabel={`Open ${habit.name}`}
+                        onOpen={() => openEdit(habit)}
+                        meta={
+                          <>
+                            <span>
+                              {labelOf(HABIT_FREQUENCIES, habit.frequency)} · target {habit.target}×
+                            </span>
+                            <span>
+                              {habitLogs.length} {habitLogs.length === 1 ? "entry" : "entries"}{" "}
+                              logged
+                            </span>
+                            {!habit.category ? (
+                              <span>{categoryLabel(habitCategory(habit))} (guessed)</span>
+                            ) : null}
+                            {!habit.active ? <span>Archived</span> : null}
+                          </>
+                        }
+                        actions={[
+                          ...(habit.active
+                            ? [{ label: "Archive", onSelect: () => archive.mutate(habit.id) }]
+                            : []),
+                          {
+                            label: "Delete",
+                            destructive: true,
+                            onSelect: () => setToDelete(habit),
+                          },
+                        ]}
+                      >
+                        <HabitDots
+                          logs={habitLogs}
+                          today={today}
+                          color={habit.color}
+                          className="sm:pl-12"
+                        />
+                      </ListRow>
+                    );
+                  })}
+                </RowList>
               </section>
             );
           })}
@@ -268,7 +279,9 @@ function HabitsPage() {
                 ...form,
                 name: e.target.value,
                 // Until a category is picked by hand, follow the name.
-                category: categoryTouched ? (form.category ?? null) : guessHabitCategory(e.target.value),
+                category: categoryTouched
+                  ? (form.category ?? null)
+                  : guessHabitCategory(e.target.value),
               })
             }
           />
@@ -299,7 +312,10 @@ function HabitsPage() {
             It shows up in that part of the app, like Health habits on the Health page.
           </p>
         </div>
-        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
+        <EntityIdentityPicker
+          value={{ icon: form.icon, color: form.color }}
+          onChange={(identity) => setForm({ ...form, ...identity })}
+        />
         <div className="space-y-2">
           <Label htmlFor="habit-description">Description</Label>
           <Textarea
