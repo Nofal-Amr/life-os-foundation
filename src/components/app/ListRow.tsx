@@ -113,7 +113,7 @@ export function ListRow({
           ) : null}
         </div>
         {trailing ? (
-          <div className="flex min-h-11 shrink-0 items-center text-right tabular-nums">
+          <div className="flex min-h-11 shrink-0 items-center text-right tabular-nums last:pr-2">
             {trailing}
           </div>
         ) : null}
