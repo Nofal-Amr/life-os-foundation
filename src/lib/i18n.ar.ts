@@ -680,4 +680,18 @@ export const AR: Record<string, string> = {
   "What went together": "ما تغيّر معًا",
   "Habits by weekday": "العادات حسب اليوم",
   Tomorrow: "غدًا",
+  Times: "المواقيت",
+  Change: "تغيير",
+  "Use it": "استخدمها",
+  "Most mosques here use": "تستخدم أغلب المساجد هنا",
+  "Prayer times updated.": "تم تحديث المواقيت.",
+  "Prayer times are worked out on this device. Your location and prayer record stay in your account and are never shared or sold.":
+    "تُحسب المواقيت على جهازك. يبقى موقعك وسجل صلاتك في حسابك ولا تتم مشاركتهما أو بيعهما أبدًا.",
+  "Muslim World League": "رابطة العالم الإسلامي",
+  "Egyptian General Authority": "الهيئة المصرية العامة للمساحة",
+  "Umm al-Qura, Makkah": "أم القرى، مكة المكرمة",
+  "University of Islamic Sciences, Karachi": "جامعة العلوم الإسلامية، كراتشي",
+  "ISNA (North America)": "الجمعية الإسلامية لأمريكا الشمالية",
+  "Shafi, Maliki, Hanbali": "الشافعي والمالكي والحنبلي",
+  Hanafi: "الحنفي",
 };
