@@ -34,8 +34,10 @@ import {
 } from "@/data/goals";
 import { tasksQuery } from "@/data/tasks";
 import { projectsQuery } from "@/data/projects";
-import { goalLinks } from "@/data/links";
-import { CountBar, GoalLinksList } from "@/components/app/LinkedProgress";
+import { goalHabits, goalLinks, habitGoalsAvailable } from "@/data/links";
+import { habitKeys, habitLogsQuery, habitsQuery, setHabitGoal } from "@/data/habits";
+import { todayISO } from "@/lib/date";
+import { CountBar, GoalHabitsList, GoalLinksList } from "@/components/app/LinkedProgress";
 import { usePreferences } from "@/hooks/usePreferences";
 import { goalStatusLabel, goalStatusTone } from "@/lib/semantics";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
@@ -68,18 +70,40 @@ function GoalsPage() {
   const goals = useQuery(goalsQuery());
   const tasks = useQuery(tasksQuery());
   const projects = useQuery(projectsQuery());
+  const habits = useQuery(habitsQuery());
+  const habitLogs = useQuery(habitLogsQuery());
   const { fmtDate } = usePreferences();
+  const today = todayISO();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
   const [form, setForm] = useState<GoalInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Goal | null>(null);
+  /** Habits ticked in the form as counting toward this goal. */
+  const [linkedHabits, setLinkedHabits] = useState<string[]>([]);
+  // Hidden until the database can store the link (habits.goal_id).
+  const canLinkHabits = habitGoalsAvailable(habits.data ?? []);
+  const activeHabits = (habits.data ?? []).filter((habit) => habit.active);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: goalKeys.all });
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
 
   const save = useMutation({
-    mutationFn: async () => (editing ? updateGoal(editing.id, form) : createGoal(form)),
+    mutationFn: async () => {
+      const goal = editing ? await updateGoal(editing.id, form) : await createGoal(form);
+      if (canLinkHabits) {
+        const goalId = editing?.id ?? (goal as unknown as Goal | null)?.id;
+        if (!goalId) return goal;
+        // Only the habits whose link changed are written.
+        for (const habit of activeHabits) {
+          const should = linkedHabits.includes(habit.id);
+          const is = habit.goal_id === goalId;
+          if (should !== is) await setHabitGoal(habit.id, should ? goalId : null);
+        }
+        void queryClient.invalidateQueries({ queryKey: habitKeys.all });
+      }
+      return goal;
+    },
     onSuccess: () => {
       invalidate();
       setDialogOpen(false);
@@ -108,6 +132,7 @@ function GoalsPage() {
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
+    setLinkedHabits([]);
     setDialogOpen(true);
   }
 
@@ -123,6 +148,9 @@ function GoalsPage() {
       icon: goal.icon,
       color: goal.color,
     });
+    setLinkedHabits(
+      (habits.data ?? []).filter((habit) => habit.goal_id === goal.id).map((habit) => habit.id),
+    );
     setDialogOpen(true);
   }
 
@@ -173,6 +201,14 @@ function GoalsPage() {
                         <div className="mt-4 max-w-md space-y-3">
                           <CountBar count={links.tasks} label="linked tasks done" />
                           <GoalLinksList links={links} />
+                          <GoalHabitsList
+                            items={goalHabits(
+                              habits.data ?? [],
+                              habitLogs.data ?? [],
+                              goal.id,
+                              today,
+                            )}
+                          />
                         </div>
                       );
                     })()}
@@ -288,6 +324,35 @@ function GoalsPage() {
             />
           </div>
         </div>
+        {canLinkHabits && activeHabits.length ? (
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Habits that count toward it</legend>
+            <div className="flex flex-wrap gap-1.5">
+              {activeHabits.map((habit) => {
+                const checked = linkedHabits.includes(habit.id);
+                return (
+                  <button
+                    key={habit.id}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={checked}
+                    onClick={() =>
+                      setLinkedHabits((current) =>
+                        checked ? current.filter((id) => id !== habit.id) : [...current, habit.id],
+                      )
+                    }
+                    className={`min-h-11 rounded-full border px-3 text-sm transition-colors duration-150 ${checked ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-accent"}`}
+                  >
+                    {habit.name}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Their entries show on this goal. A habit counts toward one goal at a time.
+            </p>
+          </fieldset>
+        ) : null}
       </FormDialog>
 
       <ConfirmDialog
@@ -296,8 +361,15 @@ function GoalsPage() {
         title="Delete this goal?"
         description={(() => {
           const linked = (tasks.data ?? []).filter((task) => task.goal_id === toDelete?.id).length;
-          return linked > 0
-            ? `${linked} ${linked === 1 ? "task is" : "tasks are"} linked to this goal. Those tasks stay, but they will no longer be linked to a goal.`
+          const habitCount = (habits.data ?? []).filter(
+            (habit) => habit.goal_id === toDelete?.id,
+          ).length;
+          const parts = [
+            linked ? `${linked} ${linked === 1 ? "task" : "tasks"}` : null,
+            habitCount ? `${habitCount} ${habitCount === 1 ? "habit" : "habits"}` : null,
+          ].filter(Boolean);
+          return parts.length
+            ? `${parts.join(" and ")} linked to this goal will stay, but no longer be linked to a goal.`
             : "This cannot be undone.";
         })()}
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}

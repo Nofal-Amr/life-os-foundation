@@ -107,3 +107,12 @@ export function dayDots(logs: { log_date: string }[], today: string, days = 14):
     return { date, logged: logged.has(date) };
   });
 }
+
+/** Let a habit count toward a goal, or unlink it (null). */
+export async function setHabitGoal(id: string, goal_id: string | null) {
+  return unwrap(
+    await writeWithColumnFallback({ goal_id }, (row) =>
+      supabase.from("habits").update(row).eq("id", id).select().single(),
+    ),
+  );
+}

@@ -1,4 +1,7 @@
+import { format, parseISO, subDays } from "date-fns";
+
 import type { Goal } from "./goals";
+import type { Habit, HabitLog } from "./habits";
 import type { Project } from "./projects";
 import type { Task } from "./tasks";
 
@@ -54,4 +57,41 @@ export function goalLinks(tasks: Task[], projects: Project[], goalId: string): G
       .map((project) => ({ project, progress: projectProgress(tasks, project.id) })),
     next,
   };
+}
+
+/**
+ * Habits can count toward a goal once the database has `habits.goal_id`
+ * (migration 20261114090000_habit_goals.sql). Until then rows don't carry
+ * the field, and linking stays hidden.
+ */
+export function habitGoalsAvailable(habits: Habit[]): boolean {
+  return habits.some((habit) => "goal_id" in habit);
+}
+
+export type GoalHabit = {
+  habit: Habit;
+  /** Days with an entry in the seven days up to today, out of seven. */
+  lastSeven: Count;
+};
+
+/** Active habits linked to a goal, with their own logs over the last week. */
+export function goalHabits(
+  habits: Habit[],
+  logs: HabitLog[],
+  goalId: string,
+  today: string,
+): GoalHabit[] {
+  const from = format(subDays(parseISO(today), 6), "yyyy-MM-dd");
+  return habits
+    .filter((habit) => habit.active && habit.goal_id === goalId)
+    .map((habit) => {
+      const days = new Set(
+        logs
+          .filter(
+            (log) => log.habit_id === habit.id && log.log_date >= from && log.log_date <= today,
+          )
+          .map((log) => log.log_date),
+      );
+      return { habit, lastSeven: { done: days.size, total: 7 } };
+    });
 }

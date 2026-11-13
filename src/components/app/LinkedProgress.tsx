@@ -1,7 +1,7 @@
 import { Target } from "lucide-react";
 
 import type { Goal } from "@/data/goals";
-import type { Count, GoalLinks } from "@/data/links";
+import type { Count, GoalHabit, GoalLinks } from "@/data/links";
 
 /** A thin bar for "done of total"; nothing is drawn without a real total. */
 export function CountBar({ count, label }: { count: Count; label: string }) {
@@ -74,6 +74,29 @@ export function GoalLinksList({ links }: { links: GoalLinks }) {
           >
             <span className="min-w-0 truncate">{task.title}</span>
             <span className="shrink-0 text-xs text-muted-foreground">Next</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Habits that count toward a goal, each with its own last seven days. */
+export function GoalHabitsList({ items }: { items: GoalHabit[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground">Habits for this goal</p>
+      <ul className="space-y-1.5">
+        {items.map(({ habit, lastSeven }) => (
+          <li
+            key={habit.id}
+            className="flex items-center justify-between gap-3 rounded-lg bg-secondary/60 px-3 py-2 text-sm"
+          >
+            <span className="min-w-0 truncate">{habit.name}</span>
+            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+              {lastSeven.done} of the last 7 days
+            </span>
           </li>
         ))}
       </ul>
