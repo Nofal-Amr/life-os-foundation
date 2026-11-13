@@ -101,13 +101,19 @@ public class ConnectService extends Service {
         String text = "main".equals(config.role)
             ? "Rings here when your SIM phone gets a call."
             : "Sends this phone's calls to your main phone.";
-        return new Notification.Builder(this, CHANNEL_STATUS)
+        Notification.Builder builder = new Notification.Builder(this, CHANNEL_STATUS)
             .setSmallIcon(R.drawable.ic_stat_prayer)
             .setContentTitle("Life Connect is on")
             .setContentText(text)
             .setContentIntent(tap)
-            .setOngoing(true)
-            .build();
+            .setOngoing(true);
+        if ("main".equals(config.role)) {
+            // One tap to bring up the music remote for the SIM phone.
+            Intent music = new Intent(this, ConnectActionReceiver.class).setAction("app.lifeos.CONNECT_media_status");
+            builder.addAction(new Notification.Action.Builder(null, "Music on SIM phone",
+                PendingIntent.getBroadcast(this, 7240, music, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE)).build());
+        }
+        return builder.build();
     }
 
     /** Screen turned on: if the connection dropped while asleep, reconnect now. */
@@ -167,6 +173,7 @@ public class ConnectService extends Service {
                     case "ended": CallAlert.ended(this, message); break;
                     case "test": CallAlert.test(this, message); break;
                     case "sms": SmsAlert.show(this, message); break;
+                    case "media_state": MediaAlert.show(this, message); break;
                     case "spend":
                         SpendingStore.add(this, message.optDouble("amount"), message.optString("currency"),
                             message.optString("merchant"), message.optString("source"),
@@ -180,6 +187,7 @@ public class ConnectService extends Service {
                     case "decline": CallControl.decline(this); break;
                     case "mute": CallControl.mute(this); break;
                     case "reply": SmsAlert.send(this, message); break;
+                    case "media": MediaRemote.handle(this, current, message); break;
                     default: break;
                 }
             }
