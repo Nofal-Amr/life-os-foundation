@@ -19,7 +19,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  ASR_SCHOOLS,
+  CALC_METHODS,
   PRAYER_LABELS,
+  savePrayerSettings,
   prayerLabel,
   PRAYER_NAMES,
   clearPrayerLog,
@@ -37,6 +40,8 @@ import { todayISO } from "@/lib/date";
 import { getLang, t, useT } from "@/lib/i18n";
 import { prayerTimesFor } from "@/lib/prayer";
 import { hijriDate, nextPrayerAt, timeLeft } from "@/lib/prayerClock";
+import { methodSuggestion } from "@/lib/prayerMethod";
+import { toError } from "@/lib/supabase-helpers";
 
 export const Route = createFileRoute("/_authenticated/spirit")({
   head: () => ({
@@ -279,6 +284,13 @@ function SpiritPage() {
                 formatTime={fmtTime}
                 sunrise={showSunrise && times ? times.sunrise : null}
               />
+              <MethodNote
+                method={config?.calc_method ?? null}
+                school={config?.asr_school ?? null}
+                place={config?.city ?? null}
+                latitude={Number(config?.latitude)}
+                longitude={Number(config?.longitude)}
+              />
             </section>
           )}
 
@@ -365,6 +377,72 @@ function PrayerClock({
         {hijriDate(new Date(`${date}T12:00:00`), lang)}
       </p>
     </section>
+  );
+}
+
+/**
+ * Under the times: which method they come from (so they can be checked
+ * against the local mosque), the local method when a different one is
+ * saved, and a plain word on where the data goes.
+ */
+function MethodNote({
+  method,
+  school,
+  place,
+  latitude,
+  longitude,
+}: {
+  method: string | null;
+  school: string | null;
+  place: string | null;
+  latitude: number;
+  longitude: number;
+}) {
+  const queryClient = useQueryClient();
+  const methodName = (key: string | null) =>
+    CALC_METHODS.find((item) => item.value === (key ?? "MuslimWorldLeague"))?.label ??
+    "Muslim World League";
+  const schoolName =
+    ASR_SCHOOLS.find((item) => item.value === (school ?? "shafi"))?.label ?? ASR_SCHOOLS[0].label;
+  const suggestion = methodSuggestion(method, place, latitude, longitude);
+  const switchMethod = useMutation({
+    mutationFn: (calc_method: string) => savePrayerSettings({ calc_method }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: spiritKeys.settings });
+      toast.success(t("Prayer times updated."));
+    },
+    onError: (error) => toast.error(toError(error).message),
+  });
+  return (
+    <div className="space-y-2 text-xs text-muted-foreground">
+      <p>
+        {t("Times")}: {t(methodName(method))} · {t("Asr")}: {t(schoolName)} ·{" "}
+        <Link to="/settings" className="underline underline-offset-2">
+          {t("Change")}
+        </Link>
+      </p>
+      {suggestion ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3 text-sm">
+          <span>
+            {t("Most mosques here use")} {t(methodName(suggestion))}.
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={switchMethod.isPending}
+            onClick={() => switchMethod.mutate(suggestion)}
+          >
+            {t("Use it")}
+          </Button>
+        </div>
+      ) : null}
+      <p>
+        {t(
+          "Prayer times are worked out on this device. Your location and prayer record stay in your account and are never shared or sold.",
+        )}
+      </p>
+    </div>
   );
 }
 
