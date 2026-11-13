@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Moon } from "lucide-react";
-import { useState } from "react";
-import { format } from "date-fns";
+import { useEffect, useState } from "react";
+import { addDays, format } from "date-fns";
 import { toast } from "sonner";
 import { AreaHabits } from "@/components/app/AreaHabits";
 import { AzkarSession } from "@/components/app/AzkarSession";
@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   PRAYER_LABELS,
+  prayerLabel,
   PRAYER_NAMES,
   clearPrayerLog,
   logPrayer,
@@ -33,8 +34,9 @@ import { prayersOn } from "@/data/stats";
 import { prayerCounts } from "@/data/week";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
-import { t } from "@/lib/i18n";
+import { getLang, t, useT } from "@/lib/i18n";
 import { prayerTimesFor } from "@/lib/prayer";
+import { hijriDate, nextPrayerAt, timeLeft } from "@/lib/prayerClock";
 
 export const Route = createFileRoute("/_authenticated/spirit")({
   head: () => ({
@@ -198,73 +200,91 @@ function SpiritPage() {
           place={config?.city ?? null}
         />
       ) : (
-      <div className="space-y-5">
-        <DateNav value={date} onChange={setDate} />
-        <AreaHabits category="spirit" title="Spirit habits" date={date} />
-
-        <GlanceSection>
-          <RingStat
-            title={date === todayISO() ? "Prayers today" : `Prayers on ${fmtDate(date)}`}
-            icon={Moon}
-            done={prayers.done}
-            total={prayers.total}
-            center={`${prayers.done}/${prayers.total}`}
-            headline={`${prayers.done} of ${prayers.total}`}
-            detail="prayers logged as completed"
-            tone={2}
-            ringLabel={`${prayers.done} of ${prayers.total} prayers logged`}
+        <div className="space-y-5">
+          <PrayerClock
+            date={date}
+            times={times ? prayerDates(times) : null}
+            tomorrowFajr={
+              hasLocation && date === todayISO()
+                ? prayerTimesFor(
+                    Number(config.latitude),
+                    Number(config.longitude),
+                    config.calc_method,
+                    config.asr_school,
+                    format(addDays(new Date(`${date}T12:00:00`), 1), "yyyy-MM-dd"),
+                  ).fajr
+                : null
+            }
+            formatTime={fmtTime}
           />
-        </GlanceSection>
+          <DateNav value={date} onChange={setDate} />
+          <AreaHabits category="spirit" title="Spirit habits" date={date} />
 
-        {!hasLocation ? (
-          <Card className="system-card">
-            <CardHeader>
-              <CardTitle className="text-base">No location set yet</CardTitle>
-              <CardDescription>
-                Prayer times are calculated from your location. Set it once in Settings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild>
-                <Link to="/settings">Open Settings</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <section className="space-y-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-sm font-semibold">
-                {doneCount} {t("of 5 prayed")}
-                <span className="ms-2 font-normal text-muted-foreground">
-                  {weekLogged} {t("of 35 over the last seven days")}
-                </span>
-              </p>
-              <span className="flex items-center gap-3 text-xs text-muted-foreground">
-                {config?.city ? `${t("Times for")} ${config.city}` : t("Times for your saved location")}
-                <label className="flex items-center gap-1.5">
-                  <Switch
-                    checked={showSunrise}
-                    onCheckedChange={toggleSunrise}
-                    aria-label="Show sunrise"
-                  />
-                  Sunrise
-                </label>
-              </span>
-            </div>
-            <PrayerDayList
-              date={date}
-              logs={logs.data ?? []}
-              times={times ? prayerDates(times) : null}
-              next={nextPrayer as PrayerName | null}
-              formatTime={fmtTime}
-              sunrise={showSunrise && times ? times.sunrise : null}
+          <GlanceSection>
+            <RingStat
+              title={date === todayISO() ? "Prayers today" : `Prayers on ${fmtDate(date)}`}
+              icon={Moon}
+              done={prayers.done}
+              total={prayers.total}
+              center={`${prayers.done}/${prayers.total}`}
+              headline={`${prayers.done} of ${prayers.total}`}
+              detail="prayers logged as completed"
+              tone={2}
+              ringLabel={`${prayers.done} of ${prayers.total} prayers logged`}
             />
-          </section>
-        )}
+          </GlanceSection>
 
-        <PrayerStats logs={logs.data ?? []} today={todayISO()} />
-        <PrayerReminderSettings />
-      </div>
+          {!hasLocation ? (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">No location set yet</CardTitle>
+                <CardDescription>
+                  Prayer times are calculated from your location. Set it once in Settings.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild>
+                  <Link to="/settings">Open Settings</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <section className="space-y-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-sm font-semibold">
+                  {doneCount} {t("of 5 prayed")}
+                  <span className="ms-2 font-normal text-muted-foreground">
+                    {weekLogged} {t("of 35 over the last seven days")}
+                  </span>
+                </p>
+                <span className="flex items-center gap-3 text-xs text-muted-foreground">
+                  {config?.city
+                    ? `${t("Times for")} ${config.city}`
+                    : t("Times for your saved location")}
+                  <label className="flex items-center gap-1.5">
+                    <Switch
+                      checked={showSunrise}
+                      onCheckedChange={toggleSunrise}
+                      aria-label="Show sunrise"
+                    />
+                    Sunrise
+                  </label>
+                </span>
+              </div>
+              <PrayerDayList
+                date={date}
+                logs={logs.data ?? []}
+                times={times ? prayerDates(times) : null}
+                next={nextPrayer as PrayerName | null}
+                formatTime={fmtTime}
+                sunrise={showSunrise && times ? times.sunrise : null}
+              />
+            </section>
+          )}
+
+          <PrayerStats logs={logs.data ?? []} today={todayISO()} />
+          <PrayerReminderSettings />
+        </div>
       )}
     </>
   );
@@ -281,7 +301,8 @@ function AzkarTab({
   const logs = useQuery(dhikrLogsQuery());
   const today = todayISO();
   const [time, setTime] = useState<AzkarTime>(
-    () => initial ?? azkarTimeAt(new Date(), times ? { fajr: times.fajr, dhuhr: times.dhuhr } : null),
+    () =>
+      initial ?? azkarTimeAt(new Date(), times ? { fajr: times.fajr, dhuhr: times.dhuhr } : null),
   );
   if (logs.isLoading) return <LoadingState rows={3} />;
   if (logs.error) return <ErrorState error={logs.error} onRetry={() => void logs.refetch()} />;
@@ -299,6 +320,50 @@ function TasbihTab() {
   const logs = useQuery(dhikrLogsQuery());
   const today = todayISO();
   return <Tasbih date={today} todayTotal={tasbihOn(logs.data ?? [], today)} />;
+}
+
+/**
+ * The line at the top of Prayers: the Hijri date, and on today the next
+ * prayer with the time left. Ticks every 30 seconds.
+ */
+function PrayerClock({
+  date,
+  times,
+  tomorrowFajr,
+  formatTime,
+}: {
+  date: string;
+  times: Record<PrayerName, Date> | null;
+  tomorrowFajr: Date | null;
+  formatTime: (date: Date) => string;
+}) {
+  useT();
+  const lang = getLang();
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const next = times && tomorrowFajr ? nextPrayerAt(now, times, tomorrowFajr) : null;
+  return (
+    <section className="stat-card flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 p-4">
+      {next ? (
+        <p className="text-base font-semibold" aria-live="polite">
+          {prayerLabel(next.name, next.tomorrow ? null : date)}{" "}
+          <span className="tabular-nums">
+            {lang === "ar" ? "بعد" : "in"} {timeLeft(next.at.getTime() - now.getTime(), lang)}
+          </span>
+          <span className="ms-2 text-sm font-normal tabular-nums text-muted-foreground">
+            {next.tomorrow ? `${t("Tomorrow")} · ` : ""}
+            {formatTime(next.at)}
+          </span>
+        </p>
+      ) : null}
+      <p className="text-sm text-muted-foreground">
+        {hijriDate(new Date(`${date}T12:00:00`), lang)}
+      </p>
+    </section>
+  );
 }
 
 /** The five prayer times as a plain record. */
