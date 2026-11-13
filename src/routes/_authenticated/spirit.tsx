@@ -29,7 +29,7 @@ import {
   spiritKeys,
   type PrayerName,
 } from "@/data/spirit";
-import { azkarDone, azkarTimeAt, dhikrLogsQuery, tasbihOn, type AzkarTime } from "@/data/azkar";
+import { azkarDone, azkarMoment, dhikrLogsQuery, tasbihOn, type AzkarSet } from "@/data/azkar";
 import { prayersOn } from "@/data/stats";
 import { prayerCounts } from "@/data/week";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -55,12 +55,12 @@ export const Route = createFileRoute("/_authenticated/spirit")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>): { tab?: SpiritTab; time?: AzkarTime } => {
+  validateSearch: (search: Record<string, unknown>): { tab?: SpiritTab; time?: AzkarSet } => {
     const tab = SPIRIT_TABS.find((option) => option.value === search["tab"])?.value;
     const time = search["time"];
     return {
       ...(tab && tab !== "prayers" ? { tab } : {}),
-      ...(time === "morning" || time === "evening" ? { time } : {}),
+      ...(time === "morning" || time === "evening" || time === "after_prayer" ? { time } : {}),
     };
   },
   component: SpiritPage,
@@ -290,28 +290,30 @@ function SpiritPage() {
   );
 }
 
-/** Morning or evening azkar for today, opening on the one that fits the hour. */
+/**
+ * Today's azkar, opening on the set that fits the moment: after a prayer for
+ * half an hour after its time, otherwise morning or evening.
+ */
 function AzkarTab({
   times,
   initial,
 }: {
   times: ReturnType<typeof prayerTimesFor> | null;
-  initial?: AzkarTime;
+  initial?: AzkarSet;
 }) {
   const logs = useQuery(dhikrLogsQuery());
   const today = todayISO();
-  const [time, setTime] = useState<AzkarTime>(
-    () =>
-      initial ?? azkarTimeAt(new Date(), times ? { fajr: times.fajr, dhuhr: times.dhuhr } : null),
-  );
+  const [moment] = useState(() => azkarMoment(new Date(), times ? prayerDates(times) : null));
+  const [time, setTime] = useState<AzkarSet>(() => initial ?? moment.set);
   if (logs.isLoading) return <LoadingState rows={3} />;
   if (logs.error) return <ErrorState error={logs.error} onRetry={() => void logs.refetch()} />;
   return (
     <AzkarSession
       date={today}
       time={time}
+      prayer={moment.prayer}
       onTimeChange={setTime}
-      done={azkarDone(logs.data ?? [], today, time)}
+      done={time !== "after_prayer" && azkarDone(logs.data ?? [], today, time)}
     />
   );
 }
