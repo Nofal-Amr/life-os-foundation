@@ -78,7 +78,7 @@ function PrivacyPage() {
         <p>Only when you use the feature that needs them:</p>
         <ul>
           <li>
-            <strong>Google</strong>, if you sign in with Google.
+            <strong>Google</strong>, if you sign in with Google, or connect Google Calendar.
           </li>
           <li>
             <strong>Open-Meteo</strong> gets the city name you type to set prayer times.
@@ -99,6 +99,32 @@ function PrivacyPage() {
           Reading text from photos and the AI suggestions run on your device. Those photos and texts
           are not uploaded for them.
         </p>
+      </section>
+
+      <section>
+        <h2>Google Calendar</h2>
+        <p>Only if you connect it in Settings:</p>
+        <ul>
+          <li>
+            Life OS reads and changes events in the Google calendars you choose, and reads the names
+            of your calendars so you can choose. It asks Google for nothing else: not your contacts,
+            mail or files, and not the settings or sharing of your calendars.
+          </li>
+          <li>
+            Events from those calendars are copied into your Life OS calendar. Events you make or
+            change in Life OS are sent to the calendar you picked for new events.
+          </li>
+          <li>
+            The access Google gives is stored encrypted on the Life OS server and never reaches your
+            browser. It is used only to sync, when you open the Calendar or tap Sync now.
+          </li>
+          <li>
+            Disconnecting in Settings gives the access back to Google and deletes it here. You can
+            keep the copied events or remove them. You can also remove access in your Google account
+            settings at any time.
+          </li>
+          <li>Google Calendar data is never used for ads, sold, or shared with anyone.</li>
+        </ul>
       </section>
 
       <section>
