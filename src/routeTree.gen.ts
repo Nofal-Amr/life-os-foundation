@@ -44,6 +44,7 @@ import { Route as AuthenticatedFinanceAccountsRouteImport } from './routes/_auth
 import { Route as AuthenticatedFinanceCategoriesRouteImport } from './routes/_authenticated/finance.categories'
 import { Route as AuthenticatedFinanceRecurringRouteImport } from './routes/_authenticated/finance.recurring'
 import { Route as AuthenticatedFinanceTransactionsRouteImport } from './routes/_authenticated/finance.transactions'
+import { Route as AuthenticatedGoogleCalendarCallbackRouteImport } from './routes/_authenticated/google-calendar.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -225,6 +226,12 @@ const AuthenticatedFinanceTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedGoogleCalendarCallbackRoute =
+  AuthenticatedGoogleCalendarCallbackRouteImport.update({
+    id: '/google-calendar/callback',
+    path: '/google-calendar/callback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
+  '/google-calendar/callback': typeof AuthenticatedGoogleCalendarCallbackRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
 }
 export interface FileRoutesByTo {
@@ -295,6 +303,7 @@ export interface FileRoutesByTo {
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
+  '/google-calendar/callback': typeof AuthenticatedGoogleCalendarCallbackRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
 }
 export interface FileRoutesById {
@@ -333,6 +342,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/_authenticated/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/_authenticated/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
+  '/_authenticated/google-calendar/callback': typeof AuthenticatedGoogleCalendarCallbackRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
 }
 export interface FileRouteTypes {
@@ -371,6 +381,7 @@ export interface FileRouteTypes {
     | '/finance/categories'
     | '/finance/recurring'
     | '/finance/transactions'
+    | '/google-calendar/callback'
     | '/finance/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -406,6 +417,7 @@ export interface FileRouteTypes {
     | '/finance/categories'
     | '/finance/recurring'
     | '/finance/transactions'
+    | '/google-calendar/callback'
     | '/finance'
   id:
     | '__root__'
@@ -443,6 +455,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/categories'
     | '/_authenticated/finance/recurring'
     | '/_authenticated/finance/transactions'
+    | '/_authenticated/google-calendar/callback'
     | '/_authenticated/finance/'
   fileRoutesById: FileRoutesById
 }
@@ -701,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceTransactionsRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/google-calendar/callback': {
+      id: '/_authenticated/google-calendar/callback'
+      path: '/google-calendar/callback'
+      fullPath: '/google-calendar/callback'
+      preLoaderRoute: typeof AuthenticatedGoogleCalendarCallbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -748,6 +768,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTogetherRoute: typeof AuthenticatedTogetherRoute
   AuthenticatedWeekRoute: typeof AuthenticatedWeekRoute
   AuthenticatedWorkRoute: typeof AuthenticatedWorkRoute
+  AuthenticatedGoogleCalendarCallbackRoute: typeof AuthenticatedGoogleCalendarCallbackRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -775,6 +796,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTogetherRoute: AuthenticatedTogetherRoute,
   AuthenticatedWeekRoute: AuthenticatedWeekRoute,
   AuthenticatedWorkRoute: AuthenticatedWorkRoute,
+  AuthenticatedGoogleCalendarCallbackRoute:
+    AuthenticatedGoogleCalendarCallbackRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

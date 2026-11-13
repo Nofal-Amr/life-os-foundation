@@ -50,7 +50,11 @@ export class GoogleApiError extends Error {
 export interface GoogleCalendarApi {
   listEvents(
     calendarId: string,
-    query: { syncToken?: string | undefined; timeMin?: string | undefined; pageToken?: string | undefined },
+    query: {
+      syncToken?: string | undefined;
+      timeMin?: string | undefined;
+      pageToken?: string | undefined;
+    },
   ): Promise<GoogleEventPage>;
   getEvent(calendarId: string, eventId: string): Promise<GoogleEvent>;
   insertEvent(calendarId: string, body: GoogleEventBody): Promise<GoogleEvent>;

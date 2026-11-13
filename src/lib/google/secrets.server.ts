@@ -6,7 +6,13 @@
  *   account it was made for.
  * - The OAuth `state` is HMAC-signed: user id, a random nonce and an expiry.
  */
-import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHmac,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
 
 const VERSION = "v1";
 
@@ -22,7 +28,12 @@ export function sealToken(plain: string, userId: string, keyB64: string): string
   cipher.setAAD(Buffer.from(userId, "utf8"));
   const body = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
-  return [VERSION, iv.toString("base64url"), tag.toString("base64url"), body.toString("base64url")].join(".");
+  return [
+    VERSION,
+    iv.toString("base64url"),
+    tag.toString("base64url"),
+    body.toString("base64url"),
+  ].join(".");
 }
 
 export function openToken(sealed: string, userId: string, keyB64: string): string {
@@ -31,7 +42,10 @@ export function openToken(sealed: string, userId: string, keyB64: string): strin
   const decipher = createDecipheriv("aes-256-gcm", keyBytes(keyB64), Buffer.from(iv, "base64url"));
   decipher.setAAD(Buffer.from(userId, "utf8"));
   decipher.setAuthTag(Buffer.from(tag, "base64url"));
-  return Buffer.concat([decipher.update(Buffer.from(body, "base64url")), decipher.final()]).toString("utf8");
+  return Buffer.concat([
+    decipher.update(Buffer.from(body, "base64url")),
+    decipher.final(),
+  ]).toString("utf8");
 }
 
 const STATE_TTL_MS = 10 * 60_000;
@@ -43,20 +57,32 @@ function hmac(data: string, keyB64: string) {
 
 export function signState(userId: string, keyB64: string, nowMs = Date.now()): string {
   const payload = Buffer.from(
-    JSON.stringify({ u: userId, n: randomBytes(16).toString("base64url"), e: nowMs + STATE_TTL_MS }),
+    JSON.stringify({
+      u: userId,
+      n: randomBytes(16).toString("base64url"),
+      e: nowMs + STATE_TTL_MS,
+    }),
   ).toString("base64url");
   return `${payload}.${hmac(payload, keyB64)}`;
 }
 
 /** True only for a state this server signed, for this user, not yet expired. */
-export function verifyState(state: string, userId: string, keyB64: string, nowMs = Date.now()): boolean {
+export function verifyState(
+  state: string,
+  userId: string,
+  keyB64: string,
+  nowMs = Date.now(),
+): boolean {
   const [payload, sig] = state.split(".");
   if (!payload || !sig) return false;
   const expected = Buffer.from(hmac(payload, keyB64));
   const given = Buffer.from(sig);
   if (expected.length !== given.length || !timingSafeEqual(expected, given)) return false;
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { u?: string; e?: number };
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      u?: string;
+      e?: number;
+    };
     return data.u === userId && typeof data.e === "number" && data.e > nowMs;
   } catch {
     return false;

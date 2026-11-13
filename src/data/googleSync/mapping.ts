@@ -117,7 +117,10 @@ export function lifeToGoogle(
  * The conflict rule when both sides changed since the last sync: the most
  * recent edit wins; a tie goes to Google.
  */
-export function newestWins(lifeUpdatedAt: string, googleUpdated: string | undefined): "life" | "google" {
+export function newestWins(
+  lifeUpdatedAt: string,
+  googleUpdated: string | undefined,
+): "life" | "google" {
   if (!googleUpdated) return "life";
   return Date.parse(lifeUpdatedAt) > Date.parse(googleUpdated) ? "life" : "google";
 }

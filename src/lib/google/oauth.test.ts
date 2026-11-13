@@ -7,15 +7,29 @@ describe("readGoogleConfig", () => {
     expect(readGoogleConfig({})).toBeNull();
     expect(readGoogleConfig({ GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "s" })).toBeNull();
     expect(
-      readGoogleConfig({ GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "s", GOOGLE_TOKEN_KEY: "k" }),
-    ).toEqual({ clientId: "id", clientSecret: "s", tokenKey: "k", redirectUri: DEFAULT_REDIRECT_URI });
+      readGoogleConfig({
+        GOOGLE_CLIENT_ID: "id",
+        GOOGLE_CLIENT_SECRET: "s",
+        GOOGLE_TOKEN_KEY: "k",
+      }),
+    ).toEqual({
+      clientId: "id",
+      clientSecret: "s",
+      tokenKey: "k",
+      redirectUri: DEFAULT_REDIRECT_URI,
+    });
   });
 });
 
 describe("buildConsentUrl", () => {
   it("asks only for the narrow calendar scopes, offline, with PKCE", () => {
     const url = new URL(
-      buildConsentUrl({ clientId: "id", redirectUri: DEFAULT_REDIRECT_URI, state: "st", codeChallenge: "ch" }),
+      buildConsentUrl({
+        clientId: "id",
+        redirectUri: DEFAULT_REDIRECT_URI,
+        state: "st",
+        codeChallenge: "ch",
+      }),
     );
     const scope = url.searchParams.get("scope")!;
     expect(scope).toContain("calendar.events");

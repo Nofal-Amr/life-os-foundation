@@ -172,7 +172,8 @@ export async function syncCalendar(input: SyncCalendarInput): Promise<SyncResult
       try {
         await google.deleteEvent(calendarId, link.google_event_id);
       } catch (error) {
-        const gone = error instanceof GoogleApiError && (error.status === 404 || error.status === 410);
+        const gone =
+          error instanceof GoogleApiError && (error.status === 404 || error.status === 410);
         if (!gone) throw error;
       }
       await store.deleteLink(link.id);
@@ -188,7 +189,12 @@ export async function syncCalendar(input: SyncCalendarInput): Promise<SyncResult
     const body = lifeToGoogle(event, { allDay: link.all_day, timeZone: zone });
     let sent: GoogleEvent;
     try {
-      sent = await google.patchEvent(calendarId, link.google_event_id, body, link.etag ?? undefined);
+      sent = await google.patchEvent(
+        calendarId,
+        link.google_event_id,
+        body,
+        link.etag ?? undefined,
+      );
     } catch (error) {
       if (!(error instanceof GoogleApiError && error.status === 412)) throw error;
       // Google changed it since we last looked: apply the rule once more.

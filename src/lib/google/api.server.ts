@@ -16,7 +16,10 @@ const API = "https://www.googleapis.com/calendar/v3";
 async function fail(res: Response): Promise<never> {
   let message = res.statusText;
   try {
-    const body = (await res.json()) as { error?: { message?: string } | string; error_description?: string };
+    const body = (await res.json()) as {
+      error?: { message?: string } | string;
+      error_description?: string;
+    };
     message =
       typeof body.error === "string"
         ? (body.error_description ?? body.error)
@@ -55,7 +58,10 @@ export async function exchangeCode(
   return (await res.json()) as TokenAnswer;
 }
 
-export async function refreshAccessToken(config: GoogleConfig, refreshToken: string): Promise<string> {
+export async function refreshAccessToken(
+  config: GoogleConfig,
+  refreshToken: string,
+): Promise<string> {
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -84,7 +90,9 @@ export function emailFromIdToken(idToken: string | undefined): string | null {
   const payload = idToken?.split(".")[1];
   if (!payload) return null;
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { email?: string };
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      email?: string;
+    };
     return data.email ?? null;
   } catch {
     return null;
@@ -126,7 +134,9 @@ export function calendarClient(accessToken: string) {
       if (query.syncToken) q.set("syncToken", query.syncToken);
       else if (query.timeMin) q.set("timeMin", query.timeMin);
       if (query.pageToken) q.set("pageToken", query.pageToken);
-      const page = await call<GoogleEventPage & { items?: GoogleEvent[] }>(`${cal(calendarId)}?${q}`);
+      const page = await call<GoogleEventPage & { items?: GoogleEvent[] }>(
+        `${cal(calendarId)}?${q}`,
+      );
       return { ...page, items: page.items ?? [] };
     },
     getEvent: (calendarId, eventId) =>

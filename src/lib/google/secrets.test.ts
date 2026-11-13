@@ -35,7 +35,9 @@ describe("signed OAuth state", () => {
     expect(verifyState(state, "user-a", key, now + 11 * 60_000)).toBe(false);
     expect(verifyState(state, "user-a", other, now)).toBe(false);
     const [payload, sig] = state.split(".");
-    const forged = Buffer.from(JSON.stringify({ u: "user-b", n: "x", e: now + 60_000 })).toString("base64url");
+    const forged = Buffer.from(JSON.stringify({ u: "user-b", n: "x", e: now + 60_000 })).toString(
+      "base64url",
+    );
     expect(verifyState(`${forged}.${sig}`, "user-b", key, now)).toBe(false);
     expect(verifyState(`${payload}.`, "user-a", key, now)).toBe(false);
   });

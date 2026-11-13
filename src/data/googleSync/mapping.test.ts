@@ -27,7 +27,10 @@ describe("googleToLife", () => {
     });
   });
   it("treats a one-day all-day event as that whole day", () => {
-    const e = googleToLife({ id: "a", start: { date: "2026-11-20" }, end: { date: "2026-11-21" } }, "UTC");
+    const e = googleToLife(
+      { id: "a", start: { date: "2026-11-20" }, end: { date: "2026-11-21" } },
+      "UTC",
+    );
     expect(e.start_at).toBe("2026-11-20T00:00:00.000Z");
     expect(e.end_at).toBe("2026-11-20T23:59:00.000Z");
   });

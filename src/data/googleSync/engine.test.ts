@@ -56,7 +56,11 @@ describe("pull", () => {
   it("uses the sync token next time and applies only what changed", async () => {
     google.put({ id: "a", summary: "Dentist", start: { dateTime: "2026-11-15T09:00:00Z" } });
     await sync();
-    google.put({ id: "a", summary: "Dentist (moved)", start: { dateTime: "2026-11-16T09:00:00Z" } });
+    google.put({
+      id: "a",
+      summary: "Dentist (moved)",
+      start: { dateTime: "2026-11-16T09:00:00Z" },
+    });
     const r = await sync();
     expect(google.calls.at(-1)).toBe("list:incremental");
     expect(r.updatedHere).toBe(1);
@@ -85,7 +89,12 @@ describe("pull", () => {
   });
 
   it("maps all-day events to local midnight through 23:59 of the last day", async () => {
-    google.put({ id: "a", summary: "Trip", start: { date: "2026-11-20" }, end: { date: "2026-11-22" } });
+    google.put({
+      id: "a",
+      summary: "Trip",
+      start: { date: "2026-11-20" },
+      end: { date: "2026-11-22" },
+    });
     await sync();
     const e = [...store.events.values()][0]!;
     // Cairo is UTC+2 in November.
@@ -97,7 +106,12 @@ describe("pull", () => {
 
 describe("push", () => {
   it("sends new Life OS events to the chosen calendar, once", async () => {
-    store.add({ title: "Write report", description: null, start_at: "2026-11-14T10:00:00.000Z", end_at: null });
+    store.add({
+      title: "Write report",
+      description: null,
+      start_at: "2026-11-14T10:00:00.000Z",
+      end_at: null,
+    });
     const r = await sync();
     expect(r.sentToGoogle).toBe(1);
     const g = [...google.events.values()][0]!;
@@ -109,19 +123,34 @@ describe("push", () => {
   });
 
   it("does not send new events to a calendar that isn't the one chosen for them", async () => {
-    store.add({ title: "Private", description: null, start_at: "2026-11-14T10:00:00.000Z", end_at: null });
+    store.add({
+      title: "Private",
+      description: null,
+      start_at: "2026-11-14T10:00:00.000Z",
+      end_at: null,
+    });
     await sync({ pushNew: false });
     expect(google.events.size).toBe(0);
   });
 
   it("leaves events from long ago alone", async () => {
-    store.add({ title: "Old", description: null, start_at: "2026-01-01T10:00:00.000Z", end_at: null });
+    store.add({
+      title: "Old",
+      description: null,
+      start_at: "2026-01-01T10:00:00.000Z",
+      end_at: null,
+    });
     await sync();
     expect(google.events.size).toBe(0);
   });
 
   it("sends Life OS edits and deletions to Google", async () => {
-    google.put({ id: "a", summary: "Lunch", start: { dateTime: "2026-11-15T12:00:00Z" }, end: { dateTime: "2026-11-15T13:00:00Z" } });
+    google.put({
+      id: "a",
+      summary: "Lunch",
+      start: { dateTime: "2026-11-15T12:00:00Z" },
+      end: { dateTime: "2026-11-15T13:00:00Z" },
+    });
     await sync();
     const id = [...store.events.keys()][0]!;
     store.edit(id, { title: "Lunch with Sara" });
@@ -134,7 +163,12 @@ describe("push", () => {
   });
 
   it("keeps all-day events all-day when edited in Life OS", async () => {
-    google.put({ id: "a", summary: "Holiday", start: { date: "2026-11-20" }, end: { date: "2026-11-21" } });
+    google.put({
+      id: "a",
+      summary: "Holiday",
+      start: { date: "2026-11-20" },
+      end: { date: "2026-11-21" },
+    });
     await sync();
     store.edit([...store.events.keys()][0]!, { title: "Holiday!" });
     await sync();
@@ -164,7 +198,11 @@ describe("conflicts: the most recent edit wins", () => {
   it("Google wins when it was edited last", async () => {
     const id = await linked();
     store.edit(id, { title: "Edited here" });
-    google.put({ id: "a", summary: "Edited in Google", start: { dateTime: "2026-11-15T12:00:00Z" } });
+    google.put({
+      id: "a",
+      summary: "Edited in Google",
+      start: { dateTime: "2026-11-15T12:00:00Z" },
+    });
     await sync();
     expect(titles()).toEqual(["Edited in Google"]);
     expect(google.events.get("a")!.summary).toBe("Edited in Google");
@@ -172,7 +210,11 @@ describe("conflicts: the most recent edit wins", () => {
 
   it("Life OS wins when it was edited last", async () => {
     const id = await linked();
-    google.put({ id: "a", summary: "Edited in Google", start: { dateTime: "2026-11-15T12:00:00Z" } });
+    google.put({
+      id: "a",
+      summary: "Edited in Google",
+      start: { dateTime: "2026-11-15T12:00:00Z" },
+    });
     store.edit(id, { title: "Edited here" });
     await sync();
     expect(titles()).toEqual(["Edited here"]);
@@ -184,7 +226,12 @@ describe("conflicts: the most recent edit wins", () => {
     store.edit(id, { title: "Edited here" });
     // Simulate a Google edit that the pull didn't see: bump the etag silently.
     const g = google.events.get("a")!;
-    google.events.set("a", { ...g, etag: '"sneaky"', summary: "Older Google edit", updated: "2026-11-13T07:00:00.000Z" });
+    google.events.set("a", {
+      ...g,
+      etag: '"sneaky"',
+      summary: "Older Google edit",
+      updated: "2026-11-13T07:00:00.000Z",
+    });
     await sync();
     expect(google.events.get("a")!.summary).toBe("Edited here");
   });

@@ -10,6 +10,7 @@ import { LifeConnectCard } from "@/components/app/LifeConnectCard";
 import { LocalAiCard } from "@/components/app/LocalAi";
 import { LanguageCard } from "@/components/app/LanguageCard";
 import { HolidaysCard } from "@/components/app/Holidays";
+import { GoogleCalendarCard } from "@/components/app/GoogleCalendarCard";
 import { SpendingSettingsCard } from "@/components/app/SpendingInbox";
 import { ReminderSettingsCard } from "@/components/app/PrayerReminders";
 import { UsageInsights } from "@/components/app/UsageInsights";
@@ -1059,6 +1060,7 @@ function SettingsPage() {
         <SpendingSettingsCard />
         <LocalAiCard />
         <HolidaysCard />
+        <GoogleCalendarCard />
 
         <UsageInsights />
         <CrashReportCard />

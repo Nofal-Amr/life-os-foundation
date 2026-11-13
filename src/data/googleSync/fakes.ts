@@ -53,7 +53,11 @@ export class FakeGoogle implements GoogleCalendarApi {
 
   async listEvents(
     _calendarId: string,
-    query: { syncToken?: string | undefined; timeMin?: string | undefined; pageToken?: string | undefined },
+    query: {
+      syncToken?: string | undefined;
+      timeMin?: string | undefined;
+      pageToken?: string | undefined;
+    },
   ) {
     this.calls.push(query.syncToken ? "list:incremental" : "list:full");
     let ids: string[];
@@ -134,7 +138,9 @@ export class MemoryStore implements SyncStore {
   }
 
   async listLinks(calendarId: string) {
-    return [...this.links.values()].filter((l) => l.calendar_id === calendarId).map((l) => ({ ...l }));
+    return [...this.links.values()]
+      .filter((l) => l.calendar_id === calendarId)
+      .map((l) => ({ ...l }));
   }
   async getEvents(ids: string[]) {
     return ids.flatMap((id) => (this.events.has(id) ? [this.events.get(id)!] : []));

@@ -59,7 +59,9 @@ export const getGoogleCalendarStatus = createServerFn({ method: "GET" })
     if (!config) return { state: "not_configured" };
     const res = await context.supabase
       .from("google_calendar_connections")
-      .select("account_email,read_calendar_ids,write_calendar_id,sync_enabled,last_sync_at,last_error")
+      .select(
+        "account_email,read_calendar_ids,write_calendar_id,sync_enabled,last_sync_at,last_error",
+      )
       .eq("user_id", context.userId)
       .maybeSingle();
     if (res.error) {
@@ -118,7 +120,9 @@ export const finishGoogleConnect = createServerFn({ method: "POST" })
     const tokens = await api.exchangeCode(config, data.code, data.codeVerifier);
     if (!hasNeededScopes(tokens.scope)) {
       await api.revokeToken(tokens.access_token);
-      throw new Error("Life OS needs calendar access to sync. Tick both calendar boxes on Google's page.");
+      throw new Error(
+        "Life OS needs calendar access to sync. Tick both calendar boxes on Google's page.",
+      );
     }
     if (!tokens.refresh_token) {
       throw new Error("Google didn't give lasting access. Try connecting again.");
@@ -138,9 +142,12 @@ export const finishGoogleConnect = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function accessFor(
-  context: { supabase: import("@supabase/supabase-js").SupabaseClient<import("@/integrations/supabase/types").Database>; userId: string },
-) {
+async function accessFor(context: {
+  supabase: import("@supabase/supabase-js").SupabaseClient<
+    import("@/integrations/supabase/types").Database
+  >;
+  userId: string;
+}) {
   const { config, secrets, api } = await server();
   if (!config) throw new Error("Google Calendar isn't set up yet.");
   const res = await context.supabase
@@ -190,13 +197,18 @@ export const saveGoogleCalendarChoice = createServerFn({ method: "POST" })
       .single();
     if (current.error) throw new Error(current.error.message);
     const tokens = (current.data.sync_tokens ?? {}) as Record<string, string>;
-    const kept = Object.fromEntries(Object.entries(tokens).filter(([id]) => data.readIds.includes(id)));
+    const kept = Object.fromEntries(
+      Object.entries(tokens).filter(([id]) => data.readIds.includes(id)),
+    );
     // Calendars no longer chosen stop syncing; their events stay as normal Life OS events.
     const linked = await context.supabase.from("google_event_links").select("calendar_id");
     if (linked.error) throw new Error(linked.error.message);
     const linkedIds = new Set([...Object.keys(tokens), ...linked.data.map((l) => l.calendar_id)]);
     for (const id of [...linkedIds].filter((id) => !data.readIds.includes(id))) {
-      const dropped = await context.supabase.from("google_event_links").delete().eq("calendar_id", id);
+      const dropped = await context.supabase
+        .from("google_event_links")
+        .delete()
+        .eq("calendar_id", id);
       if (dropped.error) throw new Error(dropped.error.message);
     }
     const res = await context.supabase
@@ -219,7 +231,8 @@ function calmError(error: unknown): string {
   if (/invalid_grant|expired or revoked/i.test(message) || status === 401) {
     return "Google access was removed. Connect again to keep syncing.";
   }
-  if (status === 403 || status === 429) return "Google asked us to slow down. It will try again later.";
+  if (status === 403 || status === 429)
+    return "Google asked us to slow down. It will try again later.";
   return "Sync didn't finish. It will try again next time.";
 }
 
@@ -227,7 +240,8 @@ export const syncGoogleCalendarNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SyncSummary> => {
     const { config, api, row, refresh } = await accessFor(context);
-    if (!row.sync_enabled) return { ok: false, skipped: true, message: "Choose your calendars first." };
+    if (!row.sync_enabled)
+      return { ok: false, skipped: true, message: "Choose your calendars first." };
 
     // A short lease so two open tabs don't sync at the same time.
     const now = new Date();
@@ -239,14 +253,21 @@ export const syncGoogleCalendarNow = createServerFn({ method: "POST" })
       .or(`last_sync_at.is.null,last_sync_at.lt.${leaseCutoff}`)
       .select("user_id");
     if (lease.error) throw new Error(lease.error.message);
-    if (!lease.data?.length) return { ok: true, skipped: true, message: "A sync just ran. Try again in a few seconds." };
+    if (!lease.data?.length)
+      return { ok: true, skipped: true, message: "A sync just ran. Try again in a few seconds." };
 
     const [{ syncCalendar }, { supabaseSyncStore }] = await Promise.all([
       import("@/data/googleSync/engine"),
       import("./google/store.server"),
     ]);
     const tokens = { ...((row.sync_tokens ?? {}) as Record<string, string>) };
-    let totals = { imported: 0, updatedHere: 0, removedHere: 0, sentToGoogle: 0, removedFromGoogle: 0 };
+    let totals = {
+      imported: 0,
+      updatedHere: 0,
+      removedHere: 0,
+      sentToGoogle: 0,
+      removedFromGoogle: 0,
+    };
     let lastError: string | null = null;
     try {
       const client = api.calendarClient(await api.refreshAccessToken(config, refresh));
@@ -283,7 +304,11 @@ export const syncGoogleCalendarNow = createServerFn({ method: "POST" })
     }
     await context.supabase
       .from("google_calendar_connections")
-      .update({ sync_tokens: tokens, last_sync_at: new Date().toISOString(), last_error: lastError })
+      .update({
+        sync_tokens: tokens,
+        last_sync_at: new Date().toISOString(),
+        last_error: lastError,
+      })
       .eq("user_id", context.userId);
     if (lastError) return { ok: false, message: lastError };
     const here = totals.imported + totals.updatedHere + totals.removedHere;
@@ -310,7 +335,9 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
     if (row.error) throw new Error(row.error.message);
     if (row.data && config) {
       try {
-        await api.revokeToken(secrets.openToken(row.data.refresh_token_enc, context.userId, config.tokenKey));
+        await api.revokeToken(
+          secrets.openToken(row.data.refresh_token_enc, context.userId, config.tokenKey),
+        );
       } catch {
         /* still forget it below */
       }
@@ -324,11 +351,17 @@ export const disconnectGoogleCalendar = createServerFn({ method: "POST" })
       if (links.error) throw new Error(links.error.message);
       const ids = links.data.flatMap((l) => (l.event_id ? [l.event_id] : []));
       for (let i = 0; i < ids.length; i += 200) {
-        const del = await context.supabase.from("events").delete().in("id", ids.slice(i, i + 200));
+        const del = await context.supabase
+          .from("events")
+          .delete()
+          .in("id", ids.slice(i, i + 200));
         if (del.error) throw new Error(del.error.message);
       }
     }
-    const links = await context.supabase.from("google_event_links").delete().eq("user_id", context.userId);
+    const links = await context.supabase
+      .from("google_event_links")
+      .delete()
+      .eq("user_id", context.userId);
     if (links.error) throw new Error(links.error.message);
     const conn = await context.supabase
       .from("google_calendar_connections")

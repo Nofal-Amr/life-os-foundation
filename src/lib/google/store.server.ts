@@ -24,15 +24,19 @@ export function supabaseSyncStore(db: Client, userId: string): SyncStore {
       const out: LifeEventRow[] = [];
       for (let i = 0; i < ids.length; i += CHUNK) {
         const part = ids.slice(i, i + CHUNK);
-        out.push(...(must(await db.from("events").select(EVENT_COLUMNS).in("id", part)) as LifeEventRow[]));
+        out.push(
+          ...(must(await db.from("events").select(EVENT_COLUMNS).in("id", part)) as LifeEventRow[]),
+        );
       }
       return out;
     },
     async listUnlinkedEvents(sinceIso) {
       const linked = new Set(
-        (must(await db.from("google_event_links").select("event_id")) as { event_id: string | null }[]).map(
-          (l) => l.event_id,
-        ),
+        (
+          must(await db.from("google_event_links").select("event_id")) as {
+            event_id: string | null;
+          }[]
+        ).map((l) => l.event_id),
       );
       const rows = must(
         await db.from("events").select(EVENT_COLUMNS).gte("start_at", sinceIso),
