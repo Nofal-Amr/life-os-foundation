@@ -29,6 +29,7 @@ import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { useHolidays } from "@/components/app/Holidays";
+import { GoogleCalendarBar } from "@/components/app/GoogleCalendarCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -454,6 +455,9 @@ function CalendarPage() {
           </Button>
         }
       />
+      <div className="-mt-2 mb-3">
+        <GoogleCalendarBar />
+      </div>
 
       {loading ? (
         <LoadingState rows={4} />

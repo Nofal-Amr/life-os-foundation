@@ -14,6 +14,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -35,6 +36,11 @@ class AppViewModel @Inject constructor(
     val haptics = settings.haptics.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     fun syncNow() = sync.request()
+
+    val isDemo: StateFlow<Boolean> = account.state.map { (it as? SessionState.SignedIn)?.session?.userId == app.lifeos.kt.data.DemoSeed.USER }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    fun resetDemo() = viewModelScope.launch { account.resetDemo() }
+    fun exitDemo() = viewModelScope.launch { account.signOut() }
 
     /** lifeosnative://auth-callback#access_token=… from the website after Google sign-in. Returns false if unreadable. */
     fun handleGoogleCallback(fragment: String?): Boolean {

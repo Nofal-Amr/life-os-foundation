@@ -22,6 +22,7 @@ import { Route as AuthenticatedFoodRouteImport } from './routes/_authenticated/f
 import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
 import { Route as AuthenticatedHabitsRouteImport } from './routes/_authenticated/habits'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
+import { Route as AuthenticatedImportPlanRouteImport } from './routes/_authenticated/import-plan'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
@@ -45,6 +46,7 @@ import { Route as AuthenticatedFinanceAccountsRouteImport } from './routes/_auth
 import { Route as AuthenticatedFinanceCategoriesRouteImport } from './routes/_authenticated/finance.categories'
 import { Route as AuthenticatedFinanceRecurringRouteImport } from './routes/_authenticated/finance.recurring'
 import { Route as AuthenticatedFinanceTransactionsRouteImport } from './routes/_authenticated/finance.transactions'
+import { Route as AuthenticatedGoogleCalendarCallbackRouteImport } from './routes/_authenticated/google-calendar.callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -109,6 +111,11 @@ const AuthenticatedHabitsRoute = AuthenticatedHabitsRouteImport.update({
 const AuthenticatedHealthRoute = AuthenticatedHealthRouteImport.update({
   id: '/health',
   path: '/health',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedImportPlanRoute = AuthenticatedImportPlanRouteImport.update({
+  id: '/import-plan',
+  path: '/import-plan',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
@@ -232,6 +239,12 @@ const AuthenticatedFinanceTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedFinanceRoute,
   } as any)
+const AuthenticatedGoogleCalendarCallbackRoute =
+  AuthenticatedGoogleCalendarCallbackRouteImport.update({
+    id: '/google-calendar/callback',
+    path: '/google-calendar/callback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -246,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/import-plan': typeof AuthenticatedImportPlanRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notes': typeof AuthenticatedNotesRoute
@@ -268,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
+  '/google-calendar/callback': typeof AuthenticatedGoogleCalendarCallbackRoute
   '/finance/': typeof AuthenticatedFinanceIndexRoute
 }
 export interface FileRoutesByTo {
@@ -282,6 +297,7 @@ export interface FileRoutesByTo {
   '/goals': typeof AuthenticatedGoalsRoute
   '/habits': typeof AuthenticatedHabitsRoute
   '/health': typeof AuthenticatedHealthRoute
+  '/import-plan': typeof AuthenticatedImportPlanRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/messages': typeof AuthenticatedMessagesRoute
   '/notes': typeof AuthenticatedNotesRoute
@@ -304,6 +320,7 @@ export interface FileRoutesByTo {
   '/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
+  '/google-calendar/callback': typeof AuthenticatedGoogleCalendarCallbackRoute
   '/finance': typeof AuthenticatedFinanceIndexRoute
 }
 export interface FileRoutesById {
@@ -321,6 +338,7 @@ export interface FileRoutesById {
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
   '/_authenticated/habits': typeof AuthenticatedHabitsRoute
   '/_authenticated/health': typeof AuthenticatedHealthRoute
+  '/_authenticated/import-plan': typeof AuthenticatedImportPlanRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
@@ -343,6 +361,7 @@ export interface FileRoutesById {
   '/_authenticated/finance/categories': typeof AuthenticatedFinanceCategoriesRoute
   '/_authenticated/finance/recurring': typeof AuthenticatedFinanceRecurringRoute
   '/_authenticated/finance/transactions': typeof AuthenticatedFinanceTransactionsRoute
+  '/_authenticated/google-calendar/callback': typeof AuthenticatedGoogleCalendarCallbackRoute
   '/_authenticated/finance/': typeof AuthenticatedFinanceIndexRoute
 }
 export interface FileRouteTypes {
@@ -360,6 +379,7 @@ export interface FileRouteTypes {
     | '/goals'
     | '/habits'
     | '/health'
+    | '/import-plan'
     | '/insights'
     | '/messages'
     | '/notes'
@@ -382,6 +402,7 @@ export interface FileRouteTypes {
     | '/finance/categories'
     | '/finance/recurring'
     | '/finance/transactions'
+    | '/google-calendar/callback'
     | '/finance/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -396,6 +417,7 @@ export interface FileRouteTypes {
     | '/goals'
     | '/habits'
     | '/health'
+    | '/import-plan'
     | '/insights'
     | '/messages'
     | '/notes'
@@ -418,6 +440,7 @@ export interface FileRouteTypes {
     | '/finance/categories'
     | '/finance/recurring'
     | '/finance/transactions'
+    | '/google-calendar/callback'
     | '/finance'
   id:
     | '__root__'
@@ -434,6 +457,7 @@ export interface FileRouteTypes {
     | '/_authenticated/goals'
     | '/_authenticated/habits'
     | '/_authenticated/health'
+    | '/_authenticated/import-plan'
     | '/_authenticated/insights'
     | '/_authenticated/messages'
     | '/_authenticated/notes'
@@ -456,6 +480,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance/categories'
     | '/_authenticated/finance/recurring'
     | '/_authenticated/finance/transactions'
+    | '/_authenticated/google-calendar/callback'
     | '/_authenticated/finance/'
   fileRoutesById: FileRoutesById
 }
@@ -558,6 +583,13 @@ declare module '@tanstack/react-router' {
       path: '/health'
       fullPath: '/health'
       preLoaderRoute: typeof AuthenticatedHealthRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/import-plan': {
+      id: '/_authenticated/import-plan'
+      path: '/import-plan'
+      fullPath: '/import-plan'
+      preLoaderRoute: typeof AuthenticatedImportPlanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/insights': {
@@ -721,6 +753,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFinanceTransactionsRouteImport
       parentRoute: typeof AuthenticatedFinanceRoute
     }
+    '/_authenticated/google-calendar/callback': {
+      id: '/_authenticated/google-calendar/callback'
+      path: '/google-calendar/callback'
+      fullPath: '/google-calendar/callback'
+      preLoaderRoute: typeof AuthenticatedGoogleCalendarCallbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -752,6 +791,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
   AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRoute
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
+  AuthenticatedImportPlanRoute: typeof AuthenticatedImportPlanRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
@@ -769,6 +809,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTogetherRoute: typeof AuthenticatedTogetherRoute
   AuthenticatedWeekRoute: typeof AuthenticatedWeekRoute
   AuthenticatedWorkRoute: typeof AuthenticatedWorkRoute
+  AuthenticatedGoogleCalendarCallbackRoute: typeof AuthenticatedGoogleCalendarCallbackRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -780,6 +821,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
   AuthenticatedHabitsRoute: AuthenticatedHabitsRoute,
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
+  AuthenticatedImportPlanRoute: AuthenticatedImportPlanRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
@@ -797,6 +839,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTogetherRoute: AuthenticatedTogetherRoute,
   AuthenticatedWeekRoute: AuthenticatedWeekRoute,
   AuthenticatedWorkRoute: AuthenticatedWorkRoute,
+  AuthenticatedGoogleCalendarCallbackRoute:
+    AuthenticatedGoogleCalendarCallbackRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

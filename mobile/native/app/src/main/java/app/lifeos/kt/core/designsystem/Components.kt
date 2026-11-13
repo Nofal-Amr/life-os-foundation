@@ -34,6 +34,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -113,18 +115,6 @@ fun LifePage(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
-        topBar = {
-            TopAppBar(
-                title = {
-                    AnimatedVisibility(scrolled, enter = fadeIn(tween(160)) + slideInVertically { it / 2 }, exit = fadeOut(tween(120)) + slideOutVertically { it / 2 }) {
-                        Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleLarge)
-                    }
-                },
-                navigationIcon = navigationIcon,
-                actions = actions,
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = barColor, scrolledContainerColor = barColor),
-            )
-        },
         floatingActionButton = floatingActionButton,
     ) { padding ->
         val list = @Composable {
@@ -135,9 +125,17 @@ fun LifePage(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item(key = "page-title") {
-                    Column(Modifier.padding(start = 4.dp, bottom = 8.dp)) {
-                        Text(title, style = MaterialTheme.typography.headlineLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        if (subtitle != null) Muted(subtitle)
+                    val topInset = if (LocalStatusBarHandled.current) Modifier else Modifier.statusBarsPadding()
+                    Column(topInset.padding(top = 12.dp, bottom = 8.dp)) {
+                        // Tool pages: the way back sits above the title.
+                        Box(Modifier.offset(x = (-12).dp)) { navigationIcon() }
+                        Row(verticalAlignment = Alignment.Top) {
+                            Column(Modifier.weight(1f).padding(start = 4.dp, top = 2.dp)) {
+                                Text(title, style = MaterialTheme.typography.headlineLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                if (subtitle != null) Muted(subtitle)
+                            }
+                            Row(content = actions)
+                        }
                     }
                 }
                 content()
@@ -145,9 +143,23 @@ fun LifePage(
         }
         Box(Modifier.padding(padding).fillMaxSize()) {
             if (onRefresh != null) PullToRefreshBox(isRefreshing = refreshing, onRefresh = onRefresh) { list() } else list()
+            // At the top, the title row carries the actions itself (no empty bar); a slim bar
+            // floats in over the content once the title has scrolled away, so nothing jumps.
+            AnimatedVisibility(scrolled, enter = fadeIn(tween(160)) + slideInVertically { -it / 2 }, exit = fadeOut(tween(120)) + slideOutVertically { -it / 2 }) {
+                TopAppBar(
+                    title = { Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleLarge) },
+                    navigationIcon = navigationIcon,
+                    actions = actions,
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = barColor, scrolledContainerColor = barColor),
+                    windowInsets = if (LocalStatusBarHandled.current) WindowInsets(0) else TopAppBarDefaults.windowInsets,
+                )
+            }
         }
     }
 }
+
+/** True when something above the page (the demo bar) already sits under the status bar. */
+val LocalStatusBarHandled = androidx.compose.runtime.staticCompositionLocalOf { false }
 
 /** A card. It gives a little under the finger and ticks when tapped. */
 @OptIn(ExperimentalFoundationApi::class)
