@@ -3,6 +3,7 @@ import { Check, PhoneCall, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { FindPhoneControl } from "@/components/app/FindPhoneControl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -341,6 +342,10 @@ export function LifeConnectCard() {
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {role !== "off" ? (
+        <FindPhoneControl role={role} peer={status?.peer} connected={!!status?.connected} />
       ) : null}
 
       {role !== "off" ? (
