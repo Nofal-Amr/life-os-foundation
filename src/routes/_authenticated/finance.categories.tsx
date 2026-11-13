@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
+import { ListRow, RowList } from "@/components/app/ListRow";
 import { FormDialog } from "@/components/app/FormDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
@@ -38,7 +39,10 @@ export const Route = createFileRoute("/_authenticated/finance/categories")({
   head: () => ({
     meta: [
       { title: "Money categories · Life OS" },
-      { name: "description", content: "Your own spending and income categories, with optional monthly budgets." },
+      {
+        name: "description",
+        content: "Your own spending and income categories, with optional monthly budgets.",
+      },
       { property: "og:title", content: "Money categories · Life OS" },
       {
         property: "og:description",
@@ -152,19 +156,24 @@ function CategoriesPage() {
           }
         />
       ) : (
-        <ul className="space-y-3">
+        <RowList>
           {list.map((category) => {
             const used = (transactions.data ?? []).filter(
               (t) => t.category_id === category.id,
             ).length;
             return (
-              <li
+              <ListRow
                 key={category.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
-              >
-                <div className="min-w-0">
-                   <div className="flex min-w-0 items-center gap-3"><EntityIcon icon={category.icon} color={category.color} /><p className="truncate font-medium">{category.name}</p></div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                leading={
+                  <span className="flex size-11 items-center justify-center">
+                    <EntityIcon icon={category.icon} color={category.color} />
+                  </span>
+                }
+                title={<span className="truncate">{category.name}</span>}
+                openLabel={`Edit ${category.name}`}
+                onOpen={() => openEdit(category)}
+                meta={
+                  <>
                     <SemanticBadge tone={category.kind === "income" ? "positive" : "neutral"}>
                       {category.kind === "income" ? "Income" : "Expense"}
                     </SemanticBadge>
@@ -178,20 +187,15 @@ function CategoriesPage() {
                         ? "Nothing logged yet"
                         : `${used} ${used === 1 ? "transaction" : "transactions"}`}
                     </span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => openEdit(category)}>
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setToDelete(category)}>
-                    Delete
-                  </Button>
-                </div>
-              </li>
+                  </>
+                }
+                actions={[
+                  { label: "Delete", destructive: true, onSelect: () => setToDelete(category) },
+                ]}
+              />
             );
           })}
-        </ul>
+        </RowList>
       )}
 
       <FormDialog
@@ -211,7 +215,10 @@ function CategoriesPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
-        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
+        <EntityIdentityPicker
+          value={{ icon: form.icon, color: form.color }}
+          onChange={(identity) => setForm({ ...form, ...identity })}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Kind</Label>
@@ -265,7 +272,6 @@ function CategoriesPage() {
         })()}
         onConfirm={() => toDelete && remove.mutate(toDelete.id)}
       />
-
     </>
   );
 }
