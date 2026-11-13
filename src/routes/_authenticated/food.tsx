@@ -255,9 +255,7 @@ function FoodPage() {
             </section>
 
             <section>
-              <h2 className="mb-3 section-title">
-                Entries
-              </h2>
+              <h2 className="mb-3 section-title">Entries</h2>
               {dayLogs.length === 0 ? (
                 <EmptyState
                   title="Nothing logged yet today"
@@ -346,9 +344,7 @@ function FoodPage() {
 
             {(foods.data ?? []).length ? (
               <section>
-                <h2 className="mb-3 section-title">
-                  Your food library
-                </h2>
+                <h2 className="mb-3 section-title">Your food library</h2>
                 <ul className="space-y-2">
                   {(foods.data ?? []).map((food) => (
                     <li

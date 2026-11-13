@@ -33,7 +33,8 @@ export function useXp() {
     /** Shows its own toast, for actions that don't already show one. */
     toast: (award: Award) => {
       const amount = amountFor(award);
-      if (on && amount) toast(`+${amount} XP`, { description: DIMENSION[award.kind], duration: 1800 });
+      if (on && amount)
+        toast(`+${amount} XP`, { description: DIMENSION[award.kind], duration: 1800 });
     },
   };
 }

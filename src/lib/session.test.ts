@@ -13,7 +13,10 @@ describe("storedUser", () => {
     const user = storedUser(
       storage({
         theme: "dark",
-        "sb-abc-auth-token": JSON.stringify({ access_token: "x", user: { id: "u1", email: "a@b.c" } }),
+        "sb-abc-auth-token": JSON.stringify({
+          access_token: "x",
+          user: { id: "u1", email: "a@b.c" },
+        }),
       }),
     );
     expect(user?.id).toBe("u1");

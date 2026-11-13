@@ -1,5 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Bell, Briefcase, MessageSquare,
+import {
+  Bell,
+  Briefcase,
+  MessageSquare,
   CalendarDays,
   CheckSquare,
   GraduationCap,
@@ -117,7 +120,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         );
       })}
-      {tools.length ? <ToolLinks onNavigate={onNavigate} className="mt-4 border-t border-border pt-4" /> : null}
+      {tools.length ? (
+        <ToolLinks onNavigate={onNavigate} className="mt-4 border-t border-border pt-4" />
+      ) : null}
     </nav>
   );
 }
@@ -190,7 +195,10 @@ export function BottomNav() {
     />
   );
   return (
-    <nav className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 md:hidden" aria-label="Sections">
+    <nav
+      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 md:hidden"
+      aria-label="Sections"
+    >
       <ul
         className="system-dock grid overflow-hidden px-1"
         style={{ gridTemplateColumns: `repeat(${navItems.length + 2}, minmax(0, 1fr))` }}
@@ -200,17 +208,17 @@ export function BottomNav() {
           return (
             <Fragment key={to}>
               {index === addAt ? addItem : null}
-            <li>
-              <Link to={to} aria-current={active ? "page" : undefined} className={tab(active)}>
-                {active ? indicator : null}
-                <Icon
-                  className={`size-5 ${active ? "text-primary" : ""}`}
-                  strokeWidth={1.75}
-                  aria-hidden="true"
-                />
-                {t(label)}
-              </Link>
-            </li>
+              <li>
+                <Link to={to} aria-current={active ? "page" : undefined} className={tab(active)}>
+                  {active ? indicator : null}
+                  <Icon
+                    className={`size-5 ${active ? "text-primary" : ""}`}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                  {t(label)}
+                </Link>
+              </li>
             </Fragment>
           );
         })}

@@ -44,12 +44,13 @@ export const getRouter = () => {
     if (!demo) installOfflineSession(isOffline);
     applyLang();
   }
-  if (!demo) installOffline({
-    supabaseUrl,
-    getAccessToken: async () =>
-      (await supabase.auth.getSession()).data.session?.access_token ?? null,
-    onSynced: () => void queryClient.invalidateQueries(),
-  });
+  if (!demo)
+    installOffline({
+      supabaseUrl,
+      getAccessToken: async () =>
+        (await supabase.auth.getSession()).data.session?.access_token ?? null,
+      onSynced: () => void queryClient.invalidateQueries(),
+    });
 
   // On the server, this response's script nonce (see src/server.ts).
   const nonce = typeof window === "undefined" ? serverNonce() : undefined;

@@ -48,14 +48,30 @@ describe("task reminders", () => {
 
 describe("timedTaskReminders", () => {
   const timed = (over: Record<string, unknown>) =>
-    ({ id: "t", title: "Call Omar", status: "todo", due_date: "2026-09-25", due_time: "15:30:00", ...over }) as never;
+    ({
+      id: "t",
+      title: "Call Omar",
+      status: "todo",
+      due_date: "2026-09-25",
+      due_time: "15:30:00",
+      ...over,
+    }) as never;
 
   it("rings at the task's time, only for open tasks ahead of now", () => {
     const now = new Date("2026-09-25T10:00:00").getTime();
-    const list = timedTaskReminders({ tasks: [timed({}), timed({ id: "d", status: "completed" }), timed({ id: "n", due_time: null })], now });
+    const list = timedTaskReminders({
+      tasks: [
+        timed({}),
+        timed({ id: "d", status: "completed" }),
+        timed({ id: "n", due_time: null }),
+      ],
+      now,
+    });
     expect(list).toHaveLength(1);
     expect(new Date(list[0]!.at).getHours()).toBe(15);
-    expect(timedTaskReminders({ tasks: [timed({})], now: new Date("2026-09-25T16:00:00").getTime() })).toEqual([]);
+    expect(
+      timedTaskReminders({ tasks: [timed({})], now: new Date("2026-09-25T16:00:00").getTime() }),
+    ).toEqual([]);
   });
 });
 

@@ -178,7 +178,9 @@ export function AzkarSession({
                   <span>
                     {t(zikr.title)}
                     {zikr.source ? (
-                      <span className="ms-2 tabular-nums opacity-80">· {sourceLabel(zikr.source)}</span>
+                      <span className="ms-2 tabular-nums opacity-80">
+                        · {sourceLabel(zikr.source)}
+                      </span>
                     ) : null}
                   </span>
                   <span

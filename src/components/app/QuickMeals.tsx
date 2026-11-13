@@ -69,7 +69,13 @@ export function QuickMeals({
   ].slice(0, 8);
   const usualAtMeal = all.some((log) => log.meal === meal && log.food_id);
   // Typed-in foods from this meal first, then any meal.
-  const oneOffs = [...recentOneOffs(all.filter((log) => log.meal === meal), 4), ...recentOneOffs(all, 4)]
+  const oneOffs = [
+    ...recentOneOffs(
+      all.filter((log) => log.meal === meal),
+      4,
+    ),
+    ...recentOneOffs(all, 4),
+  ]
     .filter((log, index, list) => list.findIndex((other) => other.name === log.name) === index)
     .slice(0, 4);
   const matches = useMemo(() => {

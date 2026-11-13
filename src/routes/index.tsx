@@ -216,7 +216,10 @@ function Hero() {
           className="min-h-[17rem] px-4 pb-5 pt-6 md:px-6"
         >
           {/* Keyed so each section eases in when picked. */}
-          <div key={section.key} className="animate-in fade-in slide-in-from-bottom-1 duration-200 ease-out">
+          <div
+            key={section.key}
+            className="animate-in fade-in slide-in-from-bottom-1 duration-200 ease-out"
+          >
             <h2 className="text-xl font-semibold tracking-[-0.015em]">{section.title}</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{section.body}</p>
             <ul className="mt-5 flex flex-wrap gap-2">
@@ -270,8 +273,9 @@ function Everywhere() {
           <Smartphone className="size-6 text-primary" strokeWidth={1.75} aria-hidden="true" />
           <h3 className="mt-4 text-lg font-semibold">The web and the Android app stay in sync</h3>
           <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted-foreground">
-            Log a meal on your phone and it is on your laptop the next time you open it. On Android you also
-            get reminders for prayers and tasks, a timer in your notifications, and Samsung Health.
+            Log a meal on your phone and it is on your laptop the next time you open it. On Android
+            you also get reminders for prayers and tasks, a timer in your notifications, and Samsung
+            Health.
           </p>
         </div>
         <div className="stat-card p-6">
@@ -295,7 +299,8 @@ function Closing() {
             Start with a blank page.
           </h2>
           <p className="mt-2 max-w-[48ch] text-muted-foreground">
-            Nothing is filled in for you. Setup lets you switch off what you don't need, and you can change it any time.
+            Nothing is filled in for you. Setup lets you switch off what you don't need, and you can
+            change it any time.
           </p>
         </div>
         <Button asChild size="lg" className="px-6">

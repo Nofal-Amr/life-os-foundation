@@ -158,8 +158,20 @@ export function achievements(sources: Sources): Achievement[] {
     count("first-task", "First strike", "Finish a task.", doneTasks, 1),
     count("tasks-50", "Getting things done", "Finish 50 tasks.", doneTasks, 50),
     count("tasks-250", "Unstoppable", "Finish 250 tasks.", doneTasks, 250),
-    count("wall-1", "Through the wall", "Finish a task that waited two weeks or more.", oldTasks, 1),
-    count("wall-5", "Wall breaker", "Finish 5 tasks that each waited two weeks or more.", oldTasks, 5),
+    count(
+      "wall-1",
+      "Through the wall",
+      "Finish a task that waited two weeks or more.",
+      oldTasks,
+      1,
+    ),
+    count(
+      "wall-5",
+      "Wall breaker",
+      "Finish 5 tasks that each waited two weeks or more.",
+      oldTasks,
+      5,
+    ),
     count("first-prayer", "First step", "Log a prayer as prayed.", prayed, 1),
     {
       id: "full-day",

@@ -129,7 +129,11 @@ export function taskReminders(args: {
 }
 
 /** A reminder at the exact time of each open task that has one, for the next `days` days. */
-export function timedTaskReminders(args: { tasks: Task[]; now: number; days?: number }): Reminder[] {
+export function timedTaskReminders(args: {
+  tasks: Task[];
+  now: number;
+  days?: number;
+}): Reminder[] {
   const until = args.now + (args.days ?? 7) * 86_400_000;
   return args.tasks.flatMap((task) => {
     if (!task.due_date || !task.due_time) return [];

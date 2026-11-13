@@ -33,13 +33,31 @@ describe("recurring intervals", () => {
 });
 describe("recurring costs before payday", () => {
   const cost = (fields: Partial<RecurringCost>) =>
-    ({ id: fields.name, active: true, interval_count: 1, frequency: "custom", ...fields }) as RecurringCost;
+    ({
+      id: fields.name,
+      active: true,
+      interval_count: 1,
+      frequency: "custom",
+      ...fields,
+    }) as RecurringCost;
   const costs = [
     cost({ name: "Transport", amount: 600, next_due_date: "2026-10-11", interval_unit: "week" }),
-    cost({ name: "Pills", amount: 300, next_due_date: "2026-10-08", interval_unit: "day", interval_count: 15 }),
+    cost({
+      name: "Pills",
+      amount: 300,
+      next_due_date: "2026-10-08",
+      interval_unit: "day",
+      interval_count: 15,
+    }),
     cost({ name: "Internet", amount: 560, next_due_date: "2026-10-14", interval_unit: "month" }),
     cost({ name: "Later", amount: 99, next_due_date: "2026-11-20", interval_unit: "month" }),
-    cost({ name: "Paused", amount: 50, next_due_date: "2026-10-09", interval_unit: "month", active: false }),
+    cost({
+      name: "Paused",
+      amount: 50,
+      next_due_date: "2026-10-09",
+      interval_unit: "month",
+      active: false,
+    }),
   ];
   const payday = new Date(2026, 10, 5);
 
@@ -94,13 +112,22 @@ describe("accounts kept separate from left to spend", () => {
 
 describe("monthlyEquivalent", () => {
   const cost = (over: Record<string, unknown>) =>
-    ({ active: true, amount: 100, frequency: "monthly", interval_count: 1, interval_unit: "month", ...over }) as never;
+    ({
+      active: true,
+      amount: 100,
+      frequency: "monthly",
+      interval_count: 1,
+      interval_unit: "month",
+      ...over,
+    }) as never;
 
   it("turns any schedule into an average month", () => {
     expect(monthlyEquivalent(cost({}))).toBeCloseTo(100);
     expect(monthlyEquivalent(cost({ interval_unit: "year", amount: 1200 }))).toBeCloseTo(100);
     expect(monthlyEquivalent(cost({ interval_unit: "week" }))).toBeCloseTo(434.82, 1);
-    expect(monthlyEquivalent(cost({ interval_unit: "month", interval_count: 3, amount: 300 }))).toBeCloseTo(100);
+    expect(
+      monthlyEquivalent(cost({ interval_unit: "month", interval_count: 3, amount: 300 })),
+    ).toBeCloseTo(100);
   });
 
   it("counts inactive costs as nothing", () => {

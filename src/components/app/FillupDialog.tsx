@@ -151,7 +151,10 @@ export function FillupDialog({
               value={odometer}
               onChange={(event) => setOdometer(event.target.value)}
             />
-            <PhotoReader kind="number" onNumber={(value) => setOdometer(String(Math.round(value)))} />
+            <PhotoReader
+              kind="number"
+              onNumber={(value) => setOdometer(String(Math.round(value)))}
+            />
             {tooLow ? (
               <p className="text-xs text-muted-foreground">
                 That's below the last reading ({currentKm} km).

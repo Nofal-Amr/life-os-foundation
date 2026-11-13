@@ -27,5 +27,11 @@ export const evidenceQuery = () =>
 
 export async function createEvidence(input: EvidenceInput) {
   const user_id = await currentUserId();
-  return unwrap(await supabase.from("evidence").insert({ ...input, user_id }).select().single());
+  return unwrap(
+    await supabase
+      .from("evidence")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
+  );
 }

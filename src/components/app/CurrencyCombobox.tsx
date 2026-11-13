@@ -47,10 +47,16 @@ export function CurrencyCombobox({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[min(24rem,calc(100vw-2rem))] p-0">
         <Command shouldFilter={false}>
-          <CommandInput value={search} onValueChange={setSearch} placeholder="Search or enter ISO code…" />
+          <CommandInput
+            value={search}
+            onValueChange={setSearch}
+            placeholder="Search or enter ISO code…"
+          />
           <CommandList>
             <CommandEmpty>
-              {code.length === 3 ? "Press Enter to use this code." : "Enter a three-letter ISO code."}
+              {code.length === 3
+                ? "Press Enter to use this code."
+                : "Enter a three-letter ISO code."}
             </CommandEmpty>
             <CommandGroup>
               <CommandItem value="plain" onSelect={() => choose(null)}>
@@ -63,8 +69,14 @@ export function CurrencyCombobox({
                   Use {code}
                 </CommandItem>
               ) : null}
-              {CURRENCIES.filter((item) => `${item.value} ${item.label}`.toLowerCase().includes(search.toLowerCase())).map((item) => (
-                <CommandItem key={item.value} value={item.value} onSelect={() => choose(item.value)}>
+              {CURRENCIES.filter((item) =>
+                `${item.value} ${item.label}`.toLowerCase().includes(search.toLowerCase()),
+              ).map((item) => (
+                <CommandItem
+                  key={item.value}
+                  value={item.value}
+                  onSelect={() => choose(item.value)}
+                >
                   <Check className={cn("size-4", value !== item.value && "opacity-0")} />
                   {item.label}
                 </CommandItem>

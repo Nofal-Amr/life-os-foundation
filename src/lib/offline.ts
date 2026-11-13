@@ -172,7 +172,12 @@ export function describeChange(entry: { method: string; url: string; body: strin
 }
 
 function describeRejected(entry: OutboxEntry): RejectedChange {
-  return { id: entry.id!, what: describeChange(entry), why: entry.rejected ?? "", when: entry.createdAt };
+  return {
+    id: entry.id!,
+    what: describeChange(entry),
+    why: entry.rejected ?? "",
+    when: entry.createdAt,
+  };
 }
 
 /** Puts every refused change back in the queue and tries again. */
@@ -858,7 +863,9 @@ export function withoutColumn(body: string, column: string): string | null {
     };
     if (Array.isArray(parsed)) {
       const rows = parsed.map(drop);
-      return rows.every((row) => row == null) ? null : JSON.stringify(rows.map((row, i) => row ?? parsed[i]));
+      return rows.every((row) => row == null)
+        ? null
+        : JSON.stringify(rows.map((row, i) => row ?? parsed[i]));
     }
     const row = drop(parsed);
     return row ? JSON.stringify(row) : null;

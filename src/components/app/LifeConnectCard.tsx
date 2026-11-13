@@ -201,9 +201,9 @@ export function LifeConnectCard() {
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Calls to the phone with your SIM card ring on your main phone (and your watch), with
-          Answer, Decline and Mute, and its SMS show up there with Reply. “Answer on” picks up on the
-          SIM phone: talk on it, or on earbuds connected to it.
-          Set this up on both phones, signed in to this account.
+          Answer, Decline and Mute, and its SMS show up there with Reply. “Answer on” picks up on
+          the SIM phone: talk on it, or on earbuds connected to it. Set this up on both phones,
+          signed in to this account.
         </p>
       </div>
 
@@ -257,7 +257,9 @@ export function LifeConnectCard() {
               blocks SMS access for apps installed from WhatsApp or a browser). Calls work as is.
             </p>
           ) : null}
-          <div className={cn("flex items-center justify-between gap-3 pt-2", !smsBuild && "hidden")}>
+          <div
+            className={cn("flex items-center justify-between gap-3 pt-2", !smsBuild && "hidden")}
+          >
             <Label htmlFor="connect-sms">Pass SMS on to the main phone</Label>
             <Switch
               id="connect-sms"

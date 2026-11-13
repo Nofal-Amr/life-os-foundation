@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { cycleWindow, tierUsage, topUpPlan, type Resource, type ResourceReading } from "./resources";
+import {
+  cycleWindow,
+  tierUsage,
+  topUpPlan,
+  type Resource,
+  type ResourceReading,
+} from "./resources";
 import { EGYPT_RESIDENTIAL_2026 } from "./tariff";
 
 function withCycle(extra: Partial<Resource>): Resource {
@@ -147,7 +153,9 @@ describe("topUpPlan", () => {
   });
 
   it("pays back a negative balance first", () => {
-    expect(topUpPlan({ balance: -50, paid: 300, credited: 290, moneyUnit: true }).balanceAfter).toBe(240);
+    expect(
+      topUpPlan({ balance: -50, paid: 300, credited: 290, moneyUnit: true }).balanceAfter,
+    ).toBe(240);
   });
 
   it("works from the balance shown after the top-up", () => {

@@ -149,48 +149,50 @@ function GoalsPage() {
           {(goals.data ?? []).map((goal) => (
             <li key={goal.id} className="rounded-xl border border-border bg-card p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                 <div className="flex min-w-0 flex-1 gap-3">
-                   <EntityIcon icon={goal.icon} color={goal.color} />
-                   <div className="min-w-0 flex-1">
-                   <p className="truncate font-medium">{goal.name}</p>
-                  {goal.description ? (
-                    <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                      {goal.description}
-                    </p>
-                  ) : null}
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <SemanticBadge tone={goalStatusTone(goal.status)}>
-                      {goalStatusLabel(goal.status)}
-                    </SemanticBadge>
-                    {goal.category ? <SemanticBadge tone="neutral">{goal.category}</SemanticBadge> : null}
-                    <span>Target {fmtDate(goal.target_date)}</span>
-                  </div>
-                  {(() => {
-                    const links = goalLinks(tasks.data ?? [], projects.data ?? [], goal.id);
-                    return (
-                      <div className="mt-4 max-w-md space-y-3">
-                        <CountBar count={links.tasks} label="linked tasks done" />
-                        <GoalLinksList links={links} />
-                      </div>
-                    );
-                  })()}
-                  <div className="mt-4 max-w-md space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Your own estimate</span>
-                      <span className="tabular-nums">{goal.progress}%</span>
+                <div className="flex min-w-0 flex-1 gap-3">
+                  <EntityIcon icon={goal.icon} color={goal.color} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{goal.name}</p>
+                    {goal.description ? (
+                      <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                        {goal.description}
+                      </p>
+                    ) : null}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <SemanticBadge tone={goalStatusTone(goal.status)}>
+                        {goalStatusLabel(goal.status)}
+                      </SemanticBadge>
+                      {goal.category ? (
+                        <SemanticBadge tone="neutral">{goal.category}</SemanticBadge>
+                      ) : null}
+                      <span>Target {fmtDate(goal.target_date)}</span>
                     </div>
-                    <Progress value={goal.progress} />
-                    <Slider
-                      value={[goal.progress]}
-                      max={100}
-                      step={5}
-                      aria-label={`Progress for ${goal.name}`}
-                      onValueChange={([v]) =>
-                        setProgress.mutate({ id: goal.id, progress: v ?? 0 })
-                      }
-                    />
+                    {(() => {
+                      const links = goalLinks(tasks.data ?? [], projects.data ?? [], goal.id);
+                      return (
+                        <div className="mt-4 max-w-md space-y-3">
+                          <CountBar count={links.tasks} label="linked tasks done" />
+                          <GoalLinksList links={links} />
+                        </div>
+                      );
+                    })()}
+                    <div className="mt-4 max-w-md space-y-2">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Your own estimate</span>
+                        <span className="tabular-nums">{goal.progress}%</span>
+                      </div>
+                      <Progress value={goal.progress} />
+                      <Slider
+                        value={[goal.progress]}
+                        max={100}
+                        step={5}
+                        aria-label={`Progress for ${goal.name}`}
+                        onValueChange={([v]) =>
+                          setProgress.mutate({ id: goal.id, progress: v ?? 0 })
+                        }
+                      />
+                    </div>
                   </div>
-                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="ghost" onClick={() => openEdit(goal)}>
@@ -222,7 +224,10 @@ function GoalsPage() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
         </div>
-        <EntityIdentityPicker value={{ icon: form.icon, color: form.color }} onChange={(identity) => setForm({ ...form, ...identity })} />
+        <EntityIdentityPicker
+          value={{ icon: form.icon, color: form.color }}
+          onChange={(identity) => setForm({ ...form, ...identity })}
+        />
         <div className="space-y-2">
           <Label htmlFor="goal-description">Description</Label>
           <Textarea
@@ -242,7 +247,11 @@ function GoalsPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="goal-target">Target date</Label>
-            <DatePicker id="goal-target" value={form.target_date} onChange={(value) => setForm({ ...form, target_date: value || null })} />
+            <DatePicker
+              id="goal-target"
+              value={form.target_date}
+              onChange={(value) => setForm({ ...form, target_date: value || null })}
+            />
           </div>
           <div className="space-y-2">
             <Label>Status</Label>
@@ -280,7 +289,6 @@ function GoalsPage() {
           </div>
         </div>
       </FormDialog>
-
 
       <ConfirmDialog
         open={!!toDelete}

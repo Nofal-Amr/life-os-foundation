@@ -25,7 +25,13 @@ export const eventsQuery = () =>
 
 export async function createEvent(input: EventInput) {
   const user_id = await currentUserId();
-  return unwrap(await supabase.from("events").insert({ ...input, user_id }).select().single());
+  return unwrap(
+    await supabase
+      .from("events")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
+  );
 }
 
 export async function updateEvent(id: string, input: Partial<EventInput>) {

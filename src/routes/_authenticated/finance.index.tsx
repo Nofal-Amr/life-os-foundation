@@ -1,13 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  CalendarDays,
-  Info,
-  Wallet,
-} from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Info, Wallet } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AnimatedNumber } from "@/components/app/AnimatedNumber";
@@ -77,7 +71,6 @@ export const Route = createFileRoute("/_authenticated/finance/")({
   component: FinanceOverview,
 });
 
-
 function FinanceOverview() {
   const queryClient = useQueryClient();
   const accounts = useQuery(accountsQuery());
@@ -95,7 +88,6 @@ function FinanceOverview() {
 
   const onError = (e: unknown) =>
     toast.error(e instanceof Error ? e.message : "Something went wrong.");
-
 
   const saveMoneySetup = useMutation({
     mutationFn: () =>
@@ -146,7 +138,10 @@ function FinanceOverview() {
   });
 
   const hasAccounts = (accounts.data ?? []).length > 0;
-  const monthlyRecurring = (costs.data ?? []).reduce((sum, cost) => sum + monthlyEquivalent(cost), 0);
+  const monthlyRecurring = (costs.data ?? []).reduce(
+    (sum, cost) => sum + monthlyEquivalent(cost),
+    0,
+  );
   const separateAccounts = (accounts.data ?? []).filter(
     (account) => account.active && !countsTowardSpendable(account),
   );
@@ -162,7 +157,6 @@ function FinanceOverview() {
         ? "Payday is today"
         : `${days} ${days === 1 ? "day" : "days"} until payday`;
   const shortfall = totals.available < 0;
-
 
   return (
     <>
@@ -324,9 +318,7 @@ function FinanceOverview() {
               </>
             ) : (
               <>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Balance you can spend
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">Balance you can spend</p>
                 <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
                   {hasAccounts ? <AnimatedNumber value={fmtMoney(totals.liquid)} /> : "—"}
                 </p>
@@ -367,94 +359,93 @@ function FinanceOverview() {
           </section>
 
           <MoreSections id="money">
-          <Section id="money-glance" title="At a glance">
-          <GlanceSection>
-            {cycle ? (
-              <RingStat
-                title="Payday cycle"
-                icon={CalendarDays}
-                done={cycle.elapsed}
-                total={cycle.total}
-                center={`${cycle.elapsed}/${cycle.total}`}
-                headline={`${cycle.elapsed} of ${cycle.total} days`}
-                detail={`Since payday on ${fmtDate(cycle.start)}. Next payday ${fmtDate(cycle.end)}.`}
-                tone={1}
-                ringLabel={`${cycle.elapsed} of ${cycle.total} days of the payday cycle have passed`}
-              />
-            ) : (
-              <StatCard title="Payday cycle" icon={CalendarDays}>
-                <p className="text-sm text-muted-foreground">
-                  Set your payday in{" "}
-                  <Link to="/settings" className="text-foreground underline underline-offset-4">
-                    Settings
-                  </Link>{" "}
-                  to see how far through the cycle you are.
-                </p>
-              </StatCard>
-            )}
-
-            {categories.error ? (
-              <StatCard title="Spending per week" icon={Wallet}>
-                <p className="text-sm text-muted-foreground">
-                  Categories could not be loaded, so this chart is paused.
-                </p>
-              </StatCard>
-            ) : categories.data && hasEnoughPoints(spend.rows) ? (
-              <WeeklyBars
-                title="Spending per week"
-                icon={Wallet}
-                badge="8 weeks"
-                description="Money out, by category, over the last 8 weeks."
-                rows={spend.rows}
-                series={spend.series}
-                formatValue={fmtMoney}
-                hero={{
-                  value: fmtMoney(spendTotal),
-                  caption: `logged across ${spend.rows.length} weeks`,
-                }}
-                legend
-              />
-            ) : categories.data ? (
-              <StatCard title="Spending per week" icon={Wallet}>
-                <NotEnoughData hint="Log spending in at least two different weeks." />
-              </StatCard>
-            ) : null}
-          </GlanceSection>
-          </Section>
-
-
-          {/* What is due next stays one tap away. */}
-          <Section id="money-coming" title="Coming up">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-muted-foreground">
-                {monthlyRecurring > 0 ? (
-                  <>
-                    Recurring costs come to about{" "}
-                    <span className="tabular-nums text-foreground">{fmtMoney(monthlyRecurring)}</span>{" "}
-                    a month.
-                  </>
+            <Section id="money-glance" title="At a glance">
+              <GlanceSection>
+                {cycle ? (
+                  <RingStat
+                    title="Payday cycle"
+                    icon={CalendarDays}
+                    done={cycle.elapsed}
+                    total={cycle.total}
+                    center={`${cycle.elapsed}/${cycle.total}`}
+                    headline={`${cycle.elapsed} of ${cycle.total} days`}
+                    detail={`Since payday on ${fmtDate(cycle.start)}. Next payday ${fmtDate(cycle.end)}.`}
+                    tone={1}
+                    ringLabel={`${cycle.elapsed} of ${cycle.total} days of the payday cycle have passed`}
+                  />
                 ) : (
-                  "No recurring costs yet."
+                  <StatCard title="Payday cycle" icon={CalendarDays}>
+                    <p className="text-sm text-muted-foreground">
+                      Set your payday in{" "}
+                      <Link to="/settings" className="text-foreground underline underline-offset-4">
+                        Settings
+                      </Link>{" "}
+                      to see how far through the cycle you are.
+                    </p>
+                  </StatCard>
                 )}
-              </p>
-              <Button asChild size="sm" variant="ghost">
-                <Link to="/finance/recurring">Manage</Link>
-              </Button>
-            </div>
-            <RecurringList compact />
-          </Section>
-          <WorkdayCostCard />
+
+                {categories.error ? (
+                  <StatCard title="Spending per week" icon={Wallet}>
+                    <p className="text-sm text-muted-foreground">
+                      Categories could not be loaded, so this chart is paused.
+                    </p>
+                  </StatCard>
+                ) : categories.data && hasEnoughPoints(spend.rows) ? (
+                  <WeeklyBars
+                    title="Spending per week"
+                    icon={Wallet}
+                    badge="8 weeks"
+                    description="Money out, by category, over the last 8 weeks."
+                    rows={spend.rows}
+                    series={spend.series}
+                    formatValue={fmtMoney}
+                    hero={{
+                      value: fmtMoney(spendTotal),
+                      caption: `logged across ${spend.rows.length} weeks`,
+                    }}
+                    legend
+                  />
+                ) : categories.data ? (
+                  <StatCard title="Spending per week" icon={Wallet}>
+                    <NotEnoughData hint="Log spending in at least two different weeks." />
+                  </StatCard>
+                ) : null}
+              </GlanceSection>
+            </Section>
+
+            {/* What is due next stays one tap away. */}
+            <Section id="money-coming" title="Coming up">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-muted-foreground">
+                  {monthlyRecurring > 0 ? (
+                    <>
+                      Recurring costs come to about{" "}
+                      <span className="tabular-nums text-foreground">
+                        {fmtMoney(monthlyRecurring)}
+                      </span>{" "}
+                      a month.
+                    </>
+                  ) : (
+                    "No recurring costs yet."
+                  )}
+                </p>
+                <Button asChild size="sm" variant="ghost">
+                  <Link to="/finance/recurring">Manage</Link>
+                </Button>
+              </div>
+              <RecurringList compact />
+            </Section>
+            <WorkdayCostCard />
           </MoreSections>
         </div>
       )}
-
 
       <QuickAddTransactionDialog
         open={quickAdd !== null}
         onOpenChange={(open) => !open && setQuickAdd(null)}
         {...(quickAdd ? { initialKind: quickAdd } : {})}
       />
-
     </>
   );
 }

@@ -87,7 +87,6 @@ export async function unlogHabit(habit_id: string, log_date = todayISO()) {
   if (error) throw error;
 }
 
-
 export type DayDot = { date: string; logged: boolean };
 
 /**

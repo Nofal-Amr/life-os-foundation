@@ -228,7 +228,8 @@ export function SamsungHealthCard() {
         </>
       ) : !android ? (
         <p className="text-sm text-muted-foreground">
-          Connect it from the Life OS Android app, or import a Samsung Health or Zepp Life download below.
+          Connect it from the Life OS Android app, or import a Samsung Health or Zepp Life download
+          below.
         </p>
       ) : null}
       <SamsungImport />
@@ -285,11 +286,7 @@ function DayChart({
                   background: value ? color : "var(--color-border)",
                 }}
               />
-              {!dense ? (
-                <span className="axis-label">
-                  {format(parseISO(day), "EEEEE")}
-                </span>
-              ) : null}
+              {!dense ? <span className="axis-label">{format(parseISO(day), "EEEEE")}</span> : null}
             </div>
           );
         })}

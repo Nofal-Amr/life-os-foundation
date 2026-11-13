@@ -74,12 +74,13 @@ export function Onboarding() {
     setExpectedNet(
       payday.data?.expected_net_amount != null ? String(payday.data.expected_net_amount) : "",
     );
-    setSafetyBuffer(
-      payday.data?.safety_buffer != null ? String(payday.data.safety_buffer) : "",
-    );
+    setSafetyBuffer(payday.data?.safety_buffer != null ? String(payday.data.safety_buffer) : "");
     setCity(prayer.data?.city ?? "");
     if (prayer.data?.latitude != null && prayer.data?.longitude != null) {
-      setCoords({ latitude: Number(prayer.data.latitude), longitude: Number(prayer.data.longitude) });
+      setCoords({
+        latitude: Number(prayer.data.latitude),
+        longitude: Number(prayer.data.longitude),
+      });
     }
     if (prayer.data?.calc_method) setMethod(prayer.data.calc_method);
     if (prayer.data?.asr_school) setSchool(prayer.data.asr_school);

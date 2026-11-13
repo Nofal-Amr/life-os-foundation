@@ -35,13 +35,7 @@ export function LoadingState({ rows = 3 }: { rows?: number }) {
   );
 }
 
-export function ErrorState({
-  error,
-  onRetry,
-}: {
-  error?: unknown;
-  onRetry?: () => void;
-}) {
+export function ErrorState({ error, onRetry }: { error?: unknown; onRetry?: () => void }) {
   const message =
     error instanceof Error ? error.message : "Something went wrong while loading your data.";
   return (

@@ -88,7 +88,8 @@ function useReminderSettings() {
   const update = (patch: Partial<ReminderSettings>) => {
     const next = { ...readSettings(), ...patch };
     writeSettings(next);
-    if ((patch.enabled || patch.tasksEnabled || patch.water) && !canNotify()) requestNotifications();
+    if ((patch.enabled || patch.tasksEnabled || patch.water) && !canNotify())
+      requestNotifications();
   };
   return [settings, update] as const;
 }
@@ -237,7 +238,10 @@ export function useReminderSync() {
               reminders.push({
                 id: `${date}-azkar-${azkarTime}`,
                 at,
-                title: azkarTime === "morning" ? "Morning azkar · أذكار الصباح" : "Evening azkar · أذكار المساء",
+                title:
+                  azkarTime === "morning"
+                    ? "Morning azkar · أذكار الصباح"
+                    : "Evening azkar · أذكار المساء",
                 body: "Tap to read them, or log them here if you already have.",
                 path: `/spirit?tab=azkar&time=${azkarTime}`,
                 channel: "prayers",
@@ -288,7 +292,8 @@ export function useReminderSync() {
         for (const session of classesOn(classSessions.data ?? [], date)) {
           const at = new Date(`${date}T${hhmm(session.starts)}:00`).getTime() - 10 * 60_000;
           if (at <= now) continue;
-          const name = (courses.data ?? []).find((c) => c.id === session.course_id)?.name ?? "Class";
+          const name =
+            (courses.data ?? []).find((c) => c.id === session.course_id)?.name ?? "Class";
           reminders.push({
             id: `class-${session.id}-${date}`,
             at,
@@ -544,7 +549,9 @@ function WaterControls({
               <SelectContent>
                 {[30, 45, 60, 90, 120, 180].map((minutes) => (
                   <SelectItem key={minutes} value={String(minutes)}>
-                    {minutes < 60 ? `${minutes} minutes` : `${minutes / 60} hour${minutes === 60 ? "" : "s"}`}
+                    {minutes < 60
+                      ? `${minutes} minutes`
+                      : `${minutes / 60} hour${minutes === 60 ? "" : "s"}`}
                   </SelectItem>
                 ))}
               </SelectContent>

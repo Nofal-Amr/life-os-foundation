@@ -95,7 +95,12 @@ function ReviewPage() {
 
       <div className="mb-6 max-w-xs space-y-2">
         <Label htmlFor="review-date">Date</Label>
-        <DatePicker id="review-date" value={date} disableFuture onChange={(value) => setDate(value || todayISO())} />
+        <DatePicker
+          id="review-date"
+          value={date}
+          disableFuture
+          onChange={(value) => setDate(value || todayISO())}
+        />
       </div>
 
       <DaySummary date={date} className="mb-6" />
@@ -199,7 +204,10 @@ function ReviewPage() {
         ) : history.error ? (
           <ErrorState error={history.error} onRetry={() => history.refetch()} />
         ) : (history.data ?? []).length === 0 ? (
-          <EmptyState title="No reviews yet" description="A short end-of-day note on how the day went. Your saved reflections stay here." />
+          <EmptyState
+            title="No reviews yet"
+            description="A short end-of-day note on how the day went. Your saved reflections stay here."
+          />
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
             {(history.data ?? []).map((r) => (

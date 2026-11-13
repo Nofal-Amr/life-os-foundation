@@ -5,11 +5,7 @@ import { tChildren } from "@/lib/i18n";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn("system-card text-card-foreground", className)}
-      {...props}
-    />
+    <div ref={ref} className={cn("system-card text-card-foreground", className)} {...props} />
   ),
 );
 Card.displayName = "Card";

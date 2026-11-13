@@ -6,12 +6,16 @@ import { isOpen, type Task } from "./tasks";
 const NOTHING = { next: "Nothing to do right now", nextDetail: "Open Life OS to add a task" };
 
 /** Overdue first (oldest), then due today (earliest time), then the soonest upcoming. */
-export function widgetNextAction(tasks: Task[], today: string): { next: string; nextDetail: string } {
+export function widgetNextAction(
+  tasks: Task[],
+  today: string,
+): { next: string; nextDetail: string } {
   const open = tasks
     .filter((task) => isOpen(task) && !task.parent_task_id && task.due_date)
     .sort(
       (a, b) =>
-        a.due_date!.localeCompare(b.due_date!) || (a.due_time ?? "99").localeCompare(b.due_time ?? "99"),
+        a.due_date!.localeCompare(b.due_date!) ||
+        (a.due_time ?? "99").localeCompare(b.due_time ?? "99"),
     );
   const first = open[0];
   if (!first) return NOTHING;

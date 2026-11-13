@@ -79,10 +79,7 @@ export const projectsQuery = () =>
     queryKey: projectKeys.all,
     queryFn: async () =>
       unwrap(
-        await supabase
-          .from("projects")
-          .select("*")
-          .order("created_at", { ascending: false }),
+        await supabase.from("projects").select("*").order("created_at", { ascending: false }),
       ) as Project[],
   });
 
@@ -95,11 +92,19 @@ export const projectQuery = (id: string) =>
 
 export async function createProject(input: ProjectInput): Promise<Project> {
   const user_id = await currentUserId();
-  return unwrap(await supabase.from("projects").insert({ ...input, user_id }).select().single()) as Project;
+  return unwrap(
+    await supabase
+      .from("projects")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
+  ) as Project;
 }
 
 export async function updateProject(id: string, input: Partial<ProjectInput>): Promise<Project> {
-  return unwrap(await supabase.from("projects").update(input).eq("id", id).select().single()) as Project;
+  return unwrap(
+    await supabase.from("projects").update(input).eq("id", id).select().single(),
+  ) as Project;
 }
 
 export async function archiveProject(id: string) {

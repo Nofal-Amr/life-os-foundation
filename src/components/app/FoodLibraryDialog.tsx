@@ -30,9 +30,7 @@ export function FoodLibraryDialog({
   const available = useMemo(() => libraryNotYetAdded(foods.data ?? []), [foods.data]);
   const shown = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return query
-      ? available.filter((food) => food.name.toLowerCase().includes(query))
-      : available;
+    return query ? available.filter((food) => food.name.toLowerCase().includes(query)) : available;
   }, [available, search]);
 
   const groups = useMemo(() => {
@@ -94,20 +92,25 @@ export function FoodLibraryDialog({
                           aria-pressed={selected}
                           className={cn(
                             "flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors duration-150",
-                            selected ? "border-primary bg-primary/10" : "border-border hover:bg-accent",
+                            selected
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:bg-accent",
                           )}
                         >
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">{food.name}</span>
                             <span className="block text-xs text-muted-foreground">
-                              {food.serving_label} · {food.calories} kcal · {food.protein_g} g protein
+                              {food.serving_label} · {food.calories} kcal · {food.protein_g} g
+                              protein
                             </span>
                           </span>
                           <span
                             aria-hidden="true"
                             className={cn(
                               "flex size-6 shrink-0 items-center justify-center rounded-full border",
-                              selected ? "border-primary bg-primary text-primary-foreground" : "border-border",
+                              selected
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border",
                             )}
                           >
                             {selected ? <Check className="size-3.5" /> : null}
@@ -133,11 +136,7 @@ export function FoodLibraryDialog({
             Cancel
           </Button>
           <Button disabled={!picked.length || add.isPending} onClick={() => add.mutate(picked)}>
-            {add.isPending
-              ? "Adding…"
-              : picked.length
-                ? `Add ${picked.length}`
-                : "Add"}
+            {add.isPending ? "Adding…" : picked.length ? `Add ${picked.length}` : "Add"}
           </Button>
         </div>
       </DialogContent>

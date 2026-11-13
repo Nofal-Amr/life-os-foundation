@@ -50,7 +50,10 @@ test.describe("intro page (signed out)", () => {
     await page.getByRole("link", { name: "Get started" }).first().click();
 
     await expect(page).toHaveURL(/\/auth\?mode=signup/);
-    await expect(page.getByRole("tab", { name: "Sign up" })).toHaveAttribute("data-state", "active");
+    await expect(page.getByRole("tab", { name: "Sign up" })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
     await expect(page.getByRole("button", { name: "Create account" })).toBeVisible();
     // New passwords need 8+ characters.
     await expect(page.getByLabel("Password")).toHaveAttribute("minlength", "8");
@@ -69,7 +72,10 @@ test.describe("intro page (signed out)", () => {
 test.describe("sign-in page", () => {
   test("sign-in does not force the new-password minimum on existing accounts", async ({ page }) => {
     await page.goto("/auth");
-    await expect(page.getByRole("tab", { name: "Sign in" })).toHaveAttribute("data-state", "active");
+    await expect(page.getByRole("tab", { name: "Sign in" })).toHaveAttribute(
+      "data-state",
+      "active",
+    );
     await expect(page.getByLabel("Password")).not.toHaveAttribute("minlength", /.*/);
     await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
   });

@@ -393,7 +393,10 @@ export type WorkCheck =
       /** Epoch ms. */
       at: number;
     }
-  | { ok: false; reason: "cancelled" | "no-lock" | "no-permission" | "no-location" | "unsupported" };
+  | {
+      ok: false;
+      reason: "cancelled" | "no-lock" | "no-permission" | "no-location" | "unsupported";
+    };
 
 /** Fingerprint (or screen lock) and one location reading, on the Android app. */
 export async function workCheck(title: string): Promise<WorkCheck> {

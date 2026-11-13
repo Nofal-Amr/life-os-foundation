@@ -160,7 +160,8 @@ export function TopUpDialog({
             <PhotoReader kind="number" onNumber={(value) => setBefore(String(value))} />
             {balance != null ? (
               <p className="text-xs text-muted-foreground">
-                Last reading {balance} {resource.unit}. Change it if the meter shows something else now.
+                Last reading {balance} {resource.unit}. Change it if the meter shows something else
+                now.
               </p>
             ) : null}
           </div>

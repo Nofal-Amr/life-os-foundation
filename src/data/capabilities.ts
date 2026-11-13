@@ -26,7 +26,11 @@ export const capabilitiesQuery = () =>
 export async function createCapability(input: CapabilityInput): Promise<Capability> {
   const user_id = await currentUserId();
   return unwrap(
-    await supabase.from("capabilities").insert({ ...input, user_id }).select().single(),
+    await supabase
+      .from("capabilities")
+      .insert({ ...input, user_id })
+      .select()
+      .single(),
   ) as Capability;
 }
 

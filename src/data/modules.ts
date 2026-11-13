@@ -19,7 +19,11 @@ export type ModuleKey = (typeof MODULE_KEYS)[number];
 
 export const MODULES: { key: ModuleKey; label: string; description: string }[] = [
   { key: "do", label: "Do", description: "Tasks, projects and goals in one place." },
-  { key: "money", label: "Money", description: "Accounts, spending and what is left before payday." },
+  {
+    key: "money",
+    label: "Money",
+    description: "Accounts, spending and what is left before payday.",
+  },
   { key: "body", label: "Body", description: "Health log, weight and medication." },
   { key: "spirit", label: "Spirit", description: "The five daily prayers, logged in a tap." },
   { key: "resources", label: "Resources", description: "Electricity, water and internet usage." },
