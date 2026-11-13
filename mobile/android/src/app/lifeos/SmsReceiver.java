@@ -12,7 +12,6 @@ import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Life Connect on the SIM phone: each SMS that arrives is sent on to the main
@@ -20,9 +19,6 @@ import java.util.regex.Pattern;
  * it's a one-time code and you chose not to forward those.
  */
 public class SmsReceiver extends BroadcastReceiver {
-    private static final Pattern CODE = Pattern.compile(
-        "(?i)\\b(otp|one[- ]?time|verification|passcode|password|code)\\b|رمز|كود|كلمة السر|كلمة المرور|التحقق");
-
     @Override
     public void onReceive(Context context, Intent intent) {
         if (!Telephony.Sms.Intents.SMS_RECEIVED_ACTION.equals(intent.getAction())) return;
@@ -50,7 +46,7 @@ public class SmsReceiver extends BroadcastReceiver {
             try {
                 for (Map.Entry<String, StringBuilder> entry : bySender.entrySet()) {
                     String body = entry.getValue().toString();
-                    if (!config.forwardCodes && CODE.matcher(body).find()) continue;
+                    if (!SmsFilter.forwards(config.forwardCodes, body)) continue;
                     String from = entry.getKey();
                     String name = contactName(app, from);
                     ConnectSender.sendNow(config, new JSONObject()

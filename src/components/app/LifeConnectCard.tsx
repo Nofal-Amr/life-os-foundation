@@ -9,7 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { preferencesKeys, preferencesQuery, savePreferences } from "@/data/preferences";
 import { supabase } from "@/integrations/supabase/client";
-import { buildFeatures, lifeConnect, type ConnectRole, type ConnectStatus } from "@/lib/native";
+import {
+  buildFeatures,
+  forwardsOneTimeCodes,
+  lifeConnect,
+  type ConnectRole,
+  type ConnectStatus,
+} from "@/lib/native";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +61,8 @@ export function LifeConnectCard() {
   const [device, setDevice] = useState("SIM phone");
   const [status, setStatus] = useState<ConnectStatus | null>(null);
   const [sms, setSms] = useState(true);
-  const [codes, setCodes] = useState(true);
+  // One-time codes stay on the SIM phone unless you switch them on.
+  const [codes, setCodes] = useState(false);
   const available = lifeConnect.available();
   const smsBuild = buildFeatures().sms;
 
@@ -64,7 +71,7 @@ export function LifeConnectCard() {
     setRole(saved === "sim" || saved === "main" ? saved : "off");
     setDevice(readLocal(NAME_KEY, "SIM phone"));
     setSms(readLocal(SMS_KEY, "1") === "1");
-    setCodes(readLocal(CODES_KEY, "1") === "1");
+    setCodes(forwardsOneTimeCodes(readLocal(CODES_KEY, "0")));
   }, []);
 
   // Keep the phone's native settings in step with the role and the account key.

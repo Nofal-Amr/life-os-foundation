@@ -218,7 +218,7 @@ public class MainActivity extends Activity {
      * lifeos://auth-callback?code=...#access_token=... . Hand the query and
      * fragment to the web app's /auth page, which completes the session.
      */
-    private static String callbackUrl(Intent intent) {
+    private String callbackUrl(Intent intent) {
         if (intent == null || intent.getData() == null) return null;
         Uri data = intent.getData();
         if (!CALLBACK_SCHEME.equals(data.getScheme())) return null;
@@ -228,6 +228,12 @@ public class MainActivity extends Activity {
             return APP_URL + (path == null ? "" : path.replaceFirst("^/", ""))
                 + (query == null ? "" : "?" + query);
         }
+        // Only a sign-in this app started, and only once (see AuthCallbackGate):
+        // otherwise any link could sign the app in to someone else's account.
+        if (!takeSignIn()) {
+            Log.w("LifeOS", "sign-in link ignored: no sign-in was started from the app");
+            return null;
+        }
         String query = data.getEncodedQuery();
         String fragment = data.getEncodedFragment();
         // A unique query forces a full page load. The app is usually already on
@@ -236,6 +242,23 @@ public class MainActivity extends Activity {
         return APP_URL + "auth?return=" + System.currentTimeMillis()
             + (query != null ? "&" + query : "")
             + (fragment != null ? "#" + fragment : "");
+    }
+
+    private static final String AUTH_PREFS = "auth";
+    private static final String KEY_SIGN_IN_AT = "signInStartedAt";
+
+    /** Notes that the app just sent you to the browser to sign in (kept if Android closes the app meanwhile). */
+    private void noteSignInStarted() {
+        getSharedPreferences(AUTH_PREFS, MODE_PRIVATE).edit()
+            .putLong(KEY_SIGN_IN_AT, System.currentTimeMillis()).apply();
+    }
+
+    /** Whether a sign-in result is expected now; using it up, so a second link is ignored. */
+    private boolean takeSignIn() {
+        android.content.SharedPreferences prefs = getSharedPreferences(AUTH_PREFS, MODE_PRIVATE);
+        long startedAt = prefs.getLong(KEY_SIGN_IN_AT, 0);
+        prefs.edit().remove(KEY_SIGN_IN_AT).apply();
+        return AuthCallbackGate.accepts(startedAt, System.currentTimeMillis());
     }
 
     /** Set when the page's renderer died: its state is worth nothing, start fresh. */
@@ -423,6 +446,12 @@ public class MainActivity extends Activity {
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri url = request.getUrl();
             if (APP_HOST.equals(url.getHost())) return false;
+            // Leaving to sign in: the result may come back through lifeos://auth-callback.
+            // (mailto:, tel: and other opaque links have no query to read.)
+            if (url.isHierarchical()
+                && AuthCallbackGate.startsSignIn(url.getPath(), url.getQueryParameter("handoff"))) {
+                noteSignInStarted();
+            }
             // Links that leave the app open in the browser.
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, url));
