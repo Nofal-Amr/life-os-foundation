@@ -53,6 +53,10 @@ export const BACKUP_TABLES: { table: string; key?: string }[] = [
   { table: "study_items" },
   { table: "rpg_rewards" },
   { table: "rpg_purchases" },
+  { table: "people" },
+  { table: "person_links" },
+  { table: "person_interactions" },
+  { table: "relationship_rules" },
 ];
 
 export type Backup = {

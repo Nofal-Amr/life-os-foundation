@@ -42,6 +42,7 @@ import {
 import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
 import { DaySummary } from "@/components/app/DaySummary";
+import { RelationshipsToday } from "@/components/app/relationships/RelationshipsToday";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
 import { useHolidays } from "@/components/app/Holidays";
 import { TaskTimerButton } from "@/components/app/Timer";
@@ -1283,6 +1284,9 @@ function DashboardPage() {
             {/* Log: one tile per thing you track, each showing where it stands. */}
             <div className="min-w-0 xl:col-start-2 xl:row-start-1">
               <TodayLog tiles={logTiles} />
+
+              {/* People: a birthday soon, or a check-in whose rhythm came round. */}
+              <RelationshipsToday className="mt-8 min-w-0" />
 
               {/* Everything else about today, folded away until you want it. */}
               <details className="group mt-8 min-w-0 border-t border-border/60 pt-4">

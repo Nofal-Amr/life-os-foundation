@@ -13,7 +13,11 @@ export const MODULE_KEYS = [
   "notes",
   "calendar",
   "study",
+  "relationships",
 ] as const;
+
+/** Areas that start off, even for "everything on": the user turns them on. */
+export const OPT_IN_MODULES: readonly string[] = ["relationships"];
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
@@ -36,9 +40,15 @@ export const MODULES: { key: ModuleKey; label: string; description: string }[] =
     label: "Study",
     description: "Student mode: courses, timetable, assignments and exams.",
   },
+  {
+    key: "relationships",
+    label: "Relationships",
+    description: "A map of your people, check-ins you choose, and birthdays.",
+  },
 ];
 
-export const ALL_MODULE_KEYS: string[] = [...MODULE_KEYS];
+/** "Everything on": every area except the opt-in ones. */
+export const ALL_MODULE_KEYS: string[] = MODULE_KEYS.filter((key) => !OPT_IN_MODULES.includes(key));
 
 export function moduleLabel(key: string): string {
   return MODULES.find((module) => module.key === key)?.label ?? key;
@@ -68,6 +78,7 @@ const ROUTE_MODULES: { prefix: string; module: ModuleKey }[] = [
   { prefix: "/notes", module: "notes" },
   { prefix: "/calendar", module: "calendar" },
   { prefix: "/study", module: "study" },
+  { prefix: "/relationships", module: "relationships" },
 ];
 
 export function moduleForPath(pathname: string): ModuleKey | null {

@@ -13,6 +13,7 @@ import {
   Menu,
   Plus,
   Moon,
+  Network,
   NotebookPen,
   Sun,
   Sunset,
@@ -49,6 +50,12 @@ const TOOLS = [
   { to: "/work" as const, label: "Work", icon: Briefcase, module: null },
   { to: "/insights" as const, label: "Insights", icon: LineChart, module: null },
   { to: "/together" as const, label: "Together", icon: Users, module: null },
+  {
+    to: "/relationships" as const,
+    label: "Relationships",
+    icon: Network,
+    module: "relationships" as const,
+  },
   { to: "/quests" as const, label: "Quests", icon: Swords, module: null },
   { to: "/review" as const, label: "Daily review", icon: Sunset, module: null },
 ];
