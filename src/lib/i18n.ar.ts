@@ -568,6 +568,7 @@ export const AR: Record<string, string> = {
   Year: "سنة",
   Sunnah: "السنة",
   Witr: "الوتر",
+  Duha: "الضحى",
   "Ayat al-Kursi": "آية الكرسي",
   "Al-Ikhlas": "الإخلاص",
   "Al-Falaq": "الفلق",
@@ -590,6 +591,9 @@ export const AR: Record<string, string> = {
   Salawat: "الصلاة على النبي",
   "Before Fajr's fard": "قبل فرض الفجر",
   "After Isha, before Fajr": "بعد العشاء وقبل الفجر",
+  "From a quarter of an hour after sunrise, before Dhuhr": "من بعد الشروق بربع ساعة حتى قبل الظهر",
+  "Duha can be logged once a one-time database update is done.":
+    "يمكن تسجيل الضحى بعد تحديث واحد لقاعدة البيانات.",
   "Sunnah prayers": "السنن",
   "Outlined: sunnah, not counted in the five.": "المحاطة بلون: سنة، ولا تُحسب من الخمس.",
   Sunrise: "الشروق",

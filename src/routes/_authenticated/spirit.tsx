@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  duhaStart,
   ASR_SCHOOLS,
   CALC_METHODS,
   PRAYER_LABELS,
@@ -293,6 +294,7 @@ function SpiritPage() {
                 next={nextPrayer as PrayerName | null}
                 formatTime={fmtTime}
                 sunrise={showSunrise && times ? times.sunrise : null}
+                duhaFrom={times ? duhaStart(times.sunrise) : null}
                 onAlarm={onAlarm}
               />
               {date === todayISO() ? <WakeAlarmSettings /> : null}

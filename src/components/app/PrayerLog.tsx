@@ -8,7 +8,7 @@ import { useXp } from "@/hooks/useXp";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  DAY_ORDER,
+  loggablePrayers,
   isSunnah,
   PRAYER_SHORT_LABELS,
   prayerLabel,
@@ -25,6 +25,7 @@ import {
   type PrayerStatus,
 } from "@/data/spirit";
 import { track } from "@/lib/analytics";
+import { isDemo } from "@/lib/demo";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -47,16 +48,31 @@ export const STATUS_STYLE: Record<PrayerStatus, { icon: LucideIcon; color: strin
 const SUNNAH_COLOR = "color-mix(in oklch, var(--primary) 40%, transparent)";
 const SUNNAH_RING = `0 0 0 1.5px ${SUNNAH_COLOR}`;
 
-/** When each sunnah is prayed: shown with Fajr's time, and Witr with Isha's. */
+/** When each sunnah is prayed: shown with Fajr's time, Duha from after sunrise, Witr with Isha's. */
 const SUNNAH_HINT: Record<string, string> = {
   sunnah_fajr: "Before Fajr's fard",
+  duha: "From a quarter of an hour after sunrise, before Dhuhr",
   witr: "After Isha, before Fajr",
 };
 
-function timeOf(times: Partial<Record<PrayerName, Date>> | null | undefined, name: LoggedPrayer) {
+function timeOf(
+  times: Partial<Record<PrayerName, Date>> | null | undefined,
+  name: LoggedPrayer,
+  duhaFrom?: Date | null,
+) {
   if (name === "sunnah_fajr") return times?.fajr;
+  if (name === "duha") return duhaFrom ?? undefined;
   if (name === "witr") return times?.isha;
   return times?.[name];
+}
+
+/** Production needs a one-time database update before Duha can be saved. */
+function saveErrorMessage(error: unknown, name: LoggedPrayer): string {
+  const message = error instanceof Error ? error.message : "";
+  if (name === "duha" && message.includes("prayer_name_check")) {
+    return t("Duha can be logged once a one-time database update is done.");
+  }
+  return message || "Couldn't save that.";
 }
 
 /** The logs of the five (passed in) plus the sunnah logs. */
@@ -117,7 +133,7 @@ export function usePrayerStatus() {
       if (previous) {
         queryClient.setQueryData(isSunnah(name) ? spiritKeys.sunnah : spiritKeys.logs, previous);
       }
-      toast.error(error instanceof Error ? error.message : "Couldn't save that.");
+      toast.error(saveErrorMessage(error, name));
     },
     onSettled: () => void queryClient.invalidateQueries({ queryKey: spiritKeys.logs }),
   });
@@ -236,6 +252,7 @@ export function PrayerDayList({
   formatTime,
   disabled,
   sunrise,
+  duhaFrom,
   onAlarm,
 }: {
   date: string;
@@ -246,6 +263,8 @@ export function PrayerDayList({
   disabled?: boolean | undefined;
   /** Shown after Fajr when given: when Fajr's time ends. Nothing to log. */
   sunrise?: Date | null | undefined;
+  /** When Duha's time begins (see duhaStart). */
+  duhaFrom?: Date | null | undefined;
   /** When given, a wake-up alarm button beside the five and sunrise. */
   onAlarm?: ((name: PrayerName | "sunrise") => void) | undefined;
 }) {
@@ -275,11 +294,11 @@ export function PrayerDayList({
   ) : null;
   return (
     <ul className="space-y-2">
-      {DAY_ORDER.flatMap((name) => {
+      {loggablePrayers(isDemo()).flatMap((name) => {
         const status = statusOf(
           dayLogs.find((log) => log.prayer_date === date && log.prayer_name === name),
         );
-        const time = timeOf(times, name);
+        const time = timeOf(times, name, duhaFrom);
         const sunnah = isSunnah(name);
         const row = (
           <li key={name} className="flex gap-2">
@@ -373,7 +392,7 @@ export function PrayerTiles({
   const dayLogs = useDayLogs(logs);
   return (
     <div className="grid min-w-0 grid-cols-7 gap-1.5">
-      {DAY_ORDER.map((name) => {
+      {loggablePrayers(isDemo()).map((name) => {
         const status = statusOf(
           dayLogs.find((log) => log.prayer_date === date && log.prayer_name === name),
         );
@@ -499,7 +518,7 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
                   ))}
                 </>
               ) : null}
-              {DAY_ORDER.map((name) => (
+              {loggablePrayers(isDemo()).map((name) => (
                 <PrayerHeatRow key={name} name={name} dates={dates} byKey={byKey} cell={cell} />
               ))}
             </div>

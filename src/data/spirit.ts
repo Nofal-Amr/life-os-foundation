@@ -12,11 +12,11 @@ export const PRAYER_NAMES = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const
 export type PrayerName = (typeof PRAYER_NAMES)[number];
 
 /**
- * The two sunnah prayers logged alongside the five: the two rak'ahs before
- * Fajr, and Witr after Isha. Kept apart from PRAYER_NAMES so "5 of 5" and
- * every count of the five stay as they are.
+ * The sunnah prayers logged alongside the five: the two rak'ahs before Fajr,
+ * Duha in the morning, and Witr after Isha. Kept apart from PRAYER_NAMES so
+ * "5 of 5" and every count of the five stay as they are.
  */
-export const SUNNAH_NAMES = ["sunnah_fajr", "witr"] as const;
+export const SUNNAH_NAMES = ["sunnah_fajr", "duha", "witr"] as const;
 export type SunnahName = (typeof SUNNAH_NAMES)[number];
 /** Any prayer that can be logged. */
 export type LoggedPrayer = PrayerName | SunnahName;
@@ -32,6 +32,7 @@ export const PRAYER_LABELS: Record<LoggedPrayer, string> = {
   asr: "Asr",
   maghrib: "Maghrib",
   isha: "Isha",
+  duha: "Duha",
   witr: "Witr",
 };
 
@@ -50,8 +51,39 @@ export function prayerLabel(name: LoggedPrayer, date?: string | Date | null): st
   return t(PRAYER_LABELS[name]);
 }
 
-/** The day's order: the sunnah of Fajr first, Witr last. */
-export const DAY_ORDER: readonly LoggedPrayer[] = ["sunnah_fajr", ...PRAYER_NAMES, "witr"];
+/** The day's order: the sunnah of Fajr first, Duha between Fajr and Dhuhr, Witr last. */
+export const DAY_ORDER: readonly LoggedPrayer[] = [
+  "sunnah_fajr",
+  "fajr",
+  "duha",
+  "dhuhr",
+  "asr",
+  "maghrib",
+  "isha",
+  "witr",
+];
+
+/**
+ * Duha's time begins once the sun has risen a little, about a quarter of an
+ * hour after sunrise, and lasts until shortly before Dhuhr.
+ */
+export const DUHA_MINUTES_AFTER_SUNRISE = 15;
+
+/**
+ * Whether the live database accepts Duha logs yet (migration
+ * 20261114110000_prayer_duha.sql). Until then Duha shows only in the demo, so
+ * nobody taps a row that can't be saved. Set to true once it is applied.
+ */
+export const DUHA_IN_DATABASE = false;
+
+/** The prayers that can be logged: Duha only once the database accepts it, or in the demo. */
+export function loggablePrayers(demo: boolean): readonly LoggedPrayer[] {
+  return demo || DUHA_IN_DATABASE ? DAY_ORDER : DAY_ORDER.filter((name) => name !== "duha");
+}
+
+export function duhaStart(sunrise: Date): Date {
+  return new Date(sunrise.getTime() + DUHA_MINUTES_AFTER_SUNRISE * 60_000);
+}
 
 /**
  * When each prayer's time runs out: Fajr at sunrise, Dhuhr at Asr, Asr at
