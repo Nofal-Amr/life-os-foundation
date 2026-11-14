@@ -2,7 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 
-import { DAY_ORDER, isSunnah, PRAYER_NAMES, prayerLabel, prayerWindowEnds } from "./spirit";
+import {
+  DAY_ORDER,
+  duhaStart,
+  isSunnah,
+  loggablePrayers,
+  PRAYER_NAMES,
+  prayerLabel,
+  prayerWindowEnds,
+} from "./spirit";
 
 describe("prayerLabel", () => {
   it("calls Dhuhr Jumu'ah on Fridays only", () => {
@@ -28,15 +36,36 @@ describe("prayerWindowEnds", () => {
 });
 
 describe("sunnah prayers", () => {
-  it("puts the sunnah of Fajr first and Witr last, around the five", () => {
-    expect(DAY_ORDER).toEqual(["sunnah_fajr", ...PRAYER_NAMES, "witr"]);
+  it("puts the sunnah of Fajr first, Duha between Fajr and Dhuhr, and Witr last", () => {
+    expect(DAY_ORDER).toEqual([
+      "sunnah_fajr",
+      "fajr",
+      "duha",
+      "dhuhr",
+      "asr",
+      "maghrib",
+      "isha",
+      "witr",
+    ]);
     expect(prayerLabel("sunnah_fajr")).toBe("Sunnah of Fajr");
+    expect(prayerLabel("duha")).toBe("Duha");
     expect(prayerLabel("witr")).toBe("Witr");
+  });
+
+  it("shows Duha in the demo, and elsewhere only once the database accepts it", () => {
+    expect(loggablePrayers(true)).toContain("duha");
+    expect(loggablePrayers(false)).not.toContain("duha");
+    expect(loggablePrayers(false)).toHaveLength(7);
+  });
+
+  it("starts Duha a quarter of an hour after sunrise", () => {
+    expect(duhaStart(new Date(2026, 10, 14, 6, 10))).toEqual(new Date(2026, 10, 14, 6, 25));
   });
 
   it("keeps them out of the five", () => {
     expect(PRAYER_NAMES.some((name) => isSunnah(name))).toBe(false);
     expect(isSunnah("witr")).toBe(true);
     expect(isSunnah("sunnah_fajr")).toBe(true);
+    expect(isSunnah("duha")).toBe(true);
   });
 });
