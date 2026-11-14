@@ -1,9 +1,40 @@
 ---
 tags: [handoff]
-updated: 2026-11-13
+updated: 2026-11-14
 ---
 
 # Handoff for the next session
+
+## Security and housekeeping, 2026-11-14
+Done (each its own PR, CI green):
+- #37: the three pending migrations that shared version `20261113120000` now have their own
+  numbers (`google_calendar_sync` → `…120100`, `notes_realtime` → `…120200`). `src/migrations.test.ts`
+  fails if two files share a version again.
+- #38: `docs/phase1/PROGRESS.md` and `EXECUTION_PROMPT.md` are marked superseded. Don't act on them.
+- #39: native app accepts only sign-in results it asked for (audit M5; `core/auth/CallbackGate.kt`).
+- #40: Android release builds (`npm run build:android:release`): not debuggable, signed with the
+  owner's key from `LIFEOS_KEYSTORE` (audit M4). Guide: `docs/android-release-signing.md`.
+- #41: migration `20261114100000_project_images_private.sql` (audit M1). **Not applied.**
+
+**Waiting on the owner:**
+- **Five migrations are written but not applied**, each needing approval of its exact SQL, staging
+  first: `20261113120000_relationships`, `20261113120100_google_calendar_sync`,
+  `20261113120200_notes_realtime`, `20261114090000_habit_goals`, `20261114100000_project_images_private`.
+- **Before applying any of them:** production's migration history doesn't match the files (the
+  Phase 0 audit found 12 recorded against 25 files; there are now 30), and some live tables, a
+  bucket and functions have no migration at all. The fix is a baseline generated from the live
+  schema (read-only), checked by rebuilding it on a staging project, then the history marked to
+  match. It needs a staging project and permission to read the production schema (the Supabase
+  connector read-only, or a read-only database role).
+- **Create the Android release key** (steps 1 and 2 of the signing guide). Until then, debug builds
+  only, for the owner's own phone.
+- **Audit M2 and M3 are not started.** Both change how every sign-in finishes (website PKCE; a
+  one-time code or Android App Link instead of tokens in `lifeos://`). They need a test on a real
+  phone, and App Links need the final domain.
+- `.env` is still tracked; it is replaced with `.env.example` once the owner confirms Vercel has the
+  build variables for Production and Preview.
+- On the PC: `Test-Path "$env:USERPROFILE\.impeccable"` and `Test-Path ".impeccable"` in the repo
+  folder, to see whether the removed design-tool hooks ever wrote files.
 
 ## Web simplification (redesign draft steps), 2026-11-13
 Plan: `docs/superpowers/specs/2026-11-12-today-tasks-navigation-redesign.md`. Each step is its own branch and PR, cut from `origin/main`, checked green (tsc, vitest, eslint, build, headless demo at 375/1280).
