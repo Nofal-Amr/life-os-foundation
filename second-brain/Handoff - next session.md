@@ -84,5 +84,5 @@ Next, in order:
 ## Ideas / open
 
 - Today (web) still dense ("Coming up" twice) — simplify.
-- Google Calendar sync (2026-11-13): built and merged behind "Not set up yet". It switches on when the owner adds GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_TOKEN_KEY in Vercel and approves `supabase/migrations/20261113120000_google_calendar_sync.sql`. Design: docs/superpowers/specs/2026-11-13-google-calendar-sync-design.md.
+- Google Calendar sync (2026-11-13): built and merged behind "Not set up yet". It switches on when the owner adds GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_TOKEN_KEY in Vercel and approves `supabase/migrations/20261113120100_google_calendar_sync.sql`. Design: docs/superpowers/specs/2026-11-13-google-calendar-sync-design.md.
 - Keep sessions short: one request at a time.

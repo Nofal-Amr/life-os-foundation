@@ -133,7 +133,7 @@ requires an end.
 
 ## Database change (needs the owner's approval; not applied)
 
-`supabase/migrations/20261113120000_google_calendar_sync.sql`
+`supabase/migrations/20261113120100_google_calendar_sync.sql`
 
 - **`google_calendar_connections`:** one row per person. It holds:
   - the account email;
