@@ -1,8 +1,15 @@
 // Builds the Life OS Android APK without Gradle or Capacitor, using only the
 // Android SDK command-line tools (aapt2, d8, zipalign, apksigner) and a JDK.
 //
-//   npm run build:android            -> mobile/android/build/life-os-debug.apk
-//   npm run build:android:full       -> mobile/android/build/life-os-full.apk
+//   npm run build:android               -> mobile/android/build/life-os-debug.apk
+//   npm run build:android:full          -> mobile/android/build/life-os-full.apk
+//   npm run build:android:release       -> mobile/android/build/life-os-release.apk
+//   npm run build:android:full:release  -> mobile/android/build/life-os-full-release.apk
+//
+// Debug builds are for your own phone only: they are debuggable and signed
+// with the standard debug key. Anything given to other people must be a
+// release build, signed with your own key (see mobile/android/signing.mjs and
+// docs/android-release-signing.md).
 //
 // The standard build leaves out everything between <!-- full:start --> and
 // <!-- full:end --> in the manifest (SMS access, notification access): Google
@@ -25,10 +32,13 @@ import { homedir } from "node:os";
 import { delimiter, dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { signingPlan } from "./signing.mjs";
+
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..", "..");
 const out = join(here, "build");
 const full = process.argv.includes("--full") || process.env.LIFEOS_FULL === "1";
+const release = process.argv.includes("--release") || process.env.LIFEOS_RELEASE === "1";
 const win = process.platform === "win32";
 
 const sdk =
@@ -59,6 +69,10 @@ const bt = (tool) => join(sdk, "build-tools", buildTools, tool + (win ? ".exe" :
 const btJar = (name) => join(sdk, "build-tools", buildTools, "lib", name + ".jar");
 const jdk = (tool) => join(javaHome, "bin", tool + (win ? ".exe" : ""));
 const androidJar = join(sdk, "platforms", platform, "android.jar");
+
+// Decided first, so a release build without its key stops before any work.
+const debugKeystore = join(homedir(), ".android", "debug.keystore");
+const signing = signingPlan({ release, full, env: process.env, root, debugKeystore });
 
 for (const [label, path] of [
   ["Android SDK", sdk],
@@ -133,8 +147,9 @@ run(bt("aapt2"), [
   "--java",
   genOut,
   "--auto-add-overlay",
-  // Debug build: lets chrome://inspect attach to the WebView.
-  "--debug-mode",
+  // Debug builds only: lets chrome://inspect attach to the WebView. Release
+  // builds leave it out, so the app is not debuggable.
+  ...(signing.debuggable ? ["--debug-mode"] : []),
   compiled,
 ]);
 
@@ -189,15 +204,15 @@ run(jdk("jar"), ["-uf", unsigned, "-C", dexOut, "classes.dex", "-C", out, "asset
 const aligned = join(out, "aligned.apk");
 run(bt("zipalign"), ["-f", "-p", "4", unsigned, aligned]);
 
-// Standard Android debug key (the same one Android Studio uses). Not for Play Store.
-const keystore = join(homedir(), ".android", "debug.keystore");
-if (!existsSync(keystore)) {
-  mkdirSync(dirname(keystore), { recursive: true });
+// Standard Android debug key for debug builds (the same one Android Studio
+// uses); release builds use the key named in the environment.
+if (!release && !existsSync(debugKeystore)) {
+  mkdirSync(dirname(debugKeystore), { recursive: true });
   run(jdk("keytool"), [
     "-genkeypair",
     "-v",
     "-keystore",
-    keystore,
+    debugKeystore,
     "-storepass",
     "android",
     "-alias",
@@ -214,19 +229,19 @@ if (!existsSync(keystore)) {
     "CN=Android Debug,O=Android,C=US",
   ]);
 }
-const apk = join(out, full ? "life-os-full.apk" : "life-os-debug.apk");
+const apk = join(out, signing.apkName);
 run(jdk("java"), [
   "-jar",
   btJar("apksigner"),
   "sign",
   "--ks",
-  keystore,
+  signing.keystore,
   "--ks-pass",
-  "pass:android",
+  signing.storePass,
   "--ks-key-alias",
-  "androiddebugkey",
+  signing.alias,
   "--key-pass",
-  "pass:android",
+  signing.keyPass,
   "--out",
   apk,
   aligned,

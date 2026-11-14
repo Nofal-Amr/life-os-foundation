@@ -46,12 +46,32 @@ android {
         jvmTarget = "17"
     }
 
+    // Release key for anything given to other people, read from outside the repository
+    // (docs/android-release-signing.md). Without it, release builds are signed with the debug
+    // key and are for your own phone only.
+    val releaseKeystore = System.getenv("LIFEOS_KEYSTORE")?.takeIf { it.isNotBlank() }
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("LIFEOS_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("LIFEOS_KEY_ALIAS") ?: "lifeos"
+                keyPassword = System.getenv("LIFEOS_KEY_PASSWORD") ?: System.getenv("LIFEOS_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (releaseKeystore != null) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn("LIFEOS_KEYSTORE is not set: release build signed with the debug key, for your own phone only.")
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
