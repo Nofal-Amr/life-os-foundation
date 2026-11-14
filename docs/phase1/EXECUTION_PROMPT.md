@@ -1,3 +1,9 @@
+> [!WARNING]
+> **Superseded on 2026-11-13.** Phase 1 as planned here was overtaken: its pull requests are all
+> merged, and the owner has since dropped the phase plan. Do not act on the "current state" or
+> "waiting on the owner" lists below. The current rules are in `AGENTS.md`; current work is in
+> `second-brain/Handoff - next session.md`. Kept as a record of the decisions made.
+
 # Phase 1 — execution instructions (owner's text, verbatim)
 
 This file records the owner's Phase 1 instructions and follow-up answers exactly as given, so a
