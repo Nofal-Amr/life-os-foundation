@@ -13,6 +13,8 @@
     "format": "prettier --write .",
     "build:android": "node mobile/android/build.mjs",
     "build:android:full": "node mobile/android/build.mjs --full",
+    "build:android:release": "node mobile/android/build.mjs --release",
+    "build:android:full:release": "node mobile/android/build.mjs --full --release",
     "build:wear": "node mobile/wear/build.mjs",
     "build:native": "node mobile/native/build.mjs",
     "test:android": "node mobile/android/test.mjs",
