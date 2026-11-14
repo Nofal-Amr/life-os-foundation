@@ -2,6 +2,7 @@ package app.lifeos.kt
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
@@ -12,6 +13,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.lifeos.kt.core.auth.PendingSignIn
 import app.lifeos.kt.core.datastore.SessionState
 import app.lifeos.kt.core.designsystem.LifeOsTheme
 import app.lifeos.kt.core.designsystem.LocalHapticsEnabled
@@ -60,9 +62,15 @@ class MainActivity : FragmentActivity() {
     private fun handleCallback(intent: Intent?) {
         val data = intent?.data ?: return
         if (data.scheme != "lifeosnative" || data.host != "auth-callback") return
+        setIntent(Intent(intent).setData(null))
+        // Only a sign-in this app started, and only once (see CallbackGate): otherwise any link
+        // could sign the app in to someone else's account.
+        if (!PendingSignIn(this).take()) {
+            Log.w("LifeOS", "sign-in link ignored: no sign-in was started from the app")
+            return
+        }
         if (!app.handleGoogleCallback(data.encodedFragment)) {
             Toast.makeText(this, "Google sign-in didn't finish. Please try again.", Toast.LENGTH_LONG).show()
         }
-        setIntent(Intent(intent).setData(null))
     }
 }

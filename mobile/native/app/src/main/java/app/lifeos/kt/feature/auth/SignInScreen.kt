@@ -42,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
+import app.lifeos.kt.core.auth.PendingSignIn
 import app.lifeos.kt.core.designsystem.IconBadge
 import app.lifeos.kt.core.designsystem.rememberHaptics
 import app.lifeos.kt.data.AccountRepository
@@ -170,7 +171,11 @@ fun SignInScreen(model: SignInViewModel = hiltViewModel()) {
                 onClick = {
                     haptics.tick()
                     if (nativeGoogleSignIn) scope.launch { model.google(googleSignIn(context)) }
-                    else context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GOOGLE_HANDOFF)))
+                    else {
+                        // Remembered so the app accepts the sign-in that comes back, and only that one.
+                        PendingSignIn(context).start()
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GOOGLE_HANDOFF)))
+                    }
                 },
                 enabled = !state.pending,
                 shape = MaterialTheme.shapes.medium,
