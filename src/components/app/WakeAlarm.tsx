@@ -38,7 +38,7 @@ export function WakeAlarmSettings() {
     );
   }
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div>
         <h3 className="text-sm font-semibold">{t("Wake-up alarm")}</h3>
         <p className="text-xs text-muted-foreground">

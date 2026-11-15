@@ -377,7 +377,7 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
 
 function Group({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="stat-card space-y-3 p-5">
+    <section className="stat-card space-y-3 p-4 sm:p-5">
       <div>
         <p className="text-sm font-semibold">{t(title)}</p>
         {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{t(hint)}</p> : null}

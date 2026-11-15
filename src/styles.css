@@ -77,6 +77,8 @@
 
 :root {
   --radius: 0.75rem;
+  /* The phone bottom bar; main's bottom padding and the timer bar sit above it. */
+  --bottom-nav-height: 3.5rem;
   --background: oklch(0.982 0.003 265);
   --foreground: oklch(0.208 0.04 266);
   --card: oklch(1 0 0);

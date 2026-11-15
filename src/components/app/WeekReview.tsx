@@ -159,7 +159,7 @@ export function WeekReview() {
         <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300">
           <div className="grid gap-4 lg:grid-cols-3">
             {/* Week summary */}
-            <section className="stat-card p-5">
+            <section className="stat-card p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-muted-foreground">
@@ -735,7 +735,7 @@ function CheckRow({
 function Recap({ lines }: { lines: string[] }) {
   if (!lines.length) return null;
   return (
-    <section className="stat-card p-5">
+    <section className="stat-card p-4 sm:p-5">
       <p className="text-sm font-semibold">This week in numbers</p>
       <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
         {lines.map((line) => (

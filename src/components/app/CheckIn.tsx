@@ -51,7 +51,7 @@ export function CheckIn({ className }: { className?: string }) {
   const energy = review.data?.energy ?? null;
 
   return (
-    <section className={cn("stat-card p-5", className)} aria-label="Check in">
+    <section className={cn("stat-card p-4 sm:p-5", className)} aria-label="Check in">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="section-title">How are you right now?</h2>

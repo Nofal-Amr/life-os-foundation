@@ -129,7 +129,7 @@ export function LifeConnectCard() {
 
   if (!available) {
     return (
-      <section className="stat-card space-y-2 p-5">
+      <section className="stat-card space-y-2 p-4 sm:p-5">
         <p className="flex items-center gap-2 text-base font-semibold">
           <PhoneCall className="size-4" /> Life Connect
         </p>
@@ -196,7 +196,7 @@ export function LifeConnectCard() {
   }
 
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div>
         <p className="flex items-center gap-2 text-base font-semibold">
           <PhoneCall className="size-4" /> Life Connect

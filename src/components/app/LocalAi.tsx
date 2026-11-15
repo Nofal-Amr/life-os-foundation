@@ -73,7 +73,7 @@ export function LocalAiCard() {
   }
 
   return (
-    <section className="stat-card space-y-3 p-5">
+    <section className="stat-card space-y-3 p-4 sm:p-5">
       <p className="flex items-center gap-2 text-base font-semibold">
         <Cpu className="size-4" /> On-device AI
       </p>

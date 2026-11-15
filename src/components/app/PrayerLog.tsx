@@ -51,7 +51,7 @@ const SUNNAH_RING = `0 0 0 1.5px ${SUNNAH_COLOR}`;
 /** When each sunnah is prayed: shown with Fajr's time, Duha from after sunrise, Witr with Isha's. */
 const SUNNAH_HINT: Record<string, string> = {
   sunnah_fajr: "Before Fajr's fard",
-  duha: "From a quarter of an hour after sunrise, before Dhuhr",
+  duha: "15 min after sunrise, until Dhuhr",
   witr: "After Isha, before Fajr",
 };
 
@@ -243,7 +243,12 @@ function StatusPicker({
   );
 }
 
-/** Spirit page: one row per prayer with its time and status. */
+/**
+ * Spirit page: the whole day in one compact list. One even row per prayer
+ * (name and time on the left, the status on the right, the wake-up alarm as a
+ * small icon in the same row), sunnah prayers with a muted second line, and
+ * sunrise as a thin divider.
+ */
 export function PrayerDayList({
   date,
   logs,
@@ -265,105 +270,111 @@ export function PrayerDayList({
   sunrise?: Date | null | undefined;
   /** When Duha's time begins (see duhaStart). */
   duhaFrom?: Date | null | undefined;
-  /** When given, a wake-up alarm button beside the five and sunrise. */
+  /** When given, a wake-up alarm button in the rows of the five and sunrise. */
   onAlarm?: ((name: PrayerName | "sunrise") => void) | undefined;
 }) {
   const setStatus = usePrayerStatus();
   const dayLogs = useDayLogs(logs);
-  const alarmButton = (name: PrayerName | "sunrise", label: string) =>
-    onAlarm ? (
+  // Every row ends in the same slot, so the status pills line up even where
+  // there is no alarm (the sunnah prayers).
+  const alarmSlot = (name: PrayerName | "sunrise" | null, label: string) =>
+    !onAlarm ? null : name ? (
       <button
         type="button"
         onClick={() => onAlarm(name)}
         aria-label={`${t("Wake-up alarm before")} ${label}`}
         title={`${t("Wake-up alarm before")} ${label}`}
-        className="stat-card flex w-12 shrink-0 items-center justify-center text-muted-foreground transition-transform active:scale-95"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-[color,scale] hover:text-foreground active:scale-95"
       >
-        <AlarmClock className="size-5" />
+        <AlarmClock className="size-[1.125rem]" aria-hidden="true" />
       </button>
-    ) : null;
+    ) : (
+      <span className="size-11 shrink-0" aria-hidden="true" />
+    );
   const sunriseRow = sunrise ? (
-    <li key="sunrise" className="flex gap-2">
-      <div className="flex min-h-11 flex-1 items-baseline gap-3 rounded-xl border border-dashed border-border px-4 py-2.5">
-        <span className="w-20 text-sm text-muted-foreground">{t("Sunrise")}</span>
-        <span className="text-sm tabular-nums text-muted-foreground">{formatTime(sunrise)}</span>
-        <span className="text-xs text-muted-foreground">{t("Fajr's time ends")}</span>
-      </div>
-      {alarmButton("sunrise", t("Sunrise"))}
+    <li
+      key="sunrise"
+      data-row="sunrise"
+      className="flex min-h-11 items-center gap-2 bg-muted/40 pe-1 ps-4 text-xs text-muted-foreground"
+    >
+      <span className="w-[5.5rem] shrink-0">{t("Sunrise")}</span>
+      <span className="whitespace-nowrap tabular-nums">{formatTime(sunrise)}</span>
+      <span className="min-w-0 flex-1 truncate">{t("Fajr's time ends")}</span>
+      {alarmSlot("sunrise", t("Sunrise"))}
     </li>
   ) : null;
   return (
-    <ul className="space-y-2">
+    <ul
+      className="stat-card max-w-2xl divide-y divide-border overflow-hidden"
+      aria-label={t("Prayers")}
+    >
       {loggablePrayers(isDemo()).flatMap((name) => {
         const status = statusOf(
           dayLogs.find((log) => log.prayer_date === date && log.prayer_name === name),
         );
         const time = timeOf(times, name, duhaFrom);
         const sunnah = isSunnah(name);
+        const label = prayerLabel(name, date);
         const row = (
-          <li key={name} className="flex gap-2">
+          <li
+            key={name}
+            data-row={name}
+            className="flex min-h-14 items-center gap-2 py-1.5 pe-1 ps-4"
+          >
             <div className="min-w-0 flex-1">
-              <StatusControl
-                name={name}
-                current={status}
-                disabled={disabled}
-                label={`${t("How was it prayed?")} ${prayerLabel(name, date)}`}
-                onPick={(value) => setStatus.mutate({ date, name, status: value })}
-              >
-                <button
-                  type="button"
-                  className="stat-card flex min-h-16 w-full items-center gap-3 overflow-hidden p-0 text-left transition-transform active:scale-[0.99] disabled:opacity-50"
-                  style={sunnah ? { boxShadow: SUNNAH_RING } : undefined}
+              <p className="flex flex-wrap items-baseline gap-x-2">
+                <span
+                  className={cn(
+                    "shrink-0 truncate text-sm",
+                    sunnah
+                      ? "min-w-[5.5rem] font-medium text-muted-foreground"
+                      : "w-[5.5rem] font-semibold",
+                  )}
                 >
-                  <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-3">
-                    <span className={cn("text-sm font-semibold", sunnah ? "min-w-20" : "w-20")}>
-                      {prayerLabel(name, date)}
-                    </span>
-                    <span className="text-sm tabular-nums text-muted-foreground">
-                      {time ? formatTime(time) : "—"}
-                    </span>
-                    {sunnah ? (
-                      <span className="text-xs text-muted-foreground">{t(SUNNAH_HINT[name]!)}</span>
-                    ) : null}
-                    {next === name && !status ? (
-                      <span className="text-2xs font-semibold uppercase tracking-wide text-primary">
-                        {t("Next")}
-                      </span>
-                    ) : null}
+                  {label}
+                </span>
+                <span className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
+                  {time ? formatTime(time) : "—"}
+                </span>
+                {next === name && !status ? (
+                  <span className="text-2xs font-semibold uppercase tracking-wide text-primary">
+                    {t("Next")}
                   </span>
-                  <span
-                    className={cn(
-                      "flex h-full min-h-16 w-28 shrink-0 flex-col items-center justify-center gap-1 text-xs font-medium",
-                      status ? "text-white" : "border-l border-border text-muted-foreground",
-                    )}
-                    style={
-                      status
-                        ? {
-                            background: STATUS_STYLE[status].color,
-                            clipPath: "polygon(14% 0, 100% 0, 100% 100%, 0 100%)",
-                          }
-                        : undefined
-                    }
-                  >
-                    {status ? (
-                      <>
-                        <StatusMark status={status} size="size-5" />
-                        {t(PRAYER_STATUS_LABELS[status])}
-                      </>
-                    ) : (
-                      t("Log")
-                    )}
-                  </span>
-                </button>
-              </StatusControl>
+                ) : null}
+              </p>
+              {sunnah ? (
+                <p className="truncate text-xs text-muted-foreground/80">{t(SUNNAH_HINT[name]!)}</p>
+              ) : null}
             </div>
-            {sunnah ? (
-              onAlarm ? (
-                <span className="w-12 shrink-0" />
-              ) : null
-            ) : (
-              alarmButton(name as PrayerName, prayerLabel(name, date))
-            )}
+            <StatusControl
+              name={name}
+              current={status}
+              disabled={disabled}
+              label={`${t("How was it prayed?")} ${label}`}
+              onPick={(value) => setStatus.mutate({ date, name, status: value })}
+            >
+              <button
+                type="button"
+                aria-label={`${label}: ${status ? t(PRAYER_STATUS_LABELS[status]) : t("Log")}`}
+                className={cn(
+                  "flex h-11 w-[5.5rem] shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-medium transition-[background-color,scale] active:scale-[0.97] disabled:opacity-50",
+                  status
+                    ? "text-white"
+                    : "border border-border text-muted-foreground hover:bg-accent",
+                )}
+                style={status ? { background: STATUS_STYLE[status].color } : undefined}
+              >
+                {status ? (
+                  <>
+                    <StatusMark status={status} size="size-3.5" />
+                    <span className="truncate">{t(PRAYER_STATUS_LABELS[status])}</span>
+                  </>
+                ) : (
+                  t("Log")
+                )}
+              </button>
+            </StatusControl>
+            {alarmSlot(sunnah ? null : (name as PrayerName), label)}
           </li>
         );
         return name === "fajr" && sunriseRow ? [row, sunriseRow] : [row];
@@ -468,7 +479,7 @@ export function PrayerStats({ logs, today }: { logs: PrayerLog[]; today: string 
   const cell = range > 60 ? 6 : range > 20 ? 12 : 22;
 
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-semibold">{t("How prayers were logged")}</p>
         <div

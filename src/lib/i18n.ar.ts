@@ -591,7 +591,7 @@ export const AR: Record<string, string> = {
   Salawat: "الصلاة على النبي",
   "Before Fajr's fard": "قبل فرض الفجر",
   "After Isha, before Fajr": "بعد العشاء وقبل الفجر",
-  "From a quarter of an hour after sunrise, before Dhuhr": "من بعد الشروق بربع ساعة حتى قبل الظهر",
+  "15 min after sunrise, until Dhuhr": "بعد الشروق بربع ساعة حتى الظهر",
   "Duha can be logged once a one-time database update is done.":
     "يمكن تسجيل الضحى بعد تحديث واحد لقاعدة البيانات.",
   "Sunnah prayers": "السنن",

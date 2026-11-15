@@ -269,7 +269,7 @@ function Everywhere() {
         On your laptop and in your pocket.
       </h2>
       <div className="mt-10 grid gap-4 md:grid-cols-3">
-        <div className="stat-card p-6 md:col-span-2">
+        <div className="stat-card p-4 sm:p-6 md:col-span-2">
           <Smartphone className="size-6 text-primary" strokeWidth={1.75} aria-hidden="true" />
           <h3 className="mt-4 text-lg font-semibold">The web and the Android app stay in sync</h3>
           <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted-foreground">
@@ -278,7 +278,7 @@ function Everywhere() {
             Health.
           </p>
         </div>
-        <div className="stat-card p-6">
+        <div className="stat-card p-4 sm:p-6">
           <BellRing className="size-6 text-primary" strokeWidth={1.75} aria-hidden="true" />
           <h3 className="mt-4 text-lg font-semibold">One button to log anything</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

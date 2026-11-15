@@ -99,7 +99,7 @@ export function HubCard() {
  */
 function SeriousHub({ lines }: { lines: DimensionLine[] }) {
   return (
-    <section className="stat-card space-y-4 p-5" aria-label="Last 7 days">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5" aria-label="Last 7 days">
       <p className="text-xs font-medium text-muted-foreground">Last 7 days</p>
       <ul className="grid gap-3 sm:grid-cols-2">
         {lines.map((line) => {
@@ -164,7 +164,7 @@ function RpgSheet({
     }
   }, [overall.level, hub.totalXp]);
   return (
-    <section className="stat-card space-y-4 p-5" aria-label="Character sheet">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5" aria-label="Character sheet">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs font-medium text-muted-foreground">Character</p>

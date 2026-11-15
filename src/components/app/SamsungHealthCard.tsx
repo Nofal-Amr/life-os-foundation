@@ -136,7 +136,7 @@ export function SamsungHealthCard() {
   ];
 
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold">Health apps</p>

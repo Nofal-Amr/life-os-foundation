@@ -1111,7 +1111,7 @@ function DashboardPage() {
           <p className="truncate text-xs text-muted-foreground">{action.parent.title}</p>
         ) : null}
         <p
-          className={`mt-1 break-words font-semibold text-foreground ${large ? "text-2xl sm:text-3xl" : "text-base"}`}
+          className={`mt-1 break-words font-semibold text-foreground ${large ? "text-xl sm:text-3xl" : "text-base"}`}
         >
           {action.item.title}
           {action.minutes ? (
@@ -1178,11 +1178,11 @@ function DashboardPage() {
   return (
     <div className="min-w-0">
       <div className="w-full min-w-0">
-        <header className="pb-6">
+        <header className="pb-4 sm:pb-6">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">{fmtLongDate(new Date())}</p>
-              <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight tracking-[-0.025em] text-foreground">
+              <h1 className="mt-1 text-2xl font-semibold leading-tight sm:text-[1.75rem] tracking-[-0.025em] text-foreground">
                 {greeting()}
                 {firstName ? `, ${firstName}` : ""}
               </h1>
@@ -1199,7 +1199,7 @@ function DashboardPage() {
         ) : (
           // Phones: one column. Wide screens: the thing to do and the check-in on
           // the left, the snapshot and today's figures on the right.
-          <main className="flex min-w-0 flex-col gap-10 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-10">
+          <main className="flex min-w-0 flex-col gap-6 sm:gap-10 xl:grid xl:grid-cols-2 xl:items-start xl:gap-x-10">
             {/* Zone 1 — the one thing to do. */}
             {isEnabled("do") ? (
               <section className="min-w-0 xl:col-start-1 xl:row-start-1">
