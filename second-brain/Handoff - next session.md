@@ -17,12 +17,11 @@ Done (each its own PR, CI green):
 - #41: migration `20261114100000_project_images_private.sql` (audit M1). **Not applied.**
 
 **Waiting on the owner:**
-- **Applied to production (with the owner's OK on 2026-11-13):** `relationships` and `habit_goals`.
-  Both were checked afterwards: row-level security is on, and the security advisor showed nothing new.
-- **Still not applied:** `20261113120100_google_calendar_sync`, `20261113120200_notes_realtime` and
-  `20261114100000_project_images_private`. The owner approved the first two, but Claude Code's
-  safety check blocks the connector's `apply_migration`. The owner runs them in the Supabase SQL
-  Editor, or allows `apply_migration` in `~/.claude/settings.json`.
+- **All five pending migrations are applied to production, each with the owner's OK:**
+  `relationships` and `habit_goals` on 2026-11-13; `notes_realtime`, `project_images_private` and
+  `google_calendar_sync` on 2026-11-15. Checked afterwards: row-level security is on, the
+  `project-images` bucket is private, and the security advisor showed nothing new.
+  Google Calendar still needs the owner's Google OAuth keys in Vercel.
 - **Before applying any of them:** production's migration history doesn't match the files (the
   Phase 0 audit found 12 recorded against 25 files; there are now 30), and some live tables, a
   bucket and functions have no migration at all. The fix is a baseline generated from the live
