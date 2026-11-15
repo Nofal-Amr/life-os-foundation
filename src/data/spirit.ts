@@ -72,9 +72,9 @@ export const DUHA_MINUTES_AFTER_SUNRISE = 15;
 /**
  * Whether the live database accepts Duha logs yet (migration
  * 20261114110000_prayer_duha.sql). Until then Duha shows only in the demo, so
- * nobody taps a row that can't be saved. Set to true once it is applied.
+ * nobody taps a row that can't be saved. Applied to production on 2026-11-15.
  */
-export const DUHA_IN_DATABASE = false;
+export const DUHA_IN_DATABASE = true;
 
 /** The prayers that can be logged: Duha only once the database accepts it, or in the demo. */
 export function loggablePrayers(demo: boolean): readonly LoggedPrayer[] {
