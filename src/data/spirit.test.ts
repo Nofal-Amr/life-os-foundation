@@ -52,10 +52,10 @@ describe("sunnah prayers", () => {
     expect(prayerLabel("witr")).toBe("Witr");
   });
 
-  it("shows Duha in the demo, and elsewhere only once the database accepts it", () => {
+  it("shows Duha for everyone now the database accepts it", () => {
     expect(loggablePrayers(true)).toContain("duha");
-    expect(loggablePrayers(false)).not.toContain("duha");
-    expect(loggablePrayers(false)).toHaveLength(7);
+    expect(loggablePrayers(false)).toContain("duha");
+    expect(loggablePrayers(false)).toHaveLength(8);
   });
 
   it("starts Duha a quarter of an hour after sunrise", () => {
