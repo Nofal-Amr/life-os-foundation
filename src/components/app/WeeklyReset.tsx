@@ -175,7 +175,7 @@ export function WeeklyReset({ week, today }: { week: string; today: string }) {
   const finished = steps.filter((step) => step.auto || done.includes(step.id)).length;
 
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="flex items-center gap-2 text-base font-semibold">
           <ListChecks className="size-4" /> {t("Weekly reset")}

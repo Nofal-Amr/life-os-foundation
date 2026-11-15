@@ -33,11 +33,11 @@ export function GlanceSection({
   className?: string;
 }) {
   return (
-    <section aria-labelledby="glance-heading" className={cn("mb-6", className)}>
+    <section aria-labelledby="glance-heading" className={cn("mb-5 sm:mb-6", className)}>
       <h2 id="glance-heading" className="section-title mb-3">
         At a glance
       </h2>
-      <div className="grid min-w-0 items-start gap-4 md:grid-cols-2">{children}</div>
+      <div className="grid min-w-0 items-start gap-3 sm:gap-4 md:grid-cols-2">{children}</div>
     </section>
   );
 }
@@ -66,7 +66,7 @@ export function StatCard({
   tone?: ChartTone | undefined;
 } & CardChrome) {
   return (
-    <div className={cn("stat-card min-w-0 p-5", className)}>
+    <div className={cn("stat-card min-w-0 p-4 sm:p-5", className)}>
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           {Icon ? (
@@ -90,7 +90,7 @@ export function StatCard({
         ) : null}
       </div>
       {description ? <p className="mt-2 text-xs text-muted-foreground">{description}</p> : null}
-      <div className="mt-4">{children}</div>
+      <div className="mt-3 sm:mt-4">{children}</div>
     </div>
   );
 }
@@ -101,7 +101,7 @@ function Hero({ value, caption }: { value: ReactNode; caption?: ReactNode }) {
   const unit = typeof value === "string" ? /^(-?[\d.,]+)\s+(\S+)$/.exec(value) : null;
   return (
     <div className="min-w-0">
-      <p className="text-4xl font-semibold leading-none tracking-[-0.03em] tabular-nums text-foreground">
+      <p className="text-3xl font-semibold leading-none sm:text-4xl tracking-[-0.03em] tabular-nums text-foreground">
         {unit ? (
           <>
             <AnimatedNumber value={unit[1]!} />

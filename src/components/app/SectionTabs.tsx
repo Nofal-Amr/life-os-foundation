@@ -95,7 +95,7 @@ export function SectionTabs() {
   return (
     <nav
       ref={listRef}
-      className="relative mb-6 flex min-w-0 gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
+      className="relative mb-4 flex min-w-0 sm:mb-6 gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
       aria-label={`${section.label} sections`}
     >
       {bar ? (
@@ -110,7 +110,7 @@ export function SectionTabs() {
           key={tab.to}
           to={tab.to}
           activeOptions={{ exact: tab.exact ?? true }}
-          className="shrink-0 px-3 pb-3 pt-2 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
+          className="shrink-0 px-3 pb-2.5 pt-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
         >
           {tab.label}
         </Link>

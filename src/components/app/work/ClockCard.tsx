@@ -153,7 +153,7 @@ export function ClockCard({
   });
 
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-base font-semibold">{org.name}</p>

@@ -303,7 +303,7 @@ function Space({ pod, onChanged }: { pod: Pod; onChanged: () => void }) {
 
   return (
     <div className="space-y-5">
-      <section className="stat-card space-y-3 p-5">
+      <section className="stat-card space-y-3 p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-lg font-semibold">{pod.name}</p>

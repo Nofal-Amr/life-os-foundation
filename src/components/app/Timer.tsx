@@ -185,7 +185,7 @@ export function TimerBar() {
     <div
       className={cn(
         "system-dock fixed inset-x-3 z-40 flex items-center gap-3 overflow-hidden px-3 py-2 md:relative md:mb-5 md:rounded-2xl",
-        "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+4.75rem)]",
+        "bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+var(--bottom-nav-height)+0.75rem)]",
         "motion-safe:animate-in motion-safe:slide-in-from-bottom-2 motion-safe:fade-in",
       )}
       role="status"

@@ -43,7 +43,7 @@ export function OnThisDay({ className }: { className?: string }) {
   if (!diary.length && !past.length) return null;
 
   return (
-    <section className={cn("stat-card p-5", className)} aria-label="On this day">
+    <section className={cn("stat-card p-4 sm:p-5", className)} aria-label="On this day">
       <h2 className="section-title">On this day</h2>
       <ul className="mt-3 space-y-3">
         {past.map((review) => (

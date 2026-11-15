@@ -63,7 +63,7 @@ export function DaySummary({
   );
 
   return (
-    <section className={cn("stat-card p-5", className)} aria-label="What changed today">
+    <section className={cn("stat-card p-4 sm:p-5", className)} aria-label="What changed today">
       <h2 className="section-title">
         {date === todayISO() ? "Today so far" : fmtLongDate(new Date(`${date}T12:00:00`))}
       </h2>

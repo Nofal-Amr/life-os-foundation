@@ -135,7 +135,7 @@ function PlaceForm({
 
   return (
     <form
-      className="stat-card space-y-4 p-5"
+      className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5"
       onSubmit={(event) => {
         event.preventDefault();
         if (place.name.trim() && point) save.mutate();

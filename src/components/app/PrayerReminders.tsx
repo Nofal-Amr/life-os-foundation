@@ -629,13 +629,13 @@ export function PrayerReminderSettings() {
   const allowed = useNotificationsAllowed();
   if (!isAndroidApp()) {
     return (
-      <section className="stat-card p-5 text-sm text-muted-foreground">
+      <section className="stat-card p-4 sm:p-5 text-sm text-muted-foreground">
         Prayer reminders arrive as notifications in the Life OS Android app.
       </section>
     );
   }
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       {!allowed ? (
         <div className="tone-warning flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm">
           <span>Notifications are off for Life OS.</span>

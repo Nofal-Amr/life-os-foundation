@@ -188,13 +188,13 @@ function FinanceOverview() {
         <div className="space-y-6">
           <SpendingReview />
           {/* The one glanceable number */}
-          <section className="stat-card p-6 sm:p-8">
+          <section className="stat-card p-4 sm:p-8">
             {setup && hasAccounts ? (
               <>
                 <p className="text-sm font-medium text-muted-foreground">
                   Left to spend before payday
                 </p>
-                <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
+                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight sm:mt-2 sm:text-6xl">
                   <AnimatedNumber value={fmtMoney(totals.available)} />
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -319,7 +319,7 @@ function FinanceOverview() {
             ) : (
               <>
                 <p className="text-sm font-medium text-muted-foreground">Balance you can spend</p>
-                <p className="mt-2 text-5xl font-semibold tabular-nums tracking-tight sm:text-6xl">
+                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight sm:mt-2 sm:text-6xl">
                   {hasAccounts ? <AnimatedNumber value={fmtMoney(totals.liquid)} /> : "—"}
                 </p>
                 {hasAccounts ? <MoneyActions onAdd={setQuickAdd} /> : null}

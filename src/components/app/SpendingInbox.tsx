@@ -151,7 +151,7 @@ export function SpendingReview() {
   }
 
   return (
-    <section className="stat-card space-y-3 p-5">
+    <section className="stat-card space-y-3 p-4 sm:p-5">
       <p className="flex items-center gap-2 text-sm font-semibold">
         <Bell className="size-4" /> From your bank notifications
       </p>
@@ -208,7 +208,7 @@ export function SpendingSettingsCard() {
   if (!spendingInbox.available()) return null;
   if (!buildFeatures().spending) {
     return (
-      <section className="stat-card space-y-2 p-5">
+      <section className="stat-card space-y-2 p-4 sm:p-5">
         <p className="flex items-center gap-2 text-base font-semibold">
           <Bell className="size-4" /> Spending from bank notifications
         </p>
@@ -237,7 +237,7 @@ export function SpendingSettingsCard() {
   }
 
   return (
-    <section className="stat-card space-y-4 p-5">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div>
         <p className="flex items-center gap-2 text-base font-semibold">
           <Bell className="size-4" /> Spending from bank notifications

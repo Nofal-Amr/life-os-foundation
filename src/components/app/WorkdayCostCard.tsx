@@ -54,7 +54,7 @@ export function WorkdayCostCard() {
   const configured = setup.categories.length > 0 && setup.workdays.length > 0;
 
   return (
-    <section className="stat-card space-y-3 p-5">
+    <section className="stat-card space-y-3 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <p className="flex items-center gap-2 text-sm font-semibold">
           <Briefcase className="size-4" aria-hidden="true" /> Going to work

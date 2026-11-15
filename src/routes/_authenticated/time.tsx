@@ -241,7 +241,7 @@ function TimePage() {
               })}
             </div>
           ) : (
-            <div className="stat-card space-y-3 p-5 text-sm">
+            <div className="stat-card space-y-3 p-4 sm:p-5 text-sm">
               <p className="text-muted-foreground">
                 Activities are what you want to time: gaming, reading, time with friends. Start with
                 a set you can rename, or add your own.
@@ -290,7 +290,7 @@ function TimePage() {
         ) : null}
 
         {/* This week, per activity. */}
-        <section className="stat-card space-y-3 p-5">
+        <section className="stat-card space-y-3 p-4 sm:p-5">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="text-sm font-semibold">Last 7 days</h2>
             <span className="text-xs tabular-nums text-muted-foreground">

@@ -91,7 +91,7 @@ export function GoogleCalendarCard() {
   const status = useGoogleStatus();
   const s = status.data;
   return (
-    <section className="stat-card space-y-4 p-5" aria-labelledby="gcal-title">
+    <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5" aria-labelledby="gcal-title">
       <div>
         <p id="gcal-title" className="flex items-center gap-2 text-base font-semibold">
           <CalendarSync className="size-4" /> Google Calendar

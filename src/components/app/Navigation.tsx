@@ -163,7 +163,7 @@ export function BottomNav() {
   const onMoreRoute =
     pathname.startsWith("/settings") || tools.some((item) => pathname.startsWith(item.to));
   const tab = (active: boolean) =>
-    `relative flex w-full flex-col items-center gap-1 px-1 pb-2 pt-2.5 text-xs transition-colors duration-150 active:scale-[0.96] ${
+    `relative flex w-full flex-col items-center gap-0.5 px-1 py-2 text-xs transition-colors duration-150 active:scale-[0.96] ${
       active ? "font-medium text-foreground" : "text-muted-foreground"
     }`;
   // + sits in the middle of the bar, part of it, so it never covers content.
@@ -192,7 +192,7 @@ export function BottomNav() {
       aria-label="Sections"
     >
       <ul
-        className="system-dock grid overflow-hidden px-1"
+        className="system-dock grid h-[var(--bottom-nav-height)] items-center overflow-hidden px-1"
         style={{ gridTemplateColumns: `repeat(${navItems.length + 2}, minmax(0, 1fr))` }}
       >
         {navItems.map(({ to, label, icon: Icon }, index) => {
