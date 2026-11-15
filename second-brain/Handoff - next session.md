@@ -17,9 +17,12 @@ Done (each its own PR, CI green):
 - #41: migration `20261114100000_project_images_private.sql` (audit M1). **Not applied.**
 
 **Waiting on the owner:**
-- **Five migrations are written but not applied**, each needing approval of its exact SQL, staging
-  first: `20261113120000_relationships`, `20261113120100_google_calendar_sync`,
-  `20261113120200_notes_realtime`, `20261114090000_habit_goals`, `20261114100000_project_images_private`.
+- **Applied to production (with the owner's OK on 2026-11-13):** `relationships` and `habit_goals`.
+  Both were checked afterwards: row-level security is on, and the security advisor showed nothing new.
+- **Still not applied:** `20261113120100_google_calendar_sync`, `20261113120200_notes_realtime` and
+  `20261114100000_project_images_private`. The owner approved the first two, but Claude Code's
+  safety check blocks the connector's `apply_migration`. The owner runs them in the Supabase SQL
+  Editor, or allows `apply_migration` in `~/.claude/settings.json`.
 - **Before applying any of them:** production's migration history doesn't match the files (the
   Phase 0 audit found 12 recorded against 25 files; there are now 30), and some live tables, a
   bucket and functions have no migration at all. The fix is a baseline generated from the live
@@ -51,7 +54,7 @@ Plan: `docs/superpowers/specs/2026-11-12-today-tasks-navigation-redesign.md`. Ea
 ## Relationships — demo-only, 2026-11-13
 - `/relationships`: people map (Me in the centre, rings; select someone and their side glows), list view, person sheet (log, goal, birthday, check-in rhythm), reminder rules with exceptions, People card in Today (max 3 check-ins).
 - Opt-in area: Settings → Areas → Relationships. On in the demo.
-- **Waiting on the owner:** `supabase/migrations/20261113120000_relationships.sql` is not applied. Approve the exact SQL, staging first. Until then the page says it needs a one-time update.
+- `supabase/migrations/20261113120000_relationships.sql` is **applied** in production (2026-11-13), so Relationships works for real accounts. Switch it on under Settings → Areas.
 - Follow-up: on a phone the full family map draws small; pinch to read outer names. Consider a closer default zoom.
 - Docs: `docs/research/2026-11-13-relationships-benchmark.md`, `docs/superpowers/specs/2026-11-13-relationships-design.md`.
 
