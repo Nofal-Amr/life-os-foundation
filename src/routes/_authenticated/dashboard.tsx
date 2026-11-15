@@ -774,6 +774,8 @@ function DashboardPage() {
 
   /* Only modules the user kept appear here. */
   const visibleComingUp = comingUp.filter((item) => {
+    // Tasks already show under Today's focus; this list holds everything else.
+    if (item.id.startsWith("task-")) return false;
     if (item.id.startsWith("cost-")) return isEnabled("money");
     if (item.id.startsWith("quota-")) return isEnabled("resources");
     return isEnabled("do");
@@ -1315,7 +1317,7 @@ function DashboardPage() {
                     ))}
                   </div>
                   <div className="min-w-0 text-xs text-muted-foreground">
-                    <h2 className="text-sm font-medium text-foreground">{t("Coming up")}</h2>
+                    <h2 className="text-sm font-medium text-foreground">{t("Also this week")}</h2>
                     {visibleComingUp.length ? (
                       <div className="mt-1 divide-y divide-border/50">
                         {visibleComingUp.slice(0, 6).map((item) => (
@@ -1332,7 +1334,7 @@ function DashboardPage() {
                         ))}
                       </div>
                     ) : (
-                      <p className="mt-1">{t("Nothing due soon.")}</p>
+                      <p className="mt-1">{t("Nothing else this week.")}</p>
                     )}
                   </div>
                   <DaySummary className="min-w-0" />

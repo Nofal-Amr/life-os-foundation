@@ -503,6 +503,8 @@ export const AR: Record<string, string> = {
   "Today's focus": "تركيز اليوم",
   "Coming up": "القادم",
   "Nothing due soon.": "لا شيء مستحق قريبًا",
+  "Also this week": "أيضًا هذا الأسبوع",
+  "Nothing else this week.": "لا شيء آخر هذا الأسبوع.",
   "Left to spend": "المتبقي للإنفاق",
   "Spent today": "أنفقت اليوم",
   "Left to spend before payday": "المتبقي للإنفاق قبل الراتب",
