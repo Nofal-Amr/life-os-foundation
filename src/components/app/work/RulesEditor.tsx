@@ -122,7 +122,12 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
                     penalty:
                       event.target.value === "day"
                         ? { kind: "day" }
-                        : { kind: "ladder", minutes: [120, 150, 180], thenAdd: 30 },
+                        : {
+                            kind: "ladder",
+                            minutes: [120, 150, 180],
+                            thenAdd: 30,
+                            afterLast: "day",
+                          },
                   })
                 }
               >
@@ -146,25 +151,50 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
                             .map(Number)
                             .filter((value) => Number.isFinite(value) && value >= 0),
                           thenAdd: step.penalty.kind === "ladder" ? step.penalty.thenAdd : 30,
+                          afterLast:
+                            step.penalty.kind === "ladder"
+                              ? (step.penalty.afterLast ?? "add")
+                              : "add",
                         },
                       })
                     }
                   />
                 </Field>
-                <Field label="Then add each time">
-                  <Input
-                    inputMode="numeric"
-                    className="h-9 w-24"
-                    value={step.penalty.thenAdd}
+                <Field label="After the last">
+                  <select
+                    className="h-9 rounded-lg border border-border bg-card px-2 text-sm"
+                    value={step.penalty.afterLast ?? "add"}
                     onChange={(event) =>
                       step.penalty.kind === "ladder" &&
                       setStep(index, {
                         ...step,
-                        penalty: { ...step.penalty, thenAdd: number(event.target.value, 0) },
+                        penalty: {
+                          ...step.penalty,
+                          afterLast: event.target.value === "day" ? "day" : "add",
+                        },
                       })
                     }
-                  />
+                  >
+                    <option value="add">{t("Add minutes each time")}</option>
+                    <option value="day">{t("A whole day, then start again")}</option>
+                  </select>
                 </Field>
+                {(step.penalty.afterLast ?? "add") === "add" ? (
+                  <Field label="Then add each time">
+                    <Input
+                      inputMode="numeric"
+                      className="h-9 w-24"
+                      value={step.penalty.thenAdd}
+                      onChange={(event) =>
+                        step.penalty.kind === "ladder" &&
+                        setStep(index, {
+                          ...step,
+                          penalty: { ...step.penalty, thenAdd: number(event.target.value, 0) },
+                        })
+                      }
+                    />
+                  </Field>
+                ) : null}
               </>
             ) : null}
             <Button

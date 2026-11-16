@@ -742,6 +742,9 @@ export const AR: Record<string, string> = {
   "Only people who have joined the company can be matched.": "يمكن مطابقة من انضم إلى الشركة فقط.",
   Days: "الأيام",
   "Test options": "خيارات تجريبية",
+  "After the last": "بعد آخر خطوة",
+  "Add minutes each time": "أضف دقائق كل مرة",
+  "A whole day, then start again": "يوم كامل، ثم تبدأ من جديد",
   "Off for every company until an admin here turns them on. They may still change.":
     "مغلقة لكل الشركات حتى يفعّلها مسؤول هنا. قد تتغير لاحقاً.",
   "Import past days from WhatsApp (in Sheets)": "استيراد الأيام السابقة من واتساب (في الكشوف)",
