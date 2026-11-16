@@ -114,6 +114,24 @@ describe("monthSheet", () => {
     ]);
   });
 
+  it("a step's tolerance lets a clock-in just after its time through", () => {
+    const rules: WorkRules = {
+      ...ADO_PRESET,
+      lateSteps: [
+        {
+          after: "08:30",
+          tolerance: 2,
+          penalty: { kind: "ladder", minutes: [120, 150, 180], thenAdd: 30, afterLast: "day" },
+        },
+      ],
+    };
+    const result = sheet([...pair(1, "08:32", "16:30"), ...pair(2, "08:33", "16:30")], { rules });
+    // 08:32 is within the 2 minutes: no penalty, only the minutes late from 08:00.
+    expect([row(result, 1).penalty, row(result, 1).late]).toEqual([0, 32]);
+    // 08:33 is past it: the ladder's first rung.
+    expect([row(result, 2).penalty, row(result, 2).late]).toEqual([120, 0]);
+  });
+
   it("after 10:00 costs a day", () => {
     const result = sheet([
       ...pair(1, "09:30", "16:30"),

@@ -10,6 +10,11 @@ export type LeaveType = { id: string; name: string; percent: number };
 /** Arriving after `after` ("HH:mm") gives a penalty instead of late minutes. */
 export type LateStep = {
   after: string;
+  /**
+   * Minutes past `after` that still don't trigger this step: with 08:30 and
+   * 2, a clock-in at 08:32 has no penalty from it and 08:33 has. Unset is 0.
+   */
+  tolerance?: number;
   penalty:
     | {
         kind: "ladder";
@@ -292,7 +297,9 @@ export function monthSheet(input: {
     if (outMinutes === null) row.note = "no-clock-out";
 
     if (kind === "work") {
-      const step = [...steps].reverse().find((item) => inMinutes > clockMinutes(item.after));
+      const step = [...steps]
+        .reverse()
+        .find((item) => inMinutes > clockMinutes(item.after) + (item.tolerance ?? 0));
       if (step?.penalty.kind === "day") {
         row.dayPenalty = true;
       } else if (step?.penalty.kind === "ladder") {

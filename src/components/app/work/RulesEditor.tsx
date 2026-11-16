@@ -100,7 +100,7 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
 
       <Group
         title="Arriving very late"
-        hint="Each step: arriving after a time gives a penalty instead of late minutes. A ladder grows with how many times it happened this month (1st, 2nd, 3rd…)."
+        hint="Each step: arriving after a time, plus its tolerance, gives a penalty instead of late minutes. A ladder grows with how many times it happened this month (1st, 2nd, 3rd…)."
       >
         {rules.lateSteps.map((step, index) => (
           <div key={index} className="flex flex-wrap items-end gap-2 rounded-lg bg-secondary p-3">
@@ -110,6 +110,16 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
                 className="h-9 w-32"
                 value={step.after}
                 onChange={(event) => setStep(index, { ...step, after: event.target.value })}
+              />
+            </Field>
+            <Field label="Tolerance (min)">
+              <Input
+                inputMode="numeric"
+                className="h-9 w-20"
+                value={step.tolerance ?? 0}
+                onChange={(event) =>
+                  setStep(index, { ...step, tolerance: number(event.target.value, 0) })
+                }
               />
             </Field>
             <Field label="Penalty">
