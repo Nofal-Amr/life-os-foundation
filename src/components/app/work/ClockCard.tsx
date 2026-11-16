@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Fingerprint, MapPin } from "lucide-react";
+import { Fingerprint, MapPin, MessageSquareText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -17,6 +17,7 @@ import {
 } from "@/data/work/api";
 import { checkPlace, type PlaceLike } from "@/data/work/place";
 import type { WorkRules } from "@/data/work/rules";
+import { clockMessage, whatsappLink } from "@/data/work/whatsappImport";
 import { t } from "@/lib/i18n";
 import { canClockIn, workCheck, type WorkCheck } from "@/lib/native";
 import { toError } from "@/lib/supabase-helpers";
@@ -56,6 +57,8 @@ export function ClockCard({
   const [message, setMessage] = useState<string | null>(null);
   const [asking, setAsking] = useState<{ check: Ok; event: EventInput } | null>(null);
   const [reason, setReason] = useState("");
+  /** The last clock-in or clock-out, to offer posting it in WhatsApp. */
+  const [toPost, setToPost] = useState<string | null>(null);
   const clocks = today.filter((event) => event.kind !== "attempt");
   const kind = nextClockKind(recent, Date.now());
   const allowed = (member.place_ids?.length
@@ -80,6 +83,8 @@ export function ClockCard({
       else {
         setMessage(null);
         toast.success(event.kind === "in" ? t("Clocked in") : t("Clocked out"));
+        if (rules.tests.whatsappPost)
+          setToPost(clockMessage(event.kind === "in" ? "in" : "out", event.at, rules.timezone));
       }
     },
     onError: (error: unknown) => toast.error(toError(error).message),
@@ -175,6 +180,7 @@ export function ClockCard({
             disabled={tap.isPending || save.isPending}
             onClick={() => {
               setMessage(null);
+              setToPost(null);
               tap.mutate();
             }}
           >
@@ -192,6 +198,19 @@ export function ClockCard({
         <p className="flex items-start gap-2 text-sm text-muted-foreground">
           <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {message}
         </p>
+      ) : null}
+
+      {toPost ? (
+        <Button asChild variant="outline" size="sm">
+          <a
+            href={whatsappLink(toPost)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setToPost(null)}
+          >
+            <MessageSquareText className="size-4" /> {`${t("Post in WhatsApp")}: ${toPost}`}
+          </a>
+        </Button>
       ) : null}
 
       {asking ? (

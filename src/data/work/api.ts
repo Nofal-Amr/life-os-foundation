@@ -44,6 +44,7 @@ export function readRules(json: unknown): WorkRules {
     ...ADO_PRESET,
     ...saved,
     overtime: { ...ADO_PRESET.overtime, ...(saved.overtime ?? {}) },
+    tests: { ...ADO_PRESET.tests, ...(saved.tests ?? {}) },
   };
 }
 

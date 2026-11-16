@@ -363,11 +363,31 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
         </select>
       </Group>
 
+      <Group
+        title="Test options"
+        hint="Off for every company until an admin here turns them on. They may still change."
+      >
+        <Toggle
+          label="Import past days from WhatsApp (in Sheets)"
+          checked={rules.tests.whatsappImport}
+          onChange={(value) => set("tests", { ...rules.tests, whatsappImport: value })}
+        />
+        <Toggle
+          label="After clocking in or out, offer to post it in WhatsApp with the time"
+          checked={rules.tests.whatsappPost}
+          onChange={(value) => set("tests", { ...rules.tests, whatsappPost: value })}
+        />
+      </Group>
+
       <div className="sticky bottom-0 flex flex-wrap gap-2 bg-background py-3">
         <Button type="button" disabled={save.isPending} onClick={() => save.mutate()}>
           {t("Save rules")}
         </Button>
-        <Button type="button" variant="ghost" onClick={() => setRules(ADO_PRESET)}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setRules({ ...ADO_PRESET, tests: rules.tests })}
+        >
           {t("Start from the ADO example")}
         </Button>
       </div>

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   classify,
+  clockMessage,
   dayEntries,
   guessDateOrder,
   matchMember,
@@ -9,6 +10,7 @@ import {
   punches,
   reasonFor,
   timeInText,
+  whatsappLink,
 } from "./whatsappImport";
 
 const ANDROID = `16/11/2026, 07:58 - Messages and calls are end-to-end encrypted.
@@ -169,5 +171,23 @@ describe("reasonFor", () => {
     expect(reasonFor(punch!)).toBe("WhatsApp 2026-11-16 08:03: in");
     const long = punches(parseChat(`16/11/2026, 08:03 - A: checked in ${"x".repeat(400)}`));
     expect(reasonFor(long[0]!).length).toBe(300);
+  });
+});
+
+describe("posting a clock-in or clock-out", () => {
+  it("writes the clock time in the company's time zone", () => {
+    expect(clockMessage("in", "2026-11-16T06:31:00.000Z", "Africa/Cairo")).toBe("In 08:31");
+    expect(clockMessage("out", "2026-11-16T14:30:00.000Z", "Africa/Cairo")).toBe("Out 16:30");
+  });
+
+  it("opens WhatsApp with the message typed in", () => {
+    expect(whatsappLink("In 08:31")).toBe("https://wa.me/?text=In%2008%3A31");
+  });
+
+  it("imports at the clock time even when sent later", () => {
+    const text = `[11/16, 9:40 AM] Nofal: ${clockMessage("in", "2026-11-16T06:31:00.000Z", "Africa/Cairo")}
+[11/16, 6:02 PM] Nofal: ${clockMessage("out", "2026-11-16T14:30:00.000Z", "Africa/Cairo")}`;
+    const [row] = dayEntries(punches(parseChat(text, "mdy", "2026-11-16")));
+    expect([row!.day, row!.in!.at, row!.out!.at]).toEqual(["2026-11-16", "08:31", "16:30"]);
   });
 });
