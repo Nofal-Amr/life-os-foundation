@@ -20,6 +20,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
 import { Route as AuthenticatedFoodRouteImport } from './routes/_authenticated/food'
 import { Route as AuthenticatedGoalsRouteImport } from './routes/_authenticated/goals'
+import { Route as AuthenticatedGymRouteImport } from './routes/_authenticated/gym'
 import { Route as AuthenticatedHabitsRouteImport } from './routes/_authenticated/habits'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
 import { Route as AuthenticatedImportPlanRouteImport } from './routes/_authenticated/import-plan'
@@ -101,6 +102,11 @@ const AuthenticatedFoodRoute = AuthenticatedFoodRouteImport.update({
 const AuthenticatedGoalsRoute = AuthenticatedGoalsRouteImport.update({
   id: '/goals',
   path: '/goals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGymRoute = AuthenticatedGymRouteImport.update({
+  id: '/gym',
+  path: '/gym',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedHabitsRoute = AuthenticatedHabitsRouteImport.update({
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/finance': typeof AuthenticatedFinanceRouteWithChildren
   '/food': typeof AuthenticatedFoodRoute
   '/goals': typeof AuthenticatedGoalsRoute
+  '/gym': typeof AuthenticatedGymRoute
   '/habits': typeof AuthenticatedHabitsRoute
   '/health': typeof AuthenticatedHealthRoute
   '/import-plan': typeof AuthenticatedImportPlanRoute
@@ -295,6 +302,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/food': typeof AuthenticatedFoodRoute
   '/goals': typeof AuthenticatedGoalsRoute
+  '/gym': typeof AuthenticatedGymRoute
   '/habits': typeof AuthenticatedHabitsRoute
   '/health': typeof AuthenticatedHealthRoute
   '/import-plan': typeof AuthenticatedImportPlanRoute
@@ -336,6 +344,7 @@ export interface FileRoutesById {
   '/_authenticated/finance': typeof AuthenticatedFinanceRouteWithChildren
   '/_authenticated/food': typeof AuthenticatedFoodRoute
   '/_authenticated/goals': typeof AuthenticatedGoalsRoute
+  '/_authenticated/gym': typeof AuthenticatedGymRoute
   '/_authenticated/habits': typeof AuthenticatedHabitsRoute
   '/_authenticated/health': typeof AuthenticatedHealthRoute
   '/_authenticated/import-plan': typeof AuthenticatedImportPlanRoute
@@ -377,6 +386,7 @@ export interface FileRouteTypes {
     | '/finance'
     | '/food'
     | '/goals'
+    | '/gym'
     | '/habits'
     | '/health'
     | '/import-plan'
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/food'
     | '/goals'
+    | '/gym'
     | '/habits'
     | '/health'
     | '/import-plan'
@@ -455,6 +466,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finance'
     | '/_authenticated/food'
     | '/_authenticated/goals'
+    | '/_authenticated/gym'
     | '/_authenticated/habits'
     | '/_authenticated/health'
     | '/_authenticated/import-plan'
@@ -569,6 +581,13 @@ declare module '@tanstack/react-router' {
       path: '/goals'
       fullPath: '/goals'
       preLoaderRoute: typeof AuthenticatedGoalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/gym': {
+      id: '/_authenticated/gym'
+      path: '/gym'
+      fullPath: '/gym'
+      preLoaderRoute: typeof AuthenticatedGymRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/habits': {
@@ -789,6 +808,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRouteWithChildren
   AuthenticatedFoodRoute: typeof AuthenticatedFoodRoute
   AuthenticatedGoalsRoute: typeof AuthenticatedGoalsRoute
+  AuthenticatedGymRoute: typeof AuthenticatedGymRoute
   AuthenticatedHabitsRoute: typeof AuthenticatedHabitsRoute
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
   AuthenticatedImportPlanRoute: typeof AuthenticatedImportPlanRoute
@@ -819,6 +839,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFinanceRoute: AuthenticatedFinanceRouteWithChildren,
   AuthenticatedFoodRoute: AuthenticatedFoodRoute,
   AuthenticatedGoalsRoute: AuthenticatedGoalsRoute,
+  AuthenticatedGymRoute: AuthenticatedGymRoute,
   AuthenticatedHabitsRoute: AuthenticatedHabitsRoute,
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
   AuthenticatedImportPlanRoute: AuthenticatedImportPlanRoute,

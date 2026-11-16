@@ -61,6 +61,7 @@ const PAGES = [
   { label: "Home and bills", to: "/resources" },
   { label: "Health", to: "/health" },
   { label: "Food", to: "/food" },
+  { label: "Gym", to: "/gym" },
   { label: "Spirit", to: "/spirit" },
   { label: "Notes", to: "/notes" },
   { label: "Calendar", to: "/calendar" },
