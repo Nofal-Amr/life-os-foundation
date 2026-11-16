@@ -45,12 +45,13 @@ export function normalizeLine(line: string): string {
 }
 
 const HEADER =
-  /^\[?(\d{1,4})[/.-](\d{1,2})[/.-](\d{1,4}),?\s+(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp]\.?\s?[Mm]\.?|ص|م)?\]?\s*(?:-\s*)?([^:]{1,80}?):\s?(.*)$/;
+  /^\[?(\d{1,4})[/.-](\d{1,2})(?:[/.-](\d{1,4}))?,?\s+(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp]\.?\s?[Mm]\.?|ص|م)?\]?\s*(?:-\s*)?([^:]{1,80}?):\s?(.*)$/;
 
 type RawMessage = {
   a: number;
   b: number;
-  c: number;
+  /** The year as written, or null when copied messages leave it out. */
+  c: number | null;
   hour: number;
   minute: number;
   sender: string;
@@ -78,7 +79,7 @@ function readRaw(text: string): RawMessage[] {
     out.push({
       a: Number(a),
       b: Number(b),
-      c: Number(c),
+      c: c ? Number(c) : null,
       hour: to24(Number(hour), marker),
       minute: Number(minute),
       sender: sender!.trim(),
@@ -98,12 +99,19 @@ export function guessDateOrder(text: string): DateOrder {
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
-function isoDay(item: RawMessage, order: DateOrder): string | null {
+function isoDay(item: RawMessage, order: DateOrder, today: string): string | null {
   let year: number, month: number, day: number;
-  if (item.a > 999) [year, month, day] = [item.a, item.b, item.c];
-  else {
-    year = item.c < 100 ? 2000 + item.c : item.c;
+  if (item.a > 999) {
+    if (item.c === null) return null;
+    [year, month, day] = [item.a, item.b, item.c];
+  } else {
     [day, month] = order === "dmy" ? [item.a, item.b] : [item.b, item.a];
+    if (item.c !== null) year = item.c < 100 ? 2000 + item.c : item.c;
+    else {
+      // Copied messages carry no year: this year, or last year for a date still ahead.
+      year = Number(today.slice(0, 4));
+      if (`${year}-${pad(month)}-${pad(day)}` > today) year -= 1;
+    }
   }
   const date = new Date(Date.UTC(year, month - 1, day));
   if (
@@ -115,11 +123,21 @@ function isoDay(item: RawMessage, order: DateOrder): string | null {
   return `${year}-${pad(month)}-${pad(day)}`;
 }
 
-/** Every message with a sender, in the order of the chat. */
-export function parseChat(text: string, order: DateOrder = guessDateOrder(text)): ChatMessage[] {
+/** Today on this device, YYYY-MM-DD. */
+const localToday = () => new Date().toLocaleDateString("en-CA");
+
+/**
+ * Every message with a sender, in the order of the chat. Reads exported chats
+ * and messages copied straight from WhatsApp, which have no year.
+ */
+export function parseChat(
+  text: string,
+  order: DateOrder = guessDateOrder(text),
+  today: string = localToday(),
+): ChatMessage[] {
   const messages: ChatMessage[] = [];
   for (const item of readRaw(text)) {
-    const day = isoDay(item, order);
+    const day = isoDay(item, order, today);
     if (!day || item.hour > 23 || item.minute > 59) continue;
     messages.push({
       sender: item.sender,

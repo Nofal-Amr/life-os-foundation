@@ -728,8 +728,8 @@ export const AR: Record<string, string> = {
   "Completing the hundred": "تمام المئة",
   "He gives life and death": "يحيي ويميت",
   "From WhatsApp": "من واتساب",
-  "For past days. In WhatsApp, open the group, then More, Export chat, Without media. Paste the text or pick the file. It stays on this device; only the times you save are sent.":
-    "للأيام السابقة. في واتساب افتح المجموعة، ثم المزيد، ثم تصدير الدردشة، بدون وسائط. الصق النص أو اختر الملف. يبقى النص على هذا الجهاز، ولا يُرسل إلا ما تحفظه من أوقات.",
+  "For past days. In WhatsApp, select the messages and copy them, or export the chat (More, Export chat, Without media). Paste the text or pick the file. It stays on this device; only the times you save are sent.":
+    "للأيام السابقة. في واتساب حدّد الرسائل وانسخها، أو صدّر الدردشة (المزيد، تصدير الدردشة، بدون وسائط). الصق النص أو اختر الملف. يبقى النص على هذا الجهاز، ولا يُرسل إلا ما تحفظه من أوقات.",
   "Chat file": "ملف الدردشة",
   "Chat text": "نص الدردشة",
   messages: "رسائل",

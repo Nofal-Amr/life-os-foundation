@@ -118,7 +118,7 @@ export function WhatsAppImport({
           <DialogTitle>From WhatsApp</DialogTitle>
           <DialogDescription>
             {t(
-              "For past days. In WhatsApp, open the group, then More, Export chat, Without media. Paste the text or pick the file. It stays on this device; only the times you save are sent.",
+              "For past days. In WhatsApp, select the messages and copy them, or export the chat (More, Export chat, Without media). Paste the text or pick the file. It stays on this device; only the times you save are sent.",
             )}
           </DialogDescription>
         </DialogHeader>
@@ -135,7 +135,7 @@ export function WhatsAppImport({
             value={text}
             rows={5}
             aria-label={t("Chat text")}
-            placeholder="16/11/2026, 08:03 - Ahmed: in"
+            placeholder="[11/16, 8:03 AM] Ahmed: In"
             onChange={(event) => {
               setText(event.target.value);
               setLeft(new Set());

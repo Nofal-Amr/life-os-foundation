@@ -58,6 +58,35 @@ describe("parseChat", () => {
   });
 });
 
+describe("copied messages, with no year", () => {
+  const COPIED = `[11/2, 8:31 AM] Nofal: In
+[11/2, 4:31 PM] Nofal: Out
+[11/3, 8:27 AM] Nofal: In
+[11/3, 3:04 PM] Nofal: Out
+[11/8, 9:57 AM] Nofal: In
+[11/8, 1:21 PM] Nofal: Out
+[11/12, 10:09 AM] Nofal: In
+[11/12, 5:09 PM] Nofal: Out
+[11/16, 9:05 AM] Nofal: In`;
+
+  it("reads them month first, in this year", () => {
+    expect(guessDateOrder(COPIED)).toBe("mdy");
+    const rows = dayEntries(punches(parseChat(COPIED, undefined, "2026-11-16")));
+    expect(rows.map((row) => [row.day, row.in?.at ?? null, row.out?.at ?? null])).toEqual([
+      ["2026-11-02", "08:31", "16:31"],
+      ["2026-11-03", "08:27", "15:04"],
+      ["2026-11-08", "09:57", "13:21"],
+      ["2026-11-12", "10:09", "17:09"],
+      ["2026-11-16", "09:05", null],
+    ]);
+  });
+
+  it("puts a date still ahead in last year", () => {
+    const [message] = parseChat("[12/30, 8:00 AM] Nofal: In", "mdy", "2027-01-05");
+    expect(message!.day).toBe("2026-12-30");
+  });
+});
+
 describe("guessDateOrder", () => {
   it("uses any date that only fits one way, else day first", () => {
     expect(guessDateOrder("16/11/2026, 08:00 - A: in")).toBe("dmy");
