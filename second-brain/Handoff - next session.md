@@ -1,9 +1,24 @@
 ---
 tags: [handoff]
-updated: 2026-11-14
+updated: 2026-11-16
 ---
 
 # Handoff for the next session
+
+## 2026-11-15/16
+- **Duha is live** for real accounts: migration `prayer_duha` applied at the owner's request and
+  checked; PR #46 set `DUHA_IN_DATABASE = true`.
+- **Phone layout compacted** (PR #47): Spirit is one even prayer list with the wake-up alarm inside
+  each row; shared cards tightened; nothing hidden under the bottom bar. Debug APK rebuilt in
+  `apps-latest/` (git-ignored locally).
+- **Today calmer** (PR #48): People shows three at most, one row each (Called + ⋯ menu); the folded
+  "Coming up" is now "Also this week" and leaves out tasks (they're under Today's focus).
+- **Logo parked** by the owner: see `Brand/Logo - status.md` and `Brand/logo/concepts/round*.png`.
+- Friend's prayer app analysis: [[Competitor - Azka Qibla Finder]].
+- Vercel preview links need a Vercel login; check changes on the live site in demo mode after merge.
+- Next: evening ritual (move unfinished to tomorrow + day summary); opt-in areas at sign-up;
+  Relationships map closer default zoom on phones; People row titles truncate ("Check in with Uncl…")
+  — consider showing just the name.
 
 ## Security and housekeeping, 2026-11-14
 Done (each its own PR, CI green):
