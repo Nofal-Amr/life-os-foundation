@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ADO_PRESET, monthSheet, type ClockEvent, type WorkRules } from "./rules";
+import { ADO_PRESET, ladderPenalty, monthSheet, type ClockEvent, type WorkRules } from "./rules";
 
 /** A Cairo local time on a September 2026 day (Cairo is UTC+3 then). */
 const cairo = (day: number, time: string) =>
@@ -73,6 +73,63 @@ describe("monthSheet", () => {
     const result = sheet(ADO_SEPTEMBER, { leaves });
     expect([6, 8, 17].map((day) => row(result, day).penalty)).toEqual([120, 150, 180]);
     expect([6, 8, 17].map((day) => row(result, day).late)).toEqual([0, 0, 0]);
+  });
+
+  it("a ladder can end in a day's penalty and then start again", () => {
+    const cycle = { minutes: [120, 150, 180], thenAdd: 30, afterLast: "day" as const };
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => ladderPenalty(cycle, n))).toEqual([
+      { minutes: 120, day: false },
+      { minutes: 150, day: false },
+      { minutes: 180, day: false },
+      { minutes: 0, day: true },
+      { minutes: 120, day: false },
+      { minutes: 150, day: false },
+      { minutes: 180, day: false },
+      { minutes: 0, day: true },
+      { minutes: 120, day: false },
+    ]);
+    // Saved rules without the choice keep adding minutes, as before.
+    expect([4, 5].map((n) => ladderPenalty({ minutes: [120, 150, 180], thenAdd: 30 }, n))).toEqual([
+      { minutes: 210, day: false },
+      { minutes: 240, day: false },
+    ]);
+  });
+
+  it("the fourth late arrival costs a day on the sheet, the fifth starts again", () => {
+    const result = sheet([
+      ...pair(1, "09:30", "16:30"),
+      ...pair(2, "09:30", "16:30"),
+      ...pair(3, "09:30", "16:30"),
+      ...pair(6, "09:30", "16:30"),
+      ...pair(7, "09:30", "16:30"),
+    ]);
+    expect(
+      [1, 2, 3, 6, 7].map((day) => [row(result, day).penalty, row(result, day).dayPenalty]),
+    ).toEqual([
+      [120, false],
+      [150, false],
+      [180, false],
+      [0, true],
+      [120, false],
+    ]);
+  });
+
+  it("a step's tolerance lets a clock-in just after its time through", () => {
+    const rules: WorkRules = {
+      ...ADO_PRESET,
+      lateSteps: [
+        {
+          after: "08:30",
+          tolerance: 2,
+          penalty: { kind: "ladder", minutes: [120, 150, 180], thenAdd: 30, afterLast: "day" },
+        },
+      ],
+    };
+    const result = sheet([...pair(1, "08:32", "16:30"), ...pair(2, "08:33", "16:30")], { rules });
+    // 08:32 is within the 2 minutes: no penalty, only the minutes late from 08:00.
+    expect([row(result, 1).penalty, row(result, 1).late]).toEqual([0, 32]);
+    // 08:33 is past it: the ladder's first rung.
+    expect([row(result, 2).penalty, row(result, 2).late]).toEqual([120, 0]);
   });
 
   it("after 10:00 costs a day", () => {

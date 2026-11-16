@@ -772,6 +772,12 @@ export const AR: Record<string, string> = {
   "Remove set": "احذف المجموعة",
   Set: "مجموعة",
   sets: "مجموعات",
+  "After the last": "بعد آخر خطوة",
+  "Tolerance (min)": "السماحية (دقيقة)",
+  "Each step: arriving after a time, plus its tolerance, gives a penalty instead of late minutes. A ladder grows with how many times it happened this month (1st, 2nd, 3rd…).":
+    "كل خطوة: الوصول بعد وقت معيّن، مضافاً إليه السماحية، يُحتسب جزاءً بدلاً من دقائق التأخير. يزيد السلّم بعدد مرات حدوثه هذا الشهر (الأولى، الثانية، الثالثة…).",
+  "Add minutes each time": "أضف دقائق كل مرة",
+  "A whole day, then start again": "يوم كامل، ثم تبدأ من جديد",
   "Due today": "مستحق اليوم",
   task: "مهمة",
   estimated: "تقديراً",
