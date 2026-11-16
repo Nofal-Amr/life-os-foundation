@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { Download, MessageSquareText } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { MemberMonth, MonthNav, sheetOptions, useMonthPicker } from "@/components/app/work/MyMonth";
+import { WhatsAppImport } from "@/components/app/work/WhatsAppImport";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,6 +47,7 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
   const leaves = useQuery(workLeavesQuery(org.id, month));
   const [who, setWho] = useState<string | null>(null);
   const [day, setDay] = useState<{ row: DayRow; member: WorkMember } | null>(null);
+  const [importing, setImporting] = useState(false);
   const list = members.data ?? [];
   const member = list.find((item) => item.user_id === who) ?? list[0] ?? null;
   const name = (userId: string) => list.find((item) => item.user_id === userId)?.display_name ?? "";
@@ -118,9 +120,14 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
           ))}
         </select>
         <MonthNav month={month} step={step} />
-        <Button type="button" variant="outline" size="sm" onClick={exportAll}>
-          <Download className="size-4" /> {t("Excel for everyone")}
-        </Button>
+        <span className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => setImporting(true)}>
+            <MessageSquareText className="size-4" /> {t("From WhatsApp")}
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={exportAll}>
+            <Download className="size-4" /> {t("Excel for everyone")}
+          </Button>
+        </span>
       </div>
 
       {requested.length ? (
@@ -217,6 +224,15 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
           onDay={(row) => setDay({ row, member })}
         />
       ) : null}
+
+      <WhatsAppImport
+        open={importing}
+        onOpenChange={setImporting}
+        org={org}
+        rules={rules}
+        members={list}
+        onSaved={refresh}
+      />
 
       <CorrectionDialog
         open={!!day}
