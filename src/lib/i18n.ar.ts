@@ -742,6 +742,13 @@ export const AR: Record<string, string> = {
   "Only people who have joined the company can be matched.": "يمكن مطابقة من انضم إلى الشركة فقط.",
   Days: "الأيام",
   "Test options": "خيارات تجريبية",
+  "Due today": "مستحق اليوم",
+  task: "مهمة",
+  estimated: "تقديراً",
+  "without a time": "بلا وقت",
+  "That's more than the": "هذا أكثر من",
+  "left today.": "المتبقية اليوم.",
+  "Choose what moves": "اختر ما يتأجل",
   "Plan steps": "خطط الخطوات",
   "Plan the steps": "خطط الخطوات",
   "One step per line, in order. A time at the end is its estimate, like “· 45m” or “1h 30m”.":
