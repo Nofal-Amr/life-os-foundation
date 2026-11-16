@@ -56,7 +56,7 @@ function sectionFor(pathname: string) {
   )
     return "/tasks";
   if (pathname.startsWith("/finance") || pathname.startsWith("/resources")) return "/finance";
-  if (pathname.startsWith("/health") || pathname.startsWith("/food")) return "/health";
+  if (["/health", "/food", "/gym"].some((path) => pathname.startsWith(path))) return "/health";
   return null;
 }
 

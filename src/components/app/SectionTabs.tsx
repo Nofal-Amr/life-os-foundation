@@ -18,7 +18,8 @@ type SectionTab = {
     | "/finance/categories"
     | "/resources"
     | "/health"
-    | "/food";
+    | "/food"
+    | "/gym";
   label: string;
   exact?: boolean;
   module?: ModuleKey;
@@ -44,6 +45,7 @@ const MONEY_TABS: SectionTab[] = [
 const BODY_TABS: SectionTab[] = [
   { to: "/health", label: "Health" },
   { to: "/food", label: "Food", module: "food" },
+  { to: "/gym", label: "Gym" },
 ];
 
 function tabsFor(pathname: string) {
