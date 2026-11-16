@@ -1,10 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Cake, Phone } from "lucide-react";
+import { Cake, Check, MoreHorizontal, Phone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { todaysNudges, type Nudge } from "@/data/relationships";
 import { isNudgeSnoozed, logInteraction, snoozeNudge } from "@/data/relationshipsApi";
 import { createTask, taskKeys } from "@/data/tasks";
@@ -16,7 +22,7 @@ import { useRelationships } from "./useRelationships";
 
 /**
  * Today's people: a birthday coming up, or a check-in whose rhythm has come
- * round. At most three check-ins, worded as facts. Nothing when the area is
+ * round. Three at most, one row each, worded as facts. Nothing when the area is
  * off or there's nothing to show.
  */
 export function RelationshipsToday({ className }: { className?: string }) {
@@ -67,6 +73,10 @@ export function RelationshipsToday({ className }: { className?: string }) {
   });
   if (!nudges.length) return null;
 
+  // Three at most, so People never outweighs the rest of Today.
+  const shown = nudges.slice(0, 3);
+  const more = nudges.length - shown.length;
+
   return (
     <section className={className} aria-labelledby="today-people">
       <div className="mb-2 flex items-baseline justify-between">
@@ -74,55 +84,60 @@ export function RelationshipsToday({ className }: { className?: string }) {
           People
         </h2>
         <Link to="/relationships" className="text-xs text-muted-foreground hover:text-foreground">
-          See everyone
+          {more > 0 ? `${more} more` : "See everyone"}
         </Link>
       </div>
-      <ul className="space-y-2">
-        {nudges.map((nudge) => (
-          <li key={nudge.key} className="rounded-xl border border-border bg-card p-3">
-            <div className="flex items-start gap-3">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
-                {nudge.kind === "birthday" ? (
-                  <Cake className="size-4" aria-hidden="true" />
-                ) : (
-                  <Phone className="size-4" aria-hidden="true" />
-                )}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{nudge.title}</p>
-                <p className="text-sm text-muted-foreground">{nudge.detail}</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {nudge.kind === "checkin" ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={log.isPending}
-                      onClick={() => log.mutate(nudge.person.id)}
-                    >
-                      Logged a call
-                    </Button>
-                  ) : null}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={task.isPending}
-                    onClick={() => task.mutate(nudge)}
-                  >
-                    Make a task
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      snoozeNudge(nudge.key, today);
-                      setTick((value) => value + 1);
-                    }}
-                  >
-                    Not now
-                  </Button>
-                </div>
-              </div>
+      <ul className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+        {shown.map((nudge) => (
+          <li key={nudge.key} className="flex min-h-14 items-center gap-3 py-2 pl-3 pr-1">
+            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
+              {nudge.kind === "birthday" ? (
+                <Cake className="size-4" aria-hidden="true" />
+              ) : (
+                <Phone className="size-4" aria-hidden="true" />
+              )}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{nudge.title}</p>
+              <p className="truncate text-xs text-muted-foreground">{nudge.detail}</p>
             </div>
+            {nudge.kind === "checkin" ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="shrink-0"
+                disabled={log.isPending}
+                onClick={() => log.mutate(nudge.person.id)}
+              >
+                <Check className="size-4" aria-hidden="true" />
+                Called
+              </Button>
+            ) : null}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-11 shrink-0"
+                  aria-label={`More for ${nudge.person.name}`}
+                >
+                  <MoreHorizontal className="size-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem disabled={task.isPending} onSelect={() => task.mutate(nudge)}>
+                  Make a task for today
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    snoozeNudge(nudge.key, today);
+                    setTick((value) => value + 1);
+                  }}
+                >
+                  Not now
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </li>
         ))}
       </ul>
