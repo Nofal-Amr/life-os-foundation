@@ -316,6 +316,26 @@ export function matchMember<T extends { display_name: string }>(
   return partial.length === 1 ? partial[0]! : null;
 }
 
+/**
+ * The message to post after clocking in or out, with the clock time in the
+ * company's time zone, 24-hour: "In 08:31". Sent late, it still imports as
+ * 08:31, because a time written in the message wins.
+ */
+export function clockMessage(kind: "in" | "out", at: string, timeZone: string): string {
+  const time = new Date(at).toLocaleTimeString("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${kind === "in" ? "In" : "Out"} ${time}`;
+}
+
+/** Opens WhatsApp with the text typed in; the person picks the group and sends. */
+export function whatsappLink(text: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
 /** What the sheet keeps as the reason: where the time came from. */
 export function reasonFor(punch: Punch): string {
   return `WhatsApp ${punch.day} ${punch.time}: ${punch.text}`.slice(0, 300);

@@ -13,6 +13,17 @@ export type LateStep = {
   penalty: { kind: "ladder"; minutes: number[]; thenAdd: number } | { kind: "day" };
 };
 
+/**
+ * Options a company can try before they are for everyone. Each is off unless
+ * an admin of that company turns it on.
+ */
+export type WorkTests = {
+  /** Sheets: import past days from WhatsApp messages. */
+  whatsappImport: boolean;
+  /** After clocking in or out, offer to post it in WhatsApp with the time. */
+  whatsappPost: boolean;
+};
+
 export type WorkRules = {
   timezone: string;
   currency: string;
@@ -38,6 +49,7 @@ export type WorkRules = {
   /** Whether leave deductions come off the month's total. */
   absenceFromTotal: boolean;
   outsideRadius: "refuse" | "refuseAndRecord" | "allowWithReason";
+  tests: WorkTests;
 };
 
 /** The example sheet from ADO Consult, as a starting point HR can change. */
@@ -63,6 +75,7 @@ export const ADO_PRESET: WorkRules = {
   dayPenaltyDivisor: 30,
   absenceFromTotal: true,
   outsideRadius: "refuseAndRecord",
+  tests: { whatsappImport: false, whatsappPost: false },
 };
 
 export type ClockEvent = { kind: "in" | "out"; at: string; placeKind?: "office" | "site" };

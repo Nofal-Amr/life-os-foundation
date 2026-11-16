@@ -27,6 +27,17 @@ describe("work api helpers", () => {
     expect(readRules(null)).toEqual(ADO_PRESET);
   });
 
+  it("keeps test options off for every company until one turns them on", () => {
+    expect(readRules({ dayStart: "09:00" }).tests).toEqual({
+      whatsappImport: false,
+      whatsappPost: false,
+    });
+    expect(readRules({ tests: { whatsappPost: true } }).tests).toEqual({
+      whatsappImport: false,
+      whatsappPost: true,
+    });
+  });
+
   it("attempts never reach the sheet", () => {
     const input = sheetInputFor({
       member,

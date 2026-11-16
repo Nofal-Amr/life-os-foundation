@@ -121,9 +121,11 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
         </select>
         <MonthNav month={month} step={step} />
         <span className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => setImporting(true)}>
-            <MessageSquareText className="size-4" /> {t("From WhatsApp")}
-          </Button>
+          {rules.tests.whatsappImport ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => setImporting(true)}>
+              <MessageSquareText className="size-4" /> {t("From WhatsApp")}
+            </Button>
+          ) : null}
           <Button type="button" variant="outline" size="sm" onClick={exportAll}>
             <Download className="size-4" /> {t("Excel for everyone")}
           </Button>
