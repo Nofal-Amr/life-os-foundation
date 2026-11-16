@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
 import { EntityIcon, EntityIdentityPicker } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
+import { GoalPlanDialog } from "@/components/app/GoalPlanDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,8 @@ import {
   type GoalInput,
 } from "@/data/goals";
 import { tasksQuery } from "@/data/tasks";
+import { workLeft } from "@/data/goalPlan";
+import { formatMinutes } from "@/data/time";
 import { projectsQuery } from "@/data/projects";
 import { goalHabits, goalLinks, habitGoalsAvailable } from "@/data/links";
 import { habitKeys, habitLogsQuery, habitsQuery, setHabitGoal } from "@/data/habits";
@@ -78,6 +81,7 @@ function GoalsPage() {
   const [editing, setEditing] = useState<Goal | null>(null);
   const [form, setForm] = useState<GoalInput>(emptyForm);
   const [toDelete, setToDelete] = useState<Goal | null>(null);
+  const [planning, setPlanning] = useState<Goal | null>(null);
   /** Habits ticked in the form as counting toward this goal. */
   const [linkedHabits, setLinkedHabits] = useState<string[]>([]);
   // Hidden until the database can store the link (habits.goal_id).
@@ -200,6 +204,23 @@ function GoalsPage() {
                       return (
                         <div className="mt-4 max-w-md space-y-3">
                           <CountBar count={links.tasks} label="linked tasks done" />
+                          {(() => {
+                            const left = workLeft(tasks.data ?? [], goal.id);
+                            if (!left.open) return null;
+                            return (
+                              <p className="text-xs text-muted-foreground">
+                                {[
+                                  `${left.open} open`,
+                                  left.minutes ? `${formatMinutes(left.minutes)} estimated` : null,
+                                  left.untimed && left.minutes
+                                    ? `${left.untimed} without a time`
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </p>
+                            );
+                          })()}
                           <GoalLinksList links={links} />
                           <GoalHabitsList
                             items={goalHabits(
@@ -231,6 +252,9 @@ function GoalsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setPlanning(goal)}>
+                    Plan steps
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => openEdit(goal)}>
                     Edit
                   </Button>
@@ -243,6 +267,13 @@ function GoalsPage() {
           ))}
         </ul>
       )}
+
+      <GoalPlanDialog
+        goal={planning}
+        today={today}
+        open={!!planning}
+        onOpenChange={(open) => !open && setPlanning(null)}
+      />
 
       <FormDialog
         open={dialogOpen}
