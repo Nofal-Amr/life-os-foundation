@@ -43,7 +43,13 @@ export function readRules(json: unknown): WorkRules {
   return {
     ...ADO_PRESET,
     ...saved,
-    overtime: { ...ADO_PRESET.overtime, ...(saved.overtime ?? {}) },
+    // Rules saved before "a day's penalty is all overtime" existed keep
+    // counting those days as before, until an admin turns it on.
+    overtime: {
+      ...ADO_PRESET.overtime,
+      ...(saved.overtime ? { dayPenaltyAllOvertime: false } : {}),
+      ...(saved.overtime ?? {}),
+    },
     tests: { ...ADO_PRESET.tests, ...(saved.tests ?? {}) },
   };
 }

@@ -55,13 +55,19 @@ export type WorkRules = {
     afterEnd: boolean;
     /** A day off that was worked counts entirely as overtime. */
     dayOffAllOvertime: boolean;
+    /**
+     * A work day that costs a day's penalty (arriving after the day step, or
+     * the ladder's day) counts entirely as overtime, from clock-in to
+     * clock-out, with no early-leave minutes. Unset in saved rules is false.
+     */
+    dayPenaltyAllOvertime: boolean;
     minimumMinutes: number;
   };
   /** Per hour, for overtime pay and for late / penalty / early-leave deductions. */
   rate: { kind: "fixed"; perHour: number } | { kind: "fromSalary" };
   earlyLeaveCounted: boolean;
   leaveTypes: LeaveType[];
-  /** A day's penalty costs base salary ÷ this. */
+  /** A day's penalty costs base salary ÷ this (20 is 5%). */
   dayPenaltyDivisor: number;
   /** Whether leave deductions come off the month's total. */
   absenceFromTotal: boolean;
@@ -79,12 +85,19 @@ export const ADO_PRESET: WorkRules = {
   graceMinutes: 0,
   lateSteps: [
     {
-      after: "09:00",
+      after: "08:30",
+      tolerance: 2,
       penalty: { kind: "ladder", minutes: [120, 150, 180], thenAdd: 30, afterLast: "day" },
     },
     { after: "10:00", penalty: { kind: "day" } },
   ],
-  overtime: { beforeStart: true, afterEnd: true, dayOffAllOvertime: true, minimumMinutes: 0 },
+  overtime: {
+    beforeStart: true,
+    afterEnd: true,
+    dayOffAllOvertime: true,
+    dayPenaltyAllOvertime: true,
+    minimumMinutes: 0,
+  },
   rate: { kind: "fixed", perHour: 47 },
   earlyLeaveCounted: true,
   leaveTypes: [
@@ -92,7 +105,7 @@ export const ADO_PRESET: WorkRules = {
     { id: "without", name: "Leave without permission", percent: 7 },
     { id: "annual", name: "Annual leave", percent: 0 },
   ],
-  dayPenaltyDivisor: 30,
+  dayPenaltyDivisor: 20,
   absenceFromTotal: true,
   outsideRadius: "refuseAndRecord",
   tests: { whatsappImport: false, whatsappPost: false },
@@ -310,7 +323,9 @@ export function monthSheet(input: {
       } else {
         row.late = Math.max(0, inMinutes - (start + rules.graceMinutes));
       }
-      if (outMinutes !== null) {
+      if (outMinutes !== null && row.dayPenalty && rules.overtime.dayPenaltyAllOvertime) {
+        row.overtime = Math.max(0, outMinutes - inMinutes);
+      } else if (outMinutes !== null) {
         const before = rules.overtime.beforeStart ? Math.max(0, start - inMinutes) : 0;
         const after = rules.overtime.afterEnd ? Math.max(0, outMinutes - end) : 0;
         row.overtime = before + after;

@@ -27,6 +27,16 @@ describe("work api helpers", () => {
     expect(readRules(null)).toEqual(ADO_PRESET);
   });
 
+  it("keeps a day's penalty day counted as before for rules saved without the choice", () => {
+    expect(readRules({ overtime: { beforeStart: true } }).overtime.dayPenaltyAllOvertime).toBe(
+      false,
+    );
+    expect(readRules({ dayStart: "08:00" }).overtime.dayPenaltyAllOvertime).toBe(true);
+    expect(
+      readRules({ overtime: { dayPenaltyAllOvertime: true } }).overtime.dayPenaltyAllOvertime,
+    ).toBe(true);
+  });
+
   it("keeps test options off for every company until one turns them on", () => {
     expect(readRules({ dayStart: "09:00" }).tests).toEqual({
       whatsappImport: false,

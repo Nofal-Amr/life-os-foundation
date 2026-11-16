@@ -140,9 +140,43 @@ describe("monthSheet", () => {
     ]);
     expect(row(result, 2).dayPenalty).toBe(true);
     expect(row(result, 2).penalty).toBe(0);
-    expect(result.money.dayPenaltyDeductions).toBe(Math.round(9500 / 30));
+    // A day's penalty is 5% of base salary (÷ 20).
+    expect(result.money.dayPenaltyDeductions).toBe(Math.round(9500 / 20));
     // The day penalty doesn't count as a ladder occurrence.
     expect(row(result, 3).penalty).toBe(150);
+  });
+
+  it("a day's penalty day counts as overtime from clock-in to clock-out", () => {
+    const result = sheet([
+      // After 10:00: 10:05 to 17:00 is all overtime, and leaving early isn't counted.
+      ...pair(1, "10:05", "17:00"),
+      ...pair(2, "10:20", "15:00"),
+      // The ladder: 120, 150, 180, then the 4th time is a day, counted from 09:30.
+      ...pair(3, "09:30", "16:30"),
+      ...pair(6, "09:30", "16:30"),
+      ...pair(7, "09:30", "16:30"),
+      ...pair(8, "09:30", "18:00"),
+    ]);
+    expect([row(result, 1).overtime, row(result, 1).earlyLeave]).toEqual([415, 0]);
+    expect([row(result, 2).overtime, row(result, 2).earlyLeave]).toEqual([280, 0]);
+    expect([3, 6, 7].map((day) => row(result, day).overtime)).toEqual([0, 0, 0]);
+    expect([row(result, 8).dayPenalty, row(result, 8).overtime]).toEqual([true, 510]);
+    expect(result.totals.dayPenalties).toBe(3);
+  });
+
+  it("with the choice off, a day's penalty day counts only the usual overtime", () => {
+    const rules: WorkRules = {
+      ...ADO_PRESET,
+      overtime: { ...ADO_PRESET.overtime, dayPenaltyAllOvertime: false },
+    };
+    const result = sheet(pair(1, "10:05", "17:00"), { rules });
+    expect([row(result, 1).overtime, row(result, 1).earlyLeave]).toEqual([30, 0]);
+  });
+
+  it("the ADO ladder starts after 08:30, with 2 minutes' tolerance", () => {
+    const result = sheet([...pair(1, "08:32", "16:30"), ...pair(2, "08:33", "16:30")]);
+    expect([row(result, 1).penalty, row(result, 1).late]).toEqual([0, 32]);
+    expect(row(result, 2).penalty).toBe(120);
   });
 
   it("belongs to the day it started", () => {

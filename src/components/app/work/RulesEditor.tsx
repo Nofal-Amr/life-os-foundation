@@ -241,6 +241,17 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
             onChange={(event) => set("dayPenaltyDivisor", number(event.target.value, 30))}
           />
         </Field>
+        {rules.dayPenaltyDivisor > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {t("That is")} {+(100 / rules.dayPenaltyDivisor).toFixed(2)}%{" "}
+            {t("of base salary for each day's penalty.")}
+          </p>
+        ) : null}
+        <Toggle
+          label="A day with a day's penalty is all overtime, from clock-in to clock-out"
+          checked={rules.overtime.dayPenaltyAllOvertime}
+          onChange={(value) => set("overtime", { ...rules.overtime, dayPenaltyAllOvertime: value })}
+        />
       </Group>
 
       <Group title="Overtime and pay">

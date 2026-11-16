@@ -276,6 +276,10 @@ export const AR: Record<string, string> = {
   "Count minutes before the start": "احسب الدقائق قبل البداية",
   "Count minutes after the end": "احسب الدقائق بعد النهاية",
   "A worked day off is all overtime": "يوم العطلة المعمول كله إضافي",
+  "A day with a day's penalty is all overtime, from clock-in to clock-out":
+    "يوم جزاء اليوم كله إضافي، من الحضور حتى الانصراف",
+  "That is": "أي",
+  "of base salary for each day's penalty.": "من الراتب الأساسي عن كل جزاء يوم.",
   "Count leaving early (deducted like late)": "احسب الانصراف المبكر (يُخصم كالتأخير)",
   "Overtime counts from (min)": "يُحسب الإضافي من (د)",
   "A fixed amount": "مبلغ ثابت",
