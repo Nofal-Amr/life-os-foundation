@@ -10,7 +10,24 @@ export type LeaveType = { id: string; name: string; percent: number };
 /** Arriving after `after` ("HH:mm") gives a penalty instead of late minutes. */
 export type LateStep = {
   after: string;
-  penalty: { kind: "ladder"; minutes: number[]; thenAdd: number } | { kind: "day" };
+  /**
+   * Minutes past `after` that still don't trigger this step: with 08:30 and
+   * 2, a clock-in at 08:32 has no penalty from it and 08:33 has. Unset is 0.
+   */
+  tolerance?: number;
+  penalty:
+    | {
+        kind: "ladder";
+        minutes: number[];
+        thenAdd: number;
+        /**
+         * After the last rung: keep adding `thenAdd` minutes each time ("add",
+         * the default), or a whole day's penalty and then start the ladder
+         * again ("day": 120, 150, 180, a day, 120, 150, 180, a day…).
+         */
+        afterLast?: "add" | "day";
+      }
+    | { kind: "day" };
 };
 
 /**
@@ -61,7 +78,10 @@ export const ADO_PRESET: WorkRules = {
   dayEnd: "16:30",
   graceMinutes: 0,
   lateSteps: [
-    { after: "09:00", penalty: { kind: "ladder", minutes: [120, 150, 180], thenAdd: 30 } },
+    {
+      after: "09:00",
+      penalty: { kind: "ladder", minutes: [120, 150, 180], thenAdd: 30, afterLast: "day" },
+    },
     { after: "10:00", penalty: { kind: "day" } },
   ],
   overtime: { beforeStart: true, afterEnd: true, dayOffAllOvertime: true, minimumMinutes: 0 },
@@ -187,14 +207,24 @@ function clocksByDay(events: ClockEvent[], timeZone: string): Map<string, DayClo
   return byDay;
 }
 
-function ladderMinutes(
-  penalty: { minutes: number[]; thenAdd: number },
+/** The penalty for the n-th time this month (1-based): minutes, or a whole day. */
+export function ladderPenalty(
+  penalty: { minutes: number[]; thenAdd: number; afterLast?: "add" | "day" },
   occurrence: number,
-): number {
+): { minutes: number; day: boolean } {
   const { minutes, thenAdd } = penalty;
-  if (minutes.length === 0) return 0;
-  if (occurrence <= minutes.length) return minutes[occurrence - 1]!;
-  return minutes[minutes.length - 1]! + thenAdd * (occurrence - minutes.length);
+  if (minutes.length === 0) return { minutes: 0, day: false };
+  if (penalty.afterLast === "day") {
+    const place = (occurrence - 1) % (minutes.length + 1);
+    return place < minutes.length
+      ? { minutes: minutes[place]!, day: false }
+      : { minutes: 0, day: true };
+  }
+  if (occurrence <= minutes.length) return { minutes: minutes[occurrence - 1]!, day: false };
+  return {
+    minutes: minutes[minutes.length - 1]! + thenAdd * (occurrence - minutes.length),
+    day: false,
+  };
 }
 
 export function monthSheet(input: {
@@ -267,12 +297,16 @@ export function monthSheet(input: {
     if (outMinutes === null) row.note = "no-clock-out";
 
     if (kind === "work") {
-      const step = [...steps].reverse().find((item) => inMinutes > clockMinutes(item.after));
+      const step = [...steps]
+        .reverse()
+        .find((item) => inMinutes > clockMinutes(item.after) + (item.tolerance ?? 0));
       if (step?.penalty.kind === "day") {
         row.dayPenalty = true;
       } else if (step?.penalty.kind === "ladder") {
         ladderCount += 1;
-        row.penalty = ladderMinutes(step.penalty, ladderCount);
+        const result = ladderPenalty(step.penalty, ladderCount);
+        row.penalty = result.minutes;
+        row.dayPenalty = result.day;
       } else {
         row.late = Math.max(0, inMinutes - (start + rules.graceMinutes));
       }
