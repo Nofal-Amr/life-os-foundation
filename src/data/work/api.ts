@@ -235,6 +235,12 @@ export async function addCorrection(input: CorrectionInput): Promise<void> {
   unwrap(await supabase.from("work_corrections").insert(input).select());
 }
 
+/** Several corrections in one request: all are saved, or none. */
+export async function addCorrections(inputs: CorrectionInput[]): Promise<void> {
+  if (!inputs.length) return;
+  unwrap(await supabase.from("work_corrections").insert(inputs).select());
+}
+
 export type LeaveInput = Pick<WorkLeave, "org_id" | "day" | "type_id"> &
   Partial<Pick<WorkLeave, "user_id" | "status" | "note">>;
 

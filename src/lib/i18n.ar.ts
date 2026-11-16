@@ -727,4 +727,20 @@ export const AR: Record<string, string> = {
   "Allahu akbar": "التكبير",
   "Completing the hundred": "تمام المئة",
   "He gives life and death": "يحيي ويميت",
+  "From WhatsApp": "من واتساب",
+  "For past days. In WhatsApp, open the group, then More, Export chat, Without media. Paste the text or pick the file. It stays on this device; only the times you save are sent.":
+    "للأيام السابقة. في واتساب افتح المجموعة، ثم المزيد، ثم تصدير الدردشة، بدون وسائط. الصق النص أو اختر الملف. يبقى النص على هذا الجهاز، ولا يُرسل إلا ما تحفظه من أوقات.",
+  "Chat file": "ملف الدردشة",
+  "Chat text": "نص الدردشة",
+  messages: "رسائل",
+  "clock-ins and clock-outs": "حضور وانصراف",
+  "other messages skipped": "رسائل أخرى تم تخطيها",
+  "Dates are written": "طريقة كتابة التاريخ",
+  "Day first (16/11)": "اليوم أولاً (16/11)",
+  "Month first (11/16)": "الشهر أولاً (11/16)",
+  "Who is who": "مطابقة الأسماء",
+  "Only people who have joined the company can be matched.": "يمكن مطابقة من انضم إلى الشركة فقط.",
+  Days: "الأيام",
+  "Each time is saved as a correction for that day. The original records stay as they were.":
+    "يُحفظ كل وقت كتعديل لذلك اليوم. تبقى السجلات الأصلية كما هي.",
 };
