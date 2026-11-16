@@ -748,6 +748,13 @@ export const AR: Record<string, string> = {
     "كل خطوة: الوصول بعد وقت معيّن، مضافاً إليه السماحية، يُحتسب جزاءً بدلاً من دقائق التأخير. يزيد السلّم بعدد مرات حدوثه هذا الشهر (الأولى، الثانية، الثالثة…).",
   "Add minutes each time": "أضف دقائق كل مرة",
   "A whole day, then start again": "يوم كامل، ثم تبدأ من جديد",
+  "Due today": "مستحق اليوم",
+  task: "مهمة",
+  estimated: "تقديراً",
+  "without a time": "بلا وقت",
+  "That's more than the": "هذا أكثر من",
+  "left today.": "المتبقية اليوم.",
+  "Choose what moves": "اختر ما يتأجل",
   "Plan steps": "خطط الخطوات",
   "Plan the steps": "خطط الخطوات",
   "One step per line, in order. A time at the end is its estimate, like “· 45m” or “1h 30m”.":

@@ -105,6 +105,8 @@ import {
   type Task,
   type TaskEnergy,
 } from "@/data/tasks";
+import { formatMinutes } from "@/data/time";
+import { todayWorkload } from "@/data/workload";
 import { useModules } from "@/hooks/useModules";
 import {
   classSessionsQuery,
@@ -507,6 +509,7 @@ function DashboardPage() {
   const capacity = energyCapacity(todayReview.data?.energy);
   const actions = nextActions(allTasks, today, capacity);
   const primary = actions[0];
+  const workload = todayWorkload(allTasks, today, new Date());
   // One task that has waited a long while (not the one already up next).
   // "Not today" is kept per device; the counter only re-renders after it.
   const [, setSnoozed] = useState(0);
@@ -1253,6 +1256,25 @@ function DashboardPage() {
                       }}
                     />
                   </div>
+                ) : null}
+
+                {workload.minutes ? (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    {[
+                      `${t("Due today")}: ${workload.count} ${t(workload.count === 1 ? "task" : "tasks")} · ${t("about")} ${formatMinutes(workload.minutes)} ${t("estimated")}`,
+                      workload.untimed ? `${workload.untimed} ${t("without a time")}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    {workload.over ? (
+                      <>
+                        {`. ${t("That's more than the")} ${formatMinutes(workload.leftMinutes)} ${t("left today.")} `}
+                        <Link to="/tasks" search={{ filter: "today" }} className="underline">
+                          {t("Choose what moves")}
+                        </Link>
+                      </>
+                    ) : null}
+                  </p>
                 ) : null}
 
                 {focusRows.length ? (
