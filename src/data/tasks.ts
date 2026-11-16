@@ -233,6 +233,18 @@ export async function createTask(input: TaskInput) {
   );
 }
 
+/** Several new tasks in one request: all are saved, or none. */
+export async function createTasks(inputs: TaskInput[]) {
+  if (!inputs.length) return [];
+  const user_id = await currentUserId();
+  return unwrap(
+    await supabase
+      .from("tasks")
+      .insert(inputs.map((input) => ({ ...input, user_id, completed_at: null })))
+      .select(),
+  );
+}
+
 /**
  * Moving a due date later is recorded as information only: a count, when it
  * last moved, and the date it was first meant for.
