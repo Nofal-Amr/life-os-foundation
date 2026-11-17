@@ -305,6 +305,8 @@ export function sheetInputFor(args: {
   corrections: Pick<WorkCorrection, "day" | "field" | "value" | "reason">[];
   leaves: Pick<WorkLeave, "day" | "type_id" | "status">[];
   holidays: string[];
+  /** This month's incentives, allowances and other additions. */
+  additions?: { label: string; amount: number }[];
   /** Today in the company's time zone; defaults to now. */
   today?: string;
 }) {
@@ -343,6 +345,7 @@ export function sheetInputFor(args: {
     corrections,
     leaves,
     excuses,
+    additions: args.additions ?? [],
     holidays: [...args.holidays, ...args.rules.holidays.map((holiday) => holiday.day)],
     today: args.today ?? new Date().toLocaleDateString("en-CA", { timeZone: args.rules.timezone }),
   };

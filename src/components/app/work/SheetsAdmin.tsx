@@ -32,6 +32,8 @@ import {
   type WorkMember,
   type WorkOrg,
 } from "@/data/work/api";
+import { PayItems } from "@/components/app/work/PayItems";
+import { additionsFor, workPayItemsQuery } from "@/data/work/payItems";
 import { monthSheet, type DayRow, type WorkRules, type ExcuseCovers } from "@/data/work/rules";
 import { exportSheets } from "@/data/work/sheetExport";
 import { t } from "@/lib/i18n";
@@ -48,6 +50,7 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
   const monthEvents = useQuery(workEventsQuery(org.id, month));
   const corrections = useQuery(workCorrectionsQuery(org.id, month));
   const leaves = useQuery(workLeavesQuery(org.id, month));
+  const payItems = useQuery(workPayItemsQuery(org.id));
   const yearLeaves = useQuery(workYearLeavesQuery(org.id, Number(month.slice(0, 4))));
   const [who, setWho] = useState<string | null>(null);
   const [day, setDay] = useState<{ row: DayRow; member: WorkMember } | null>(null);
@@ -95,6 +98,7 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
           events: monthEvents.data.filter((row) => row.user_id === item.user_id),
           corrections: corrections.data.filter((row) => row.user_id === item.user_id),
           leaves: leaves.data.filter((row) => row.user_id === item.user_id),
+          additions: additionsFor(payItems.data ?? [], item.user_id, month),
           holidays: [],
         }),
       ),
@@ -219,6 +223,10 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
             </p>
           ))}
         </section>
+      ) : null}
+
+      {member ? (
+        <PayItems org={org} rules={rules} member={member} members={list} month={month} />
       ) : null}
 
       {member ? (

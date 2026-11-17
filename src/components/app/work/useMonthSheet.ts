@@ -9,6 +9,7 @@ import {
   type WorkMember,
   type WorkOrg,
 } from "@/data/work/api";
+import { additionsFor, workPayItemsQuery } from "@/data/work/payItems";
 import { monthSheet, type WorkRules } from "@/data/work/rules";
 
 /**
@@ -24,6 +25,8 @@ export function useMonthSheet(
   const events = useQuery(workEventsQuery(org.id, month));
   const corrections = useQuery(workCorrectionsQuery(org.id, month));
   const leaves = useQuery(workLeavesQuery(org.id, month));
+  // Optional: without the table (or while it loads) there's simply nothing added.
+  const payItems = useQuery(workPayItemsQuery(org.id));
   const loading = events.isLoading || corrections.isLoading || leaves.isLoading;
   const error = events.error ?? corrections.error ?? leaves.error;
 
@@ -41,6 +44,7 @@ export function useMonthSheet(
           events: mine(events.data),
           corrections: memberCorrections,
           leaves: mine(leaves.data),
+          additions: additionsFor(payItems.data ?? [], member.user_id, month),
           // Company holidays come later; admins mark those days as leave.
           holidays: [],
         }),
@@ -48,7 +52,7 @@ export function useMonthSheet(
       corrections: memberCorrections,
       events: mine(events.data),
     };
-  }, [member, rules, month, events.data, corrections.data, leaves.data]);
+  }, [member, rules, month, events.data, corrections.data, leaves.data, payItems.data]);
 
   return { ...result, loading, error };
 }

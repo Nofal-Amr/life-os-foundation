@@ -92,6 +92,7 @@ export function sheetRows(sheet: MonthSheet, options: SheetOptions): Cell[][] {
     [labels("Leave deductions"), -money.leaveDeductions],
     [labels("Total deductions"), -money.totalDeductions],
     [labels("Overtime pay"), money.overtimePay],
+    ...money.additions.map((item): Cell[] => [item.label, item.amount]),
     [labels("Total additions"), money.totalAdditions],
     [labels("Total"), money.total],
   ];

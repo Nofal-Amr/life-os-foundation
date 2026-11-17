@@ -215,6 +215,11 @@ export function MonthSheetView({
           <Sum minutes={totals.overtime} rate={sheet.money.ratePerHour} />+
           {money(sheet.money.overtimePay)}
         </Line>
+        {sheet.money.additions.map((item, index) => (
+          <Line key={`${item.label}-${index}`} label={item.label}>
+            +{money(item.amount)}
+          </Line>
+        ))}
         <div className="border-t border-border pt-1.5 font-medium">
           <Line label="Total additions">+{money(sheet.money.totalAdditions)}</Line>
         </div>

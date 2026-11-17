@@ -187,7 +187,9 @@ export type MonthSheet = {
     dayPenaltyDeductions: number;
     /** Everything taken off: minutes, day penalties and (when they count) leave. */
     totalDeductions: number;
-    /** Everything added: overtime. */
+    /** Incentives, allowances and other money an admin added. */
+    additions: { label: string; amount: number }[];
+    /** Everything added: overtime and the additions. */
     totalAdditions: number;
     total: number;
   };
@@ -358,6 +360,8 @@ export function monthSheet(input: {
   events: ClockEvent[];
   corrections: Correction[];
   leaves: Leave[];
+  /** Money added this month: incentives, allowances and the like. */
+  additions?: { label: string; amount: number }[];
   /** An admin's excuses; for a day, the latest wins. */
   excuses?: Excuse[];
   holidays: string[];
@@ -502,7 +506,8 @@ export function monthSheet(input: {
   const dayPenaltyDeductions = dayPenaltyRate * totals.dayPenalties;
   const totalDeductions =
     deductions + dayPenaltyDeductions + (rules.absenceFromTotal ? leaveDeductions : 0);
-  const totalAdditions = overtimePay;
+  const additions = (input.additions ?? []).filter((item) => item.amount > 0);
+  const totalAdditions = overtimePay + additions.reduce((sum, item) => sum + item.amount, 0);
   const total = base - totalDeductions + totalAdditions;
 
   return {
@@ -520,6 +525,7 @@ export function monthSheet(input: {
       leaveDeductions,
       dayPenaltyDeductions,
       totalDeductions,
+      additions,
       totalAdditions,
       total,
     },

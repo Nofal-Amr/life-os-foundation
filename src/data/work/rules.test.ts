@@ -80,6 +80,7 @@ describe("monthSheet", () => {
     expect(result.money.total).toBe(9730);
     expect(result.money.totalDeductions).toBe(569 + 475);
     expect(result.money.totalAdditions).toBe(1274);
+    expect(result.money.additions).toEqual([]);
   });
 
   it("ladder counts occurrences in the month", () => {
@@ -426,5 +427,31 @@ describe("excuses", () => {
       { day: "2026-11-02", covers: "none" },
     ]);
     expect(row(sheet, 2)).toMatchObject({ penalty: 120, excused: [] });
+  });
+});
+
+describe("additions", () => {
+  it("adds incentives and allowances to the total and to total additions", () => {
+    const sheet = monthSheet({
+      rules: ADO_PRESET,
+      month: "2026-11",
+      baseSalary: 9000,
+      events: [],
+      corrections: [],
+      leaves: [],
+      holidays: [],
+      today: "2026-11-01",
+      additions: [
+        { label: "Incentive", amount: 500 },
+        { label: "Transport allowance", amount: 300 },
+        { label: "Nothing", amount: 0 },
+      ],
+    });
+    expect(sheet.money.additions.map((item) => item.label)).toEqual([
+      "Incentive",
+      "Transport allowance",
+    ]);
+    expect(sheet.money.totalAdditions).toBe(800);
+    expect(sheet.money.total).toBe(9000 + 800);
   });
 });
