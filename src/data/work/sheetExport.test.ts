@@ -75,7 +75,9 @@ describe("sheetExport", () => {
     const money = Object.fromEntries(
       rows.filter((row) => row.length === 2).map((row) => [row[0], row[1]]),
     );
-    expect(money["Late, penalties and early leave"]).toBe(-569);
+    expect(money["Lateness"]).toBe(-216);
+    expect(money["Penalties"]).toBe(-353);
+    expect(money["Early leave"]).toBe(-0);
     expect(money["Overtime pay"]).toBe(1274);
     expect(money["Leave deductions"]).toBe(-475);
     expect(money["Total"]).toBe(9730);

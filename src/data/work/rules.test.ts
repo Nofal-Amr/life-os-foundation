@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { ADO_PRESET, ladderPenalty, monthSheet, type ClockEvent, type WorkRules } from "./rules";
+import {
+  ADO_PRESET,
+  dayTaps,
+  ladderPenalty,
+  monthSheet,
+  type ClockEvent,
+  type WorkRules,
+} from "./rules";
 
 /** A Cairo local time on a September 2026 day (Cairo is UTC+3 then). */
 const cairo = (day: number, time: string) =>
@@ -64,6 +71,10 @@ describe("monthSheet", () => {
     expect(result.totals.penalty).toBe(450);
     expect(result.totals.overtime).toBe(1627);
     expect(result.money.deductions).toBe(569);
+    // Each kind of minute is costed on its own line: 276 late, 450 penalty, no early leave.
+    expect(result.money.lateDeductions).toBe(216);
+    expect(result.money.penaltyDeductions).toBe(353);
+    expect(result.money.earlyLeaveDeductions).toBe(0);
     expect(result.money.overtimePay).toBe(1274);
     expect(result.money.leaveDeductions).toBe(475);
     expect(result.money.total).toBe(9730);
@@ -141,7 +152,8 @@ describe("monthSheet", () => {
     expect(row(result, 2).dayPenalty).toBe(true);
     expect(row(result, 2).penalty).toBe(0);
     // A day's penalty is 5% of base salary (÷ 20).
-    expect(result.money.dayPenaltyDeductions).toBe(Math.round(9500 / 20));
+    expect(result.money.dayPenaltyRate).toBe(475);
+    expect(result.money.dayPenaltyDeductions).toBe(475);
     // The day penalty doesn't count as a ladder occurrence.
     expect(row(result, 3).penalty).toBe(150);
   });
@@ -251,6 +263,67 @@ describe("several taps in one day", () => {
     expect(row.out).toBe("2026-11-17T16:30:00+02:00");
     expect(row.between.map((event) => event.kind)).toEqual(["out", "in"]);
     expect(row.earlyLeave).toBe(0);
+  });
+});
+
+describe("a day's taps after corrections", () => {
+  const at = (clock: string) => `2026-11-17T${clock}:00+02:00`;
+  const taps: ClockEvent[] = [
+    { kind: "in", at: at("08:27") },
+    { kind: "out", at: at("09:12") },
+    { kind: "in", at: at("09:44") },
+  ];
+
+  it("drops a removed clock-out and the clock-in that only reopened the day", () => {
+    const result = dayTaps(taps, [
+      { field: "in", at: at("08:26") },
+      { field: "out", at: null },
+    ]);
+    expect(result.taps).toEqual([{ kind: "in", at: at("08:26") }]);
+    expect(result.between).toEqual([]);
+  });
+
+  it("drops taps outside a corrected window", () => {
+    const result = dayTaps(
+      [...taps, { kind: "out", at: at("17:00") }],
+      [{ field: "out", at: at("09:00") }],
+    );
+    expect(result.taps.map((tap) => tap.at)).toEqual([at("08:27"), at("09:00")]);
+  });
+
+  it("keeps a real break", () => {
+    const result = dayTaps([...taps, { kind: "out", at: at("16:30") }], []);
+    expect(result.between.map((tap) => tap.kind)).toEqual(["out", "in"]);
+  });
+
+  it("the latest correction wins, and removing the clock-in leaves no anchor", () => {
+    expect(dayTaps(taps, [{ field: "in", at: null }]).in).toBeNull();
+    expect(
+      dayTaps(taps, [
+        { field: "in", at: null },
+        { field: "in", at: at("08:00") },
+      ]).in,
+    ).toBe(at("08:00"));
+  });
+
+  it("the sheet shows the same corrected taps and counts from them", () => {
+    const sheet = monthSheet({
+      rules: ADO_PRESET,
+      month: "2026-11",
+      baseSalary: 6000,
+      events: taps,
+      corrections: [
+        { day: "2026-11-17", field: "in", at: at("08:26"), reason: "." },
+        { day: "2026-11-17", field: "out", at: null, reason: "." },
+      ],
+      leaves: [],
+      holidays: [],
+      today: "2026-11-17",
+    });
+    const row = sheet.rows.find((item) => item.day === "2026-11-17")!;
+    expect([row.in, row.out, row.between]).toEqual([at("08:26"), null, []]);
+    expect(row.note).toBeNull();
+    expect(row.penalty).toBe(0);
   });
 });
 

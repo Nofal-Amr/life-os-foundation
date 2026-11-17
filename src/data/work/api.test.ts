@@ -143,6 +143,28 @@ describe("todayClock", () => {
     expect(today.next).toBe("out");
   });
 
+  it("lists today's taps with the corrections applied, not the raw ones", () => {
+    // In 08:27, a wrong out 09:12, in again 09:44. The admin set the clock-in
+    // to 08:26 and removed the clock-out: the card shows one clock-in.
+    const taps = [...events, { kind: "in", at: "2026-11-17T09:44:00+02:00" }];
+    const corrections = [
+      { day, field: "out", value: "2026-11-17T16:30:00+02:00" },
+      { day, field: "in", value: null },
+      { day, field: "in", value: "2026-11-17T08:26:00+02:00" },
+      { day, field: "out", value: null },
+    ];
+    const today = todayClock({ day, events: taps, corrections, recent: taps, now });
+    expect(today.taps).toEqual([{ kind: "in", at: "2026-11-17T08:26:00+02:00" }]);
+    expect(today.corrected).toEqual(["out", "in"]);
+    expect(today.next).toBe("out");
+  });
+
+  it("keeps the place of taps nobody corrected", () => {
+    const taps = [event("in", "2026-11-17T08:27:00+02:00")];
+    const today = todayClock({ day, events: taps, corrections: [], recent: taps, now });
+    expect(today.taps).toEqual(taps);
+  });
+
   it("ignores other days' corrections and falls back without a clock-in", () => {
     const corrections = [{ day: "2026-11-16", field: "out", value: null }];
     expect(todayClock({ day, events, corrections, recent: events, now }).next).toBe("in");

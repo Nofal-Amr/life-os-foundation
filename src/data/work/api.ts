@@ -11,6 +11,7 @@ import { unwrap } from "@/lib/supabase-helpers";
 
 import {
   ADO_PRESET,
+  dayTaps,
   type ClockEvent,
   type Correction,
   type Leave,
@@ -341,12 +342,15 @@ export function sheetInputFor(args: {
   };
 }
 
-export type TodayClock = {
-  in: string | null;
-  out: string | null;
-  corrected: ("in" | "out")[];
-  next: "in" | "out";
-};
+export type TodayClock<T extends Pick<WorkEvent, "kind" | "at"> = Pick<WorkEvent, "kind" | "at">> =
+  {
+    in: string | null;
+    out: string | null;
+    corrected: ("in" | "out")[];
+    /** Today's taps with the corrections applied, as the sheet counts them. */
+    taps: (T | { kind: "in" | "out"; at: string })[];
+    next: "in" | "out";
+  };
 
 /**
  * Today as the clock card should show it: the first clock-in and last
@@ -357,30 +361,32 @@ export type TodayClock = {
  * the day). Otherwise it follows the last tap (`nextClockKind`), so clocking
  * back in after a break, or a shift that started last night, offers clock-out.
  */
-export function todayClock(args: {
+export function todayClock<T extends Pick<WorkEvent, "kind" | "at">>(args: {
   day: string;
-  events: Pick<WorkEvent, "kind" | "at">[];
+  events: T[];
   corrections: Pick<WorkCorrection, "day" | "field" | "value">[];
   recent: Pick<WorkEvent, "kind" | "at">[];
   now: number;
-}): TodayClock {
-  const clocks = args.events
-    .filter((event) => event.kind === "in" || event.kind === "out")
-    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
-  let inAt = clocks.find((event) => event.kind === "in")?.at ?? null;
-  let outAt = clocks.filter((event) => event.kind === "out").at(-1)?.at ?? null;
-  const corrected: ("in" | "out")[] = [];
-  for (const item of args.corrections) {
-    if (item.day !== args.day || (item.field !== "in" && item.field !== "out")) continue;
-    if (item.field === "in") inAt = item.value;
-    else outAt = item.value;
-    if (!corrected.includes(item.field)) corrected.push(item.field);
-  }
+}): TodayClock<T> {
+  const clocks = args.events.filter(
+    (event): event is T & { kind: "in" | "out" } => event.kind === "in" || event.kind === "out",
+  );
+  const {
+    in: inAt,
+    out: outAt,
+    corrected,
+    taps,
+  } = dayTaps(
+    clocks,
+    args.corrections
+      .filter((item) => item.day === args.day && (item.field === "in" || item.field === "out"))
+      .map((item) => ({ field: item.field as "in" | "out", at: item.value })),
+  );
   // A clock-out an admin removed or moved ahead of now means the day is still open.
   const reopened =
     corrected.includes("out") && !!inAt && (outAt === null || Date.parse(outAt) > args.now);
   const next = reopened ? "out" : nextClockKind(args.recent, args.now);
-  return { in: inAt, out: outAt, corrected, next };
+  return { in: inAt, out: outAt, corrected, taps, next };
 }
 
 /* ------------------------------------------------- yearly vacation days */

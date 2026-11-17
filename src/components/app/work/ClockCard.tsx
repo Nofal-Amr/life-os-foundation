@@ -66,7 +66,6 @@ export function ClockCard({
   const day = new Date().toLocaleDateString("en-CA", { timeZone: rules.timezone });
   const state = todayClock({ day, events: today, corrections, recent, now: Date.now() });
   const kind = state.next;
-  const clocks = today.filter((event) => event.kind !== "attempt");
   const allowed = (member.place_ids?.length
     ? places.filter((place) => member.place_ids!.includes(place.id))
     : places) as unknown as PlaceLike[];
@@ -169,11 +168,11 @@ export function ClockCard({
         <div>
           <p className="text-base font-semibold">{org.name}</p>
           <p className="text-xs text-muted-foreground">
-            {clocks.length
-              ? clocks
+            {state.taps.length
+              ? state.taps
                   .map(
                     (event) =>
-                      `${t(event.kind === "in" ? "In" : "Out")} ${time(event.at)}${event.place_id ? ` · ${placeName(event.place_id)}` : ""}`,
+                      `${t(event.kind === "in" ? "In" : "Out")} ${time(event.at)}${"place_id" in event && event.place_id ? ` · ${placeName(event.place_id)}` : ""}`,
                   )
                   .join("  ·  ")
               : t("Not clocked in today.")}
