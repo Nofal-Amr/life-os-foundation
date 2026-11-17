@@ -821,4 +821,24 @@ export const AR: Record<string, string> = {
   "Post in WhatsApp": "انشر في واتساب",
   "Each time is saved as a correction for that day. The original records stay as they were.":
     "يُحفظ كل وقت كتعديل لذلك اليوم. تبقى السجلات الأصلية كما هي.",
+  Profile: "الملف الشخصي",
+  Areas: "الأقسام",
+  "Phone and watch": "الهاتف والساعة",
+  "Language and look": "اللغة والمظهر",
+  "Set things up once. Pick a part to open it.": "اضبط الأشياء مرة واحدة. اختر جزءًا لفتحه.",
+  "Your name, picture, units and formats.": "اسمك وصورتك والوحدات والتنسيقات.",
+  "Choose which parts of Life OS you see.": "اختر أجزاء Life OS التي تراها.",
+  "Location, calculation method and reminders.": "الموقع وطريقة الحساب والتذكيرات.",
+  "Payday, currency and bank notifications.": "يوم الراتب والعملة وإشعارات البنك.",
+  "Height, weight and goals.": "الطول والوزن والأهداف.",
+  "Life Connect, the watch and the on-phone assistant.":
+    "Life Connect والساعة والمساعد على الهاتف.",
+  "Your company and clocking in.": "شركتك وتسجيل الحضور.",
+  "Holidays and Google Calendar.": "العطلات وتقويم Google.",
+  "Language, theme, colour and text size.": "اللغة والسمة واللون وحجم الخط.",
+  "Export, crash reports and deleting your account.": "التصدير وتقارير الأعطال وحذف حسابك.",
+  "this part couldn't load.": "تعذّر تحميل هذا الجزء.",
+  "This part couldn't load.": "تعذّر تحميل هذا الجزء.",
+  "The rest of Life OS still works. Leave this page and come back to try again.":
+    "باقي Life OS يعمل. اترك هذه الصفحة وعُد لتحاول مرة أخرى.",
 };

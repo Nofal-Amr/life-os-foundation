@@ -48,7 +48,7 @@ function GoogleCallbackPage() {
       .then(async () => {
         await qc.invalidateQueries({ queryKey: ["google-calendar"] });
         toast.success("Google Calendar connected. Choose which calendars to sync.");
-        void navigate({ to: "/settings" });
+        void navigate({ to: "/settings", search: { section: "calendar" } });
       })
       .catch((e: unknown) =>
         setProblem(e instanceof Error ? e.message : "Google Calendar wasn't connected. Try again."),
@@ -59,7 +59,9 @@ function GoogleCallbackPage() {
     <div className="mx-auto max-w-md space-y-4 py-16 text-center">
       <p className="text-sm text-muted-foreground">{problem ?? "Connecting Google Calendar…"}</p>
       {problem ? (
-        <Button onClick={() => void navigate({ to: "/settings" })}>Back to Settings</Button>
+        <Button onClick={() => void navigate({ to: "/settings", search: { section: "calendar" } })}>
+          Back to Settings
+        </Button>
       ) : null}
     </div>
   );

@@ -954,7 +954,9 @@ function DashboardPage() {
           />
         ) : (
           <Button asChild variant="outline" size="sm" className="min-h-11">
-            <Link to="/settings">{t("Set up payday")}</Link>
+            <Link to="/settings" search={{ section: "money" }}>
+              {t("Set up payday")}
+            </Link>
           </Button>
         )
       }

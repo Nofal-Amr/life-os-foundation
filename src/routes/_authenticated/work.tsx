@@ -63,7 +63,9 @@ function WorkPage() {
           description="Make a test company or join one with a code in Settings → Work."
           action={
             <Button asChild>
-              <Link to="/settings">{t("Open Settings")}</Link>
+              <Link to="/settings" search={{ section: "work" }}>
+                {t("Open Settings")}
+              </Link>
             </Button>
           }
         />

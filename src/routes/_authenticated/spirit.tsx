@@ -260,7 +260,9 @@ function SpiritPage() {
               </CardHeader>
               <CardContent>
                 <Button asChild>
-                  <Link to="/settings">Open Settings</Link>
+                  <Link to="/settings" search={{ section: "prayer" }}>
+                    Open Settings
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
@@ -431,7 +433,11 @@ function MethodNote({
     <div className="space-y-2 text-xs text-muted-foreground">
       <p>
         {t("Times")}: {t(methodName(method))} · {t("Asr")}: {t(schoolName)} ·{" "}
-        <Link to="/settings" className="underline underline-offset-2">
+        <Link
+          to="/settings"
+          search={{ section: "prayer" }}
+          className="underline underline-offset-2"
+        >
           {t("Change")}
         </Link>
       </p>

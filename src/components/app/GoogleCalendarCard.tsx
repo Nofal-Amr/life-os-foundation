@@ -315,11 +315,11 @@ export function GoogleCalendarBar() {
       {s.state === "not_configured" ? (
         <span>Google Calendar: not set up yet</span>
       ) : s.state === "disconnected" ? (
-        <Link to="/settings" className="underline">
+        <Link to="/settings" search={{ section: "calendar" }} className="underline">
           Connect Google Calendar
         </Link>
       ) : !s.syncEnabled ? (
-        <Link to="/settings" className="underline">
+        <Link to="/settings" search={{ section: "calendar" }} className="underline">
           Choose Google calendars to sync
         </Link>
       ) : (
