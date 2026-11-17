@@ -19,6 +19,7 @@ describe("Ayat al-Kursi", () => {
     // The same words as the plain text, once the marks are taken off.
     const plain = kursi
       .text!.replace(/[ً-ْۖ-ۜ]/g, "")
+      .replace(/ ?﴿[٠-٩]+﴾/g, "")
       .replace(/\s+/g, " ")
       .trim();
     expect(plain).toBe(
@@ -40,19 +41,29 @@ describe("Quran passages", () => {
     }
   });
 
+  it("end every verse with its numbered sign, the basmala on its own line", () => {
+    const text = (id: string) => AZKAR.find((zikr) => zikr.id === id)!.text!;
+    expect(text("kursi").endsWith(" ﴿٢٥٥﴾")).toBe(true);
+    expect(text("ikhlas").split("\n")).toHaveLength(2);
+    expect(text("ikhlas").match(/﴿[٠-٩]+﴾/g)).toEqual(["﴿١﴾", "﴿٢﴾", "﴿٣﴾", "﴿٤﴾"]);
+    expect(text("falaq").match(/﴿[٠-٩]+﴾/g)).toHaveLength(5);
+    expect(text("nas").trim().endsWith("﴿٦﴾")).toBe(true);
+  });
+
   it("keep the same words once the marks are taken off", () => {
     const plain = (id: string) =>
       AZKAR.find((zikr) => zikr.id === id)!
         .text!.replace(marks, "")
+        .replace(/ ?﴿[٠-٩]+﴾/g, "")
         .replace(/\s+/g, " ");
     expect(plain("ikhlas")).toBe(
-      "بسم الله الرحمن الرحيم ۝ قل هو الله أحد ۝ الله الصمد ۝ لم يلد ولم يولد ۝ ولم يكن له كفوا أحد",
+      "بسم الله الرحمن الرحيم قل هو الله أحد الله الصمد لم يلد ولم يولد ولم يكن له كفوا أحد",
     );
     expect(plain("falaq")).toBe(
-      "بسم الله الرحمن الرحيم ۝ قل أعوذ برب الفلق ۝ من شر ما خلق ۝ ومن شر غاسق إذا وقب ۝ ومن شر النفاثات في العقد ۝ ومن شر حاسد إذا حسد",
+      "بسم الله الرحمن الرحيم قل أعوذ برب الفلق من شر ما خلق ومن شر غاسق إذا وقب ومن شر النفاثات في العقد ومن شر حاسد إذا حسد",
     );
     expect(plain("nas")).toBe(
-      "بسم الله الرحمن الرحيم ۝ قل أعوذ برب الناس ۝ ملك الناس ۝ إله الناس ۝ من شر الوسواس الخناس ۝ الذي يوسوس في صدور الناس ۝ من الجنة والناس",
+      "بسم الله الرحمن الرحيم قل أعوذ برب الناس ملك الناس إله الناس من شر الوسواس الخناس الذي يوسوس في صدور الناس من الجنة والناس",
     );
   });
 });

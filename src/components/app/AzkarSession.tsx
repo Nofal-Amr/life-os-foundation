@@ -228,7 +228,7 @@ export function AzkarSession({
                   <span
                     dir="rtl"
                     lang="ar"
-                    className="mt-3 block font-arabic text-xl leading-[2.1] text-foreground"
+                    className="mt-3 block whitespace-pre-line font-arabic text-xl leading-[2.1] text-foreground"
                   >
                     {text}
                   </span>
