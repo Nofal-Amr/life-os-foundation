@@ -1,7 +1,7 @@
 -- Gym: workouts and their sets. Every row is private to its owner, and a set
 -- can only belong to one of your own workouts.
--- NOT APPLIED YET: waiting for the owner's approval (staging first). Until it
--- is, the Gym page says it needs a one-time database update.
+-- Applied to production on 2026-11-17 with the owner's OK. Before that, the
+-- Gym page said it needed a one-time database update.
 
 CREATE TABLE IF NOT EXISTS public.workouts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
