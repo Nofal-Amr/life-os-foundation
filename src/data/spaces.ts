@@ -32,6 +32,15 @@ export const SPACES: Record<
   },
 };
 
+export type SpaceTab = "tasks" | "notes" | "ideas" | "calendar";
+
+export const SPACE_TABS: { value: SpaceTab; label: string }[] = [
+  { value: "tasks", label: "Tasks" },
+  { value: "notes", label: "Notes" },
+  { value: "ideas", label: "Ideas" },
+  { value: "calendar", label: "Calendar" },
+];
+
 export const IDEA_TAG = "idea";
 
 /** The project that holds a space's tasks, if it exists yet. */

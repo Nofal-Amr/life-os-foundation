@@ -12,7 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createNote, deleteNote, noteKeys, notesQuery, type Note } from "@/data/notes";
 import { createProject, projectKeys, projectsQuery, type Project } from "@/data/projects";
-import { SPACES, spaceNotes, spaceProject, spaceTags, type SpaceKey } from "@/data/spaces";
+import {
+  SPACES,
+  spaceNotes,
+  spaceProject,
+  spaceTags,
+  type SpaceKey,
+  type SpaceTab,
+} from "@/data/spaces";
 import { studyItemsQuery } from "@/data/study";
 import {
   completeTask,
@@ -27,15 +34,6 @@ import {
 import { usePreferences } from "@/hooks/usePreferences";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-
-export type SpaceTab = "tasks" | "notes" | "ideas" | "calendar";
-
-export const SPACE_TABS: { value: SpaceTab; label: string }[] = [
-  { value: "tasks", label: "Tasks" },
-  { value: "notes", label: "Notes" },
-  { value: "ideas", label: "Ideas" },
-  { value: "calendar", label: "Calendar" },
-];
 
 /** A row of tabs that scrolls sideways on a phone instead of squeezing. */
 export function TabRow<T extends string>({

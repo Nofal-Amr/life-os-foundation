@@ -6,12 +6,8 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { DatePicker } from "@/components/app/DatePicker";
-import {
-  SPACE_TABS,
-  SpaceTabContent,
-  TabRow,
-  type SpaceTab,
-} from "@/components/app/spaces/SpaceTabs";
+import { SpaceTabContent, TabRow } from "@/components/app/spaces/SpaceTabs";
+import { SPACE_TABS, type SpaceTab } from "@/data/spaces";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";

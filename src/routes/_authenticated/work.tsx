@@ -24,12 +24,8 @@ import {
   type WorkOrg,
 } from "@/data/work/api";
 import type { WorkRules } from "@/data/work/rules";
-import {
-  SPACE_TABS,
-  SpaceTabContent,
-  TabRow,
-  type SpaceTab,
-} from "@/components/app/spaces/SpaceTabs";
+import { SpaceTabContent, TabRow } from "@/components/app/spaces/SpaceTabs";
+import { SPACE_TABS, type SpaceTab } from "@/data/spaces";
 import { useAuth } from "@/hooks/useAuth";
 import { t } from "@/lib/i18n";
 
