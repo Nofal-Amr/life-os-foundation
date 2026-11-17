@@ -17,6 +17,8 @@ site (https://lifeos0.vercel.app), so everything that reaches `main` is live wit
 - `second-brain/Handoff - next session.md`: what is in progress and what comes next.
 - `second-brain/Decisions.md`: the owner's decisions.
 - `docs/MASTER_SPEC.md`: a roadmap of future features. It is not a sequence of phases to restart.
+- `docs/owner/README.md`: how the project runs (deploys, database, phone builds) and the owner's
+  to-do list. The full working rules are in `.claude/skills/life-os/`.
 
 ## Safety
 

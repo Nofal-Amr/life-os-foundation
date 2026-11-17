@@ -1,0 +1,5 @@
+Since 2026-10-21 the Wear OS app lives in `mobile/wear` (Gradle 8.11.1 from ~/.gradle/wrapper/dists, AGP 8.9.1, Java, adhan-java 1.2.1, androidx tiles 1.4.1 / protolayout 1.2.1 / complications 1.2.1). Same applicationId as the phone app (`app.lifeos`), signed with the debug key. `npm run build:wear` runs its unit test and copies a shrunk release APK to `mobile/android/build/life-os-wear.apk` (the phone build's clean step keeps it).
+
+**Why the workaround:** Gradle on this PC fails with "Unable to establish loopback connection" unless `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir="<plain folder>"` is set; build.mjs sets it to `mobile/wear/.gradle/tmp`. `local.properties` needs forward slashes (backslashes are escapes).
+
+**How to apply:** no Wear emulator image is installed, so watch behaviour is only verified by the JVM test (`PrayerDayTest` checks times against the phone's adhan.js). Tell the owner it's untested on a real watch. The phone app still builds without Gradle ([hosting](hosting.md) has the release flow).
