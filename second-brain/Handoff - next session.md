@@ -6,6 +6,13 @@ updated: 2026-11-17
 # Handoff for the next session
 
 ## 2026-11-17
+
+- **Owner: simplify before adding features.** Plan for approval:
+  `docs/superpowers/specs/2026-11-17-simplify-before-adding.md` (Settings to a short list, capture
+  says where things went, Do opens on its list, areas at sign-up, shorter More, Today in four
+  blocks). All 31 pages load clean at 375/1280 (2026-11-17). Wait for the owner's answers to Q1–Q4.
+- **Running without AI:** `docs/owner/README.md`; the rules are in `.claude/skills/life-os/` (PR #58).
+- Play Protect blocks the Full APK when installed from a file; send the standard `life-os-debug.apk`.
 - A **cloud session** merged #49–#55 on 2026-11-16 (WhatsApp import and test options, goal step
   plans, Today workload line, late-rule tolerance and ladder, ADO 5% day penalty, Gym). Details:
   [[Cloud session 2026-11-16]]. **Gym migration `20261116120000_gym.sql` is not applied**; waits for
@@ -22,6 +29,7 @@ updated: 2026-11-17
   "cancelled", which hides the real reason.
 
 ## 2026-11-15/16
+
 - **Duha is live** for real accounts: migration `prayer_duha` applied at the owner's request and
   checked; PR #46 set `DUHA_IN_DATABASE = true`.
 - **Phone layout compacted** (PR #47): Spirit is one even prayer list with the wake-up alarm inside
@@ -37,7 +45,9 @@ updated: 2026-11-17
   — consider showing just the name.
 
 ## Security and housekeeping, 2026-11-14
+
 Done (each its own PR, CI green):
+
 - #37: the three pending migrations that shared version `20261113120000` now have their own
   numbers (`google_calendar_sync` → `…120100`, `notes_realtime` → `…120200`). `src/migrations.test.ts`
   fails if two files share a version again.
@@ -48,6 +58,7 @@ Done (each its own PR, CI green):
 - #41: migration `20261114100000_project_images_private.sql` (audit M1). **Not applied.**
 
 **Waiting on the owner:**
+
 - **All five pending migrations are applied to production, each with the owner's OK:**
   `relationships` and `habit_goals` on 2026-11-13; `notes_realtime`, `project_images_private` and
   `google_calendar_sync` on 2026-11-15. Checked afterwards: row-level security is on, the
@@ -70,7 +81,9 @@ Done (each its own PR, CI green):
   folder, to see whether the removed design-tool hooks ever wrote files.
 
 ## Web simplification (redesign draft steps), 2026-11-13
+
 Plan: `docs/superpowers/specs/2026-11-12-today-tasks-navigation-redesign.md`. Each step is its own branch and PR, cut from `origin/main`, checked green (tsc, vitest, eslint, build, headless demo at 375/1280).
+
 - Done, merged: one row pattern on seven list screens (`ListRow`, PR #17).
 - **Open, green, waiting to be merged** (the merge was refused by this session's permission check, so the owner or a session allowed to merge must do it):
   - #28 `ux/short-forms`: New task = Title, Due, Project; habit and project = Name; the rest under "More options" (`MoreOptions`, "3 set" hint, opens when editing).
@@ -82,6 +95,7 @@ Plan: `docs/superpowers/specs/2026-11-12-today-tasks-navigation-redesign.md`. Ea
 - Worktrees: `../lo-forms`, `../lo-nav`, `../lo-week`, `../lo-goals` (each with its own `bun install`). Python isn't installed; use node or sed for scripted edits.
 
 ## Relationships — demo-only, 2026-11-13
+
 - `/relationships`: people map (Me in the centre, rings; select someone and their side glows), list view, person sheet (log, goal, birthday, check-in rhythm), reminder rules with exceptions, People card in Today (max 3 check-ins).
 - Opt-in area: Settings → Areas → Relationships. On in the demo.
 - `supabase/migrations/20261113120000_relationships.sql` is **applied** in production (2026-11-13), so Relationships works for real accounts. Switch it on under Settings → Areas.
