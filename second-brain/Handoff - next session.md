@@ -1,9 +1,25 @@
 ---
 tags: [handoff]
-updated: 2026-11-16
+updated: 2026-11-17
 ---
 
 # Handoff for the next session
+
+## 2026-11-17
+- A **cloud session** merged #49–#55 on 2026-11-16 (WhatsApp import and test options, goal step
+  plans, Today workload line, late-rule tolerance and ladder, ADO 5% day penalty, Gym). Details:
+  [[Cloud session 2026-11-16]]. **Gym migration `20261116120000_gym.sql` is not applied**; waits for
+  the owner's OK.
+- **Why the apps lag the website:** the web-view app ships a copy of the website inside the APK
+  (`assets/www`, served from `app.lifeos.local`), so it only changes when the APK is rebuilt and
+  reinstalled. Data is shared (same Supabase); screens are not. The native app is its own code.
+  Idea: build the APK in CI on every merge to `main` and attach it to a GitHub release, or let the
+  app fetch a newer web bundle when online and keep the bundled one for offline.
+- **Clock-in fails on the S25 Ultra, works on the Xiaomi:** cause not found yet. Need the exact
+  message the card shows on the S25. Suspects: location granted as "Approximate" only, the
+  `fused` provider on Samsung returning nothing within 20 s, poor indoor accuracy → "Location
+  isn't clear", or an older APK on the S25. `WorkClock.java` reports every biometric error as
+  "cancelled", which hides the real reason.
 
 ## 2026-11-15/16
 - **Duha is live** for real accounts: migration `prayer_duha` applied at the owner's request and
