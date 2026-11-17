@@ -307,6 +307,13 @@ export const AR: Record<string, string> = {
   "Official holiday": "إجازة رسمية",
   "Not clocked in yet": "لم تسجّل الحضور بعد",
   "At work": "في العمل",
+  "Paid vacation days a year": "أيام الإجازة المدفوعة في السنة",
+  "Paid vacation used this year": "الإجازة المدفوعة المستخدمة هذا العام",
+  "Uses vacation days": "تُخصم من أيام الإجازة",
+  "This day goes past their allowance; it can still be saved.":
+    "هذا اليوم يتجاوز رصيده، ويمكن حفظه مع ذلك.",
+  "Paid vacation": "الإجازة المدفوعة",
+  "days used in": "يومًا مستخدمة في",
   "Clocking in away from a place": "التسجيل بعيدًا عن مكان",
   "Refuse, but keep the attempt with a reason": "ارفض، واحتفظ بالمحاولة مع سببها",
   Refuse: "ارفض",

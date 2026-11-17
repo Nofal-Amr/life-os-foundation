@@ -9,7 +9,14 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { unwrap } from "@/lib/supabase-helpers";
 
-import { ADO_PRESET, type ClockEvent, type Correction, type Leave, type WorkRules } from "./rules";
+import {
+  ADO_PRESET,
+  type ClockEvent,
+  type Correction,
+  type Leave,
+  type LeaveType,
+  type WorkRules,
+} from "./rules";
 
 type Tables = Database["public"]["Tables"];
 export type WorkOrg = Tables["work_orgs"]["Row"];
@@ -27,6 +34,7 @@ export const workKeys = {
   events: (org: string, month: string) => ["work", "events", org, month] as const,
   corrections: (org: string, month: string) => ["work", "corrections", org, month] as const,
   leaves: (org: string, month: string) => ["work", "leaves", org, month] as const,
+  yearLeaves: (org: string, year: number) => ["work", "year-leaves", org, year] as const,
 };
 
 /** The month's first day and the next month's, for range queries. */
@@ -194,7 +202,10 @@ export async function deletePlace(id: string): Promise<void> {
 }
 
 export type MemberPatch = Partial<
-  Pick<WorkMember, "display_name" | "role" | "base_salary" | "overtime_rate" | "place_ids">
+  Pick<
+    WorkMember,
+    "display_name" | "role" | "base_salary" | "overtime_rate" | "place_ids" | "annual_leave_days"
+  >
 >;
 
 export async function saveMember(orgId: string, userId: string, patch: MemberPatch): Promise<void> {
@@ -370,4 +381,61 @@ export function todayClock(args: {
     corrected.includes("out") && !!inAt && (outAt === null || Date.parse(outAt) > args.now);
   const next = reopened ? "out" : nextClockKind(args.recent, args.now);
   return { in: inAt, out: outAt, corrected, next };
+}
+
+/* ------------------------------------------------- yearly vacation days */
+
+/** Whether a kind of leave comes out of the yearly paid-vacation days. */
+export function usesAllowance(type: Pick<LeaveType, "id" | "fromAllowance"> | undefined): boolean {
+  if (!type) return false;
+  return type.fromAllowance ?? type.id === "annual";
+}
+
+/** A year's leave rows (approved or requested) and leave corrections, everyone's RLS allows. */
+export const workYearLeavesQuery = (orgId: string, year: number) =>
+  queryOptions({
+    queryKey: workKeys.yearLeaves(orgId, year),
+    queryFn: async () => {
+      const from = `${year}-01-01`;
+      const to = `${year + 1}-01-01`;
+      const [leaves, corrections] = await Promise.all([
+        supabase.from("work_leaves").select("*").eq("org_id", orgId).gte("day", from).lt("day", to),
+        supabase
+          .from("work_corrections")
+          .select("*")
+          .eq("org_id", orgId)
+          .eq("field", "leave")
+          .gte("day", from)
+          .lt("day", to)
+          .order("created_at"),
+      ]);
+      return {
+        leaves: unwrap(leaves) as WorkLeave[],
+        corrections: unwrap(corrections) as WorkCorrection[],
+      };
+    },
+  });
+
+/**
+ * Paid-vacation days a worker has used in the year: days whose leave (an
+ * approved request, or an admin's later "mark as leave") is a kind that comes
+ * out of the allowance. A day counts once.
+ */
+export function allowanceUsed(args: {
+  userId: string;
+  rules: Pick<WorkRules, "leaveTypes">;
+  leaves: Pick<WorkLeave, "user_id" | "day" | "type_id" | "status">[];
+  corrections: Pick<WorkCorrection, "user_id" | "day" | "field" | "value">[];
+}): number {
+  const byDay = new Map<string, string>();
+  for (const leave of args.leaves)
+    if (leave.user_id === args.userId && leave.status === "approved")
+      byDay.set(leave.day, leave.type_id);
+  for (const item of args.corrections)
+    if (item.user_id === args.userId && item.field === "leave" && item.value)
+      byDay.set(item.day, item.value);
+  let used = 0;
+  for (const typeId of byDay.values())
+    if (usesAllowance(args.rules.leaveTypes.find((type) => type.id === typeId))) used += 1;
+  return used;
 }

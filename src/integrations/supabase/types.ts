@@ -2306,6 +2306,7 @@ export type Database = {
       };
       work_members: {
         Row: {
+          annual_leave_days: number;
           base_salary: number;
           display_name: string;
           joined_at: string;
@@ -2316,6 +2317,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          annual_leave_days?: number;
           base_salary?: number;
           display_name: string;
           joined_at?: string;
@@ -2326,6 +2328,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          annual_leave_days?: number;
           base_salary?: number;
           display_name?: string;
           joined_at?: string;

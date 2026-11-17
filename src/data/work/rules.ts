@@ -5,7 +5,13 @@
  * sheet is one ready-made preset, and nothing here assumes its numbers.
  */
 
-export type LeaveType = { id: string; name: string; percent: number };
+export type LeaveType = {
+  id: string;
+  name: string;
+  percent: number;
+  /** Comes out of each worker's yearly paid-vacation days. Unset: only "annual". */
+  fromAllowance?: boolean;
+};
 
 /** Arriving after `after` ("HH:mm") gives a penalty instead of late minutes. */
 export type LateStep = {
