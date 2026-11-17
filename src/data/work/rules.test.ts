@@ -78,6 +78,8 @@ describe("monthSheet", () => {
     expect(result.money.overtimePay).toBe(1274);
     expect(result.money.leaveDeductions).toBe(475);
     expect(result.money.total).toBe(9730);
+    expect(result.money.totalDeductions).toBe(569 + 475);
+    expect(result.money.totalAdditions).toBe(1274);
   });
 
   it("ladder counts occurrences in the month", () => {

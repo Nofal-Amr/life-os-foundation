@@ -218,6 +218,9 @@ export const AR: Record<string, string> = {
   "Early leave (hours)": "الانصراف المبكر (ساعة)",
   Penalties: "الجزاءات",
   Lateness: "التأخير",
+  "Total deductions": "إجمالي الخصومات",
+  "Total additions": "إجمالي الإضافات",
+  h: "س",
   "Day penalty (each)": "جزاء اليوم الواحد",
   "No base salary is set for this person, so day penalties and leave come to 0. Set it under People.":
     "لم يُحدَّد راتب أساسي لهذا الشخص، فجزاءات الأيام والإجازات = ٠. حدِّده من قسم الأشخاص.",

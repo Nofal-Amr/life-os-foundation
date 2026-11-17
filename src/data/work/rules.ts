@@ -176,6 +176,10 @@ export type MonthSheet = {
     dayPenaltyRate: number;
     leaveDeductions: number;
     dayPenaltyDeductions: number;
+    /** Everything taken off: minutes, day penalties and (when they count) leave. */
+    totalDeductions: number;
+    /** Everything added: overtime. */
+    totalAdditions: number;
     total: number;
   };
 };
@@ -472,12 +476,10 @@ export function monthSheet(input: {
   const dayPenaltyRate =
     rules.dayPenaltyDivisor > 0 ? Math.round(base / rules.dayPenaltyDivisor) : 0;
   const dayPenaltyDeductions = dayPenaltyRate * totals.dayPenalties;
-  const total =
-    base -
-    deductions +
-    overtimePay -
-    dayPenaltyDeductions -
-    (rules.absenceFromTotal ? leaveDeductions : 0);
+  const totalDeductions =
+    deductions + dayPenaltyDeductions + (rules.absenceFromTotal ? leaveDeductions : 0);
+  const totalAdditions = overtimePay;
+  const total = base - totalDeductions + totalAdditions;
 
   return {
     rows,
@@ -493,6 +495,8 @@ export function monthSheet(input: {
       dayPenaltyRate,
       leaveDeductions,
       dayPenaltyDeductions,
+      totalDeductions,
+      totalAdditions,
       total,
     },
   };

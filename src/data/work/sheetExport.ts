@@ -90,7 +90,9 @@ export function sheetRows(sheet: MonthSheet, options: SheetOptions): Cell[][] {
     [labels("Day penalty (each)"), money.dayPenaltyRate],
     [labels("Day penalties"), -money.dayPenaltyDeductions],
     [labels("Leave deductions"), -money.leaveDeductions],
+    [labels("Total deductions"), -money.totalDeductions],
     [labels("Overtime pay"), money.overtimePay],
+    [labels("Total additions"), money.totalAdditions],
     [labels("Total"), money.total],
   ];
   if (sheet.rows.some((row) => row.corrected.length))
