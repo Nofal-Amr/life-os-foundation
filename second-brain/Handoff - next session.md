@@ -5,6 +5,39 @@ updated: 2026-11-17
 
 # Handoff for the next session
 
+## Next, after 2026-11-17 (read [[2026-11-17 - Simplify, handbook, Settings]])
+
+- **Done today:**
+  - #60: full tashkeel on the Quran passages in the azkar.
+  - #61: Settings is a list of ten parts, each inside `SectionBoundary`.
+  - The Gym tables are applied.
+- **Build a new standard APK** (`life-os-debug.apk`, never the Full one for phones) and have the
+  owner try Settings. Does it still close the app? If so, get the crash report from Settings → Your
+  data.
+- **Simplify plan, owner approved** (`docs/superpowers/specs/2026-11-17-simplify-before-adding.md`).
+  Settings is done. Next, in order:
+  1. capture confirms where things went;
+  2. Do opens on its list (the chart moves to Insights);
+  3. areas at sign-up;
+  4. the shorter More: **Plan** = Week + Calendar and **Review** = Daily review + Insights (approved);
+  5. Today in four blocks, with the "4 of 12" ring moved to Review (approved);
+  6. long pages fold;
+  7. the evening ritual.
+
+  The owner adds: it must not feel crowded even with **every** area on.
+
+- **Segments (owner idea):** each area (Work, Spirit, Study…) shows its own tasks, notes, goals and
+  events. This needs a nullable `area` column on tasks, projects, notes and events. Write the
+  migration, show the exact SQL, wait for the OK. Then a `#work` capture tag and area tabs.
+- **Gym, owner wants:** plan a workout (routines), then log what happened. Read Galaxy Watch workouts
+  through Health Connect (`READ_EXERCISE` is already declared). Maybe show the plan on the watch app.
+- **Work:**
+  - let an employee ask for a correction of a wrong clock-in or out (admins can already correct in
+    Sheets);
+  - make the WhatsApp test option easier to find (Work → Rules → Test options, admin only);
+  - S25 clock-in: get the exact message, and report fingerprint errors honestly in `WorkClock.java`.
+- **Native app:** still paused until the web design is approved. It lacks everything from November.
+
 ## 2026-11-17
 
 - **Owner: simplify before adding features.** Plan for approval:
