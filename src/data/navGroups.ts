@@ -63,7 +63,7 @@ export const TOOL_GROUPS: { label: string; tools: Tool[] }[] = [
 
 /**
  * The groups this user sees: only areas they kept, Quests only in the RPG
- * skin, Work only once in a company. Empty groups are left out.
+ * skin, Work once in a company or turned on. Empty groups are left out.
  */
 export function visibleToolGroups({
   enabled,
@@ -80,7 +80,7 @@ export function visibleToolGroups({
       (item) =>
         (!item.module || enabled.includes(item.module)) &&
         (item.to !== "/quests" || skin === "rpg") &&
-        (item.to !== "/work" || inCompany),
+        (item.to !== "/work" || inCompany || enabled.includes("work")),
     ),
   })).filter((group) => group.tools.length > 0);
 }

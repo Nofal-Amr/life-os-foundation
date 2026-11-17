@@ -13,11 +13,12 @@ export const MODULE_KEYS = [
   "notes",
   "calendar",
   "study",
+  "work",
   "relationships",
 ] as const;
 
 /** Areas that start off, even for "everything on": the user turns them on. */
-export const OPT_IN_MODULES: readonly string[] = ["relationships"];
+export const OPT_IN_MODULES: readonly string[] = ["relationships", "work"];
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 
@@ -38,7 +39,13 @@ export const MODULES: { key: ModuleKey; label: string; description: string }[] =
   {
     key: "study",
     label: "Study",
-    description: "Student mode: courses, timetable, assignments and exams.",
+    description: "Student mode: courses, timetable, tasks, notes, ideas and exams.",
+  },
+  {
+    key: "work",
+    label: "Work",
+    description:
+      "Work tasks, notes, ideas and dates in their own space. Always on while you're in a company.",
   },
   {
     key: "relationships",

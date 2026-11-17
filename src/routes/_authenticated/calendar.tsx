@@ -51,6 +51,9 @@ import { projectsQuery } from "@/data/projects";
 import { PRAYER_NAMES, prayerLabel, prayerSettingsQuery } from "@/data/spirit";
 import { isOpen, tasksQuery } from "@/data/tasks";
 import { podEventsQuery, podsQuery } from "@/data/together";
+import { calendarShowsSpace, spaceOfTask, spaceProject, type CalendarSpace } from "@/data/spaces";
+import { studyItemsQuery } from "@/data/study";
+import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { isoToLocalInput, localInputToISO } from "@/lib/date";
 import { t } from "@/lib/i18n";
@@ -80,7 +83,15 @@ type FormState = { title: string; description: string | null; start: string; end
 const emptyForm: FormState = { title: "", description: null, start: "", end: "" };
 
 type SourceId =
-  "events" | "together" | "tasks" | "projects" | "goals" | "costs" | "health" | "holidays";
+  | "events"
+  | "together"
+  | "tasks"
+  | "study"
+  | "projects"
+  | "goals"
+  | "costs"
+  | "health"
+  | "holidays";
 
 /** Each source's colour: a soft tint with a coloured edge, readable in both themes. */
 const SOURCES: { id: SourceId; label: string; dot: string; tone: string }[] = [
@@ -101,6 +112,12 @@ const SOURCES: { id: SourceId; label: string; dot: string; tone: string }[] = [
     label: "Tasks",
     dot: "bg-chart-2",
     tone: "bg-chart-2/15 border-s-2 border-chart-2 text-foreground",
+  },
+  {
+    id: "study",
+    label: "Assignments and exams",
+    dot: "bg-chart-3",
+    tone: "bg-chart-3/10 border-s-2 border-chart-3 text-foreground",
   },
   {
     id: "projects",
@@ -144,7 +161,15 @@ type Item = {
   projected?: boolean;
   icon?: { icon: string | null; color: string | null } | null;
   event?: CalendarEvent;
+  /** Work and Study items can be shown or hidden as a whole. */
+  space?: CalendarSpace;
 };
+
+const SPACE_CHIPS: { id: CalendarSpace; label: string }[] = [
+  { id: "life", label: "Life" },
+  { id: "work", label: "Work" },
+  { id: "study", label: "Study" },
+];
 
 const dayKey = (date: Date) => format(date, "yyyy-MM-dd");
 
@@ -171,6 +196,13 @@ function CalendarPage() {
   const pods = useQuery(podsQuery());
   const podEvents = useQuery(podEventsQuery());
   const prayerSettings = useQuery(prayerSettingsQuery());
+  const { enabled, isEnabled } = useModules();
+  const studyOn = isEnabled("study");
+  const studyItems = useQuery({ ...studyItemsQuery(), enabled: studyOn });
+  // The Settings choice is the default; a tap here changes this visit only.
+  const [spaceOverride, setSpaceOverride] = useState<Partial<Record<CalendarSpace, boolean>>>({});
+  const spaceShown = (space: CalendarSpace) =>
+    spaceOverride[space] ?? (space === "life" ? true : calendarShowsSpace(enabled, space));
 
   const [view, setViewState] = useState<View>(readView);
   const [cursor, setCursor] = useState(() => startOfDay(new Date()));
@@ -295,6 +327,23 @@ function CalendarPage() {
         to: "/tasks",
         ...(start && !Number.isNaN(start.getTime()) ? { start, end: null } : {}),
         icon: project ? { icon: project.icon, color: project.color } : null,
+        space: spaceOfTask(task, projects.data ?? []),
+      });
+    }
+    for (const item of studyOn ? (studyItems.data ?? []) : []) {
+      if (!item.due_at) continue;
+      const start = new Date(item.due_at);
+      const midnight = start.getHours() === 0 && start.getMinutes() === 0;
+      const kind = item.kind.charAt(0).toUpperCase() + item.kind.slice(1);
+      list.push({
+        id: `study-${item.id}`,
+        source: "study",
+        date: dayKey(start),
+        title: item.done ? `✓ ${item.title}` : item.title,
+        detail: `${t("Study")} · ${t(kind)}`,
+        to: "/study",
+        ...(midnight ? {} : { start, end: null }),
+        space: "study",
       });
     }
     for (const project of projects.data ?? []) {
@@ -362,6 +411,8 @@ function CalendarPage() {
     podEvents.data,
     pods.data,
     tasks.data,
+    studyItems.data,
+    studyOn,
     projects.data,
     goals.data,
     costs.data,
@@ -372,7 +423,13 @@ function CalendarPage() {
     fmtMoney,
   ]);
 
-  const visible = items.filter((item) => !hidden.includes(item.source));
+  const visible = items.filter(
+    (item) => !hidden.includes(item.source) && spaceShown(item.space ?? "life"),
+  );
+  const hasWork = !!spaceProject(projects.data ?? [], "work");
+  const spaceChips = SPACE_CHIPS.filter(
+    (chip) => chip.id === "life" || (chip.id === "work" ? hasWork : studyOn),
+  );
   const byDay = useMemo(() => {
     const map = new Map<string, Item[]>();
     for (const item of visible) {
@@ -519,13 +576,42 @@ function CalendarPage() {
             </div>
           </div>
 
+          {/* Life, Work and Study, each shown or hidden as a whole */}
+          {spaceChips.length > 1 ? (
+            <div
+              className="flex flex-wrap items-center gap-1.5"
+              role="group"
+              aria-label={t("Show or hide spaces")}
+            >
+              {spaceChips.map((chip) => {
+                const on = spaceShown(chip.id);
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setSpaceOverride((current) => ({ ...current, [chip.id]: !on }))}
+                    className={cn(
+                      "inline-flex min-h-9 items-center rounded-lg border px-3 text-sm font-medium transition-colors",
+                      on
+                        ? "border-foreground/20 bg-card text-foreground"
+                        : "border-transparent bg-secondary text-muted-foreground",
+                    )}
+                  >
+                    {t(chip.label)}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
           {/* What's shown */}
           <div
             className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
             role="group"
             aria-label={t("Show or hide sources")}
           >
-            {SOURCES.map((source) => {
+            {SOURCES.filter((source) => source.id !== "study" || studyOn).map((source) => {
               const on = !hidden.includes(source.id);
               return (
                 <button
