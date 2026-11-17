@@ -83,6 +83,7 @@ const ROUTE_MODULES: { prefix: string; module: ModuleKey }[] = [
   { prefix: "/health", module: "body" },
   { prefix: "/spirit", module: "spirit" },
   { prefix: "/notes", module: "notes" },
+  { prefix: "/canvas", module: "notes" },
   { prefix: "/calendar", module: "calendar" },
   { prefix: "/study", module: "study" },
   { prefix: "/relationships", module: "relationships" },

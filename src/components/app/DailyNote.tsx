@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, ChevronLeft, ChevronRight, Lightbulb, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { DayCanvasButton } from "@/components/app/canvas/CanvasList";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import {
@@ -118,7 +119,7 @@ export function DailyNote({ date, onDate }: { date: string; onDate: (date: strin
               <ChevronRight className="size-5" />
             </Button>
           </div>
-          <div className="flex items-center justify-center gap-2 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
             {date !== today ? (
               <Button type="button" variant="outline" size="sm" onClick={() => onDate(today)}>
                 Back to today
@@ -134,6 +135,7 @@ export function DailyNote({ date, onDate }: { date: string; onDate: (date: strin
                 className="rounded-md border border-border bg-background px-2 py-1 text-sm"
               />
             </label>
+            <DayCanvasButton date={date} notes={all} />
           </div>
 
           {notes.isLoading ? (
