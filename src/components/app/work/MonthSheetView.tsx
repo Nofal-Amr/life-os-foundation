@@ -172,20 +172,40 @@ export function MonthSheetView({
 
       <dl className="space-y-1.5 rounded-xl border border-border p-4 text-sm tabular-nums">
         <Line label="Base salary">{money(sheet.money.base)}</Line>
-        <Line label="Lateness">−{money(sheet.money.lateDeductions)}</Line>
-        <Line label="Penalties">−{money(sheet.money.penaltyDeductions)}</Line>
-        <Line label="Early leave">−{money(sheet.money.earlyLeaveDeductions)}</Line>
+        <Line label="Lateness">
+          <Sum minutes={totals.late} rate={sheet.money.ratePerHour} />−
+          {money(sheet.money.lateDeductions)}
+        </Line>
+        <Line label="Penalties">
+          <Sum minutes={totals.penalty} rate={sheet.money.ratePerHour} />−
+          {money(sheet.money.penaltyDeductions)}
+        </Line>
+        <Line label="Early leave">
+          <Sum minutes={totals.earlyLeave} rate={sheet.money.ratePerHour} />−
+          {money(sheet.money.earlyLeaveDeductions)}
+        </Line>
         <Line label="Day penalties">
-          {totals.dayPenalties > 0
-            ? `${totals.dayPenalties} × ${money(sheet.money.dayPenaltyRate)} = `
-            : ""}
+          {totals.dayPenalties > 0 ? (
+            <span className="text-muted-foreground">
+              {`${totals.dayPenalties} × ${sheet.money.dayPenaltyRate.toLocaleString()} = `}
+            </span>
+          ) : null}
           −{money(sheet.money.dayPenaltyDeductions)}
         </Line>
         <Line label="Leave deductions">
           −{money(sheet.money.leaveDeductions)}
           {rules.absenceFromTotal ? "" : ` (${t("not taken off the total")})`}
         </Line>
-        <Line label="Overtime pay">+{money(sheet.money.overtimePay)}</Line>
+        <div className="border-t border-border pt-1.5 font-medium">
+          <Line label="Total deductions">−{money(sheet.money.totalDeductions)}</Line>
+        </div>
+        <Line label="Overtime pay">
+          <Sum minutes={totals.overtime} rate={sheet.money.ratePerHour} />+
+          {money(sheet.money.overtimePay)}
+        </Line>
+        <div className="border-t border-border pt-1.5 font-medium">
+          <Line label="Total additions">+{money(sheet.money.totalAdditions)}</Line>
+        </div>
         <div className="border-t border-border pt-1.5 text-base font-semibold">
           <Line label="Total">{money(sheet.money.total)}</Line>
         </div>
@@ -214,6 +234,16 @@ export function MonthSheetView({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** "5.08 h × 47 = ", how a minutes line comes to its amount. */
+function Sum({ minutes, rate }: { minutes: number; rate: number }) {
+  if (!minutes) return null;
+  return (
+    <span className="text-muted-foreground">
+      {`${(minutes / 60).toFixed(2)} ${t("h")} × ${+rate.toFixed(2)} = `}
+    </span>
   );
 }
 

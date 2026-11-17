@@ -80,6 +80,8 @@ describe("sheetExport", () => {
     expect(money["Early leave"]).toBe(-0);
     expect(money["Overtime pay"]).toBe(1274);
     expect(money["Leave deductions"]).toBe(-475);
+    expect(money["Total deductions"]).toBe(-1044);
+    expect(money["Total additions"]).toBe(1274);
     expect(money["Total"]).toBe(9730);
   });
 
