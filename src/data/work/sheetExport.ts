@@ -72,10 +72,9 @@ export function sheetRows(sheet: MonthSheet, options: SheetOptions): Cell[][] {
       totals.earlyLeave,
       totals.overtime,
     ],
-    [
-      labels("Late, penalty and early-leave time (hours)"),
-      Math.round(((totals.late + totals.penalty + totals.earlyLeave) / 60) * 100) / 100,
-    ],
+    [labels("Late (hours)"), Math.round((totals.late / 60) * 100) / 100],
+    [labels("Penalty (hours)"), Math.round((totals.penalty / 60) * 100) / 100],
+    [labels("Early leave (hours)"), Math.round((totals.earlyLeave / 60) * 100) / 100],
     [labels("Overtime (hours)"), Math.round((totals.overtime / 60) * 100) / 100],
     ...Object.entries(totals.leaves).map(([typeId, days]): Cell[] => [
       `${leaveName(typeId)} (${labels("days")})`,
@@ -85,10 +84,13 @@ export function sheetRows(sheet: MonthSheet, options: SheetOptions): Cell[][] {
     [labels("Site days"), totals.siteDays],
     [],
     [labels("Base salary"), money.base],
-    [labels("Late, penalties and early leave"), -money.deductions],
-    [labels("Overtime pay"), money.overtimePay],
-    [labels("Leave deductions"), -money.leaveDeductions],
+    [labels("Lateness"), -money.lateDeductions],
+    [labels("Penalties"), -money.penaltyDeductions],
+    [labels("Early leave"), -money.earlyLeaveDeductions],
+    [labels("Day penalty (each)"), money.dayPenaltyRate],
     [labels("Day penalties"), -money.dayPenaltyDeductions],
+    [labels("Leave deductions"), -money.leaveDeductions],
+    [labels("Overtime pay"), money.overtimePay],
     [labels("Total"), money.total],
   ];
   if (sheet.rows.some((row) => row.corrected.length))

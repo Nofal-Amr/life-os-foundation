@@ -157,9 +157,9 @@ export function MonthSheetView({
       </div>
 
       <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-        <Line label="Late, penalty and early-leave time (hours)">
-          {((totals.late + totals.penalty + totals.earlyLeave) / 60).toFixed(2)}
-        </Line>
+        <Line label="Late (hours)">{(totals.late / 60).toFixed(2)}</Line>
+        <Line label="Penalty (hours)">{(totals.penalty / 60).toFixed(2)}</Line>
+        <Line label="Early leave (hours)">{(totals.earlyLeave / 60).toFixed(2)}</Line>
         <Line label="Overtime (hours)">{(totals.overtime / 60).toFixed(2)}</Line>
         {Object.entries(totals.leaves).map(([id, days]) => (
           <Line key={id} label={leaveName(id)}>
@@ -172,16 +172,30 @@ export function MonthSheetView({
 
       <dl className="space-y-1.5 rounded-xl border border-border p-4 text-sm tabular-nums">
         <Line label="Base salary">{money(sheet.money.base)}</Line>
-        <Line label="Late, penalties and early leave">−{money(sheet.money.deductions)}</Line>
-        <Line label="Overtime pay">+{money(sheet.money.overtimePay)}</Line>
+        <Line label="Lateness">−{money(sheet.money.lateDeductions)}</Line>
+        <Line label="Penalties">−{money(sheet.money.penaltyDeductions)}</Line>
+        <Line label="Early leave">−{money(sheet.money.earlyLeaveDeductions)}</Line>
+        <Line label="Day penalties">
+          {totals.dayPenalties > 0
+            ? `${totals.dayPenalties} × ${money(sheet.money.dayPenaltyRate)} = `
+            : ""}
+          −{money(sheet.money.dayPenaltyDeductions)}
+        </Line>
         <Line label="Leave deductions">
           −{money(sheet.money.leaveDeductions)}
           {rules.absenceFromTotal ? "" : ` (${t("not taken off the total")})`}
         </Line>
-        <Line label="Day penalties">−{money(sheet.money.dayPenaltyDeductions)}</Line>
+        <Line label="Overtime pay">+{money(sheet.money.overtimePay)}</Line>
         <div className="border-t border-border pt-1.5 text-base font-semibold">
           <Line label="Total">{money(sheet.money.total)}</Line>
         </div>
+        {sheet.money.base <= 0 ? (
+          <p className="pt-1 text-xs text-destructive">
+            {t(
+              "No base salary is set for this person, so day penalties and leave come to 0. Set it under People.",
+            )}
+          </p>
+        ) : null}
         <p className="pt-1 text-xs text-muted-foreground">
           {t("Hourly rate")}: {sheet.money.ratePerHour.toFixed(2)} {rules.currency}
         </p>

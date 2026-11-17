@@ -163,8 +163,17 @@ export type MonthSheet = {
   money: {
     base: number;
     ratePerHour: number;
+    /** Late minutes' cost. */
+    lateDeductions: number;
+    /** The ladder's penalty minutes' cost. */
+    penaltyDeductions: number;
+    /** Early-leave minutes' cost. */
+    earlyLeaveDeductions: number;
+    /** Late + penalty + early leave, together. */
     deductions: number;
     overtimePay: number;
+    /** What one day's penalty costs (base salary / the divisor). */
+    dayPenaltyRate: number;
     leaveDeductions: number;
     dayPenaltyDeductions: number;
     total: number;
@@ -238,6 +247,70 @@ function clocksByDay(events: ClockEvent[], timeZone: string): Map<string, DayClo
   return byDay;
 }
 
+type Tap = { kind: "in" | "out"; at: string };
+
+/**
+ * A day's taps once an admin's corrections are applied, the one list the
+ * clock card and the sheet both show. The first clock-in and the last
+ * clock-out are the day's anchors: a correction replaces one (the latest
+ * wins) or, with `null`, removes it. Taps outside the corrected in–out
+ * window are dropped, and so is a repeat tap (a second clock-in while
+ * already in keeps the first; a second clock-out keeps the last).
+ */
+export function dayTaps<T extends Tap>(
+  raw: T[],
+  corrections: { field: "in" | "out"; at: string | null }[],
+): {
+  in: string | null;
+  out: string | null;
+  corrected: ("in" | "out")[];
+  /** In time order; a corrected anchor is a plain `{ kind, at }`. */
+  taps: (T | Tap)[];
+  /** The taps between the anchors. */
+  between: T[];
+} {
+  const sorted = [...raw].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const firstIn = sorted.find((tap) => tap.kind === "in") ?? null;
+  const lastOut = sorted.filter((tap) => tap.kind === "out").at(-1) ?? null;
+  let inAt = firstIn?.at ?? null;
+  let outAt = lastOut?.at ?? null;
+  const corrected: ("in" | "out")[] = [];
+  for (const item of corrections) {
+    if (item.field === "in") inAt = item.at;
+    else outAt = item.at;
+    if (!corrected.includes(item.field)) corrected.push(item.field);
+  }
+  const from = inAt ? Date.parse(inAt) : -Infinity;
+  const to = outAt ? Date.parse(outAt) : Infinity;
+  const inside = sorted.filter(
+    (tap) =>
+      tap !== firstIn && tap !== lastOut && Date.parse(tap.at) > from && Date.parse(tap.at) < to,
+  );
+  const inTap: T | Tap | null = inAt
+    ? firstIn && !corrected.includes("in")
+      ? firstIn
+      : { kind: "in", at: inAt }
+    : null;
+  const outTap: T | Tap | null = outAt
+    ? lastOut && !corrected.includes("out")
+      ? lastOut
+      : { kind: "out", at: outAt }
+    : null;
+  const ordered = [...(inTap ? [inTap] : []), ...inside, ...(outTap ? [outTap] : [])];
+  const taps: (T | Tap)[] = [];
+  for (const tap of ordered) {
+    const last = taps.at(-1);
+    if (last && last.kind === tap.kind) {
+      // in, in: keep the first. out, out: keep the last.
+      if (tap.kind === "out") taps[taps.length - 1] = tap;
+      continue;
+    }
+    taps.push(tap);
+  }
+  const between = taps.filter((tap) => tap !== inTap && tap !== outTap) as T[];
+  return { in: inAt, out: outAt, corrected, taps, between };
+}
+
 /** The penalty for the n-th time this month (1-based): minutes, or a whole day. */
 export function ladderPenalty(
   penalty: { minutes: number[]; thenAdd: number; afterLast?: "add" | "day" },
@@ -286,15 +359,15 @@ export function monthSheet(input: {
     const day = `${month}-${String(date).padStart(2, "0")}`;
     const weekday = new Date(Date.UTC(year!, monthNumber! - 1, date)).getUTCDay();
     const clock = clocks.get(day) ?? { in: null, out: null, all: [] };
-    let inAt = clock.in?.at ?? null;
-    let outAt = clock.out?.at ?? null;
-    const corrected: ("in" | "out")[] = [];
-    for (const correction of input.corrections) {
-      if (correction.day !== day) continue;
-      if (correction.field === "in") inAt = correction.at;
-      else outAt = correction.at;
-      if (!corrected.includes(correction.field)) corrected.push(correction.field);
-    }
+    const {
+      in: inAt,
+      out: outAt,
+      corrected,
+      between,
+    } = dayTaps(
+      clock.all,
+      input.corrections.filter((correction) => correction.day === day),
+    );
     const leaveTypeId = leaveByDay.get(day) ?? null;
     const kind: DayRow["kind"] = leaveTypeId
       ? "leave"
@@ -324,10 +397,7 @@ export function monthSheet(input: {
       overtime: 0,
       site: kind !== "leave" && clock.in?.placeKind === "site",
       corrected,
-      between:
-        kind === "leave"
-          ? []
-          : clock.all.filter((event) => event !== clock.in && event !== clock.out),
+      between: kind === "leave" ? [] : between,
       note: null,
       leaveTypeId,
     };
@@ -389,18 +459,19 @@ export function monthSheet(input: {
   const ratePerHour =
     input.overtimeRate ??
     (rules.rate.kind === "fixed" ? rules.rate.perHour : base / (workDaysInMonth * dayHours));
-  const deductions = Math.round(
-    ((totals.late + totals.penalty + totals.earlyLeave) / 60) * ratePerHour,
-  );
+  const cost = (minutes: number) => Math.round((minutes / 60) * ratePerHour);
+  const lateDeductions = cost(totals.late);
+  const penaltyDeductions = cost(totals.penalty);
+  const earlyLeaveDeductions = cost(totals.earlyLeave);
+  const deductions = lateDeductions + penaltyDeductions + earlyLeaveDeductions;
   const overtimePay = Math.round((totals.overtime / 60) * ratePerHour);
   const leaveDeductions = rows.reduce((total, row) => {
     const type = rules.leaveTypes.find((item) => item.id === row.leaveTypeId);
     return total + (type ? Math.round((base * type.percent) / 100) : 0);
   }, 0);
-  const dayPenaltyDeductions =
-    rules.dayPenaltyDivisor > 0
-      ? Math.round(base / rules.dayPenaltyDivisor) * totals.dayPenalties
-      : 0;
+  const dayPenaltyRate =
+    rules.dayPenaltyDivisor > 0 ? Math.round(base / rules.dayPenaltyDivisor) : 0;
+  const dayPenaltyDeductions = dayPenaltyRate * totals.dayPenalties;
   const total =
     base -
     deductions +
@@ -414,8 +485,12 @@ export function monthSheet(input: {
     money: {
       base,
       ratePerHour,
+      lateDeductions,
+      penaltyDeductions,
+      earlyLeaveDeductions,
       deductions,
       overtimePay,
+      dayPenaltyRate,
       leaveDeductions,
       dayPenaltyDeductions,
       total,
