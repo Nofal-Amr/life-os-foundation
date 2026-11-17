@@ -18,16 +18,13 @@ updated: 2026-11-17
      Mirror Gym's tabs: Today · Plan · Foods.
   2. **InBody input** in Body → `health_samples` (`source: "inbody"`), with a trend. Check
      `external_id` uniqueness first.
-  3. **Vacation allowance:** waiting for the owner's "yes, vacation days" on
-     `alter table public.work_members add column annual_leave_days numeric(5,1) not null default 0 check (annual_leave_days >= 0);`.
-     Then show "X of Y days used this year" and a warning (not a block) when it runs out.
-  4. **A new standard APK** (`life-os-debug.apk`) with everything since 17 Nov. The owner tests
-     Settings and the Work fixes on the phone.
+  3. ~~Vacation allowance~~ **done (#69)**; VONKAI's day penalty is set to 5% (divisor 20), with
+     the owner's OK.
+  4. ~~New APK~~ **sent** (`life-os-debug.apk` from `f155531`). Waiting for the owner's phone test:
+     Settings, Work fixes, Gym, azkar.
   5. **Egypt holidays:** if the owner still misses 23 July / 30 June, check the cached
      `holidays:EG:2026` and the Calendar settings.
-- **The owner's own to-dos:**
-  - set the VONKAI day-penalty divisor to 20 (5%) in Work → Rules;
-  - Google Calendar env vars (see the session note).
+- **The owner's own to-dos:** Google Calendar env vars (see the session note).
 - **Then continue** "Next, after 2026-11-17" below (simplify plan, segments, Work items).
 
 ## Next, after 2026-11-17 (read [[2026-11-17 - Simplify, handbook, Settings]])
