@@ -545,12 +545,14 @@ export type Database = {
         Row: {
           calories: number;
           carbs_g: number | null;
+          cost: number | null;
           created_at: string;
           fat_g: number | null;
           icon: string | null;
           id: string;
           name: string;
           protein_g: number | null;
+          recipe: string | null;
           serving_grams: number | null;
           serving_label: string | null;
           updated_at: string;
@@ -559,12 +561,14 @@ export type Database = {
         Insert: {
           calories: number;
           carbs_g?: number | null;
+          cost?: number | null;
           created_at?: string;
           fat_g?: number | null;
           icon?: string | null;
           id?: string;
           name: string;
           protein_g?: number | null;
+          recipe?: string | null;
           serving_grams?: number | null;
           serving_label?: string | null;
           updated_at?: string;
@@ -573,12 +577,14 @@ export type Database = {
         Update: {
           calories?: number;
           carbs_g?: number | null;
+          cost?: number | null;
           created_at?: string;
           fat_g?: number | null;
           icon?: string | null;
           id?: string;
           name?: string;
           protein_g?: number | null;
+          recipe?: string | null;
           serving_grams?: number | null;
           serving_label?: string | null;
           updated_at?: string;
