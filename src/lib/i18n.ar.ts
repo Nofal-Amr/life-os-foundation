@@ -291,6 +291,22 @@ export const AR: Record<string, string> = {
   "Sick leave": "إجازة مرضية",
   "Add a kind of leave": "أضف نوع إجازة",
   "Leave deductions come off the total": "خصومات الإجازات تُخصم من الإجمالي",
+  "Official holidays": "الإجازات الرسمية",
+  "Days the company is closed. Nobody is absent on them, and working one counts like a day off.":
+    "أيام تغلق فيها الشركة. لا يُحتسب فيها غياب، والعمل فيها يُحتسب كيوم عطلة.",
+  "Country code": "رمز الدولة",
+  "Add public holidays for": "أضف الإجازات الرسمية لعام",
+  "Eid dates follow the moon; check them each year.":
+    "مواعيد الأعياد تتبع رؤية الهلال؛ راجعها كل عام.",
+  "No new public holidays found.": "لا توجد إجازات رسمية جديدة.",
+  "holidays added. Check them, add any missing, then save.":
+    "إجازات أُضيفت. راجعها وأضف الناقص ثم احفظ.",
+  "Couldn't load public holidays. Check the connection.":
+    "تعذّر تحميل الإجازات الرسمية. تحقق من الاتصال.",
+  "Add a holiday": "أضف إجازة",
+  "Official holiday": "إجازة رسمية",
+  "Not clocked in yet": "لم تسجّل الحضور بعد",
+  "At work": "في العمل",
   "Clocking in away from a place": "التسجيل بعيدًا عن مكان",
   "Refuse, but keep the attempt with a reason": "ارفض، واحتفظ بالمحاولة مع سببها",
   Refuse: "ارفض",

@@ -150,3 +150,22 @@ describe("todayClock", () => {
     );
   });
 });
+
+describe("official holidays", () => {
+  it("default to none and reach the sheet from the rules", () => {
+    expect(readRules({}).holidays).toEqual([]);
+    const rules = readRules({ holidays: [{ day: "2026-11-03", name: "Test" }] });
+    const input = sheetInputFor({
+      member: { base_salary: 6000, overtime_rate: null },
+      rules,
+      month: "2026-11",
+      events: [],
+      corrections: [],
+      leaves: [],
+      holidays: [],
+      today: "2026-11-17",
+    });
+    expect(input.holidays).toEqual(["2026-11-03"]);
+    expect(input.today).toBe("2026-11-17");
+  });
+});

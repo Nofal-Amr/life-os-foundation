@@ -50,6 +50,7 @@ export function readRules(json: unknown): WorkRules {
       ...(saved.overtime ? { dayPenaltyAllOvertime: false } : {}),
       ...(saved.overtime ?? {}),
     },
+    holidays: Array.isArray(saved.holidays) ? saved.holidays : [],
     tests: { ...ADO_PRESET.tests, ...(saved.tests ?? {}) },
   };
 }
@@ -290,6 +291,8 @@ export function sheetInputFor(args: {
   corrections: Pick<WorkCorrection, "day" | "field" | "value" | "reason">[];
   leaves: Pick<WorkLeave, "day" | "type_id" | "status">[];
   holidays: string[];
+  /** Today in the company's time zone; defaults to now. */
+  today?: string;
 }) {
   const events: ClockEvent[] = args.events
     .filter((event) => event.kind === "in" || event.kind === "out")
@@ -322,7 +325,8 @@ export function sheetInputFor(args: {
     events,
     corrections,
     leaves,
-    holidays: args.holidays,
+    holidays: [...args.holidays, ...args.rules.holidays.map((holiday) => holiday.day)],
+    today: args.today ?? new Date().toLocaleDateString("en-CA", { timeZone: args.rules.timezone }),
   };
 }
 

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { publicHolidays, readHolidaySettings } from "@/data/holidays";
 import { saveRules, workKeys, type WorkOrg } from "@/data/work/api";
 import { ADO_PRESET, type LateStep, type WorkRules } from "@/data/work/rules";
 import { t } from "@/lib/i18n";
@@ -400,6 +401,11 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
         />
       </Group>
 
+      <OfficialHolidays
+        holidays={rules.holidays}
+        onChange={(holidays) => set("holidays", holidays)}
+      />
+
       <Group title="Clocking in away from a place">
         <select
           className="h-10 w-full rounded-lg border border-border bg-card px-2 text-sm"
@@ -481,5 +487,109 @@ function Toggle({
       {t(label)}
       <Switch checked={checked} onCheckedChange={onChange} />
     </label>
+  );
+}
+
+/** The company's official days off; one tap fills in a country's public holidays. */
+function OfficialHolidays({
+  holidays,
+  onChange,
+}: {
+  holidays: WorkRules["holidays"];
+  onChange: (holidays: WorkRules["holidays"]) => void;
+}) {
+  const [country, setCountry] = useState(() => readHolidaySettings().country ?? "EG");
+  const year = new Date().getFullYear();
+  const fill = useMutation({
+    mutationFn: () => publicHolidays(year, country.trim().toUpperCase()),
+    onSuccess: (list) => {
+      const known = new Set(holidays.map((item) => item.day));
+      const added = list
+        .filter((item) => !known.has(item.date))
+        .map((item) => ({ day: item.date, name: item.localName ?? item.name }));
+      if (!added.length) {
+        toast.info(t("No new public holidays found."));
+        return;
+      }
+      onChange([...holidays, ...added].sort((a, b) => a.day.localeCompare(b.day)));
+      toast.success(
+        `${added.length} ${t("holidays added. Check them, add any missing, then save.")}`,
+      );
+    },
+    onError: () => toast.error(t("Couldn't load public holidays. Check the connection.")),
+  });
+  const update = (index: number, patch: Partial<WorkRules["holidays"][number]>) =>
+    onChange(holidays.map((item, at) => (at === index ? { ...item, ...patch } : item)));
+
+  return (
+    <Group
+      title="Official holidays"
+      hint="Days the company is closed. Nobody is absent on them, and working one counts like a day off."
+    >
+      <div className="flex flex-wrap items-end gap-2">
+        <Field label="Country code">
+          <Input
+            className="h-9 w-20 uppercase"
+            maxLength={2}
+            value={country}
+            onChange={(event) => setCountry(event.target.value)}
+          />
+        </Field>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={country.trim().length !== 2 || fill.isPending}
+          onClick={() => fill.mutate()}
+        >
+          {`${t("Add public holidays for")} ${year}`}
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t("Eid dates follow the moon; check them each year.")}
+      </p>
+      {holidays.map((holiday, index) => (
+        <div key={`${holiday.day}-${index}`} className="flex flex-wrap items-end gap-2">
+          <Field label="Date">
+            <Input
+              type="date"
+              className="h-9 w-40"
+              value={holiday.day}
+              onChange={(event) => update(index, { day: event.target.value })}
+            />
+          </Field>
+          <Field label="Name">
+            <Input
+              className="h-9 w-56"
+              maxLength={60}
+              value={holiday.name}
+              onChange={(event) => update(index, { name: event.target.value })}
+            />
+          </Field>
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label={t("Remove")}
+            onClick={() => onChange(holidays.filter((_, at) => at !== index))}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() =>
+          onChange([
+            ...holidays,
+            { day: new Date().toLocaleDateString("en-CA"), name: t("Official holiday") },
+          ])
+        }
+      >
+        <Plus className="size-4" /> {t("Add a holiday")}
+      </Button>
+    </Group>
   );
 }

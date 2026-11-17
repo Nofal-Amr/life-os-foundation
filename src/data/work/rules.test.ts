@@ -253,3 +253,30 @@ describe("several taps in one day", () => {
     expect(row.earlyLeave).toBe(0);
   });
 });
+
+describe("today and the days still to come", () => {
+  const sheet = monthSheet({
+    rules: ADO_PRESET,
+    month: "2026-11",
+    baseSalary: 6000,
+    events: [{ kind: "in", at: "2026-11-17T08:20:00+02:00" }],
+    corrections: [],
+    leaves: [],
+    holidays: ["2026-11-03"],
+    today: "2026-11-17",
+  });
+  const row = (day: string) => sheet.rows.find((item) => item.day === day)!;
+
+  it("never calls a future work day absent", () => {
+    expect(row("2026-11-18")).toMatchObject({ when: "future", note: null });
+    expect(row("2026-11-16")).toMatchObject({ when: "past", note: "absent-unexplained" });
+  });
+
+  it("doesn't call today's open clock-in a missing clock-out", () => {
+    expect(row("2026-11-17")).toMatchObject({ when: "today", note: null, earlyLeave: 0 });
+  });
+
+  it("treats an official holiday as a day off, not an absence", () => {
+    expect(row("2026-11-03")).toMatchObject({ kind: "holiday", note: null });
+  });
+});

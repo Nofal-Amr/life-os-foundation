@@ -72,6 +72,8 @@ export type WorkRules = {
   /** Whether leave deductions come off the month's total. */
   absenceFromTotal: boolean;
   outsideRadius: "refuse" | "refuseAndRecord" | "allowWithReason";
+  /** The company's official days off ("yyyy-MM-dd"): nobody is absent on them. */
+  holidays: { day: string; name: string }[];
   tests: WorkTests;
 };
 
@@ -108,6 +110,7 @@ export const ADO_PRESET: WorkRules = {
   dayPenaltyDivisor: 20,
   absenceFromTotal: true,
   outsideRadius: "refuseAndRecord",
+  holidays: [],
   tests: { whatsappImport: false, whatsappPost: false },
 };
 
@@ -129,6 +132,8 @@ export type DayRow = {
   overtime: number;
   site: boolean;
   corrected: ("in" | "out")[];
+  /** Before, on or after today: today and later days are never "absent". */
+  when: "past" | "today" | "future";
   /**
    * The day's other taps, between the first clock-in and the last clock-out
    * (a break, a trip out). Shown on the sheet; pay uses the first and last.
@@ -256,6 +261,8 @@ export function monthSheet(input: {
   corrections: Correction[];
   leaves: Leave[];
   holidays: string[];
+  /** Today ("yyyy-MM-dd", the company's time zone). Unset: the whole month is past. */
+  today?: string;
 }): MonthSheet {
   const { rules, month, baseSalary: base } = input;
   const [year, monthNumber] = month.split("-").map(Number);
@@ -290,8 +297,16 @@ export function monthSheet(input: {
         : rules.workDays.includes(weekday)
           ? "work"
           : "off";
+    const when: DayRow["when"] = !input.today
+      ? "past"
+      : day < input.today
+        ? "past"
+        : day === input.today
+          ? "today"
+          : "future";
     const row: DayRow = {
       day,
+      when,
       weekday,
       kind,
       in: kind === "leave" ? null : inAt,
@@ -313,12 +328,12 @@ export function monthSheet(input: {
     rows.push(row);
     if (kind === "leave") continue;
     if (!row.in) {
-      if (kind === "work") row.note = "absent-unexplained";
+      if (kind === "work" && when === "past") row.note = "absent-unexplained";
       continue;
     }
     const inMinutes = minutesFrom(day, row.in, rules.timezone);
     const outMinutes = row.out ? minutesFrom(day, row.out, rules.timezone) : null;
-    if (outMinutes === null) row.note = "no-clock-out";
+    if (outMinutes === null && when !== "today") row.note = "no-clock-out";
 
     if (kind === "work") {
       const step = [...steps]
