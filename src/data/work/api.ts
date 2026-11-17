@@ -339,8 +339,8 @@ export type TodayClock = {
  * removes a time), the same way the month sheet counts them. The button
  * offers clock-out while today has a clock-in and no clock-out yet, or a
  * clock-out set ahead of now (a wrong clock-out an admin moved to the end of
- * the day). Without a clock-in today it falls back to `nextClockKind`, so a
- * shift that started last night still offers clock-out.
+ * the day). Otherwise it follows the last tap (`nextClockKind`), so clocking
+ * back in after a break, or a shift that started last night, offers clock-out.
  */
 export function todayClock(args: {
   day: string;
@@ -361,10 +361,9 @@ export function todayClock(args: {
     else outAt = item.value;
     if (!corrected.includes(item.field)) corrected.push(item.field);
   }
-  const next: "in" | "out" = inAt
-    ? outAt === null || Date.parse(outAt) > args.now
-      ? "out"
-      : "in"
-    : nextClockKind(args.recent, args.now);
+  // A clock-out an admin removed or moved ahead of now means the day is still open.
+  const reopened =
+    corrected.includes("out") && !!inAt && (outAt === null || Date.parse(outAt) > args.now);
+  const next = reopened ? "out" : nextClockKind(args.recent, args.now);
   return { in: inAt, out: outAt, corrected, next };
 }

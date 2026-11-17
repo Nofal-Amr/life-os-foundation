@@ -94,6 +94,16 @@ export function MonthSheetView({
                       <td className="px-2 py-1.5">
                         {time(row.in!)}
                         {mark("in")}
+                        {row.between.length ? (
+                          <span className="block text-2xs text-muted-foreground">
+                            {row.between
+                              .map(
+                                (event) =>
+                                  `${t(event.kind === "in" ? "In" : "Out")} ${time(event.at)}`,
+                              )
+                              .join(" · ")}
+                          </span>
+                        ) : null}
                       </td>
                       <td className="px-2 py-1.5">
                         {row.out ? (

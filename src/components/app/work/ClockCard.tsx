@@ -66,11 +66,7 @@ export function ClockCard({
   const day = new Date().toLocaleDateString("en-CA", { timeZone: rules.timezone });
   const state = todayClock({ day, events: today, corrections, recent, now: Date.now() });
   const kind = state.next;
-  const placeOf = (field: "in" | "out") =>
-    state.corrected.includes(field)
-      ? null
-      : (today.filter((event) => event.kind === field).at(field === "in" ? 0 : -1)?.place_id ??
-        null);
+  const clocks = today.filter((event) => event.kind !== "attempt");
   const allowed = (member.place_ids?.length
     ? places.filter((place) => member.place_ids!.includes(place.id))
     : places) as unknown as PlaceLike[];
@@ -173,17 +169,26 @@ export function ClockCard({
         <div>
           <p className="text-base font-semibold">{org.name}</p>
           <p className="text-xs text-muted-foreground">
-            {state.in || state.out
-              ? (["in", "out"] as const)
-                  .filter((field) => state[field])
-                  .map((field) => {
-                    const place = placeOf(field);
-                    const mark = state.corrected.includes(field) ? ` (${t("corrected")})` : "";
-                    return `${t(field === "in" ? "In" : "Out")} ${time(state[field]!)}${mark}${place ? ` · ${placeName(place)}` : ""}`;
-                  })
+            {clocks.length
+              ? clocks
+                  .map(
+                    (event) =>
+                      `${t(event.kind === "in" ? "In" : "Out")} ${time(event.at)}${event.place_id ? ` · ${placeName(event.place_id)}` : ""}`,
+                  )
                   .join("  ·  ")
               : t("Not clocked in today.")}
           </p>
+          {state.corrected.length ? (
+            <p className="text-xs text-muted-foreground">
+              {`${t("Corrected by an admin")}: `}
+              {state.corrected
+                .map(
+                  (field) =>
+                    `${t(field === "in" ? "In" : "Out")} ${state[field] ? time(state[field]) : t("removed")}`,
+                )
+                .join("  ·  ")}
+            </p>
+          ) : null}
         </div>
         {canClockIn() ? (
           <Button

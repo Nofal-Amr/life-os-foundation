@@ -317,6 +317,7 @@ export const AR: Record<string, string> = {
   "Remove the clock-out (a wrong tap)": "احذف الانصراف (تسجيل خاطئ)",
   "Remove the clock-in": "احذف الحضور",
   corrected: "مُصحَّح",
+  removed: "محذوف",
   "Mark as leave": "سجّلها إجازة",
   "Reason (shown on the sheet)": "السبب (يظهر في الكشف)",
   "The original stays stored; the sheet shows this as a correction.":
