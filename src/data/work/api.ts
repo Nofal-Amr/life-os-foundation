@@ -14,6 +14,8 @@ import {
   dayTaps,
   type ClockEvent,
   type Correction,
+  type Excuse,
+  type ExcuseCovers,
   type Leave,
   type LeaveType,
   type WorkRules,
@@ -303,6 +305,8 @@ export function sheetInputFor(args: {
   corrections: Pick<WorkCorrection, "day" | "field" | "value" | "reason">[];
   leaves: Pick<WorkLeave, "day" | "type_id" | "status">[];
   holidays: string[];
+  /** This month's incentives, allowances and other additions. */
+  additions?: { label: string; amount: number }[];
   /** Today in the company's time zone; defaults to now. */
   today?: string;
 }) {
@@ -321,6 +325,9 @@ export function sheetInputFor(args: {
       at: item.value,
       reason: item.reason,
     }));
+  const excuses: Excuse[] = args.corrections
+    .filter((item) => item.field === "excuse")
+    .map((item) => ({ day: item.day, covers: excuseCovers(item.value) }));
   const leaves: Leave[] = [
     ...args.leaves
       .filter((leave) => leave.status === "approved")
@@ -337,9 +344,16 @@ export function sheetInputFor(args: {
     events,
     corrections,
     leaves,
+    excuses,
+    additions: args.additions ?? [],
     holidays: [...args.holidays, ...args.rules.holidays.map((holiday) => holiday.day)],
     today: args.today ?? new Date().toLocaleDateString("en-CA", { timeZone: args.rules.timezone }),
   };
+}
+
+/** A stored excuse value as what it covers; anything else means none. */
+export function excuseCovers(value: string | null): ExcuseCovers {
+  return value === "late" || value === "early" || value === "both" ? value : "none";
 }
 
 export type TodayClock<T extends Pick<WorkEvent, "kind" | "at"> = Pick<WorkEvent, "kind" | "at">> =

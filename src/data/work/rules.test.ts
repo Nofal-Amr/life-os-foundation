@@ -80,6 +80,7 @@ describe("monthSheet", () => {
     expect(result.money.total).toBe(9730);
     expect(result.money.totalDeductions).toBe(569 + 475);
     expect(result.money.totalAdditions).toBe(1274);
+    expect(result.money.additions).toEqual([]);
   });
 
   it("ladder counts occurrences in the month", () => {
@@ -353,5 +354,104 @@ describe("today and the days still to come", () => {
 
   it("treats an official holiday as a day off, not an absence", () => {
     expect(row("2026-11-03")).toMatchObject({ kind: "holiday", note: null });
+  });
+});
+
+describe("excuses", () => {
+  const at = (day: number, clock: string) =>
+    `2026-11-${String(day).padStart(2, "0")}T${clock}:00+02:00`;
+  const run = (excuses: { day: string; covers: "late" | "early" | "both" | "none" }[]) =>
+    monthSheet({
+      rules: ADO_PRESET,
+      month: "2026-11",
+      baseSalary: 9000,
+      events: [
+        // 2nd: 08:40 (a ladder late), out 16:30.
+        { kind: "in", at: at(2, "08:40") },
+        { kind: "out", at: at(2, "16:30") },
+        // 3rd: 08:45 (another), out 15:30 (an hour early).
+        { kind: "in", at: at(3, "08:45") },
+        { kind: "out", at: at(3, "15:30") },
+        // 4th: 08:20 (late minutes only).
+        { kind: "in", at: at(4, "08:20") },
+        { kind: "out", at: at(4, "16:30") },
+        // 5th: 10:30 (a day's penalty).
+        { kind: "in", at: at(5, "10:30") },
+        { kind: "out", at: at(5, "16:30") },
+      ],
+      corrections: [],
+      leaves: [],
+      excuses,
+      holidays: [],
+    });
+  const row = (sheet: ReturnType<typeof run>, day: number) =>
+    sheet.rows.find((item) => item.day === `2026-11-${String(day).padStart(2, "0")}`)!;
+
+  it("without excuses, counts as usual", () => {
+    const sheet = run([]);
+    expect([row(sheet, 2).penalty, row(sheet, 3).penalty]).toEqual([120, 150]);
+    expect(row(sheet, 3).earlyLeave).toBe(60);
+    expect(row(sheet, 4).late).toBe(20);
+    expect(row(sheet, 5).dayPenalty).toBe(true);
+  });
+
+  it("an excused late arrival costs nothing and isn't counted on the ladder", () => {
+    const sheet = run([{ day: "2026-11-02", covers: "late" }]);
+    expect(row(sheet, 2)).toMatchObject({ penalty: 0, late: 0, excused: ["late"] });
+    // The 3rd is now the first time, so the first rung.
+    expect(row(sheet, 3).penalty).toBe(120);
+    // Its early leave still counts.
+    expect(row(sheet, 3).earlyLeave).toBe(60);
+  });
+
+  it("excuses late minutes and a day's penalty too", () => {
+    const sheet = run([
+      { day: "2026-11-04", covers: "late" },
+      { day: "2026-11-05", covers: "late" },
+    ]);
+    expect(row(sheet, 4).late).toBe(0);
+    expect(row(sheet, 5).dayPenalty).toBe(false);
+    expect(sheet.money.dayPenaltyDeductions).toBe(0);
+  });
+
+  it("an excused early leave costs no early-leave minutes; both covers both", () => {
+    const early = run([{ day: "2026-11-03", covers: "early" }]);
+    expect([row(early, 3).earlyLeave, row(early, 3).penalty]).toEqual([0, 150]);
+    const both = run([{ day: "2026-11-03", covers: "both" }]);
+    expect([row(both, 3).earlyLeave, row(both, 3).penalty]).toEqual([0, 0]);
+  });
+
+  it("the latest excuse for a day wins, so one can be taken back", () => {
+    const sheet = run([
+      { day: "2026-11-02", covers: "late" },
+      { day: "2026-11-02", covers: "none" },
+    ]);
+    expect(row(sheet, 2)).toMatchObject({ penalty: 120, excused: [] });
+  });
+});
+
+describe("additions", () => {
+  it("adds incentives and allowances to the total and to total additions", () => {
+    const sheet = monthSheet({
+      rules: ADO_PRESET,
+      month: "2026-11",
+      baseSalary: 9000,
+      events: [],
+      corrections: [],
+      leaves: [],
+      holidays: [],
+      today: "2026-11-01",
+      additions: [
+        { label: "Incentive", amount: 500 },
+        { label: "Transport allowance", amount: 300 },
+        { label: "Nothing", amount: 0 },
+      ],
+    });
+    expect(sheet.money.additions.map((item) => item.label)).toEqual([
+      "Incentive",
+      "Transport allowance",
+    ]);
+    expect(sheet.money.totalAdditions).toBe(800);
+    expect(sheet.money.total).toBe(9000 + 800);
   });
 });

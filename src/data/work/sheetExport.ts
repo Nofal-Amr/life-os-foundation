@@ -39,9 +39,9 @@ function dayCells(row: DayRow, { labels, fmt, leaveName }: SheetOptions): Cell[]
     row.out
       ? fmt.time(row.out) + mark("out")
       : labels(row.when === "today" ? "At work" : "No clock-out"),
-    row.late,
+    row.excused.includes("late") ? labels("Excused") : row.late,
     row.dayPenalty ? labels("A day") : row.penalty,
-    row.earlyLeave,
+    row.excused.includes("early") ? labels("Excused") : row.earlyLeave,
     row.overtime,
   ];
 }
@@ -92,6 +92,7 @@ export function sheetRows(sheet: MonthSheet, options: SheetOptions): Cell[][] {
     [labels("Leave deductions"), -money.leaveDeductions],
     [labels("Total deductions"), -money.totalDeductions],
     [labels("Overtime pay"), money.overtimePay],
+    ...money.additions.map((item): Cell[] => [item.label, item.amount]),
     [labels("Total additions"), money.totalAdditions],
     [labels("Total"), money.total],
   ];
