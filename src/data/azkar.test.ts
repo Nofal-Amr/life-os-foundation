@@ -27,6 +27,36 @@ describe("Ayat al-Kursi", () => {
   });
 });
 
+describe("Quran passages", () => {
+  // Tanzil's standard (Imla'i) text: the marks are fatha … sukun and the small alif.
+  const marks = /[ً-ْٰ]/g;
+  const quranic = AZKAR.filter((zikr) => zikr.source);
+
+  it("all carry tashkeel on every word", () => {
+    expect(quranic.map((zikr) => zikr.id)).toEqual(["kursi", "ikhlas", "falaq", "nas"]);
+    for (const zikr of quranic) {
+      const words = zikr.text!.split(/\s+/).filter((word) => /[ء-ي]/.test(word));
+      for (const word of words) expect(word, `${zikr.id}: ${word}`).toMatch(marks);
+    }
+  });
+
+  it("keep the same words once the marks are taken off", () => {
+    const plain = (id: string) =>
+      AZKAR.find((zikr) => zikr.id === id)!
+        .text!.replace(marks, "")
+        .replace(/\s+/g, " ");
+    expect(plain("ikhlas")).toBe(
+      "بسم الله الرحمن الرحيم ۝ قل هو الله أحد ۝ الله الصمد ۝ لم يلد ولم يولد ۝ ولم يكن له كفوا أحد",
+    );
+    expect(plain("falaq")).toBe(
+      "بسم الله الرحمن الرحيم ۝ قل أعوذ برب الفلق ۝ من شر ما خلق ۝ ومن شر غاسق إذا وقب ۝ ومن شر النفاثات في العقد ۝ ومن شر حاسد إذا حسد",
+    );
+    expect(plain("nas")).toBe(
+      "بسم الله الرحمن الرحيم ۝ قل أعوذ برب الناس ۝ ملك الناس ۝ إله الناس ۝ من شر الوسواس الخناس ۝ الذي يوسوس في صدور الناس ۝ من الجنة والناس",
+    );
+  });
+});
+
 describe("sourceLabel", () => {
   afterEach(() => {
     lang.value = "en";
