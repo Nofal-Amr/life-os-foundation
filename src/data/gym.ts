@@ -10,6 +10,8 @@ export type Workout = {
   performed_on: string;
   name: string | null;
   note: string | null;
+  /** The routine this workout followed, if any. */
+  routine_id?: string | null;
   created_at: string;
   updated_at: string;
 };

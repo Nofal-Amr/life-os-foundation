@@ -10,15 +10,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { unwrap } from "@/lib/supabase-helpers";
 
 import type { Workout, WorkoutSet } from "./gym";
+import type { Routine, RoutineInput } from "./gymRoutines";
 import { isMissingTable } from "./relationshipsApi";
 
 // The generated types don't have these tables until the migration is applied.
-const table = (name: "workouts" | "workout_sets") => supabase.from(name as never);
+const table = (name: "workouts" | "workout_sets" | "workout_routines") =>
+  supabase.from(name as never);
 
 export const gymKeys = {
   all: ["gym"] as const,
   workouts: ["gym", "workouts"] as const,
   sets: ["gym", "sets"] as const,
+  routines: ["gym", "routines"] as const,
 };
 
 export const workoutsQuery = () =>
@@ -51,7 +54,7 @@ export type NewSet = Pick<
 
 /** A workout and its sets. If the sets can't be saved, the empty workout is removed again. */
 export async function logWorkout(
-  workout: Pick<Workout, "performed_on" | "name" | "note">,
+  workout: Pick<Workout, "performed_on" | "name" | "note"> & { routine_id?: string | null },
   sets: NewSet[],
 ): Promise<void> {
   const saved = unwrap(
@@ -75,4 +78,45 @@ export async function logWorkout(
 
 export async function deleteWorkout(id: string): Promise<void> {
   unwrap(await table("workouts").delete().eq("id", id).select());
+}
+
+/* --------------------------------------------------------------- routines */
+
+export const routinesQuery = () =>
+  queryOptions({
+    queryKey: gymKeys.routines,
+    queryFn: async () =>
+      unwrap(await table("workout_routines").select("*").order("name")) as unknown as Routine[],
+    retry: (count, error) => !isMissingTable(error) && count < 2,
+  });
+
+export async function saveRoutine(input: RoutineInput, id?: string): Promise<void> {
+  if (id) {
+    unwrap(
+      await table("workout_routines")
+        .update(input as never)
+        .eq("id", id)
+        .select(),
+    );
+  } else {
+    unwrap(
+      await table("workout_routines")
+        .insert(input as never)
+        .select(),
+    );
+  }
+}
+
+/** Several routines at once (an imported plan): all are saved, or none. */
+export async function saveRoutines(inputs: RoutineInput[]): Promise<void> {
+  if (!inputs.length) return;
+  unwrap(
+    await table("workout_routines")
+      .insert(inputs as never)
+      .select(),
+  );
+}
+
+export async function deleteRoutine(id: string): Promise<void> {
+  unwrap(await table("workout_routines").delete().eq("id", id).select());
 }
