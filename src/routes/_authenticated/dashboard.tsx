@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CheckIn } from "@/components/app/CheckIn";
 import { OnThisDay, ReflectionNudge } from "@/components/app/OnThisDay";
+import { CloseTheDayPrompt } from "@/components/app/CloseTheDay";
 import { DaySummary } from "@/components/app/DaySummary";
 import { RelationshipsToday } from "@/components/app/relationships/RelationshipsToday";
 import { QuickAddTaskDialog } from "@/components/app/QuickAddTask";
@@ -1310,6 +1311,9 @@ function DashboardPage() {
             {/* Log: one tile per thing you track, each showing where it stands. */}
             <div className="min-w-0 xl:col-start-2 xl:row-start-1">
               <TodayLog tiles={logTiles} />
+
+              {/* From the evening: a way into closing the day. */}
+              <CloseTheDayPrompt className="mt-6 min-w-0" />
 
               {/* People: a birthday soon, or a check-in whose rhythm came round. */}
               <RelationshipsToday className="mt-8 min-w-0" />

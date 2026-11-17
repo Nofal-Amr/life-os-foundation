@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { DatePicker } from "@/components/app/DatePicker";
+import { CloseTheDay } from "@/components/app/CloseTheDay";
 import { DaySummary } from "@/components/app/DaySummary";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -104,6 +105,7 @@ function ReviewPage() {
       </div>
 
       <DaySummary date={date} className="mb-6" />
+      {date === todayISO() ? <CloseTheDay className="mb-6" /> : null}
       <DayIdeas date={date} />
 
       {review.isLoading ? (
