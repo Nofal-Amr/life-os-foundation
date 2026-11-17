@@ -1080,4 +1080,15 @@ export const AR: Record<string, string> = {
   "Your canvases": "لوحاتك",
   "Zoom in": "تكبير",
   "Zoom out": "تصغير",
+  "moved to tomorrow": "نُقلت إلى الغد",
+  "Close the day": "إغلاق اليوم",
+  "Still open from today and before. Untick anything you'd rather keep where it is.":
+    "ما زال مفتوحًا من اليوم وما قبله. أزل العلامة عن أي شيء تفضل إبقاءه مكانه.",
+  Move: "انقل",
+  Dated: "بتاريخ",
+  "to tomorrow": "إلى الغد",
+  "Nothing dated today is still open. Tomorrow starts clear.":
+    "لا شيء بتاريخ اليوم ما زال مفتوحًا. الغد يبدأ صافيًا.",
+  "still open · see your day and move them on": "ما زالت مفتوحة · راجع يومك وانقلها",
+  "See your day and write a line about it": "راجع يومك واكتب عنه سطرًا",
 };
