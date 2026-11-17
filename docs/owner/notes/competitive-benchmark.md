@@ -1,0 +1,5 @@
+Every Life OS product audit must include a competitive benchmark against Notion, ClickUp, Amazing Marvin, Lunatask, Griply, Todoist, TickTick, Things 3, Sunsama, Motion, Morgen, Structured, Tiimo, Timestripe (more allowed): matrix, 1–10 scorecard, advantages/weaknesses/complexity/differentiation lists, patterns, strategy, roadmap. Official sources with dates; label estimates vs observed.
+
+**Why:** Owner (2026-11-12) wants Life OS judged against the market, explicitly NOT turned into "Notion + Todoist + TickTick + Sunsama" — learn principles, avoid inheriting all-in-one complexity.
+
+**How to apply:** Brief saved as docs/research/competitive-benchmark-brief.md (branch docs/competitive-benchmark); first result docs/research/2026-11-12-competitive-benchmark.md. Key takeaways: lead with faith + payday money + one-line capture; make areas opt-in (Marvin); goals must drive daily actions (Griply); evening ritual (Sunsama). See [core-rules](core-rules.md), [inspiration-not-copy](inspiration-not-copy.md).
