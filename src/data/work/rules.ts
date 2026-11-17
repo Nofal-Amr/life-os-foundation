@@ -129,6 +129,11 @@ export type DayRow = {
   overtime: number;
   site: boolean;
   corrected: ("in" | "out")[];
+  /**
+   * The day's other taps, between the first clock-in and the last clock-out
+   * (a break, a trip out). Shown on the sheet; pay uses the first and last.
+   */
+  between: ClockEvent[];
   note: "no-clock-out" | "absent-unexplained" | null;
   leaveTypeId: string | null;
 };
@@ -190,7 +195,7 @@ function minutesFrom(day: string, iso: string, timeZone: string): number {
   return daysBetween(day, at.date) * 1440 + at.minutes;
 }
 
-type DayClock = { in: ClockEvent | null; out: ClockEvent | null };
+type DayClock = { in: ClockEvent | null; out: ClockEvent | null; all: ClockEvent[] };
 
 /**
  * Each day's first clock-in and last clock-out. A clock-out belongs to the
@@ -205,14 +210,16 @@ function clocksByDay(events: ClockEvent[], timeZone: string): Map<string, DayClo
     const time = Date.parse(event.at);
     if (event.kind === "in") {
       const day = local(event.at, timeZone).date;
-      const entry = byDay.get(day) ?? { in: null, out: null };
+      const entry = byDay.get(day) ?? { in: null, out: null, all: [] };
+      entry.all.push(event);
       if (!entry.in) entry.in = event;
       byDay.set(day, entry);
       open = { day, at: time };
       continue;
     }
     const day = open && time - open.at <= DAY_MS ? open.day : local(event.at, timeZone).date;
-    const entry = byDay.get(day) ?? { in: null, out: null };
+    const entry = byDay.get(day) ?? { in: null, out: null, all: [] };
+    entry.all.push(event);
     if (!entry.out || Date.parse(entry.out.at) < time) entry.out = event;
     byDay.set(day, entry);
     open = null;
@@ -265,7 +272,7 @@ export function monthSheet(input: {
   for (let date = 1; date <= length; date++) {
     const day = `${month}-${String(date).padStart(2, "0")}`;
     const weekday = new Date(Date.UTC(year!, monthNumber! - 1, date)).getUTCDay();
-    const clock = clocks.get(day) ?? { in: null, out: null };
+    const clock = clocks.get(day) ?? { in: null, out: null, all: [] };
     let inAt = clock.in?.at ?? null;
     let outAt = clock.out?.at ?? null;
     const corrected: ("in" | "out")[] = [];
@@ -296,6 +303,10 @@ export function monthSheet(input: {
       overtime: 0,
       site: kind !== "leave" && clock.in?.placeKind === "site",
       corrected,
+      between:
+        kind === "leave"
+          ? []
+          : clock.all.filter((event) => event !== clock.in && event !== clock.out),
       note: null,
       leaveTypeId,
     };

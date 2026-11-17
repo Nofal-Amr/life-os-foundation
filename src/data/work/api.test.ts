@@ -4,6 +4,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 
 import {
   nextClockKind,
+  todayClock,
   readRules,
   sheetInputFor,
   type WorkCorrection,
@@ -109,5 +110,43 @@ describe("work api helpers", () => {
     expect(nextClockKind([event("in", "2026-10-04T08:00:00+03:00")], now)).toBe("in");
     // Attempts don't count.
     expect(nextClockKind([event("attempt", "2026-10-06T01:00:00+03:00")], now)).toBe("in");
+  });
+});
+
+describe("todayClock", () => {
+  const day = "2026-11-17";
+  const now = Date.parse("2026-11-17T09:39:00+02:00");
+  const events = [
+    { kind: "in", at: "2026-11-17T08:27:00+02:00" },
+    { kind: "out", at: "2026-11-17T09:12:00+02:00" },
+  ];
+
+  it("shows the raw times and offers clock-in after a clock-out", () => {
+    const today = todayClock({ day, events, corrections: [], recent: events, now });
+    expect(today).toMatchObject({ out: "2026-11-17T09:12:00+02:00", corrected: [], next: "in" });
+  });
+
+  it("shows an admin's corrected clock-out and still offers clock-out before it", () => {
+    const corrections = [{ day, field: "out", value: "2026-11-17T16:30:00+02:00" }];
+    const today = todayClock({ day, events, corrections, recent: events, now });
+    expect(today.out).toBe("2026-11-17T16:30:00+02:00");
+    expect(today.corrected).toEqual(["out"]);
+    expect(today.next).toBe("out");
+  });
+
+  it("offers clock-out again when a wrong clock-out was removed", () => {
+    const corrections = [{ day, field: "out", value: null }];
+    const today = todayClock({ day, events, corrections, recent: events, now });
+    expect(today.out).toBeNull();
+    expect(today.next).toBe("out");
+  });
+
+  it("ignores other days' corrections and falls back without a clock-in", () => {
+    const corrections = [{ day: "2026-11-16", field: "out", value: null }];
+    expect(todayClock({ day, events, corrections, recent: events, now }).next).toBe("in");
+    const lastNight = [{ kind: "in", at: "2026-11-16T22:00:00+02:00" }];
+    expect(todayClock({ day, events: [], corrections: [], recent: lastNight, now }).next).toBe(
+      "out",
+    );
   });
 });

@@ -229,3 +229,27 @@ describe("monthSheet", () => {
     expect(result.money.total).toBe(9500);
   });
 });
+
+describe("several taps in one day", () => {
+  it("pays from the first clock-in to the last clock-out and lists the taps between", () => {
+    const sheet = monthSheet({
+      rules: ADO_PRESET,
+      month: "2026-11",
+      baseSalary: 6000,
+      events: [
+        { kind: "in", at: "2026-11-17T08:20:00+02:00" },
+        { kind: "out", at: "2026-11-17T09:12:00+02:00" },
+        { kind: "in", at: "2026-11-17T09:44:00+02:00" },
+        { kind: "out", at: "2026-11-17T16:30:00+02:00" },
+      ],
+      corrections: [],
+      leaves: [],
+      holidays: [],
+    });
+    const row = sheet.rows.find((item) => item.day === "2026-11-17")!;
+    expect(row.in).toBe("2026-11-17T08:20:00+02:00");
+    expect(row.out).toBe("2026-11-17T16:30:00+02:00");
+    expect(row.between.map((event) => event.kind)).toEqual(["out", "in"]);
+    expect(row.earlyLeave).toBe(0);
+  });
+});

@@ -6,10 +6,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  nextClockKind,
   recordEvent,
+  todayClock,
   workKeys,
   type EventInput,
+  type WorkCorrection,
   type WorkEvent,
   type WorkMember,
   type WorkOrg,
@@ -43,6 +44,7 @@ export function ClockCard({
   places,
   today,
   recent,
+  corrections,
 }: {
   org: WorkOrg;
   rules: WorkRules;
@@ -52,6 +54,8 @@ export function ClockCard({
   today: WorkEvent[];
   /** Your events from the last day or so, to tell clock-in from clock-out. */
   recent: WorkEvent[];
+  /** This month's corrections for you; today's are shown on the card. */
+  corrections: WorkCorrection[];
 }) {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string | null>(null);
@@ -59,8 +63,10 @@ export function ClockCard({
   const [reason, setReason] = useState("");
   /** The last clock-in or clock-out, to offer posting it in WhatsApp. */
   const [toPost, setToPost] = useState<string | null>(null);
+  const day = new Date().toLocaleDateString("en-CA", { timeZone: rules.timezone });
+  const state = todayClock({ day, events: today, corrections, recent, now: Date.now() });
+  const kind = state.next;
   const clocks = today.filter((event) => event.kind !== "attempt");
-  const kind = nextClockKind(recent, Date.now());
   const allowed = (member.place_ids?.length
     ? places.filter((place) => member.place_ids!.includes(place.id))
     : places) as unknown as PlaceLike[];
@@ -172,6 +178,17 @@ export function ClockCard({
                   .join("  ·  ")
               : t("Not clocked in today.")}
           </p>
+          {state.corrected.length ? (
+            <p className="text-xs text-muted-foreground">
+              {`${t("Corrected by an admin")}: `}
+              {state.corrected
+                .map(
+                  (field) =>
+                    `${t(field === "in" ? "In" : "Out")} ${state[field] ? time(state[field]) : t("removed")}`,
+                )
+                .join("  ·  ")}
+            </p>
+          ) : null}
         </div>
         {canClockIn() ? (
           <Button
