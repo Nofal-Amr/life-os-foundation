@@ -16,7 +16,12 @@ describe("repository hygiene", () => {
   });
 
   it("has no committed third-party agent skills", () => {
-    expect(tracked(".agents", ".claude/skills", "skills-lock.json")).toEqual([]);
+    // The owner's own working rules (plain Markdown, no scripts) are the one exception.
+    const own = (file: string) =>
+      file.startsWith(".claude/skills/life-os/") && file.endsWith(".md");
+    expect(
+      tracked(".agents", ".claude/skills", "skills-lock.json").filter((file) => !own(file)),
+    ).toEqual([]);
     expect(tracked(".claude/agents").filter((file) => file.includes("impeccable"))).toEqual([]);
   });
 
