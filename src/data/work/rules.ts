@@ -124,6 +124,9 @@ export type ClockEvent = { kind: "in" | "out"; at: string; placeKind?: "office" 
 /** An admin's change to a day's time; `at: null` removes it. */
 export type Correction = { day: string; field: "in" | "out"; at: string | null; reason: string };
 export type Leave = { day: string; typeId: string };
+/** What an admin excused on a day: the late arrival, the early leave, both, or (none) nothing any more. */
+export type ExcuseCovers = "late" | "early" | "both" | "none";
+export type Excuse = { day: string; covers: ExcuseCovers };
 
 export type DayRow = {
   day: string;
@@ -138,6 +141,12 @@ export type DayRow = {
   overtime: number;
   site: boolean;
   corrected: ("in" | "out")[];
+  /**
+   * Excused by an admin: an excused late arrival costs nothing (no late
+   * minutes, no penalty, not counted on the ladder); an excused early leave
+   * costs no early-leave minutes.
+   */
+  excused: ("late" | "early")[];
   /** Before, on or after today: today and later days are never "absent". */
   when: "past" | "today" | "future";
   /**
@@ -315,6 +324,12 @@ export function dayTaps<T extends Tap>(
   return { in: inAt, out: outAt, corrected, taps, between };
 }
 
+function excusedOn(covers: ExcuseCovers | undefined): ("late" | "early")[] {
+  if (covers === "both") return ["late", "early"];
+  if (covers === "late" || covers === "early") return [covers];
+  return [];
+}
+
 /** The penalty for the n-th time this month (1-based): minutes, or a whole day. */
 export function ladderPenalty(
   penalty: { minutes: number[]; thenAdd: number; afterLast?: "add" | "day" },
@@ -343,6 +358,8 @@ export function monthSheet(input: {
   events: ClockEvent[];
   corrections: Correction[];
   leaves: Leave[];
+  /** An admin's excuses; for a day, the latest wins. */
+  excuses?: Excuse[];
   holidays: string[];
   /** Today ("yyyy-MM-dd", the company's time zone). Unset: the whole month is past. */
   today?: string;
@@ -356,6 +373,8 @@ export function monthSheet(input: {
   const clocks = clocksByDay(input.events, rules.timezone);
   const leaveByDay = new Map(input.leaves.map((leave) => [leave.day, leave.typeId]));
   const holidays = new Set(input.holidays);
+  const excuseByDay = new Map<string, ExcuseCovers>();
+  for (const excuse of input.excuses ?? []) excuseByDay.set(excuse.day, excuse.covers);
   let ladderCount = 0;
 
   const rows: DayRow[] = [];
@@ -401,6 +420,7 @@ export function monthSheet(input: {
       overtime: 0,
       site: kind !== "leave" && clock.in?.placeKind === "site",
       corrected,
+      excused: excusedOn(excuseByDay.get(day)),
       between: kind === "leave" ? [] : between,
       note: null,
       leaveTypeId,
@@ -416,9 +436,12 @@ export function monthSheet(input: {
     if (outMinutes === null && when !== "today") row.note = "no-clock-out";
 
     if (kind === "work") {
-      const step = [...steps]
-        .reverse()
-        .find((item) => inMinutes > clockMinutes(item.after) + (item.tolerance ?? 0));
+      // An excused late arrival costs nothing and isn't counted on the ladder.
+      const step = row.excused.includes("late")
+        ? undefined
+        : [...steps]
+            .reverse()
+            .find((item) => inMinutes > clockMinutes(item.after) + (item.tolerance ?? 0));
       if (step?.penalty.kind === "day") {
         row.dayPenalty = true;
       } else if (step?.penalty.kind === "ladder") {
@@ -426,7 +449,7 @@ export function monthSheet(input: {
         const result = ladderPenalty(step.penalty, ladderCount);
         row.penalty = result.minutes;
         row.dayPenalty = result.day;
-      } else {
+      } else if (!row.excused.includes("late")) {
         row.late = Math.max(0, inMinutes - (start + rules.graceMinutes));
       }
       if (outMinutes !== null && row.dayPenalty && rules.overtime.dayPenaltyAllOvertime) {
@@ -435,7 +458,8 @@ export function monthSheet(input: {
         const before = rules.overtime.beforeStart ? Math.max(0, start - inMinutes) : 0;
         const after = rules.overtime.afterEnd ? Math.max(0, outMinutes - end) : 0;
         row.overtime = before + after;
-        if (rules.earlyLeaveCounted) row.earlyLeave = Math.max(0, end - outMinutes);
+        if (rules.earlyLeaveCounted && !row.excused.includes("early"))
+          row.earlyLeave = Math.max(0, end - outMinutes);
       }
     } else if (outMinutes !== null && rules.overtime.dayOffAllOvertime) {
       row.overtime = Math.max(0, outMinutes - inMinutes);

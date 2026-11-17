@@ -175,6 +175,32 @@ describe("todayClock", () => {
   });
 });
 
+describe("excuses from corrections", () => {
+  it("reach the sheet, latest last, and unknown values mean none", () => {
+    const input = sheetInputFor({
+      member: { base_salary: 6000, overtime_rate: null },
+      rules: ADO_PRESET,
+      month: "2026-11",
+      events: [],
+      corrections: [
+        { day: "2026-11-02", field: "excuse", value: "late", reason: "Doctor" },
+        { day: "2026-11-03", field: "excuse", value: "both", reason: "Errand for the office" },
+        { day: "2026-11-02", field: "excuse", value: "nonsense", reason: "." },
+      ],
+      leaves: [],
+      holidays: [],
+      today: "2026-11-17",
+    });
+    expect(input.excuses).toEqual([
+      { day: "2026-11-02", covers: "late" },
+      { day: "2026-11-03", covers: "both" },
+      { day: "2026-11-02", covers: "none" },
+    ]);
+    expect(input.corrections).toEqual([]);
+    expect(input.leaves).toEqual([]);
+  });
+});
+
 describe("official holidays", () => {
   it("default to none and reach the sheet from the rules", () => {
     expect(readRules({}).holidays).toEqual([]);

@@ -122,11 +122,23 @@ export function MonthSheetView({
                           <span className="text-destructive">{t("No clock-out")}</span>
                         )}
                       </td>
-                      <td className="px-2 py-1.5">{row.late || ""}</td>
+                      <td className="px-2 py-1.5">
+                        {row.excused.includes("late") ? (
+                          <span className="text-xs text-muted-foreground">{t("Excused")}</span>
+                        ) : (
+                          row.late || ""
+                        )}
+                      </td>
                       <td className="px-2 py-1.5">
                         {row.dayPenalty ? t("A day") : row.penalty || ""}
                       </td>
-                      <td className="px-2 py-1.5">{row.earlyLeave || ""}</td>
+                      <td className="px-2 py-1.5">
+                        {row.excused.includes("early") ? (
+                          <span className="text-xs text-muted-foreground">{t("Excused")}</span>
+                        ) : (
+                          row.earlyLeave || ""
+                        )}
+                      </td>
                       <td className="px-2 py-1.5">
                         {row.overtime || ""}
                         {workedOff ? (
@@ -227,8 +239,16 @@ export function MonthSheetView({
           {corrections.map((item, index) => (
             <p key={`${item.day}-${index}`}>
               {Number(item.day.slice(8))} ·{" "}
-              {t(item.field === "leave" ? "Leave" : item.field === "in" ? "In" : "Out")}:{" "}
-              {item.reason}
+              {t(
+                item.field === "leave"
+                  ? "Leave"
+                  : item.field === "excuse"
+                    ? "Excused"
+                    : item.field === "in"
+                      ? "In"
+                      : "Out",
+              )}
+              : {item.reason}
             </p>
           ))}
         </div>

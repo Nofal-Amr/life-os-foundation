@@ -32,7 +32,7 @@ import {
   type WorkMember,
   type WorkOrg,
 } from "@/data/work/api";
-import { monthSheet, type DayRow, type WorkRules } from "@/data/work/rules";
+import { monthSheet, type DayRow, type WorkRules, type ExcuseCovers } from "@/data/work/rules";
 import { exportSheets } from "@/data/work/sheetExport";
 import { t } from "@/lib/i18n";
 import { saveFile } from "@/lib/native";
@@ -279,9 +279,12 @@ function CorrectionDialog({
   rules: WorkRules;
   /** This person's paid vacation this year. */
   allowance: { used: number; total: number } | null;
-  onSave: (field: "in" | "out" | "leave", value: string | null, reason: string) => void;
+  onSave: (field: "in" | "out" | "leave" | "excuse", value: string | null, reason: string) => void;
 }) {
-  const [field, setField] = useState<"in" | "out" | "leave" | "remove-in" | "remove-out">("out");
+  const [field, setField] = useState<
+    "in" | "out" | "leave" | "excuse" | "remove-in" | "remove-out"
+  >("out");
+  const [covers, setCovers] = useState<ExcuseCovers>("late");
   const [clock, setClock] = useState("16:30");
   const [leave, setLeave] = useState(rules.leaveTypes[0]?.id ?? "");
   const [reason, setReason] = useState("");
@@ -303,7 +306,11 @@ function CorrectionDialog({
             else
               onSave(
                 field,
-                field === "leave" ? leave : zonedIso(day.row.day, clock, rules.timezone),
+                field === "leave"
+                  ? leave
+                  : field === "excuse"
+                    ? covers
+                    : zonedIso(day.row.day, clock, rules.timezone),
                 reason.trim(),
               );
             setReason("");
@@ -321,6 +328,7 @@ function CorrectionDialog({
             ) : null}
             {day.row.in ? <option value="remove-in">{t("Remove the clock-in")}</option> : null}
             <option value="leave">{t("Mark as leave")}</option>
+            <option value="excuse">{t("Excuse (late or early leave doesn't count)")}</option>
           </select>
           {field === "leave" ? (
             <select
@@ -350,6 +358,21 @@ function CorrectionDialog({
                 ? `. ${t("This day goes past their allowance; it can still be saved.")}`
                 : ""}
             </p>
+          ) : null}
+          {field === "excuse" ? (
+            <select
+              aria-label={t("What is excused")}
+              className="h-10 w-full rounded-lg border border-border bg-card px-2 text-sm"
+              value={covers}
+              onChange={(event) => setCovers(event.target.value as ExcuseCovers)}
+            >
+              <option value="late">{t("The late arrival")}</option>
+              <option value="early">{t("The early leave")}</option>
+              <option value="both">{t("Both")}</option>
+              {day.row.excused.length ? (
+                <option value="none">{t("Take the excuse back")}</option>
+              ) : null}
+            </select>
           ) : null}
           {field === "in" || field === "out" ? (
             <Input type="time" value={clock} onChange={(event) => setClock(event.target.value)} />
