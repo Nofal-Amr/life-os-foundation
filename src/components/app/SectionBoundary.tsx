@@ -10,17 +10,17 @@ export class SectionBoundary extends Component<
   { children: ReactNode; label?: string },
   { failed: boolean }
 > {
-  state = { failed: false };
+  override state = { failed: false };
 
   static getDerivedStateFromError() {
     return { failed: true };
   }
 
-  componentDidCatch(error: unknown) {
+  override componentDidCatch(error: unknown) {
     console.error("Section failed", this.props.label ?? "", error);
   }
 
-  render() {
+  override render() {
     if (!this.state.failed) return this.props.children;
     return (
       <div role="alert" className="rounded-xl border border-border bg-card p-4 text-sm">

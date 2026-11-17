@@ -108,7 +108,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
     ],
   }),
   validateSearch: (search: Record<string, unknown>): { section?: SettingsSectionKey } => {
-    const section = settingsSection(search.section);
+    const section = settingsSection(search["section"]);
     return section ? { section } : {};
   },
   component: SettingsPage,
