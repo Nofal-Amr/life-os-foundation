@@ -89,11 +89,96 @@ export function islamicDays(year: number): Holiday[] {
   return out;
 }
 
+/* ------------------------------------------- official Islamic days off */
+
+type OfficialDay = {
+  /** Matches the same holiday under the source's spelling. */
+  family: RegExp;
+  month: number;
+  days: number[];
+  name: string;
+  localName: string;
+};
+
+/**
+ * The Islamic days a country gives off. The public-holiday source misses
+ * some of them for some countries (for Egypt in 2026: Eid al-Fitr and the Day
+ * of Arafah), so they're filled in from the Hijri calendar, as expected dates.
+ */
+const OFFICIAL_ISLAMIC: Record<string, OfficialDay[]> = {
+  EG: [
+    {
+      family: /fitr/i,
+      month: 10,
+      days: [1, 2, 3],
+      name: "Eid al-Fitr",
+      localName: "عيد الفطر",
+    },
+    { family: /arafa/i, month: 12, days: [9], name: "Day of Arafah", localName: "يوم عرفة" },
+    {
+      family: /adha/i,
+      month: 12,
+      days: [10, 11, 12, 13],
+      name: "Eid al-Adha",
+      localName: "عيد الأضحى",
+    },
+    {
+      family: /islamic new year|hijri/i,
+      month: 1,
+      days: [1],
+      name: "Islamic New Year",
+      localName: "رأس السنة الهجرية",
+    },
+    {
+      family: /prophet|mawlid/i,
+      month: 3,
+      days: [12],
+      name: "Mawlid an-Nabi",
+      localName: "المولد النبوي",
+    },
+  ],
+};
+
+/**
+ * A country's public holidays with its official Islamic days added where the
+ * source has none of that holiday this year. Days the source already lists
+ * (often moved to a Thursday by decree) are kept as they are.
+ */
+export function withOfficialIslamicDays(list: Holiday[], year: number, country: string): Holiday[] {
+  const official = OFFICIAL_ISLAMIC[country.toUpperCase()];
+  if (!official) return list;
+  const added: Holiday[] = [];
+  for (const holiday of official) {
+    if (list.some((item) => holiday.family.test(item.name))) continue;
+    for (
+      let date = new Date(year, 0, 1, 12);
+      date.getFullYear() === year;
+      date = addDays(date, 1)
+    ) {
+      const { month, day } = hijriOf(date);
+      if (month !== holiday.month || !holiday.days.includes(day)) continue;
+      const nth = holiday.days.length > 1 ? holiday.days.indexOf(day) + 1 : 0;
+      added.push({
+        date: format(date, "yyyy-MM-dd"),
+        name: nth ? `${holiday.name} (day ${nth})` : holiday.name,
+        localName: nth ? `${holiday.localName} (${"١٢٣٤"[nth - 1]})` : holiday.localName,
+        kind: "islamic",
+      });
+    }
+  }
+  return [...list, ...added].sort((a, b) => a.date.localeCompare(b.date));
+}
+
 /* ------------------------------------------------------ public holidays */
 
 type NagerHoliday = { date: string; name: string; localName: string };
 
+/** A country's public holidays for a year, with its official Islamic days filled in. */
 export async function publicHolidays(year: number, country: string): Promise<Holiday[]> {
+  return withOfficialIslamicDays(await sourceHolidays(year, country), year, country);
+}
+
+async function sourceHolidays(year: number, country: string): Promise<Holiday[]> {
   const cacheKey = `holidays:${country}:${year}`;
   try {
     const cached = localStorage.getItem(cacheKey);
@@ -147,7 +232,11 @@ export const holidaysQuery = (settings: HolidaySettings, year = new Date().getFu
             // Offline and not cached yet: Islamic days still show.
           }
         }
-        if (settings.islamic) list.push(...islamicDays(y));
+        if (settings.islamic) {
+          // A day the country list already has (an Eid filled in above) is shown once.
+          const taken = new Set(list.map((item) => item.date));
+          list.push(...islamicDays(y).filter((item) => !taken.has(item.date)));
+        }
       }
       return list.sort((a, b) => a.date.localeCompare(b.date));
     },
