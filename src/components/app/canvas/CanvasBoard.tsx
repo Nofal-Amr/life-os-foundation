@@ -43,6 +43,7 @@ import { dailyDateOf, dailyTitle } from "@/data/dailyNotes";
 import { checklistOf, isLockedNote, type Note } from "@/data/notes";
 import { useT } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 type Selection = { type: "card" | "edge"; id: string } | null;
 
@@ -610,7 +611,7 @@ export function CanvasBoard({
                             isSel ? "border-primary" : "border-border",
                           )}
                         >
-                          {edge.label}
+                          {t(edge.label)}
                         </button>
                       </div>
                     </foreignObject>
@@ -1135,7 +1136,7 @@ function LinkDialog({
             className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
           <div className="flex justify-end">
-            <Button type="submit">Add</Button>
+            <Button type="submit">{t("Add")}</Button>
           </div>
         </form>
       </DialogContent>

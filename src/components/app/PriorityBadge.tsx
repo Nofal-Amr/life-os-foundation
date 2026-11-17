@@ -1,5 +1,6 @@
 import { PRIORITY_STYLE, type Priority } from "@/data/focus";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** A priority's colour and its word together; low priority shows nothing. */
 export function PriorityBadge({
@@ -22,7 +23,7 @@ export function PriorityBadge({
         background: `color-mix(in oklch, ${style.color} 14%, transparent)`,
       }}
     >
-      {style.label}
+      {t(style.label)}
     </span>
   );
 }

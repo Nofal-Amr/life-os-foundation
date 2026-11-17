@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Info, Wallet } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -50,6 +50,7 @@ import { hasEnoughPoints, paydayCycle, weeklySpendByCategory } from "@/data/stat
 import { usePreferences } from "@/hooks/usePreferences";
 import { availabilityTone } from "@/lib/semantics";
 import { RecurringList } from "./finance.recurring";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/finance/")({
   head: () => ({
@@ -165,7 +166,7 @@ function FinanceOverview() {
         description="Everything here comes from what you have logged."
         actions={
           <Button asChild variant="outline">
-            <Link to="/finance/accounts">Accounts</Link>
+            <Link to="/finance/accounts">{t("Accounts")}</Link>
           </Button>
         }
       />
@@ -192,7 +193,7 @@ function FinanceOverview() {
             {setup && hasAccounts ? (
               <>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Left to spend before payday
+                  {t("Left to spend before payday")}
                 </p>
                 <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight sm:mt-2 sm:text-6xl">
                   <AnimatedNumber value={fmtMoney(totals.available)} />
@@ -202,7 +203,7 @@ function FinanceOverview() {
                   safety buffer.
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Spent today:{" "}
+                  {t("Spent today:")}{" "}
                   <span className="font-medium tabular-nums text-foreground">
                     {fmtMoney(spentToday)}
                   </span>
@@ -220,22 +221,24 @@ function FinanceOverview() {
                       trigger={
                         <Button type="button" size="sm" variant="outline">
                           <Info className="size-4" />
-                          How this is worked out
+                          {t("How this is worked out")}
                         </Button>
                       }
                     />
                   </div>
                   <dl className="grid min-w-0 gap-3 text-sm sm:grid-cols-3">
                     <div>
-                      <dt className="text-muted-foreground">Recurring costs before payday</dt>
+                      <dt className="text-muted-foreground">
+                        {t("Recurring costs before payday")}
+                      </dt>
                       <dd className="tabular-nums">{fmtMoney(totals.committed)}</dd>
                     </div>
                     <div>
-                      <dt className="text-muted-foreground">Safety buffer</dt>
+                      <dt className="text-muted-foreground">{t("Safety buffer")}</dt>
                       <dd className="tabular-nums">{fmtMoney(totals.buffer)}</dd>
                     </div>
                     <div>
-                      <dt className="text-muted-foreground">Next payday</dt>
+                      <dt className="text-muted-foreground">{t("Next payday")}</dt>
                       <dd className="tabular-nums">
                         {nextDate
                           ? `${fmtDate(format(nextDate, "yyyy-MM-dd"))} · ${
@@ -260,7 +263,7 @@ function FinanceOverview() {
                       }}
                     >
                       <div className="min-w-0 space-y-2">
-                        <Label htmlFor="overview-expected">Expected net pay</Label>
+                        <Label htmlFor="overview-expected">{t("Expected net pay")}</Label>
                         <Input
                           id="overview-expected"
                           type="number"
@@ -271,7 +274,7 @@ function FinanceOverview() {
                         />
                       </div>
                       <div className="min-w-0 space-y-2">
-                        <Label htmlFor="overview-buffer">Safety buffer</Label>
+                        <Label htmlFor="overview-buffer">{t("Safety buffer")}</Label>
                         <Input
                           id="overview-buffer"
                           type="number"
@@ -283,7 +286,7 @@ function FinanceOverview() {
                       </div>
                       <div className="flex gap-2">
                         <Button type="submit" disabled={saveMoneySetup.isPending}>
-                          Save
+                          {t("Save")}
                         </Button>
                         <Button
                           type="button"
@@ -318,7 +321,9 @@ function FinanceOverview() {
               </>
             ) : (
               <>
-                <p className="text-sm font-medium text-muted-foreground">Balance you can spend</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t("Balance you can spend")}
+                </p>
                 <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight sm:mt-2 sm:text-6xl">
                   {hasAccounts ? <AnimatedNumber value={fmtMoney(totals.liquid)} /> : "—"}
                 </p>
@@ -334,24 +339,26 @@ function FinanceOverview() {
                 {!hasAccounts ? (
                   <div className="mt-3 flex flex-wrap items-center gap-3">
                     <p className="text-sm text-muted-foreground">
-                      Nothing logged yet. Add an account with its opening balance to see your
-                      figure.
+                      {t(
+                        "Nothing logged yet. Add an account with its opening balance to see your figure.",
+                      )}
                     </p>
                     <Button asChild size="sm">
                       <Link to="/finance/accounts" search={{ new: true }}>
-                        Add an account
+                        {t("Add an account")}
                       </Link>
                     </Button>
                   </div>
                 ) : (
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     <p className="text-sm text-muted-foreground">
-                      Tell Life OS when you are paid and it can show what is free to spend before
-                      then.
+                      {t(
+                        "Tell Life OS when you are paid and it can show what is free to spend before then.",
+                      )}
                     </p>
                     <Button asChild size="sm" variant="outline">
                       <Link to="/settings" search={{ section: "money" }}>
-                        Set up payday
+                        {t("Set up payday")}
                       </Link>
                     </Button>
                   </div>
@@ -378,13 +385,13 @@ function FinanceOverview() {
                 ) : (
                   <StatCard title="Payday cycle" icon={CalendarDays}>
                     <p className="text-sm text-muted-foreground">
-                      Set your payday in{" "}
+                      {t("Set your payday in")}{" "}
                       <Link
                         to="/settings"
                         search={{ section: "money" }}
                         className="text-foreground underline underline-offset-4"
                       >
-                        Settings
+                        {t("Settings")}
                       </Link>{" "}
                       to see how far through the cycle you are.
                     </p>
@@ -394,7 +401,7 @@ function FinanceOverview() {
                 {categories.error ? (
                   <StatCard title="Spending per week" icon={Wallet}>
                     <p className="text-sm text-muted-foreground">
-                      Categories could not be loaded, so this chart is paused.
+                      {t("Categories could not be loaded, so this chart is paused.")}
                     </p>
                   </StatCard>
                 ) : categories.data && hasEnoughPoints(spend.rows) ? (
@@ -437,7 +444,7 @@ function FinanceOverview() {
                   )}
                 </p>
                 <Button asChild size="sm" variant="ghost">
-                  <Link to="/finance/recurring">Manage</Link>
+                  <Link to="/finance/recurring">{t("Manage")}</Link>
                 </Button>
               </div>
               <RecurringList compact />
@@ -462,14 +469,14 @@ function MoneyActions({ onAdd }: { onAdd: (kind: "expense" | "income") => void }
     <div className="mt-5 flex flex-wrap gap-2">
       <Button type="button" onClick={() => onAdd("expense")}>
         <ArrowUpRight className="size-4" aria-hidden="true" />
-        Add spending
+        {t("Add spending")}
       </Button>
       <Button type="button" variant="outline" onClick={() => onAdd("income")}>
         <ArrowDownLeft className="size-4" aria-hidden="true" />
-        Add income
+        {t("Add income")}
       </Button>
       <Button asChild variant="ghost">
-        <Link to="/finance/transactions">All transactions</Link>
+        <Link to="/finance/transactions">{t("All transactions")}</Link>
       </Button>
     </div>
   );
@@ -479,8 +486,8 @@ function MoneyActions({ onAdd }: { onAdd: (kind: "expense" | "income") => void }
 function KeptSeparate({ amount, names }: { amount: string; names: string[] }) {
   return (
     <p className="text-sm text-muted-foreground">
-      Kept separate, not in this figure:{" "}
-      <span className="tabular-nums text-foreground">{amount}</span> in {names.join(", ")}.
+      {t("Kept separate, not in this figure:")}{" "}
+      <span className="tabular-nums text-foreground">{amount}</span> {t("in")} {names.join(", ")}.
     </p>
   );
 }

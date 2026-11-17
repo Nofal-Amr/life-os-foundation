@@ -3,7 +3,8 @@
  * today. Starting one only creates ordinary tasks — change, move or delete
  * any of them afterwards.
  */
-import { addDays, format } from "date-fns";
+import { addDays } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { createProject } from "./projects";
 import { createTask } from "./tasks";

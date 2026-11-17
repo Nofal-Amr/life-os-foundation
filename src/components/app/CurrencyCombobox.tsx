@@ -14,6 +14,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CURRENCIES, isValidCurrencyCode } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export function CurrencyCombobox({
   value,
@@ -61,16 +62,16 @@ export function CurrencyCombobox({
             <CommandGroup>
               <CommandItem value="plain" onSelect={() => choose(null)}>
                 <Check className={cn("size-4", value !== null && "opacity-0")} />
-                Plain numbers
+                {t("Plain numbers")}
               </CommandItem>
               {custom ? (
                 <CommandItem value={code} onSelect={() => choose(code)}>
                   <Check className={cn("size-4", value !== code && "opacity-0")} />
-                  Use {code}
+                  {t("Use")} {code}
                 </CommandItem>
               ) : null}
               {CURRENCIES.filter((item) =>
-                `${item.value} ${item.label}`.toLowerCase().includes(search.toLowerCase()),
+                `${item.value} ${t(item.label)}`.toLowerCase().includes(search.toLowerCase()),
               ).map((item) => (
                 <CommandItem
                   key={item.value}
@@ -78,7 +79,7 @@ export function CurrencyCombobox({
                   onSelect={() => choose(item.value)}
                 >
                   <Check className={cn("size-4", value !== item.value && "opacity-0")} />
-                  {item.label}
+                  {t(item.label)}
                 </CommandItem>
               ))}
             </CommandGroup>

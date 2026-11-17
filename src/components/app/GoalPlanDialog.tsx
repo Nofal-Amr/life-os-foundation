@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addWeeks, format } from "date-fns";
+import { addWeeks } from "date-fns";
+import { format } from "@/lib/dates";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -94,7 +95,7 @@ export function GoalPlanDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Plan the steps</DialogTitle>
+          <DialogTitle>{t("Plan the steps")}</DialogTitle>
           <DialogDescription>
             {goal
               ? `${goal.name} · ${t("One step per line, in order. A time at the end is its estimate, like “· 45m” or “1h 30m”.")}`

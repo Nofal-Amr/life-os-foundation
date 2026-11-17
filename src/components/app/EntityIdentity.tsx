@@ -203,6 +203,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export type EntityIdentityValue = { icon: string | null; color: string | null };
 
@@ -1316,7 +1317,9 @@ export function EntityIdentityPicker({
     const term = search.trim().toLowerCase();
     const matches = term
       ? ICONS.filter((item) =>
-          `${item.label} ${item.keywords} ${item.group} ${item.name}`.toLowerCase().includes(term),
+          `${t(item.label)} ${item.keywords} ${item.group} ${item.name}`
+            .toLowerCase()
+            .includes(term),
         )
       : ICONS;
     return GROUP_ORDER.map((group) => ({
@@ -1328,7 +1331,7 @@ export function EntityIdentityPicker({
   return (
     <div className="grid min-w-0 gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
       <div className="min-w-0 space-y-2">
-        <Label>Icon</Label>
+        <Label>{t("Icon")}</Label>
         <Button
           type="button"
           variant="outline"
@@ -1349,8 +1352,10 @@ export function EntityIdentityPicker({
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="flex max-h-[85vh] flex-col sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Choose an icon</DialogTitle>
-              <DialogDescription>Search by name or scroll through the groups.</DialogDescription>
+              <DialogTitle>{t("Choose an icon")}</DialogTitle>
+              <DialogDescription>
+                {t("Search by name or scroll through the groups.")}
+              </DialogDescription>
             </DialogHeader>
 
             <Input
@@ -1364,7 +1369,9 @@ export function EntityIdentityPicker({
 
             <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain">
               {groups.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No matching icon.</p>
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  {t("No matching icon.")}
+                </p>
               ) : (
                 <div className="space-y-4 pb-2">
                   {groups.map((entry) => (
@@ -1422,7 +1429,7 @@ export function EntityIdentityPicker({
         </Dialog>
       </div>
       <fieldset className="min-w-0 space-y-2">
-        <legend className="text-sm font-medium">Colour</legend>
+        <legend className="text-sm font-medium">{t("Colour")}</legend>
         <div className="flex min-h-12 flex-wrap items-center gap-2">
           {ENTITY_COLORS.map((item) => (
             <button

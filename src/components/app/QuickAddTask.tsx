@@ -14,6 +14,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createTask, splitTaskLines, taskKeys } from "@/data/tasks";
+import { t } from "@/lib/i18n";
 
 /**
  * One-step task capture: a title is the only thing required, and a list can go
@@ -59,9 +60,9 @@ export function QuickAddTaskDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Quick add task</DialogTitle>
+          <DialogTitle>{t("Quick add task")}</DialogTitle>
           <DialogDescription>
-            Just a title. Put each task on its own line to add several at once.
+            {t("Just a title. Put each task on its own line to add several at once.")}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -72,7 +73,7 @@ export function QuickAddTaskDialog({
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="quick-task-title">What needs doing?</Label>
+            <Label htmlFor="quick-task-title">{t("What needs doing?")}</Label>
             <Textarea
               id="quick-task-title"
               autoFocus

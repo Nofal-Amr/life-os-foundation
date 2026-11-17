@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth/update-password")({
   ssr: false,
@@ -48,9 +49,9 @@ function UpdatePasswordPage() {
           submit();
         }}
       >
-        <h1 className="text-lg font-semibold tracking-tight">Choose a new password</h1>
+        <h1 className="text-lg font-semibold tracking-tight">{t("Choose a new password")}</h1>
         <div className="space-y-2">
-          <Label htmlFor="new-password">New password</Label>
+          <Label htmlFor="new-password">{t("New password")}</Label>
           <Input
             id="new-password"
             type="password"

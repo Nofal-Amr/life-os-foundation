@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const KEY = "life-os:more";
 
@@ -92,7 +93,7 @@ export function MoreSections({
                   : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
-              {section.props.title}
+              {t(section.props.title)}
             </button>
           );
         })}

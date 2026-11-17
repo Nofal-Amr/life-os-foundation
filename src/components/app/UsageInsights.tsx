@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { analyticsEnabled, setAnalyticsEnabled } from "@/lib/analytics";
+import { t } from "@/lib/i18n";
 
 type Row = {
   name: string;
@@ -60,10 +61,11 @@ export function UsageInsights() {
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-base">How you use Life OS</CardTitle>
+            <CardTitle className="text-base">{t("How you use Life OS")}</CardTitle>
             <CardDescription>
-              Private: screens and actions are logged only to your own account, to find what takes
-              too many taps. Nothing leaves your Supabase.
+              {t(
+                "Private: screens and actions are logged only to your own account, to find what takes too many taps. Nothing leaves your Supabase.",
+              )}
             </CardDescription>
           </div>
           <Switch
@@ -79,14 +81,18 @@ export function UsageInsights() {
       <CardContent>
         {events.error ? (
           <p className="text-sm text-muted-foreground">
-            Run the latest SQL migration to start the usage log.
+            {t("Run the latest SQL migration to start the usage log.")}
           </p>
         ) : !rows.length ? (
-          <p className="text-sm text-muted-foreground">Nothing logged in the last 30 days yet.</p>
+          <p className="text-sm text-muted-foreground">
+            {t("Nothing logged in the last 30 days yet.")}
+          </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">Screens · 30 days</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
+                {t("Screens · 30 days")}
+              </p>
               <ul className="space-y-1 text-sm">
                 {topScreens.map(([screen, stats]) => (
                   <li key={screen} className="flex justify-between gap-3">
@@ -100,7 +106,9 @@ export function UsageInsights() {
               </ul>
             </div>
             <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">Actions · 30 days</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
+                {t("Actions · 30 days")}
+              </p>
               <ul className="space-y-1 text-sm">
                 {topActions.length ? (
                   topActions.map(([name, count]) => (
@@ -110,7 +118,7 @@ export function UsageInsights() {
                     </li>
                   ))
                 ) : (
-                  <li className="text-muted-foreground">No actions yet.</li>
+                  <li className="text-muted-foreground">{t("No actions yet.")}</li>
                 )}
               </ul>
             </div>

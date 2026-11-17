@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { format, isToday, isTomorrow, parseISO } from "date-fns";
+import { isToday, isTomorrow, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import {
   CalendarDays,
   Copy,
@@ -51,6 +52,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/together")({
   head: () => ({
@@ -186,10 +188,10 @@ function StartOrJoin({ first, onDone }: { first: boolean; onDone: (id: string) =
     <section className={cn("space-y-4", !first && "mt-8 border-t border-border pt-6")}>
       <div className="flex flex-wrap gap-2">
         <Button variant={mode === "start" ? "default" : "outline"} onClick={() => setMode("start")}>
-          <Plus className="size-4" /> Start a space
+          <Plus className="size-4" /> {t("Start a space")}
         </Button>
         <Button variant={mode === "join" ? "default" : "outline"} onClick={() => setMode("join")}>
-          <Users className="size-4" /> Join with a code
+          <Users className="size-4" /> {t("Join with a code")}
         </Button>
       </div>
 
@@ -204,7 +206,7 @@ function StartOrJoin({ first, onDone }: { first: boolean; onDone: (id: string) =
         >
           {mode === "start" ? (
             <div className="space-y-2">
-              <Label htmlFor="pod-name">Name of the space</Label>
+              <Label htmlFor="pod-name">{t("Name of the space")}</Label>
               <Input
                 id="pod-name"
                 className="h-11"
@@ -215,7 +217,7 @@ function StartOrJoin({ first, onDone }: { first: boolean; onDone: (id: string) =
             </div>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="pod-code">Invite code</Label>
+              <Label htmlFor="pod-code">{t("Invite code")}</Label>
               <Input
                 id="pod-code"
                 className="h-12 font-mono text-xl tracking-[0.3em] uppercase"
@@ -230,7 +232,7 @@ function StartOrJoin({ first, onDone }: { first: boolean; onDone: (id: string) =
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="pod-me">Your name there</Label>
+            <Label htmlFor="pod-me">{t("Your name there")}</Label>
             <Input
               id="pod-me"
               className="h-11"
@@ -247,8 +249,9 @@ function StartOrJoin({ first, onDone }: { first: boolean; onDone: (id: string) =
             {mode === "start" ? "Create" : "Join"}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Members see the space's calendar and lists, and each other's names. Nothing else from
-            your Life OS.
+            {t(
+              "Members see the space's calendar and lists, and each other's names. Nothing else from your Life OS.",
+            )}
           </p>
         </form>
       ) : null}
@@ -316,13 +319,13 @@ function Space({ pod, onChanged }: { pod: Pod; onChanged: () => void }) {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-muted-foreground">Invite code</p>
+            <p className="text-xs text-muted-foreground">{t("Invite code")}</p>
             <p className="font-mono text-2xl font-semibold tracking-[0.25em]">{pod.invite_code}</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => void share()}>
-            <Share2 className="size-4" /> Invite
+            <Share2 className="size-4" /> {t("Invite")}
           </Button>
           <Button
             size="sm"
@@ -333,7 +336,7 @@ function Space({ pod, onChanged }: { pod: Pod; onChanged: () => void }) {
                 .then(() => toast.success("Code copied."))
             }
           >
-            <Copy className="size-4" /> Copy code
+            <Copy className="size-4" /> {t("Copy code")}
           </Button>
           {owner ? (
             <Button
@@ -342,11 +345,11 @@ function Space({ pod, onChanged }: { pod: Pod; onChanged: () => void }) {
               onClick={() => renew.mutate()}
               disabled={renew.isPending}
             >
-              <RefreshCw className="size-4" /> New code
+              <RefreshCw className="size-4" /> {t("New code")}
             </Button>
           ) : null}
           <Button size="sm" variant="ghost" onClick={() => setLeaving(true)}>
-            <LogOut className="size-4" /> Leave
+            <LogOut className="size-4" /> {t("Leave")}
           </Button>
         </div>
       </section>
@@ -369,7 +372,7 @@ function Space({ pod, onChanged }: { pod: Pod; onChanged: () => void }) {
               tab === option.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
             )}
           >
-            <option.icon className="size-4" /> {option.label}
+            <option.icon className="size-4" /> {t(option.label)}
           </button>
         ))}
       </div>
@@ -446,7 +449,7 @@ function Lists({ pod }: { pod: Pod }) {
           onChange={(e) => setNewList(e.target.value)}
         />
         <Button type="submit" className="h-11" disabled={!newList.trim() || add.isPending}>
-          Add list
+          {t("Add list")}
         </Button>
       </form>
     </div>
@@ -504,7 +507,7 @@ function ListCard({
   return (
     <section className="stat-card space-y-3 p-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="font-semibold">{list.title}</p>
+        <p className="font-semibold">{t(list.title)}</p>
         <div className="flex gap-1">
           {doneCount ? (
             <Button size="sm" variant="ghost" onClick={() => clear.mutate()}>
@@ -514,7 +517,7 @@ function ListCard({
           <Button
             size="icon"
             variant="ghost"
-            aria-label={`Delete ${list.title}`}
+            aria-label={`Delete ${t(list.title)}`}
             onClick={() => setRemoving(true)}
           >
             <Trash2 className="size-4" />
@@ -562,13 +565,13 @@ function ListCard({
           onChange={(e) => setText(e.target.value)}
         />
         <Button type="submit" className="h-11" disabled={!text.trim() || add.isPending}>
-          Add
+          {t("Add")}
         </Button>
       </form>
       <ConfirmDialog
         open={removing}
         onOpenChange={setRemoving}
-        title={`Delete "${list.title}" for everyone?`}
+        title={`Delete "${t(list.title)}" for everyone?`}
         description="Everyone in the space loses this list and its items."
         onConfirm={() => drop.mutate()}
       />
@@ -631,7 +634,7 @@ function SharedCalendar({ pod }: { pod: Pod }) {
         }}
       >
         <div className="space-y-1.5">
-          <Label htmlFor="pod-event">What</Label>
+          <Label htmlFor="pod-event">{t("What")}</Label>
           <Input
             id="pod-event"
             className="h-11"
@@ -642,11 +645,11 @@ function SharedCalendar({ pod }: { pod: Pod }) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="pod-date">Day</Label>
+          <Label htmlFor="pod-date">{t("Day")}</Label>
           <DatePicker id="pod-date" value={date} onChange={(value) => value && setDate(value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="pod-time">Time (optional)</Label>
+          <Label htmlFor="pod-time">{t("Time (optional)")}</Label>
           <Input
             id="pod-time"
             type="time"
@@ -656,7 +659,7 @@ function SharedCalendar({ pod }: { pod: Pod }) {
           />
         </div>
         <Button type="submit" className="h-11" disabled={!title.trim() || add.isPending}>
-          Add
+          {t("Add")}
         </Button>
       </form>
 
@@ -698,7 +701,7 @@ function SharedCalendar({ pod }: { pod: Pod }) {
           );
         })
       ) : (
-        <p className="text-sm text-muted-foreground">Nothing on the shared calendar yet.</p>
+        <p className="text-sm text-muted-foreground">{t("Nothing on the shared calendar yet.")}</p>
       )}
     </div>
   );

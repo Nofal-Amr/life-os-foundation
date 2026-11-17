@@ -75,6 +75,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { PriorityBadge } from "@/components/app/PriorityBadge";
 import { taskStatusLabel, taskStatusTone } from "@/lib/semantics";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/tasks")({
   head: () => ({
@@ -394,7 +395,7 @@ function TasksPage() {
       <PageHeader
         title="Tasks"
         description="One list, filtered by when it matters."
-        actions={<Button onClick={openCreate}>New task</Button>}
+        actions={<Button onClick={openCreate}>{t("New task")}</Button>}
       />
 
       {tasks.isLoading || tasks.error ? null : (
@@ -422,7 +423,7 @@ function TasksPage() {
         <TabsList className="flex-wrap">
           {FILTERS.map((f) => (
             <TabsTrigger key={f.value} value={f.value}>
-              {f.label}
+              {t(f.label)}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -436,7 +437,7 @@ function TasksPage() {
         <EmptyState
           title="Nothing here"
           description="Tasks are the single next things you owe yourself. Write one down so it is not held in your head."
-          action={<Button onClick={openCreate}>New task</Button>}
+          action={<Button onClick={openCreate}>{t("New task")}</Button>}
         />
       ) : (
         <RowList>
@@ -506,10 +507,14 @@ function TasksPage() {
                         {formatMinutes(tracked.get(task.id)!)} tracked
                       </span>
                     ) : null}
-                    {stuck ? <span>Waiting {stuckDays.get(task.id)} days</span> : null}
+                    {stuck ? (
+                      <span>
+                        {t("Waiting")} {stuckDays.get(task.id)} days
+                      </span>
+                    ) : null}
                     {moved ? (
                       <span>
-                        Moved {task.postponed_count} times
+                        {t("Moved")} {task.postponed_count} times
                         {task.original_due_date ? ` since ${fmtDate(task.original_due_date)}` : ""}
                       </span>
                     ) : null}
@@ -607,7 +612,7 @@ function TasksPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
+          <Label htmlFor="title">{t("Title")}</Label>
           <Input
             id="title"
             required
@@ -617,7 +622,7 @@ function TasksPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="task-due">Due date</Label>
+            <Label htmlFor="task-due">{t("Due date")}</Label>
             <DatePicker
               id="task-due"
               value={form.due_date}
@@ -625,7 +630,7 @@ function TasksPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Project</Label>
+            <Label>{t("Project")}</Label>
             <Select
               value={form.project_id ?? NO_PROJECT}
               onValueChange={(v) => {
@@ -641,8 +646,8 @@ function TasksPage() {
                 <SelectValue placeholder="No project" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NEW_PROJECT}>+ New project</SelectItem>
-                <SelectItem value={NO_PROJECT}>No project</SelectItem>
+                <SelectItem value={NEW_PROJECT}>{t("+ New project")}</SelectItem>
+                <SelectItem value={NO_PROJECT}>{t("No project")}</SelectItem>
                 {(projects.data ?? []).map((p) => (
                   <SelectItem key={p.id} value={p.id}>
                     <span className="flex items-center gap-2">
@@ -652,7 +657,7 @@ function TasksPage() {
                         containerClassName="size-5 rounded"
                         className="size-3"
                       />
-                      {p.name}
+                      {t(p.name)}
                     </span>
                   </SelectItem>
                 ))}
@@ -694,7 +699,7 @@ function TasksPage() {
           setCount={taskExtrasSet(form)}
         >
           <div className="space-y-2">
-            <Label htmlFor="task-description">Description</Label>
+            <Label htmlFor="task-description">{t("Description")}</Label>
             <Textarea
               id="task-description"
               value={form.description ?? ""}
@@ -703,7 +708,7 @@ function TasksPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t("Status")}</Label>
               <Select
                 value={form.status}
                 onValueChange={(v) => setForm({ ...form, status: v as Task["status"] })}
@@ -714,14 +719,14 @@ function TasksPage() {
                 <SelectContent>
                   {TASK_STATUSES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
-                      {s.label}
+                      {t(s.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Priority</Label>
+              <Label>{t("Priority")}</Label>
               <Select
                 value={form.priority}
                 onValueChange={(v) => setForm({ ...form, priority: v as Task["priority"] })}
@@ -732,14 +737,14 @@ function TasksPage() {
                 <SelectContent>
                   {PRIORITIES.map((p) => (
                     <SelectItem key={p.value} value={p.value}>
-                      {p.label}
+                      {t(p.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="task-start">Start date (optional)</Label>
+              <Label htmlFor="task-start">{t("Start date (optional)")}</Label>
               <DatePicker
                 id="task-start"
                 value={form.start_date ?? null}
@@ -747,7 +752,7 @@ function TasksPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="task-time">Time (optional)</Label>
+              <Label htmlFor="task-time">{t("Time (optional)")}</Label>
               <Input
                 id="task-time"
                 type="time"
@@ -756,11 +761,11 @@ function TasksPage() {
                 onChange={(event) => setForm({ ...form, due_time: event.target.value || null })}
               />
               <p className="text-xs text-muted-foreground">
-                The Android app reminds you at this time.
+                {t("The Android app reminds you at this time.")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Energy it needs</Label>
+              <Label>{t("Energy it needs")}</Label>
               <div
                 className="flex flex-wrap gap-1.5"
                 role="radiogroup"
@@ -781,16 +786,16 @@ function TasksPage() {
                     }
                     className={`min-h-9 rounded-full border px-3 text-sm transition-colors ${form.energy === option.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent"}`}
                   >
-                    {option.label}
+                    {t(option.label)}
                   </button>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                Optional. On a low day, Today puts low-energy tasks first.
+                {t("Optional. On a low day, Today puts low-energy tasks first.")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Repeat</Label>
+              <Label>{t("Repeat")}</Label>
               <Select
                 value={form.repeat ?? "none"}
                 onValueChange={(value) =>
@@ -801,31 +806,31 @@ function TasksPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Doesn't repeat</SelectItem>
+                  <SelectItem value="none">{t("Doesn't repeat")}</SelectItem>
                   {TASK_REPEATS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {form.repeat ? (
                 <p className="text-xs text-muted-foreground">
-                  When you tick it off, the next one appears on its next date.
+                  {t("When you tick it off, the next one appears on its next date.")}
                 </p>
               ) : null}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="task-max">Max date (optional)</Label>
+              <Label htmlFor="task-max">{t("Max date (optional)")}</Label>
               <DatePicker
                 id="task-max"
                 value={form.max_date ?? null}
                 onChange={(value) => setForm({ ...form, max_date: value || null })}
               />
-              <p className="text-xs text-muted-foreground">The date this cannot pass.</p>
+              <p className="text-xs text-muted-foreground">{t("The date this cannot pass.")}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="task-estimate">Estimate (optional)</Label>
+              <Label htmlFor="task-estimate">{t("Estimate (optional)")}</Label>
               <div className="flex gap-2">
                 <Input
                   id="task-estimate"
@@ -862,7 +867,7 @@ function TasksPage() {
                   <SelectContent>
                     {ESTIMATE_UNITS.map((unit) => (
                       <SelectItem key={unit.value} value={unit.value}>
-                        {unit.label}
+                        {t(unit.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -870,7 +875,7 @@ function TasksPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Capability (optional)</Label>
+              <Label>{t("Capability (optional)")}</Label>
               <Select
                 value={form.capability_id ?? NONE}
                 onValueChange={(v) => {
@@ -886,8 +891,8 @@ function TasksPage() {
                   <SelectValue placeholder="No capability" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NEW_CAPABILITY}>+ New capability</SelectItem>
-                  <SelectItem value={NONE}>No capability</SelectItem>
+                  <SelectItem value={NEW_CAPABILITY}>{t("+ New capability")}</SelectItem>
+                  <SelectItem value={NONE}>{t("No capability")}</SelectItem>
                   {(capabilities.data ?? []).map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       <span className="flex items-center gap-2">
@@ -897,7 +902,7 @@ function TasksPage() {
                           containerClassName="size-5 rounded"
                           className="size-3"
                         />
-                        {c.name}
+                        {t(c.name)}
                       </span>
                     </SelectItem>
                   ))}
@@ -929,7 +934,7 @@ function TasksPage() {
               ) : null}
             </div>
             <div className="space-y-2">
-              <Label>Goal (optional)</Label>
+              <Label>{t("Goal (optional)")}</Label>
               <Select
                 value={form.goal_id ?? NONE}
                 onValueChange={(v) => {
@@ -945,8 +950,8 @@ function TasksPage() {
                   <SelectValue placeholder="No goal" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NEW_GOAL}>+ New goal</SelectItem>
-                  <SelectItem value={NONE}>No goal</SelectItem>
+                  <SelectItem value={NEW_GOAL}>{t("+ New goal")}</SelectItem>
+                  <SelectItem value={NONE}>{t("No goal")}</SelectItem>
                   {(goals.data ?? []).map((g) => (
                     <SelectItem key={g.id} value={g.id}>
                       <span className="flex items-center gap-2">
@@ -956,7 +961,7 @@ function TasksPage() {
                           containerClassName="size-5 rounded"
                           className="size-3"
                         />
-                        {g.name}
+                        {t(g.name)}
                       </span>
                     </SelectItem>
                   ))}
@@ -995,7 +1000,7 @@ function TasksPage() {
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Save the task first, then add steps to it.
+            {t("Save the task first, then add steps to it.")}
           </p>
         )}
       </FormDialog>
@@ -1009,7 +1014,7 @@ function TasksPage() {
         onSubmit={() => closeEvidence(true)}
       >
         <div className="space-y-2">
-          <Label>Capability</Label>
+          <Label>{t("Capability")}</Label>
           <Select
             value={evidenceCapability ?? NONE}
             onValueChange={(v) => setEvidenceCapability(v === NONE ? null : v)}
@@ -1018,17 +1023,17 @@ function TasksPage() {
               <SelectValue placeholder="No capability" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE}>No capability</SelectItem>
+              <SelectItem value={NONE}>{t("No capability")}</SelectItem>
               {(capabilities.data ?? []).map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                  {t(c.name)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="evidence-note">Note</Label>
+          <Label htmlFor="evidence-note">{t("Note")}</Label>
           <Textarea
             id="evidence-note"
             value={evidenceNote}

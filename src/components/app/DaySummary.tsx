@@ -14,6 +14,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { formatDuration } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * What changed today, in one card: only lines for things actually logged.
@@ -86,7 +87,7 @@ export function DaySummary({
         </ul>
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">
-          Nothing logged for this day yet. Anything you log shows up here.
+          {t("Nothing logged for this day yet. Anything you log shows up here.")}
         </p>
       )}
     </section>

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { Check, ChevronLeft, ChevronRight, ListChecks, Moon, Repeat, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -47,6 +48,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const TASK_TONE: ChartTone = 1;
 const HABIT_TONE: ChartTone = 2;
@@ -119,7 +121,7 @@ export function WeekReview() {
     <section className="space-y-3" aria-labelledby="week-review-title">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="week-review-title" className="flex items-center gap-2 text-lg font-semibold">
-          Week by week
+          {t("Week by week")}
         </h2>
 
         <div className="flex items-center gap-1">
@@ -187,14 +189,14 @@ export function WeekReview() {
                   </div>
                 </Ring>
                 <div className="min-w-0 flex-1 space-y-2">
-                  <p className="text-sm font-medium">Tasks due this week</p>
+                  <p className="text-sm font-medium">{t("Tasks due this week")}</p>
                   <Meter value={week.tasks} tone={TASK_TONE} />
                   <div className="grid grid-cols-2 gap-2">
                     {trackHabits ? <Tile label="Habits" value={week.habits} /> : null}
                     {trackPrayers ? <Tile label="Prayers" value={week.prayers} /> : null}
                     {trackMoney ? (
                       <div className="rounded-lg bg-secondary px-2.5 py-1.5">
-                        <p className="text-xs text-muted-foreground">Spent</p>
+                        <p className="text-xs text-muted-foreground">{t("Spent")}</p>
                         <p className="text-sm font-semibold tabular-nums">{fmtMoney(week.spent)}</p>
                       </div>
                     ) : null}
@@ -337,7 +339,7 @@ function DayBars({
           <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight">
             {formatValue(selectedValue)}
             <span className="ml-2 text-xs font-normal text-muted-foreground">
-              on {format(parseISO(selected), "EEEE")}
+              {t("on")} {format(parseISO(selected), "EEEE")}
             </span>
           </p>
           <div className="mt-4 grid flex-1 grid-cols-7 items-end gap-1.5" style={{ minHeight: 96 }}>
@@ -582,9 +584,9 @@ function DayDetail({
           ))
         ) : (
           <div className="stat-card p-4 text-sm text-muted-foreground">
-            Nothing due {day.isToday ? "today" : "this day"}.{" "}
+            {t("Nothing due")} {day.isToday ? "today" : "this day"}.{" "}
             <Link to="/tasks" className="text-foreground underline underline-offset-4">
-              Plan a task
+              {t("Plan a task")}
             </Link>
           </div>
         )}
@@ -592,8 +594,10 @@ function DayDetail({
         {day.dueLater.length ? (
           <div className="stat-card space-y-2 p-4">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold">Due later this week</p>
-              <span className="ml-auto text-xs text-muted-foreground">can be done early</span>
+              <p className="text-sm font-semibold">{t("Due later this week")}</p>
+              <span className="ml-auto text-xs text-muted-foreground">
+                {t("can be done early")}
+              </span>
             </div>
             <ul className="space-y-1.5">
               {day.dueLater.map((task) => (
@@ -630,7 +634,7 @@ function DayDetail({
                 style={{ color: `var(--chart-${HABIT_TONE})` }}
                 aria-hidden="true"
               />
-              <p className="text-sm font-semibold">Daily habits</p>
+              <p className="text-sm font-semibold">{t("Daily habits")}</p>
               <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                 {day.habits.done}/{day.habits.total}
               </span>
@@ -660,7 +664,7 @@ function DayDetail({
                 style={{ color: `var(--chart-${PRAYER_TONE})` }}
                 aria-hidden="true"
               />
-              <p className="text-sm font-semibold">Prayers</p>
+              <p className="text-sm font-semibold">{t("Prayers")}</p>
               <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                 {day.prayers.done}/{day.prayers.total}
               </span>
@@ -725,7 +729,7 @@ function CheckRow({
       </span>
       {checked ? (
         <span className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Done
+          {t("Done")}
         </span>
       ) : null}
     </button>
@@ -736,7 +740,7 @@ function Recap({ lines }: { lines: string[] }) {
   if (!lines.length) return null;
   return (
     <section className="stat-card p-4 sm:p-5">
-      <p className="text-sm font-semibold">This week in numbers</p>
+      <p className="text-sm font-semibold">{t("This week in numbers")}</p>
       <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
         {lines.map((line) => (
           <li key={line}>{line}</li>

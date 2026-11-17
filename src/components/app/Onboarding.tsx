@@ -29,6 +29,7 @@ import {
 } from "@/data/spirit";
 import { createTask, taskKeys } from "@/data/tasks";
 import { requestDeviceLocation } from "@/lib/geolocation";
+import { t } from "@/lib/i18n";
 
 type StepKey = "name" | "modules" | "money" | "spirit" | "first";
 
@@ -197,7 +198,7 @@ export function Onboarding() {
     <div className="flex min-h-screen flex-col bg-background px-4 py-6">
       <header className="mx-auto flex w-full max-w-xl items-center justify-between gap-3">
         <p className="text-xs text-muted-foreground">
-          Step {Math.min(index, steps.length - 1) + 1} of {steps.length}
+          {t("Step")} {Math.min(index, steps.length - 1) + 1} of {steps.length}
         </p>
         <Button
           type="button"
@@ -215,13 +216,15 @@ export function Onboarding() {
         {step === "name" && (
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">What should we call you?</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("What should we call you?")}
+              </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Used across the app instead of your email.
+                {t("Used across the app instead of your email.")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="setup-name">Your name</Label>
+              <Label htmlFor="setup-name">{t("Your name")}</Label>
               <Input
                 id="setup-name"
                 className="h-12"
@@ -236,9 +239,13 @@ export function Onboarding() {
         {step === "modules" && (
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">What do you want to track?</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                {t("What do you want to track?")}
+              </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Everything is on. Switch off what you do not need. You can change this any time.
+                {t(
+                  "Everything is on. Switch off what you do not need. You can change this any time.",
+                )}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -261,19 +268,19 @@ export function Onboarding() {
                     }`}
                   >
                     <span className="flex w-full items-center justify-between gap-2 text-sm font-medium text-foreground">
-                      {module.label}
+                      {t(module.label)}
                       <span className="text-xs font-normal text-muted-foreground">
                         {on ? (
                           <span className="flex items-center gap-1">
                             <Check className="size-3.5" aria-hidden="true" />
-                            On
+                            {t("On")}
                           </span>
                         ) : (
                           "Off"
                         )}
                       </span>
                     </span>
-                    <span className="text-xs text-muted-foreground">{module.description}</span>
+                    <span className="text-xs text-muted-foreground">{t(module.description)}</span>
                   </button>
                 );
               })}
@@ -284,18 +291,18 @@ export function Onboarding() {
         {step === "money" && (
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Money basics</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{t("Money basics")}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 All optional. Anything you leave blank stays blank; no figure is guessed.
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Currency</Label>
+              <Label>{t("Currency")}</Label>
               <CurrencyCombobox value={currency} onChange={setCurrency} />
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="setup-payday">Pay day of the month</Label>
+                <Label htmlFor="setup-payday">{t("Pay day of the month")}</Label>
                 <Input
                   id="setup-payday"
                   type="number"
@@ -308,7 +315,7 @@ export function Onboarding() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="setup-net">Expected net pay</Label>
+                <Label htmlFor="setup-net">{t("Expected net pay")}</Label>
                 <Input
                   id="setup-net"
                   type="number"
@@ -320,7 +327,7 @@ export function Onboarding() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="setup-buffer">Safety buffer</Label>
+                <Label htmlFor="setup-buffer">{t("Safety buffer")}</Label>
                 <Input
                   id="setup-buffer"
                   type="number"
@@ -338,14 +345,15 @@ export function Onboarding() {
         {step === "spirit" && (
           <div className="space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Where do you pray?</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{t("Where do you pray?")}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Prayer times need a real location to be correct, so nothing is set until you choose
-                one.
+                {t(
+                  "Prayer times need a real location to be correct, so nothing is set until you choose one.",
+                )}
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="setup-city">City</Label>
+              <Label htmlFor="setup-city">{t("City")}</Label>
               <div className="flex flex-wrap gap-2">
                 <Input
                   id="setup-city"
@@ -361,7 +369,7 @@ export function Onboarding() {
                   disabled={locating || !city.trim()}
                   onClick={lookUpCity}
                 >
-                  Find
+                  {t("Find")}
                 </Button>
                 <Button
                   type="button"
@@ -371,7 +379,7 @@ export function Onboarding() {
                   onClick={useMyLocation}
                 >
                   <MapPin className="size-4" aria-hidden="true" />
-                  Use my location
+                  {t("Use my location")}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -382,7 +390,7 @@ export function Onboarding() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Calculation method</Label>
+                <Label>{t("Calculation method")}</Label>
                 <Select value={method} onValueChange={setMethod}>
                   <SelectTrigger className="h-12">
                     <SelectValue />
@@ -390,14 +398,14 @@ export function Onboarding() {
                   <SelectContent>
                     {CALC_METHODS.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        {t(item.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Asr school</Label>
+                <Label>{t("Asr school")}</Label>
                 <Select value={school} onValueChange={setSchool}>
                   <SelectTrigger className="h-12">
                     <SelectValue />
@@ -405,7 +413,7 @@ export function Onboarding() {
                   <SelectContent>
                     {ASR_SCHOOLS.map((item) => (
                       <SelectItem key={item.value} value={item.value}>
-                        {item.label}
+                        {t(item.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -419,14 +427,14 @@ export function Onboarding() {
           <div className="space-y-6">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">
-                One thing you want to get done?
+                {t("One thing you want to get done?")}
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                It becomes your first task. Leave it blank if you would rather start empty.
+                {t("It becomes your first task. Leave it blank if you would rather start empty.")}
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="setup-first">First task</Label>
+              <Label htmlFor="setup-first">{t("First task")}</Label>
               <Input
                 id="setup-first"
                 className="h-12"

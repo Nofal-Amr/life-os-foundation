@@ -33,6 +33,7 @@ import { tasksQuery } from "@/data/tasks";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+import { t } from "@/lib/i18n";
 
 const META: Record<Dimension, { icon: LucideIcon; module: ModuleKey; to: string; tone: number }> = {
   body: { icon: HeartPulse, module: "body", to: "/health", tone: 3 },
@@ -100,7 +101,7 @@ export function HubCard() {
 function SeriousHub({ lines }: { lines: DimensionLine[] }) {
   return (
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5" aria-label="Last 7 days">
-      <p className="text-xs font-medium text-muted-foreground">Last 7 days</p>
+      <p className="text-xs font-medium text-muted-foreground">{t("Last 7 days")}</p>
       <ul className="grid gap-3 sm:grid-cols-2">
         {lines.map((line) => {
           const { icon: Icon, to, tone } = META[line.key];
@@ -116,7 +117,7 @@ function SeriousHub({ lines }: { lines: DimensionLine[] }) {
                     style={{ color: `var(--chart-${tone})` }}
                     aria-hidden="true"
                   />
-                  <span className="text-sm font-semibold">{line.label}</span>
+                  <span className="text-sm font-semibold">{t(line.label)}</span>
                 </div>
                 <p className="mt-2 text-xs tabular-nums text-muted-foreground">{line.count}</p>
                 {line.ratio && line.ratio.total > 0 ? (
@@ -124,7 +125,7 @@ function SeriousHub({ lines }: { lines: DimensionLine[] }) {
                     into={line.ratio.done}
                     span={line.ratio.total}
                     tone={tone}
-                    label={`${line.label}: ${line.count}`}
+                    label={`${t(line.label)}: ${line.count}`}
                   />
                 ) : null}
               </Link>
@@ -167,9 +168,9 @@ function RpgSheet({
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5" aria-label="Character sheet">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-medium text-muted-foreground">Character</p>
+          <p className="text-xs font-medium text-muted-foreground">{t("Character")}</p>
           <p className="text-2xl font-semibold tracking-tight">
-            Level {overall.level}
+            {t("Level")} {overall.level}
             <span className="ml-2 text-base font-medium text-primary">{title}</span>
             <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">
               {hub.totalXp} XP
@@ -217,31 +218,35 @@ function RpgSheet({
                   style={{ color: `var(--chart-${tone})` }}
                   aria-hidden="true"
                 />
-                <span className="text-sm font-semibold">{line.label}</span>
+                <span className="text-sm font-semibold">{t(line.label)}</span>
                 <span className="text-xs text-muted-foreground">{line.maslow}</span>
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
                       type="button"
                       className="ml-auto rounded-full p-1 text-muted-foreground hover:text-foreground"
-                      aria-label={`How ${line.label} is worked out`}
+                      aria-label={`How ${t(line.label)} is worked out`}
                     >
                       <Info className="size-3.5" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-72 text-sm">
-                    <p className="mb-1 font-medium">How this is worked out</p>
+                    <p className="mb-1 font-medium">{t("How this is worked out")}</p>
                     <ul className="list-disc space-y-1 pl-4 text-muted-foreground">
                       {line.explain.map((text) => (
                         <li key={text}>{text}</li>
                       ))}
-                      <li>Right now: {line.count}.</li>
+                      <li>
+                        {t("Right now:")} {line.count}.
+                      </li>
                     </ul>
                   </PopoverContent>
                 </Popover>
               </div>
               <div className="mt-2 flex items-baseline justify-between text-xs">
-                <span className="font-medium">Lv {level.level}</span>
+                <span className="font-medium">
+                  {t("Lv")} {level.level}
+                </span>
                 <span className="tabular-nums text-muted-foreground">
                   {stat == null ? "no stat yet" : `${stat}/100`}
                 </span>
@@ -251,7 +256,9 @@ function RpgSheet({
                 span={100}
                 tone={tone}
                 label={
-                  stat == null ? `${line.label}: no stat yet` : `${line.label} stat ${stat} of 100`
+                  stat == null
+                    ? `${t(line.label)}: no stat yet`
+                    : `${t(line.label)} stat ${stat} of 100`
                 }
               />
             </li>
@@ -261,7 +268,7 @@ function RpgSheet({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Sparkles className="size-3" aria-hidden="true" />
-          Every point comes from something you logged. Tap ⓘ to see how.
+          {t("Every point comes from something you logged. Tap ⓘ to see how.")}
         </p>
         <Link
           to="/quests"
@@ -272,15 +279,15 @@ function RpgSheet({
       </div>
       <Dialog open={levelUp != null} onOpenChange={(open) => !open && setLevelUp(null)}>
         <DialogContent className="text-center sm:max-w-sm">
-          <DialogTitle className="sr-only">Level up</DialogTitle>
+          <DialogTitle className="sr-only">{t("Level up")}</DialogTitle>
           <div className="animate-in zoom-in-50 fade-in duration-500">
-            <p className="text-sm font-medium text-muted-foreground">Level up</p>
+            <p className="text-sm font-medium text-muted-foreground">{t("Level up")}</p>
             <p className="mt-2 text-6xl font-semibold tabular-nums">{levelUp}</p>
             <p className="mt-2 text-lg font-medium text-primary">
               {levelUp ? titleFor(levelUp).title : ""}
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              From what you actually did.{" "}
+              {t("From what you actually did.")}{" "}
               {levelUp ? `${levelFor(hub.totalXp).span} XP to the next.` : ""}
             </p>
           </div>

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addHours, format } from "date-fns";
+import { addHours } from "date-fns";
+import { format } from "@/lib/dates";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -25,6 +26,7 @@ import {
 import { isAndroidApp } from "@/lib/native";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** The next whole hour, as a sensible default. */
 function nextHour() {
@@ -88,7 +90,7 @@ export function ReminderDialog({
         <DialogHeader>
           <DialogTitle>{editing ? "Edit reminder" : "Remind me"}</DialogTitle>
           <DialogDescription>
-            For anything that isn't a task. It rings at the time.
+            {t("For anything that isn't a task. It rings at the time.")}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -99,7 +101,7 @@ export function ReminderDialog({
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="reminder-title">What</Label>
+            <Label htmlFor="reminder-title">{t("What")}</Label>
             <Input
               id="reminder-title"
               autoFocus
@@ -111,7 +113,7 @@ export function ReminderDialog({
           </div>
           <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-3">
             <div className="space-y-2">
-              <Label htmlFor="reminder-date">Day</Label>
+              <Label htmlFor="reminder-date">{t("Day")}</Label>
               <Input
                 id="reminder-date"
                 type="date"
@@ -121,7 +123,7 @@ export function ReminderDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reminder-time">Time</Label>
+              <Label htmlFor="reminder-time">{t("Time")}</Label>
               <Input
                 id="reminder-time"
                 type="time"
@@ -132,7 +134,7 @@ export function ReminderDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Repeat</Label>
+            <Label>{t("Repeat")}</Label>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Repeat">
               {REPEAT_OPTIONS.map((option) => (
                 <button
@@ -148,13 +150,13 @@ export function ReminderDialog({
                       : "border-border text-muted-foreground hover:bg-accent",
                   )}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </button>
               ))}
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reminder-note">Note</Label>
+            <Label htmlFor="reminder-note">{t("Note")}</Label>
             <Textarea
               id="reminder-note"
               rows={2}

@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArchiveRestore, Download, HardDriveDownload } from "lucide-react";
 import { useRef, useState } from "react";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { XLSX_MIME, exportEverything } from "@/data/exportData";
 import { saveFile } from "@/lib/native";
+import { t } from "@/lib/i18n";
 
 /** Everything you've logged, as one Excel file you keep. */
 export function ExportDataCard() {
@@ -77,10 +78,11 @@ export function ExportDataCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your data</CardTitle>
+        <CardTitle>{t("Your data")}</CardTitle>
         <CardDescription>
-          Download everything you've logged as an Excel file: tasks, money, habits, food, health,
-          prayers, time, notes and readings, one sheet each. It's yours to keep or analyse.
+          {t(
+            "Download everything you've logged as an Excel file: tasks, money, habits, food, health, prayers, time, notes and readings, one sheet each. It's yours to keep or analyse.",
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -95,8 +97,9 @@ export function ExportDataCard() {
         </Button>
         <div className="mt-4 space-y-2 border-t border-border pt-4">
           <p className="text-sm text-muted-foreground">
-            A full backup is one file with everything, that Life OS can read back: if you change
-            phones, or want a copy before a big change.
+            {t(
+              "A full backup is one file with everything, that Life OS can read back: if you change phones, or want a copy before a big change.",
+            )}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button

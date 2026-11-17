@@ -4,7 +4,8 @@
  * tomorrow each prayer's name and time plus how it was logged. Yesterday
  * and tomorrow let the widget count down and fill its bar across midnight.
  */
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { PRAYER_NAMES, prayerLabel, statusOf, type PrayerLog, type PrayerName } from "./spirit";
 

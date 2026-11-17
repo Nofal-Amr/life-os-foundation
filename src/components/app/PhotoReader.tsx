@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { numbersIn, readPhoto, receiptFrom } from "@/lib/ocr";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * "Read from photo": take or pick a photo, read it on the phone, and offer
@@ -73,7 +74,7 @@ export function PhotoReader({
       </Button>
       {found?.length ? (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">Tap the right one:</span>
+          <span className="text-xs text-muted-foreground">{t("Tap the right one:")}</span>
           {found.map((value) => (
             <button
               key={value}

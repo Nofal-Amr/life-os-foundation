@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { Fuel, Gauge, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { FUEL_GRADES, deleteFillup, fuelKeys, fuelStats, type FuelFillup } from 
 import type { Resource, ResourceReading } from "@/data/resources";
 import { usePreferences } from "@/hooks/usePreferences";
 import { toError } from "@/lib/supabase-helpers";
+import { t } from "@/lib/i18n";
 
 const round = (value: number, digits = 1) => Math.round(value * 10 ** digits) / 10 ** digits;
 
@@ -60,7 +61,7 @@ export function VehicleCard({
             <>
               <p className="text-3xl font-semibold leading-none tabular-nums">
                 {Math.round(stats.kmLeft)}{" "}
-                <span className="text-base font-normal text-muted-foreground">km left</span>
+                <span className="text-base font-normal text-muted-foreground">{t("km left")}</span>
               </p>
               <p className="mt-1.5 text-xs text-muted-foreground">
                 {stats.fullTankSource === "tank"
@@ -82,32 +83,32 @@ export function VehicleCard({
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => setFillOpen(true)}>
             <Fuel className="size-4" aria-hidden="true" />
-            Fill-up
+            {t("Fill-up")}
           </Button>
           <Button size="sm" variant="outline" onClick={onUpdateKm}>
             <Gauge className="size-4" aria-hidden="true" />
-            Update km
+            {t("Update km")}
           </Button>
         </div>
       </div>
 
       <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
         <div>
-          <dt className="text-muted-foreground">Km per litre</dt>
+          <dt className="text-muted-foreground">{t("Km per litre")}</dt>
           <dd className="tabular-nums">{stats.kmPerLitre ? round(stats.kmPerLitre) : "—"}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">L per 100 km</dt>
+          <dt className="text-muted-foreground">{t("L per 100 km")}</dt>
           <dd className="tabular-nums">{stats.litresPer100 ? round(stats.litresPer100) : "—"}</dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Cost per km</dt>
+          <dt className="text-muted-foreground">{t("Cost per km")}</dt>
           <dd className="tabular-nums">
             {stats.costPerKm ? fmtMoney(round(stats.costPerKm, 2)) : "—"}
           </dd>
         </div>
         <div>
-          <dt className="text-muted-foreground">Odometer</dt>
+          <dt className="text-muted-foreground">{t("Odometer")}</dt>
           <dd className="tabular-nums">
             {stats.currentKm != null ? `${stats.currentKm} km` : "—"}
           </dd>
@@ -115,7 +116,7 @@ export function VehicleCard({
       </dl>
       {stats.stretches ? (
         <p className="text-xs text-muted-foreground">
-          From {stats.stretches} full-to-full {stats.stretches === 1 ? "tank" : "tanks"}.
+          {t("From")} {stats.stretches} full-to-full {stats.stretches === 1 ? "tank" : "tanks"}.
         </p>
       ) : null}
 
@@ -126,7 +127,8 @@ export function VehicleCard({
       {own.length ? (
         <details className="text-sm">
           <summary className="min-h-8 cursor-pointer select-none py-1 text-xs text-muted-foreground">
-            Fill-ups ({own.length}){last ? ` · last ${fmtDate(last.filled_at.slice(0, 10))}` : ""}
+            {t("Fill-ups (")}
+            {own.length}){last ? ` · last ${fmtDate(last.filled_at.slice(0, 10))}` : ""}
           </summary>
           <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
             {[...own].reverse().map((fill) => (

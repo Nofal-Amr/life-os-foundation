@@ -91,7 +91,7 @@ export function WorkSettingsCard() {
         >
           {mode === "make" ? (
             <div className="space-y-1.5">
-              <Label htmlFor="work-org-name">Company name</Label>
+              <Label htmlFor="work-org-name">{t("Company name")}</Label>
               <Input
                 id="work-org-name"
                 value={name}
@@ -101,7 +101,7 @@ export function WorkSettingsCard() {
             </div>
           ) : (
             <div className="space-y-1.5">
-              <Label htmlFor="work-code">Invite code</Label>
+              <Label htmlFor="work-code">{t("Invite code")}</Label>
               <Input
                 id="work-code"
                 value={code}
@@ -113,7 +113,7 @@ export function WorkSettingsCard() {
             </div>
           )}
           <div className="space-y-1.5">
-            <Label htmlFor="work-my-name">Your name there</Label>
+            <Label htmlFor="work-my-name">{t("Your name there")}</Label>
             <Input
               id="work-my-name"
               value={myName}

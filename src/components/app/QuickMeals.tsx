@@ -27,6 +27,7 @@ import { preferencesQuery, readFoodPrefs } from "@/data/preferences";
 import { track } from "@/lib/analytics";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * Log a meal in one or two taps: the meal is picked from the time of day,
@@ -165,7 +166,7 @@ export function QuickMeals({
               meal === option.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
@@ -265,7 +266,7 @@ export function QuickMeals({
             today.some((log) => (log.meal ?? "snack") === option.value),
           ).map((option) => (
             <div key={option.value} className="flex flex-wrap items-center gap-1.5">
-              <span className="w-20 text-xs text-muted-foreground">{option.label}</span>
+              <span className="w-20 text-xs text-muted-foreground">{t(option.label)}</span>
               {today
                 .filter((log) => (log.meal ?? "snack") === option.value)
                 .map((log) => (
@@ -298,7 +299,7 @@ export function QuickMeals({
           ) : null}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">Nothing logged for this day yet.</p>
+        <p className="text-xs text-muted-foreground">{t("Nothing logged for this day yet.")}</p>
       )}
 
       {!usual && !prefs.isLoading ? (
@@ -316,7 +317,7 @@ export function QuickMeals({
           to="/food"
           className="inline-block text-xs text-muted-foreground underline underline-offset-4"
         >
-          Food library and details
+          {t("Food library and details")}
         </Link>
       ) : null}
     </div>

@@ -27,6 +27,7 @@ import { exactDate, needsStartDate, parsePlan } from "@/lib/planMarkdown";
 import { PLAN_PROMPTS, SAMPLE_CAREER_PLAN } from "@/lib/planPrompts";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/import-plan")({
   head: () => ({
@@ -108,10 +109,11 @@ function ImportPlanPage() {
       />
 
       <section className="mb-6 space-y-3 rounded-xl border border-border bg-card p-4">
-        <h2 className="text-sm font-semibold">1. Get a plan from your AI chat</h2>
+        <h2 className="text-sm font-semibold">{t("1. Get a plan from your AI chat")}</h2>
         <p className="text-sm text-muted-foreground">
-          Copy a prompt, fill in the brackets, and paste it into ChatGPT, Claude or any AI chat.
-          Life OS doesn't send anything to an AI. You paste the answer below.
+          {t(
+            "Copy a prompt, fill in the brackets, and paste it into ChatGPT, Claude or any AI chat. Life OS doesn't send anything to an AI. You paste the answer below.",
+          )}
         </p>
         <div className="flex flex-wrap gap-2">
           {PLAN_PROMPTS.map((prompt) => (
@@ -122,7 +124,7 @@ function ImportPlanPage() {
               onClick={() => copy(prompt.text)}
             >
               <Copy className="size-4" aria-hidden="true" />
-              Copy prompt: {prompt.label}
+              {t("Copy prompt:")} {t(prompt.label)}
             </Button>
           ))}
         </div>
@@ -131,7 +133,7 @@ function ImportPlanPage() {
       <section className="mb-6 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Label htmlFor="plan-text" className="text-sm font-semibold">
-            2. Paste the plan
+            {t("2. Paste the plan")}
           </Label>
           <div className="flex gap-2">
             <Button
@@ -149,7 +151,7 @@ function ImportPlanPage() {
               onClick={() => fileRef.current?.click()}
             >
               <FileUp className="size-4" aria-hidden="true" />
-              Upload .md
+              {t("Upload .md")}
             </Button>
             <input
               ref={fileRef}
@@ -179,7 +181,7 @@ function ImportPlanPage() {
           data-testid="plan-text"
         />
         <p className="text-xs text-muted-foreground">
-          The format is in <code>docs/plan-markdown.md</code>: <code># Goal:</code>,{" "}
+          {t("The format is in")} <code>docs/plan-markdown.md</code>: <code># Goal:</code>,{" "}
           <code>## Project:</code>, <code>### Week 1</code>,{" "}
           <code>- [ ] Task @2026-11-20 !high #career ~2h</code>, <code>## Habits</code>,{" "}
           <code>## Notes</code>.
@@ -188,12 +190,12 @@ function ImportPlanPage() {
 
       {text.trim() ? (
         <section className="space-y-4" aria-label="Preview">
-          <h2 className="text-sm font-semibold">3. Check and create</h2>
+          <h2 className="text-sm font-semibold">{t("3. Check and create")}</h2>
 
           {usesStart ? (
             <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3">
               <Label htmlFor="plan-start" className="text-sm">
-                Week 1 starts on
+                {t("Week 1 starts on")}
               </Label>
               <Input
                 id="plan-start"
@@ -203,8 +205,9 @@ function ImportPlanPage() {
                 className="w-auto"
               />
               <p className="w-full text-xs text-muted-foreground">
-                Tasks in "Week N" are due on the last day of that week, counted from this date.
-                Tasks with a written date keep it.
+                {t(
+                  'Tasks in "Week N" are due on the last day of that week, counted from this date. Tasks with a written date keep it.',
+                )}
               </p>
             </div>
           ) : null}
@@ -251,17 +254,17 @@ function ImportPlanPage() {
               role="status"
             >
               <p className="font-medium" data-testid="plan-done">
-                Created {summary(done)}.
+                {t("Created")} {summary(done)}.
               </p>
               <div className="flex flex-wrap gap-2">
                 {done.goal ? (
                   <Button asChild variant="outline" size="sm">
-                    <Link to="/goals">Open goals</Link>
+                    <Link to="/goals">{t("Open goals")}</Link>
                   </Button>
                 ) : null}
                 {done.projects ? (
                   <Button asChild variant="outline" size="sm">
-                    <Link to="/projects">Open projects</Link>
+                    <Link to="/projects">{t("Open projects")}</Link>
                   </Button>
                 ) : null}
                 <Button type="button" variant="ghost" size="sm" onClick={() => setPlanText("")}>
@@ -330,7 +333,7 @@ function TreeRow({
           <span className="mr-2 text-xs text-muted-foreground no-underline">
             {KIND_LABEL[item.kind]}
           </span>
-          <span className="text-sm">{item.label}</span>
+          <span className="text-sm">{t(item.label)}</span>
           {item.detail ? (
             <span className="ml-2 text-xs text-muted-foreground">{item.detail}</span>
           ) : null}

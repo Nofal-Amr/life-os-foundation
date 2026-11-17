@@ -32,6 +32,7 @@ import { todayISO } from "@/lib/date";
 import { notesQuery } from "@/data/notes";
 import { reflectionNotesOn } from "@/data/reflections";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({
@@ -95,7 +96,7 @@ function ReviewPage() {
       />
 
       <div className="mb-6 max-w-xs space-y-2">
-        <Label htmlFor="review-date">Date</Label>
+        <Label htmlFor="review-date">{t("Date")}</Label>
         <DatePicker
           id="review-date"
           value={date}
@@ -121,7 +122,7 @@ function ReviewPage() {
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="wins">Wins</Label>
+            <Label htmlFor="wins">{t("Wins")}</Label>
             <Textarea
               id="wins"
               rows={3}
@@ -130,7 +131,7 @@ function ReviewPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="challenges">Challenges</Label>
+            <Label htmlFor="challenges">{t("Challenges")}</Label>
             <Textarea
               id="challenges"
               rows={3}
@@ -139,7 +140,7 @@ function ReviewPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="gratitude">Gratitude</Label>
+            <Label htmlFor="gratitude">{t("Gratitude")}</Label>
             <Textarea
               id="gratitude"
               rows={3}
@@ -149,7 +150,7 @@ function ReviewPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Mood</Label>
+              <Label>{t("Mood")}</Label>
               <Select
                 value={form.mood ? String(form.mood) : ""}
                 onValueChange={(v) => setForm({ ...form, mood: Number(v) })}
@@ -167,7 +168,7 @@ function ReviewPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Energy</Label>
+              <Label>{t("Energy")}</Label>
               <Select
                 value={form.energy ? String(form.energy) : ""}
                 onValueChange={(v) => setForm({ ...form, energy: Number(v) })}
@@ -185,7 +186,7 @@ function ReviewPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="focus">Tomorrow's focus</Label>
+              <Label htmlFor="focus">{t("Tomorrow's focus")}</Label>
               <Input
                 id="focus"
                 value={form.tomorrow_focus ?? ""}
@@ -200,7 +201,7 @@ function ReviewPage() {
       )}
 
       <section className="mt-10">
-        <h2 className="mb-3 text-sm font-medium">Recent reviews</h2>
+        <h2 className="mb-3 text-sm font-medium">{t("Recent reviews")}</h2>
         {history.isLoading ? (
           <LoadingState rows={2} />
         ) : history.error ? (
@@ -245,7 +246,9 @@ function DayIdeas({ date }: { date: string }) {
   if (!items.length) return null;
   return (
     <section className="mb-6 rounded-xl border border-border bg-card p-5">
-      <h2 className="text-sm font-semibold text-foreground">Ideas and notes from this day</h2>
+      <h2 className="text-sm font-semibold text-foreground">
+        {t("Ideas and notes from this day")}
+      </h2>
       <ul className="mt-2 space-y-1.5">
         {items.map((note) => (
           <li key={note.id} className="flex gap-2 text-sm">

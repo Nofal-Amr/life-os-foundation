@@ -2,7 +2,7 @@
  * The daily log: one line per kind of thing actually logged on a day. Nothing
  * is scored or judged — it is a receipt of the day, built from stored rows.
  */
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type DayInputs = {
   date: string;

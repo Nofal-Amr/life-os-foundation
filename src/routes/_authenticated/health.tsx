@@ -60,6 +60,7 @@ import {
   weightToStored,
 } from "@/lib/format";
 import { scaleTone } from "@/lib/semantics";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/health")({
   head: () => ({
@@ -562,7 +563,7 @@ function HealthPage() {
                         <span className="font-medium">{medication.name}</span>
                         <span className="tabular-nums text-muted-foreground">{fmtSlot(slot)}</span>
                         {!taken ? (
-                          <span className="text-muted-foreground">· Mark taken</span>
+                          <span className="text-muted-foreground">{t("· Mark taken")}</span>
                         ) : null}
                       </button>
                     );
@@ -572,7 +573,7 @@ function HealthPage() {
           ) : (
             <StatCard title="Medication today" icon={Pill}>
               <p className="text-sm text-muted-foreground">
-                No doses are scheduled. Add times to a medication below to see this.
+                {t("No doses are scheduled. Add times to a medication below to see this.")}
               </p>
             </StatCard>
           )}
@@ -590,7 +591,7 @@ function HealthPage() {
           />
 
           <div className="flex items-center justify-between gap-3 md:col-span-2">
-            <p className="text-sm font-medium">Sleep</p>
+            <p className="text-sm font-medium">{t("Sleep")}</p>
             <RangeToggle
               label="Sleep range"
               value={sleepDays}
@@ -643,7 +644,7 @@ function HealthPage() {
 
         <Card id="meals" className="system-card scroll-mt-20">
           <CardHeader>
-            <CardTitle className="text-base">Meals</CardTitle>
+            <CardTitle className="text-base">{t("Meals")}</CardTitle>
             <CardDescription>
               Tap what you had. The meal is picked from the time of day; type anything else.
             </CardDescription>
@@ -656,9 +657,10 @@ function HealthPage() {
         <Card id="daily-log" className="system-card scroll-mt-20">
           <CardHeader>
             <CardTitle className="text-base">
-              Log for {date === todayISO() ? "today" : fmtLongDate(new Date(`${date}T12:00:00`))}
+              {t("Log for")}{" "}
+              {date === todayISO() ? "today" : fmtLongDate(new Date(`${date}T12:00:00`))}
             </CardTitle>
-            <CardDescription>A few taps. Anything you skip stays empty.</CardDescription>
+            <CardDescription>{t("A few taps. Anything you skip stays empty.")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form
@@ -670,7 +672,7 @@ function HealthPage() {
             >
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="flex min-h-14 items-center justify-between rounded-xl border border-border px-4 py-3">
-                  <Label htmlFor="trained">Trained</Label>
+                  <Label htmlFor="trained">{t("Trained")}</Label>
                   <Switch
                     id="trained"
                     checked={logForm.trained === true}
@@ -678,7 +680,7 @@ function HealthPage() {
                   />
                 </div>
                 <div className="flex min-h-14 items-center justify-between rounded-xl border border-border px-4 py-3">
-                  <Label htmlFor="water">Water target met</Label>
+                  <Label htmlFor="water">{t("Water target met")}</Label>
                   <Switch
                     id="water"
                     checked={logForm.water_ok === true}
@@ -788,7 +790,7 @@ function HealthPage() {
                     step="0.1"
                   />
                   <div className="space-y-2">
-                    <Label htmlFor="sleep-start">Sleep started</Label>
+                    <Label htmlFor="sleep-start">{t("Sleep started")}</Label>
                     <Input
                       id="sleep-start"
                       type="time"
@@ -803,7 +805,7 @@ function HealthPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="sleep-end">Sleep ended</Label>
+                    <Label htmlFor="sleep-end">{t("Sleep ended")}</Label>
                     <Input
                       id="sleep-end"
                       type="time"
@@ -818,7 +820,7 @@ function HealthPage() {
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label htmlFor="sleep-source">Measured with</Label>
+                    <Label htmlFor="sleep-source">{t("Measured with")}</Label>
                     <Input
                       id="sleep-source"
                       placeholder="Device name, if you want to record it"
@@ -833,7 +835,7 @@ function HealthPage() {
               </Collapsible>
 
               <div className="space-y-2">
-                <Label htmlFor="log-note">Note</Label>
+                <Label htmlFor="log-note">{t("Note")}</Label>
                 <Textarea
                   id="log-note"
                   value={logForm.note ?? ""}
@@ -852,14 +854,15 @@ function HealthPage() {
           <CardHeader className="gap-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base">Medications</CardTitle>
+                <CardTitle className="text-base">{t("Medications")}</CardTitle>
                 <CardDescription>
-                  This is an in-app schedule and checklist only. Reliable background reminders will
-                  need the future mobile app, so it will not alarm your phone.
+                  {t(
+                    "This is an in-app schedule and checklist only. Reliable background reminders will need the future mobile app, so it will not alarm your phone.",
+                  )}
                 </CardDescription>
               </div>
               <Button type="button" onClick={openMedCreate}>
-                Add medication
+                {t("Add medication")}
               </Button>
             </div>
           </CardHeader>
@@ -870,7 +873,7 @@ function HealthPage() {
                 description="Add the medication schedule you already follow, and today's doses appear on Today for one-tap logging."
                 action={
                   <Button type="button" onClick={openMedCreate}>
-                    Add medication
+                    {t("Add medication")}
                   </Button>
                 }
               />
@@ -883,7 +886,9 @@ function HealthPage() {
                         <p className="font-medium">
                           {medication.name}
                           {!medication.active ? (
-                            <span className="ml-2 text-xs text-muted-foreground">Inactive</span>
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {t("Inactive")}
+                            </span>
                           ) : null}
                         </p>
                         {medication.dosage ? (
@@ -955,7 +960,7 @@ function HealthPage() {
             {activeMeds.length > 0 &&
             activeMeds.every((medication) => (medication.schedule_times ?? []).length === 0) ? (
               <p className="text-xs text-muted-foreground">
-                Add times to a medication to get a daily taken checklist.
+                {t("Add times to a medication to get a daily taken checklist.")}
               </p>
             ) : null}
           </CardContent>
@@ -968,7 +973,7 @@ function HealthPage() {
 
               <Card className="system-card">
                 <CardHeader>
-                  <CardTitle className="text-base">Weight</CardTitle>
+                  <CardTitle className="text-base">{t("Weight")}</CardTitle>
                   <CardDescription>
                     {heightCm != null
                       ? `Height ${fmtHeight(heightCm)}, set in Settings.`
@@ -984,7 +989,10 @@ function HealthPage() {
                     }}
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="weight">Current weight ({weightUnit})</Label>
+                      <Label htmlFor="weight">
+                        {t("Current weight (")}
+                        {weightUnit})
+                      </Label>
                       <Input
                         id="weight"
                         type="number"
@@ -1001,7 +1009,7 @@ function HealthPage() {
                     {!heightCm ? null : (
                       <Button asChild variant="ghost" className="h-12">
                         <Link to="/settings" search={{ section: "body" }}>
-                          Body setup
+                          {t("Body setup")}
                         </Link>
                       </Button>
                     )}
@@ -1013,8 +1021,9 @@ function HealthPage() {
                           BMI {bmiValue.toFixed(1)}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Weight in kg ÷ height in m², from {fmtHeight(heightCm ?? 0)} and the
-                          weight saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}.
+                          {t("Weight in kg ÷ height in m², from")} {fmtHeight(heightCm ?? 0)} and
+                          the weight saved{savedWeightDate ? ` on ${fmtDate(savedWeightDate)}` : ""}
+                          .
                         </p>
                       </>
                     ) : (
@@ -1032,8 +1041,8 @@ function HealthPage() {
           <Section id="health-recent" title="Recent days">
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Recent days</CardTitle>
-                <CardDescription>Your last entries, most recent first.</CardDescription>
+                <CardTitle className="text-base">{t("Recent days")}</CardTitle>
+                <CardDescription>{t("Your last entries, most recent first.")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {recent.length === 0 ? (
@@ -1057,7 +1066,7 @@ function HealthPage() {
                         </button>
                         <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           {log.trained ? (
-                            <SemanticBadge tone="positive">Trained</SemanticBadge>
+                            <SemanticBadge tone="positive">{t("Trained")}</SemanticBadge>
                           ) : null}
                           {log.actual_sleep_minutes != null || log.sleep_hours != null ? (
                             <span className="tabular-nums">
@@ -1069,11 +1078,13 @@ function HealthPage() {
                             </span>
                           ) : null}
                           {log.sleep_score != null ? (
-                            <span className="tabular-nums">Sleep score {log.sleep_score}</span>
+                            <span className="tabular-nums">
+                              {t("Sleep score")} {log.sleep_score}
+                            </span>
                           ) : null}
                           {log.mood != null ? (
                             <SemanticBadge tone={scaleTone("mood", log.mood)}>
-                              Mood {log.mood} of 5
+                              {t("Mood")} {log.mood} of 5
                             </SemanticBadge>
                           ) : null}
                           {log.stress_level != null ? (
@@ -1081,7 +1092,7 @@ function HealthPage() {
                               tone={scaleTone("stress", log.stress_level)}
                               className="hidden sm:inline-flex"
                             >
-                              Stress {log.stress_level} of 5
+                              {t("Stress")} {log.stress_level} of 5
                             </SemanticBadge>
                           ) : null}
                         </span>
@@ -1104,7 +1115,7 @@ function HealthPage() {
         onSubmit={() => saveMed.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="med-name">Name</Label>
+          <Label htmlFor="med-name">{t("Name")}</Label>
           <Input
             id="med-name"
             required
@@ -1113,7 +1124,7 @@ function HealthPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="med-dosage">Dosage (optional)</Label>
+          <Label htmlFor="med-dosage">{t("Dosage (optional)")}</Label>
           <Input
             id="med-dosage"
             value={medForm.dosage ?? ""}
@@ -1121,7 +1132,7 @@ function HealthPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="med-time">Schedule times (optional)</Label>
+          <Label htmlFor="med-time">{t("Schedule times (optional)")}</Label>
           <div className="flex gap-2">
             <Input
               id="med-time"
@@ -1138,7 +1149,7 @@ function HealthPage() {
             />
             <Button type="button" variant="outline" className="h-12" onClick={addTime}>
               <Plus className="size-4" aria-hidden="true" />
-              Add time
+              {t("Add time")}
             </Button>
           </div>
           {medTimes.length > 0 ? (
@@ -1160,7 +1171,7 @@ function HealthPage() {
           ) : null}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="med-notes">Notes (optional)</Label>
+          <Label htmlFor="med-notes">{t("Notes (optional)")}</Label>
           <Textarea
             id="med-notes"
             value={medForm.notes ?? ""}
@@ -1173,7 +1184,7 @@ function HealthPage() {
             checked={medForm.active}
             onCheckedChange={(value) => setMedForm({ ...medForm, active: value })}
           />
-          <Label htmlFor="med-active">Active</Label>
+          <Label htmlFor="med-active">{t("Active")}</Label>
         </div>
       </FormDialog>
 

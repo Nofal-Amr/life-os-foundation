@@ -34,6 +34,7 @@ import {
   type FinanceCategory,
 } from "@/data/finance";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/finance/categories")({
   head: () => ({
@@ -133,7 +134,7 @@ function CategoriesPage() {
       <PageHeader
         title="Categories"
         description="Your own labels for where money goes and comes from."
-        actions={<Button onClick={openCreate}>New category</Button>}
+        actions={<Button onClick={openCreate}>{t("New category")}</Button>}
       />
 
       {categories.isLoading ? (
@@ -150,7 +151,7 @@ function CategoriesPage() {
                 {starter.isPending ? "Adding…" : "Add starter categories"}
               </Button>
               <Button variant="outline" onClick={openCreate}>
-                Create my own
+                {t("Create my own")}
               </Button>
             </div>
           }
@@ -179,7 +180,7 @@ function CategoriesPage() {
                     </SemanticBadge>
                     {category.monthly_budget != null ? (
                       <span className="tabular-nums">
-                        Monthly budget {fmtMoney(Number(category.monthly_budget))}
+                        {t("Monthly budget")} {fmtMoney(Number(category.monthly_budget))}
                       </span>
                     ) : null}
                     <span>
@@ -206,7 +207,7 @@ function CategoriesPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="category-name">Name</Label>
+          <Label htmlFor="category-name">{t("Name")}</Label>
           <Input
             id="category-name"
             required
@@ -221,7 +222,7 @@ function CategoriesPage() {
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Kind</Label>
+            <Label>{t("Kind")}</Label>
             <Select
               value={form.kind}
               onValueChange={(v) => setForm({ ...form, kind: v as CategoryInput["kind"] })}
@@ -232,14 +233,14 @@ function CategoriesPage() {
               <SelectContent>
                 {CATEGORY_KINDS.map((k) => (
                   <SelectItem key={k.value} value={k.value}>
-                    {k.label}
+                    {t(k.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="category-budget">Monthly budget (optional)</Label>
+            <Label htmlFor="category-budget">{t("Monthly budget (optional)")}</Label>
             <Input
               id="category-budget"
               type="number"

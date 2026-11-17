@@ -41,6 +41,7 @@ import {
 } from "@/data/finance";
 import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/finance/recurring")({
   head: () => ({
@@ -186,10 +187,10 @@ export function RecurringList({
                   {overdue ? "Past its date" : "Due"} {fmtDate(cost.next_due_date)}
                 </SemanticBadge>
                 <span>
-                  Every {interval.count} {interval.unit}
+                  {t("Every")} {interval.count} {interval.unit}
                   {interval.count === 1 ? "" : "s"}
                 </span>
-                {!cost.active ? <span>Paused</span> : null}
+                {!cost.active ? <span>{t("Paused")}</span> : null}
               </>
             }
             trailing={<span className="font-medium">{fmtMoney(Number(cost.amount))}</span>}
@@ -287,7 +288,7 @@ function RecurringPage() {
       <PageHeader
         title="Recurring costs"
         description="Projections only. Nothing changes a balance until you log it."
-        actions={<Button onClick={openCreate}>New cost</Button>}
+        actions={<Button onClick={openCreate}>{t("New cost")}</Button>}
       />
 
       <RecurringList onEdit={openEdit} onDelete={setToDelete} />
@@ -300,7 +301,7 @@ function RecurringPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="cost-name">Name</Label>
+          <Label htmlFor="cost-name">{t("Name")}</Label>
           <Input
             id="cost-name"
             required
@@ -311,7 +312,7 @@ function RecurringPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="cost-amount">Amount</Label>
+            <Label htmlFor="cost-amount">{t("Amount")}</Label>
             <Input
               id="cost-amount"
               type="number"
@@ -324,7 +325,7 @@ function RecurringPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="cost-date">Next due</Label>
+            <Label htmlFor="cost-date">{t("Next due")}</Label>
             <DatePicker
               id="cost-date"
               value={form.next_due_date}
@@ -338,7 +339,7 @@ function RecurringPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="interval-count">Repeat</Label>
+            <Label htmlFor="interval-count">{t("Repeat")}</Label>
             <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
               <Input
                 id="interval-count"
@@ -382,7 +383,7 @@ function RecurringPage() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Account</Label>
+            <Label>{t("Account")}</Label>
             <Select
               value={form.account_id ?? "none"}
               onValueChange={(v) => setForm({ ...form, account_id: v === "none" ? null : v })}
@@ -391,7 +392,7 @@ function RecurringPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No account yet</SelectItem>
+                <SelectItem value="none">{t("No account yet")}</SelectItem>
                 {(accounts.data ?? []).map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     <span className="flex items-center gap-2">
@@ -409,7 +410,7 @@ function RecurringPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>{t("Category")}</Label>
             <Select
               value={form.category_id ?? "none"}
               onValueChange={(v) => {
@@ -421,7 +422,7 @@ function RecurringPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No category</SelectItem>
+                <SelectItem value="none">{t("No category")}</SelectItem>
                 {(categories.data ?? []).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     <span className="flex items-center gap-2">
@@ -435,7 +436,7 @@ function RecurringPage() {
                     </span>
                   </SelectItem>
                 ))}
-                <SelectItem value="new">+ New category</SelectItem>
+                <SelectItem value="new">{t("+ New category")}</SelectItem>
               </SelectContent>
             </Select>
             {newCategory != null ? (
@@ -473,7 +474,7 @@ function RecurringPage() {
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{t("Status")}</Label>
             <Select
               value={form.active ? "active" : "paused"}
               onValueChange={(v) => setForm({ ...form, active: v === "active" })}
@@ -482,8 +483,8 @@ function RecurringPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
+                <SelectItem value="active">{t("Active")}</SelectItem>
+                <SelectItem value="paused">{t("Paused")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

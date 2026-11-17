@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { addDays, format } from "date-fns";
+import { addDays } from "date-fns";
+import { format } from "@/lib/dates";
 import { Bell, BellOff, GlassWater, ListChecks, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -52,6 +53,7 @@ import {
   type Reminder,
 } from "@/lib/native";
 import { prayerTimesFor } from "@/lib/prayer";
+import { t } from "@/lib/i18n";
 
 /** Per device: reminders fire on the phone they are set on. */
 const STORAGE_KEY = "life-os-prayer-reminders";
@@ -394,10 +396,10 @@ function PrayerControls({
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Moon className="size-4" aria-hidden="true" />
-            Prayers
+            {t("Prayers")}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Before each prayer you haven't logged yet. Needs your location in Settings.
+            {t("Before each prayer you haven't logged yet. Needs your location in Settings.")}
           </p>
         </div>
         <Switch
@@ -408,7 +410,7 @@ function PrayerControls({
       </div>
       {settings.enabled ? (
         <div className="flex items-center justify-between gap-3">
-          <Label htmlFor="prayer-at-time">Also notify at the prayer time</Label>
+          <Label htmlFor="prayer-at-time">{t("Also notify at the prayer time")}</Label>
           <Switch
             id="prayer-at-time"
             checked={settings.atTime}
@@ -419,9 +421,9 @@ function PrayerControls({
       {settings.enabled ? (
         <div className="flex items-center justify-between gap-3">
           <Label htmlFor="prayer-clutch" className="block">
-            Clutch reminder
+            {t("Clutch reminder")}
             <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-              5 minutes before a prayer's time runs out, if it isn't logged yet.
+              {t("5 minutes before a prayer's time runs out, if it isn't logged yet.")}
             </span>
           </Label>
           <Switch
@@ -434,10 +436,10 @@ function PrayerControls({
       {settings.enabled ? (
         <div className="flex items-center justify-between gap-3">
           <Label htmlFor="azkar-reminder" className="block">
-            Azkar reminders
+            {t("Azkar reminders")}
             <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-              Morning azkar {settings.azkarDelay} minutes after Fajr, evening azkar after Asr, until
-              you've read them.
+              {t("Morning azkar")} {settings.azkarDelay} minutes after Fajr, evening azkar after
+              Asr, until you've read them.
             </span>
           </Label>
           <Switch
@@ -449,7 +451,7 @@ function PrayerControls({
       ) : null}
       {settings.enabled ? (
         <div className="space-y-2">
-          <Label>Remind me before</Label>
+          <Label>{t("Remind me before")}</Label>
           <Select
             value={String(settings.leadMinutes)}
             onValueChange={(value) => update({ leadMinutes: Number(value) })}
@@ -484,10 +486,10 @@ function TaskControls({
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <ListChecks className="size-4" aria-hidden="true" />
-            Tasks
+            {t("Tasks")}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            One notification a day with what's due, including anything overdue.
+            {t("One notification a day with what's due, including anything overdue.")}
           </p>
         </div>
         <Switch
@@ -498,7 +500,7 @@ function TaskControls({
       </div>
       {settings.tasksEnabled ? (
         <div className="space-y-2">
-          <Label htmlFor="task-reminder-time">At</Label>
+          <Label htmlFor="task-reminder-time">{t("At")}</Label>
           <Input
             id="task-reminder-time"
             type="time"
@@ -525,9 +527,11 @@ function WaterControls({
         <div className="min-w-0">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <GlassWater className="size-4" aria-hidden="true" />
-            Water
+            {t("Water")}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">A nudge to drink, through the day.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("A nudge to drink, through the day.")}
+          </p>
         </div>
         <Switch
           checked={settings.water}
@@ -538,7 +542,7 @@ function WaterControls({
       {settings.water ? (
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-2">
-            <Label>Every</Label>
+            <Label>{t("Every")}</Label>
             <Select
               value={String(settings.waterEvery)}
               onValueChange={(value) => update({ waterEvery: Number(value) })}
@@ -558,7 +562,7 @@ function WaterControls({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="water-from">From</Label>
+            <Label htmlFor="water-from">{t("From")}</Label>
             <Input
               id="water-from"
               type="time"
@@ -568,7 +572,7 @@ function WaterControls({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="water-to">Until</Label>
+            <Label htmlFor="water-to">{t("Until")}</Label>
             <Input
               id="water-to"
               type="time"
@@ -606,9 +610,9 @@ export function ReminderSettingsCard() {
         <>
           {!allowed ? (
             <div className="tone-warning flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm">
-              <span>Notifications are off for Life OS, so reminders can't show.</span>
+              <span>{t("Notifications are off for Life OS, so reminders can't show.")}</span>
               <Button type="button" size="sm" onClick={requestNotifications}>
-                Allow notifications
+                {t("Allow notifications")}
               </Button>
             </div>
           ) : null}
@@ -630,7 +634,7 @@ export function PrayerReminderSettings() {
   if (!isAndroidApp()) {
     return (
       <section className="stat-card p-4 sm:p-5 text-sm text-muted-foreground">
-        Prayer reminders arrive as notifications in the Life OS Android app.
+        {t("Prayer reminders arrive as notifications in the Life OS Android app.")}
       </section>
     );
   }
@@ -638,9 +642,9 @@ export function PrayerReminderSettings() {
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       {!allowed ? (
         <div className="tone-warning flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm">
-          <span>Notifications are off for Life OS.</span>
+          <span>{t("Notifications are off for Life OS.")}</span>
           <Button type="button" size="sm" onClick={requestNotifications}>
-            Allow notifications
+            {t("Allow notifications")}
           </Button>
         </div>
       ) : null}

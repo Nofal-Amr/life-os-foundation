@@ -1,4 +1,5 @@
-import { addDays, format } from "date-fns";
+import { addDays } from "date-fns";
+import { format } from "@/lib/dates";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));

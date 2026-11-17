@@ -10,6 +10,7 @@ import { prayerCounts } from "@/data/week";
 import { useModules } from "@/hooks/useModules";
 import { todayISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const SIZE = 92;
 const STROKE = 9;
@@ -77,7 +78,7 @@ export function TodayRing({
   if (!segments.length) return null;
   const done = segments.reduce((sum, segment) => sum + segment.done, 0);
   const total = segments.reduce((sum, segment) => sum + segment.total, 0);
-  const summary = segments.map((s) => `${s.label} ${s.done} of ${s.total}`).join(", ");
+  const summary = segments.map((s) => `${t(s.label)} ${s.done} of ${s.total}`).join(", ");
 
   return (
     <div
@@ -112,7 +113,9 @@ export function TodayRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
         <span className="text-xl font-semibold tabular-nums">{done}</span>
-        <span className="mt-1 text-[0.6875rem] tabular-nums text-muted-foreground">of {total}</span>
+        <span className="mt-1 text-[0.6875rem] tabular-nums text-muted-foreground">
+          {t("of")} {total}
+        </span>
       </div>
     </div>
   );
@@ -136,7 +139,7 @@ export function TodayRingLegend({ segments }: { segments: RingSegment[] }) {
                 segment.done >= segment.total ? "bg-primary" : "bg-muted-foreground/40",
               )}
             />
-            {segment.label}{" "}
+            {t(segment.label)}{" "}
             <span className="tabular-nums text-foreground">
               {segment.done}/{segment.total}
             </span>

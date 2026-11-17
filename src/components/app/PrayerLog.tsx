@@ -1,6 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { AlarmClock, Check, Clock, Users, X, Zap, type LucideIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";

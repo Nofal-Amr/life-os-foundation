@@ -23,6 +23,7 @@ import { habitsQuery } from "@/data/habits";
 import { isAndroidApp } from "@/lib/native";
 import { FOCUS_PRESETS, writeFocus } from "@/lib/focus";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * Start a focus session: a length, what it's for, and optionally a habit
@@ -80,9 +81,9 @@ export function FocusDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Focus</DialogTitle>
+          <DialogTitle>{t("Focus")}</DialogTitle>
           <DialogDescription>
-            One thing, for a set time. You'll hear a soft chime when it's done.
+            {t("One thing, for a set time. You'll hear a soft chime when it's done.")}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -93,7 +94,7 @@ export function FocusDialog({
           }}
         >
           <div className="space-y-2">
-            <Label>How long</Label>
+            <Label>{t("How long")}</Label>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Minutes">
               {FOCUS_PRESETS.map((value) => (
                 <button
@@ -127,7 +128,7 @@ export function FocusDialog({
           </div>
           {!task ? (
             <div className="space-y-2">
-              <Label htmlFor="focus-label">On what</Label>
+              <Label htmlFor="focus-label">{t("On what")}</Label>
               <Input
                 id="focus-label"
                 className="h-12"
@@ -138,19 +139,19 @@ export function FocusDialog({
             </div>
           ) : (
             <p className="text-sm">
-              <span className="text-muted-foreground">On: </span>
+              <span className="text-muted-foreground">{t("On:")} </span>
               {task.title}
             </p>
           )}
           {activeHabits.length ? (
             <div className="space-y-2">
-              <Label>Tick a habit when done</Label>
+              <Label>{t("Tick a habit when done")}</Label>
               <Select value={habitId} onValueChange={setHabitId}>
                 <SelectTrigger className="h-12">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No habit</SelectItem>
+                  <SelectItem value="none">{t("No habit")}</SelectItem>
                   {activeHabits.map((habit) => (
                     <SelectItem key={habit.id} value={habit.id}>
                       {habit.name}
@@ -169,15 +170,17 @@ export function FocusDialog({
                 onChange={(event) => setLock(event.target.checked)}
               />
               <span>
-                Lock the screen to Life OS
+                {t("Lock the screen to Life OS")}
                 <span className="block text-xs text-muted-foreground">
-                  Android app pinning until the time is up. Hold Back and Recents to leave early.
+                  {t(
+                    "Android app pinning until the time is up. Hold Back and Recents to leave early.",
+                  )}
                 </span>
               </span>
             </label>
           ) : null}
           <Button type="submit" className="h-12 w-full" disabled={!ready || start.isPending}>
-            Start {ready ? `${length} min` : ""}
+            {t("Start")} {ready ? `${length} min` : ""}
           </Button>
         </form>
       </DialogContent>

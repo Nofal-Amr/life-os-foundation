@@ -19,12 +19,15 @@ import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useAuth, useSignOut } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { t } from "@/lib/i18n";
 
 function Brand() {
   return (
     <Link to="/dashboard" className="block px-3 py-1">
-      <span className="text-sm font-semibold tracking-tight text-foreground">Life OS</span>
-      <span className="mt-0.5 block text-xs text-muted-foreground">Personal operating system</span>
+      <span className="text-sm font-semibold tracking-tight text-foreground">{t("Life OS")}</span>
+      <span className="mt-0.5 block text-xs text-muted-foreground">
+        {t("Personal operating system")}
+      </span>
     </Link>
   );
 }
@@ -54,7 +57,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             className="flex h-10 w-full items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <Search className="size-4" aria-hidden="true" />
-            Search
+            {t("Search")}
             <kbd className="ml-auto rounded border border-border px-1.5 text-[0.6875rem]">
               Ctrl K
             </kbd>
@@ -90,7 +93,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </Button>
           <Button variant="ghost" size="sm" className="w-full justify-start" onClick={signOut}>
             <LogOut className="size-4" aria-hidden="true" />
-            Sign out
+            {t("Sign out")}
           </Button>
         </div>
       </aside>
@@ -102,7 +105,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* The chip sits beside the link, not in it, so tapping it never navigates. */}
         <div className="flex min-w-0 flex-col items-start py-1">
           <Link to="/dashboard" className="truncate text-sm font-semibold tracking-tight">
-            Life OS
+            {t("Life OS")}
           </Link>
           <SyncIndicator />
         </div>

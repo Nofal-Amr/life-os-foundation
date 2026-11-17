@@ -11,6 +11,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { AnimatedNumber } from "@/components/app/AnimatedNumber";
+import { t } from "@/lib/i18n";
 
 /**
  * Presentation for the "at a glance" cards. Nothing here computes or judges a
@@ -35,7 +36,7 @@ export function GlanceSection({
   return (
     <section aria-labelledby="glance-heading" className={cn("mb-5 sm:mb-6", className)}>
       <h2 id="glance-heading" className="section-title mb-3">
-        At a glance
+        {t("At a glance")}
       </h2>
       <div className="grid min-w-0 items-start gap-3 sm:gap-4 md:grid-cols-2">{children}</div>
     </section>
@@ -124,7 +125,7 @@ function Hero({ value, caption }: { value: ReactNode; caption?: ReactNode }) {
 export function NotEnoughData({ hint }: { hint: string }) {
   return (
     <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center">
-      <p className="text-sm text-foreground">Not enough data yet</p>
+      <p className="text-sm text-foreground">{t("Not enough data yet")}</p>
       <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
     </div>
   );
@@ -498,7 +499,7 @@ export function WeeklyBars({
                   className="size-3 shrink-0 rounded-[4px]"
                   style={{ background: colorOf(entry, index) }}
                 />
-                <span className="truncate">{entry.label}</span>
+                <span className="truncate">{t(entry.label)}</span>
               </span>
               <span className="shrink-0 font-mono text-[13px] font-medium tabular-nums text-foreground">
                 {formatValue(entry.total)}
@@ -538,7 +539,7 @@ export function RangeToggle<T extends number>({
     >
       {options.map((option) => (
         <ToggleGroupItem key={option.value} value={String(option.value)} className="px-3 text-xs">
-          {option.label}
+          {t(option.label)}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

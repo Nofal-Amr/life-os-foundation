@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { clearCrashReport, crashReport, type CrashReport } from "@/lib/native";
+import { t } from "@/lib/i18n";
 
 /**
  * Android only: if Life OS crashed or froze, shows what Android recorded so it
@@ -18,7 +19,7 @@ export function CrashReportCard() {
     `Life OS on ${report.device}`,
     ...report.exits.map(
       (exit) =>
-        `${new Date(exit.at).toLocaleString()} — ${exit.reason}${exit.description ? `: ${exit.description}` : ""}${exit.trace ? `\n${exit.trace}` : ""}`,
+        `${new Date(exit.at).toLocaleString()} — ${exit.reason}${exit.description ? `: ${t(exit.description)}` : ""}${exit.trace ? `\n${exit.trace}` : ""}`,
     ),
     report.crash ? `\nLast crash:\n${report.crash}` : "",
     report.notes ? `\nNotes:\n${report.notes}` : "",
@@ -39,11 +40,12 @@ export function CrashReportCard() {
     <section className="stat-card space-y-3 p-4 sm:p-5">
       <div>
         <p className="flex items-center gap-2 text-base font-semibold">
-          <Bug className="size-4" /> Recent app stops
+          <Bug className="size-4" /> {t("Recent app stops")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Life OS stopped unexpectedly on this phone. Copy this and send it on so it can be fixed.
-          It stays on this phone unless you share it.
+          {t(
+            "Life OS stopped unexpectedly on this phone. Copy this and send it on so it can be fixed. It stays on this phone unless you share it.",
+          )}
         </p>
       </div>
       <ul className="space-y-1 text-sm">
@@ -61,7 +63,7 @@ export function CrashReportCard() {
       </pre>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" onClick={() => void copy()}>
-          <Copy className="size-4" /> Copy report
+          <Copy className="size-4" /> {t("Copy report")}
         </Button>
         <Button
           type="button"

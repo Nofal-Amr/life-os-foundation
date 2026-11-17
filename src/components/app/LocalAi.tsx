@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { AI_MODEL, deleteModel, loadModel, modelDownloaded } from "@/lib/localAi";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /* -------------------------------------------- shared "is it here" state */
 
@@ -75,20 +76,22 @@ export function LocalAiCard() {
   return (
     <section className="stat-card space-y-3 p-4 sm:p-5">
       <p className="flex items-center gap-2 text-base font-semibold">
-        <Cpu className="size-4" /> On-device AI
+        <Cpu className="size-4" /> {t("On-device AI")}
       </p>
       <p className="text-xs text-muted-foreground">
-        A small AI model ({AI_MODEL.label}) that runs on this device: it suggests first steps for a
-        task and pulls tasks out of a note. Nothing you type leaves the device, and it works
-        offline. It's small, so it can be wrong — you always pick what's kept.
+        {t("A small AI model (")}
+        {t(AI_MODEL.label)}) that runs on this device: it suggests first steps for a task and pulls
+        tasks out of a note. Nothing you type leaves the device, and it works offline. It's small,
+        so it can be wrong — you always pick what's kept.
       </p>
       {ready ? (
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span className="flex items-center gap-1.5">
-            <Check className="size-4" /> On this device
+            <Check className="size-4" /> {t("On this device")}
           </span>
           <Button size="sm" variant="ghost" disabled={busy} onClick={() => void remove()}>
-            <Trash2 className="size-4" /> Remove ({AI_MODEL.sizeMb} MB)
+            <Trash2 className="size-4" /> {t("Remove (")}
+            {AI_MODEL.sizeMb} MB)
           </Button>
         </div>
       ) : progress != null ? (
@@ -100,12 +103,14 @@ export function LocalAiCard() {
             />
           </div>
           <p className="text-xs tabular-nums text-muted-foreground">
-            Downloading… {Math.round(progress * 100)}% of {AI_MODEL.sizeMb} MB. Keep the app open.
+            {t("Downloading…")} {Math.round(progress * 100)}% of {AI_MODEL.sizeMb} MB. Keep the app
+            open.
           </p>
         </div>
       ) : (
         <Button size="sm" disabled={busy || ready === null} onClick={() => void download()}>
-          <Sparkles className="size-4" /> Download ({AI_MODEL.sizeMb} MB, once)
+          <Sparkles className="size-4" /> {t("Download (")}
+          {AI_MODEL.sizeMb} MB, once)
         </Button>
       )}
     </section>
@@ -168,7 +173,7 @@ export function AiSuggestDialog({
         </DialogHeader>
         {items == null ? (
           <p className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Thinking on this device…
+            <Loader2 className="size-4 animate-spin" /> {t("Thinking on this device…")}
           </p>
         ) : items.length ? (
           <ul className="space-y-1">
@@ -200,7 +205,7 @@ export function AiSuggestDialog({
           </ul>
         ) : (
           <p className="py-4 text-sm text-muted-foreground">
-            Nothing came up. Try writing a bit more.
+            {t("Nothing came up. Try writing a bit more.")}
           </p>
         )}
         {items?.length ? (

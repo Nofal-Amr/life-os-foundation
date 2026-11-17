@@ -3,7 +3,8 @@
  * move them to tomorrow in one tap instead of letting them pile up.
  * Nothing is judged; a moved task is just a task with a new date.
  */
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { supabase } from "@/integrations/supabase/client";
 import { isOpen, updateTask, type Task } from "@/data/tasks";

@@ -13,6 +13,7 @@ import {
   type HoldMode,
 } from "@/lib/qibla";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** Within this many degrees counts as facing the Qibla. */
 const ALIGNED = 4;
@@ -273,12 +274,12 @@ export function QiblaFinder({
           </p>
           {!searching ? (
             <Button type="button" onClick={retry}>
-              <LocateFixed className="size-4" /> Try again
+              <LocateFixed className="size-4" /> {t("Try again")}
             </Button>
           ) : null}
           {failed ? (
             <p className="text-sm text-muted-foreground">
-              Couldn't get your location. Allow location for Life OS, or set it in Settings.
+              {t("Couldn't get your location. Allow location for Life OS, or set it in Settings.")}
             </p>
           ) : null}
         </div>
@@ -312,7 +313,7 @@ export function QiblaFinder({
           {searching ? " · finding you…" : ""}
           {!searching && !place.fresh ? (
             <button type="button" className="underline underline-offset-2" onClick={retry}>
-              Try again
+              {t("Try again")}
             </button>
           ) : null}
         </p>
@@ -341,14 +342,14 @@ export function QiblaFinder({
               mode === option.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
 
       {needsTap ? (
         <Button type="button" onClick={() => void allowWeb()}>
-          <Compass className="size-4" /> Start the compass
+          <Compass className="size-4" /> {t("Start the compass")}
         </Button>
       ) : null}
 
@@ -367,13 +368,14 @@ export function QiblaFinder({
             />
           </svg>
           <span>
-            The compass needs calibrating. Move the phone in a figure 8 a few times, away from metal
-            and magnets.
+            {t(
+              "The compass needs calibrating. Move the phone in a figure 8 a few times, away from metal and magnets.",
+            )}
           </span>
         </div>
       ) : wasCalibrating && reading?.calibration === 3 ? (
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground" role="status">
-          <Check className="size-4" /> Compass calibrated.
+          <Check className="size-4" /> {t("Compass calibrated.")}
         </p>
       ) : null}
 
@@ -400,8 +402,9 @@ export function QiblaFinder({
             {guidance}
           </p>
           <p className="text-center text-xs text-muted-foreground">
-            Hold the phone up in front of you, screen facing you. Turn until the arrow points
-            straight up.
+            {t(
+              "Hold the phone up in front of you, screen facing you. Turn until the arrow points straight up.",
+            )}
           </p>
         </div>
       ) : (
@@ -486,7 +489,7 @@ export function QiblaFinder({
 
       {silent ? (
         <p className="text-sm text-muted-foreground">
-          No compass reading. Allow motion and orientation access, or use the Life OS app.
+          {t("No compass reading. Allow motion and orientation access, or use the Life OS app.")}
         </p>
       ) : null}
       {reading ? (

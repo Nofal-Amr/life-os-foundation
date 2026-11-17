@@ -32,6 +32,7 @@ import {
 import { evidenceQuery } from "@/data/evidence";
 import { tasksQuery } from "@/data/tasks";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/capabilities")({
   head: () => ({
@@ -122,7 +123,7 @@ function CapabilitiesPage() {
       <PageHeader
         title="Capabilities"
         description="What you are building, backed by evidence."
-        actions={<Button onClick={openCreate}>Add capability</Button>}
+        actions={<Button onClick={openCreate}>{t("Add capability")}</Button>}
       />
 
       {capabilities.isLoading ? (
@@ -133,7 +134,7 @@ function CapabilitiesPage() {
         <EmptyState
           title="No capabilities yet"
           description="A capability is something you are getting better at. Finished work becomes its evidence over time."
-          action={<Button onClick={openCreate}>Add capability</Button>}
+          action={<Button onClick={openCreate}>{t("Add capability")}</Button>}
         />
       ) : (
         <ul className="space-y-3">
@@ -148,7 +149,7 @@ function CapabilitiesPage() {
                       <p className="truncate font-medium">{capability.name}</p>
                       {capability.description ? (
                         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                          {capability.description}
+                          {t(capability.description)}
                         </p>
                       ) : null}
                       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -186,7 +187,7 @@ function CapabilitiesPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="capability-name">Name</Label>
+          <Label htmlFor="capability-name">{t("Name")}</Label>
           <Input
             id="capability-name"
             required
@@ -200,7 +201,7 @@ function CapabilitiesPage() {
           onChange={(identity) => setForm({ ...form, ...identity })}
         />
         <div className="space-y-2">
-          <Label htmlFor="capability-description">Description (optional)</Label>
+          <Label htmlFor="capability-description">{t("Description (optional)")}</Label>
           <Textarea
             id="capability-description"
             value={form.description ?? ""}
@@ -212,9 +213,11 @@ function CapabilitiesPage() {
       <Dialog open={!!viewing} onOpenChange={(open) => !open && setViewing(null)}>
         <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Evidence for {viewing?.name}</DialogTitle>
+            <DialogTitle>
+              {t("Evidence for")} {viewing?.name}
+            </DialogTitle>
             <DialogDescription>
-              Every completed task linked to this capability, newest first.
+              {t("Every completed task linked to this capability, newest first.")}
             </DialogDescription>
           </DialogHeader>
           <ul className="divide-y divide-border">

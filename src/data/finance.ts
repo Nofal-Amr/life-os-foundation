@@ -5,9 +5,9 @@ import {
   addWeeks,
   addYears,
   differenceInCalendarDays,
-  format,
   parseISO,
 } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";

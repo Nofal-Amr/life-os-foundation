@@ -17,6 +17,7 @@ import {
 import { reviewByDateQuery, reviewKeys } from "@/data/reviews";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * Reflect: one thing at a time (a good thing, a hard thing, something you're
@@ -71,9 +72,9 @@ export function ReflectSheet({
         side="bottom"
         className="max-h-[90vh] overflow-y-auto rounded-t-3xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6"
       >
-        <SheetTitle className="text-base">Reflect</SheetTitle>
+        <SheetTitle className="text-base">{t("Reflect")}</SheetTitle>
         <SheetDescription className="mt-1">
-          One thing at a time. Your daily review gathers them.
+          {t("One thing at a time. Your daily review gathers them.")}
         </SheetDescription>
 
         <form
@@ -98,7 +99,7 @@ export function ReflectSheet({
                     : "border-border text-foreground hover:bg-accent",
                 )}
               >
-                {item.label}
+                {t(item.label)}
               </button>
             ))}
           </div>
@@ -121,12 +122,12 @@ export function ReflectSheet({
 
         {day.length ? (
           <section className="mt-6" aria-label="Today so far">
-            <h3 className="mb-2 text-sm font-medium text-foreground">Today so far</h3>
+            <h3 className="mb-2 text-sm font-medium text-foreground">{t("Today so far")}</h3>
             <ul className="space-y-1.5">
               {day.map((item, index) => (
                 <li key={index} className="flex gap-2 text-sm">
                   <span className="w-16 shrink-0 text-xs leading-5 text-muted-foreground">
-                    {item.label}
+                    {t(item.label)}
                   </span>
                   <span className="min-w-0 break-words text-foreground">{item.line}</span>
                 </li>

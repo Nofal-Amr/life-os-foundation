@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { TASBIH_PHRASES, TASBIH_TARGETS, dhikrKeys, logDhikr } from "@/data/azkar";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const STORE = "tasbih:current";
 
@@ -114,7 +115,7 @@ export function Tasbih({ date, todayTotal }: { date: string; todayTotal: number 
       </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Target</span>
+        <span className="text-muted-foreground">{t("Target")}</span>
         {[...TASBIH_TARGETS, null].map((option) => (
           <button
             key={option ?? "none"}
@@ -179,7 +180,9 @@ export function Tasbih({ date, todayTotal }: { date: string; todayTotal: number 
             ) : null}
           </span>
         </button>
-        <p className="text-xs text-muted-foreground">Tap the circle. It buzzes at the target.</p>
+        <p className="text-xs text-muted-foreground">
+          {t("Tap the circle. It buzzes at the target.")}
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -188,7 +191,7 @@ export function Tasbih({ date, todayTotal }: { date: string; todayTotal: number 
           onClick={() => save.mutate()}
           disabled={count === 0 || save.isPending}
         >
-          <Save className="size-4" /> Save to today
+          <Save className="size-4" /> {t("Save to today")}
         </Button>
         <Button
           type="button"
@@ -196,10 +199,10 @@ export function Tasbih({ date, todayTotal }: { date: string; todayTotal: number 
           onClick={() => setCurrent((value) => ({ ...value, count: 0 }))}
           disabled={count === 0}
         >
-          <RotateCcw className="size-4" /> Start again
+          <RotateCcw className="size-4" /> {t("Start again")}
         </Button>
         <span className="ms-auto text-sm text-muted-foreground tabular-nums">
-          Saved today: {todayTotal}
+          {t("Saved today:")} {todayTotal}
         </span>
       </div>
     </section>

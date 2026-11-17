@@ -35,6 +35,7 @@ import { resourcesQuery } from "@/data/resources";
 import { searchItems, type SearchItem, type SearchKind } from "@/data/search";
 import { tasksQuery } from "@/data/tasks";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 
 const KINDS: Record<SearchKind, { label: string; icon: LucideIcon; to: string }> = {
   task: { label: "Tasks", icon: CheckSquare, to: "/tasks" },
@@ -249,7 +250,7 @@ export function UniversalSearch({
                   className="gap-3"
                 >
                   <Icon className="text-muted-foreground" aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate">{result.title}</span>
+                  <span className="min-w-0 flex-1 truncate">{t(result.title)}</span>
                   {result.detail ? (
                     <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                       {result.detail}
@@ -270,7 +271,7 @@ export function UniversalSearch({
                 className="gap-3"
               >
                 <Search className="text-muted-foreground" aria-hidden="true" />
-                {page.label}
+                {t(page.label)}
               </CommandItem>
             ))}
           </CommandGroup>

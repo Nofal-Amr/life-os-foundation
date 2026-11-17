@@ -17,6 +17,7 @@ import { useXp } from "@/hooks/useXp";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * The habits that belong to one part of life, ticked right where you are:
@@ -76,7 +77,7 @@ export function AreaHabits({
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="section-title">{title}</h2>
         <Link to="/habits" className="text-xs text-muted-foreground hover:text-foreground">
-          All habits
+          {t("All habits")}
         </Link>
       </div>
       <ul className="grid gap-2 sm:grid-cols-2">

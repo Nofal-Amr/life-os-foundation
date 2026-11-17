@@ -45,6 +45,7 @@ import { CountBar, GoalChips } from "@/components/app/LinkedProgress";
 import { usePreferences } from "@/hooks/usePreferences";
 import { priorityLabel, priorityTone, projectStatusTone } from "@/lib/semantics";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/projects")({
   head: () => ({
@@ -163,9 +164,9 @@ function ProjectsPage() {
               From a plan
             </Button>
             <Button variant="outline" asChild>
-              <Link to="/import-plan">Import a plan</Link>
+              <Link to="/import-plan">{t("Import a plan")}</Link>
             </Button>
-            <Button onClick={openCreate}>New project</Button>
+            <Button onClick={openCreate}>{t("New project")}</Button>
           </div>
         }
       />
@@ -178,7 +179,7 @@ function ProjectsPage() {
         <EmptyState
           title="No projects yet"
           description="A project holds the tasks that belong together, so related work stays in one place."
-          action={<Button onClick={openCreate}>New project</Button>}
+          action={<Button onClick={openCreate}>{t("New project")}</Button>}
         />
       ) : (
         <div className="space-y-8">
@@ -218,9 +219,13 @@ function ProjectsPage() {
                               {priorityLabel(project.priority)} priority
                             </SemanticBadge>
                           ) : null}
-                          {project.due_date ? <span>Due {fmtDate(project.due_date)}</span> : null}
+                          {project.due_date ? (
+                            <span>
+                              {t("Due")} {fmtDate(project.due_date)}
+                            </span>
+                          ) : null}
                           {project.description ? (
-                            <span className="line-clamp-1 max-w-xl">{project.description}</span>
+                            <span className="line-clamp-1 max-w-xl">{t(project.description)}</span>
                           ) : null}
                         </>
                       }
@@ -261,7 +266,7 @@ function ProjectsPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t("Name")}</Label>
           <Input
             id="name"
             required
@@ -288,7 +293,7 @@ function ProjectsPage() {
             onChange={(identity) => setForm({ ...form, ...identity })}
           />
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t("Description")}</Label>
             <Textarea
               id="description"
               value={form.description ?? ""}
@@ -297,7 +302,7 @@ function ProjectsPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t("Status")}</Label>
               <Select
                 value={form.status}
                 onValueChange={(v) => setForm({ ...form, status: v as Project["status"] })}
@@ -308,14 +313,14 @@ function ProjectsPage() {
                 <SelectContent>
                   {PROJECT_STATUSES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
-                      {s.label}
+                      {t(s.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Priority</Label>
+              <Label>{t("Priority")}</Label>
               <Select
                 value={form.priority}
                 onValueChange={(v) => setForm({ ...form, priority: v as Project["priority"] })}
@@ -326,14 +331,14 @@ function ProjectsPage() {
                 <SelectContent>
                   {PRIORITIES.map((p) => (
                     <SelectItem key={p.value} value={p.value}>
-                      {p.label}
+                      {t(p.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="start">Start date</Label>
+              <Label htmlFor="start">{t("Start date")}</Label>
               <DatePicker
                 id="start"
                 value={form.start_date}
@@ -341,7 +346,7 @@ function ProjectsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="due">Due date</Label>
+              <Label htmlFor="due">{t("Due date")}</Label>
               <DatePicker
                 id="due"
                 value={form.due_date}

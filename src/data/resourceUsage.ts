@@ -8,7 +8,8 @@
  * skipped). A day or month no pair of readings covers is null, not zero:
  * there is simply no reading for it.
  */
-import { addDays, addMonths, format, startOfDay, startOfMonth, subDays, subMonths } from "date-fns";
+import { addDays, addMonths, startOfDay, startOfMonth, subDays, subMonths } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type UsagePeriod = "day" | "month";
 export type UsageBucket = { key: string; start: Date; value: number | null };

@@ -16,6 +16,7 @@ import { projectKeys } from "@/data/projects";
 import { taskKeys } from "@/data/tasks";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * Pick a ready-made plan: it becomes a project with its tasks spread over
@@ -53,10 +54,11 @@ export function PlansDialog({
     >
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Start from a plan</DialogTitle>
+          <DialogTitle>{t("Start from a plan")}</DialogTitle>
           <DialogDescription>
-            A project with its tasks spread over the days from today. Move, change or delete any of
-            them after.
+            {t(
+              "A project with its tasks spread over the days from today. Move, change or delete any of them after.",
+            )}
           </DialogDescription>
         </DialogHeader>
         <ul className="space-y-2">
@@ -89,7 +91,11 @@ export function PlansDialog({
                           {task.due.slice(5)} · {task.title}
                         </li>
                       ))}
-                      {tasks.length > 12 ? <li>…and {tasks.length - 12} more</li> : null}
+                      {tasks.length > 12 ? (
+                        <li>
+                          {t("…and")} {tasks.length - 12} more
+                        </li>
+                      ) : null}
                     </ul>
                     <Button
                       className="h-11 w-full"

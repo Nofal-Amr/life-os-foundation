@@ -9,7 +9,8 @@
  * Open tasks due later in the week can be done early from any earlier day;
  * they only count toward the day they are due (or done).
  */
-import { addDays, differenceInCalendarDays, format, parseISO, startOfWeek } from "date-fns";
+import { addDays, differenceInCalendarDays, parseISO, startOfWeek } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { Transaction } from "./finance";
 import type { Habit, HabitLog } from "./habits";

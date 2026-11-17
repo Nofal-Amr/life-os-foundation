@@ -6,6 +6,7 @@ import { EntityIcon } from "@/components/app/EntityIdentity";
 import { Button } from "@/components/ui/button";
 import { projectCoverUrlQuery, validateProjectCover } from "@/data/projects";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export function ProjectCover({
   path,
@@ -74,7 +75,7 @@ export function ProjectCoverPicker({
 
   return (
     <div className="space-y-2">
-      <span className="text-sm font-medium">Cover image</span>
+      <span className="text-sm font-medium">{t("Cover image")}</span>
       <div className="overflow-hidden rounded-lg border border-border bg-muted">
         <div className="relative aspect-[16/6]">
           {shown ? (
@@ -121,12 +122,14 @@ export function ProjectCoverPicker({
               }}
             >
               <X className="size-4" />
-              Remove
+              {t("Remove")}
             </Button>
           ) : null}
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Optional · PNG, JPEG or WebP · up to 5MB</p>
+      <p className="text-xs text-muted-foreground">
+        {t("Optional · PNG, JPEG or WebP · up to 5MB")}
+      </p>
     </div>
   );
 }

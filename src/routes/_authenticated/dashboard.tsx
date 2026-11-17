@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { addDays, format, isToday, parseISO } from "date-fns";
+import { addDays, isToday, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import {
   Check,
   Gauge,
@@ -292,8 +293,8 @@ function MoneySplitBar({
         <span style={{ width: pct(spendable) }} className="bg-primary/70" />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Balance now {fmtMoney(liquid)} · Recurring before payday {fmtMoney(committed)} · Buffer{" "}
-        {fmtMoney(buffer)}
+        {t("Balance now")} {fmtMoney(liquid)} · Recurring before payday {fmtMoney(committed)} ·
+        Buffer {fmtMoney(buffer)}
       </p>
     </div>
   );
@@ -326,7 +327,7 @@ function PaydayLine({
         />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Day {elapsed} of {span} since {fmtDate(iso(from))} · next {fmtDate(iso(to))}
+        {t("Day")} {elapsed} of {span} since {fmtDate(iso(from))} · next {fmtDate(iso(to))}
       </p>
     </div>
   );
@@ -1116,12 +1117,12 @@ function DashboardPage() {
     return (
       <div className="min-w-0">
         {isStep ? (
-          <p className="truncate text-xs text-muted-foreground">{action.parent.title}</p>
+          <p className="truncate text-xs text-muted-foreground">{t(action.parent.title)}</p>
         ) : null}
         <p
           className={`mt-1 break-words font-semibold text-foreground ${large ? "text-xl sm:text-3xl" : "text-base"}`}
         >
-          {action.item.title}
+          {t(action.item.title)}
           {action.minutes ? (
             <span className="ml-2 text-base font-normal text-muted-foreground">
               · {action.estimate}
@@ -1130,7 +1131,7 @@ function DashboardPage() {
         </p>
         {(action.parent.postponed_count ?? 0) >= 3 ? (
           <p className="mt-2 text-xs text-muted-foreground">
-            Moved {action.parent.postponed_count} times
+            {t("Moved")} {action.parent.postponed_count} times
             {action.parent.original_due_date
               ? ` since ${fmtDate(action.parent.original_due_date)}`
               : ""}
@@ -1146,7 +1147,7 @@ function DashboardPage() {
             onClick={() => finish.mutate(action.item.id)}
           >
             <Check className="size-4" />
-            Done
+            {t("Done")}
           </Button>
           <TaskTimerButton task={action.item} />
           {/* One clear action; the rest one tap away. */}
@@ -1173,7 +1174,7 @@ function DashboardPage() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/tasks" hash={action.parent.id}>
-                  Open task
+                  {t("Open task")}
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

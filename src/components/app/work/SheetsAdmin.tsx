@@ -290,7 +290,7 @@ function CorrectionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Correct this day</DialogTitle>
+          <DialogTitle>{t("Correct this day")}</DialogTitle>
           <DialogDescription>{`${day.member.display_name} · ${day.row.day}`}</DialogDescription>
         </DialogHeader>
         <form

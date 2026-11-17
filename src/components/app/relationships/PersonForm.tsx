@@ -17,6 +17,7 @@ import {
 import type { PersonInput } from "@/data/relationshipsApi";
 
 import { defaultCircle, defaultLinkKind, selectClass } from "./personFormHelpers";
+import { t } from "@/lib/i18n";
 
 const MONTHS = [
   "January",
@@ -164,7 +165,7 @@ export function PersonForm({
           >
             {RELATIONS.map((item) => (
               <option key={item.value} value={item.value}>
-                {item.label}
+                {t(item.label)}
               </option>
             ))}
           </select>
@@ -180,7 +181,7 @@ export function PersonForm({
           >
             {CIRCLES.map((item) => (
               <option key={item.value} value={item.value}>
-                {item.label}
+                {t(item.label)}
               </option>
             ))}
           </select>
@@ -231,17 +232,19 @@ export function PersonForm({
         >
           {CADENCES.map((item) => (
             <option key={item.label} value={item.days ?? ""}>
-              {item.label}
+              {t(item.label)}
             </option>
           ))}
           {draft.cadence && !CADENCES.some((item) => String(item.days) === draft.cadence) ? (
-            <option value={draft.cadence}>Every {draft.cadence} days</option>
+            <option value={draft.cadence}>
+              {t("Every")} {draft.cadence} days
+            </option>
           ) : null}
         </select>
       </Field>
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Birthday</legend>
+        <legend className="text-sm font-medium">{t("Birthday")}</legend>
         <div className="grid grid-cols-[1fr_2fr_1.4fr] gap-2">
           <select
             aria-label="Birthday day"
@@ -249,7 +252,7 @@ export function PersonForm({
             value={draft.day}
             onChange={(event) => set({ day: event.target.value })}
           >
-            <option value="">Day</option>
+            <option value="">{t("Day")}</option>
             {Array.from({ length: 31 }, (_, index) => (
               <option key={index} value={index + 1}>
                 {index + 1}
@@ -262,7 +265,7 @@ export function PersonForm({
             value={draft.month}
             onChange={(event) => set({ month: event.target.value })}
           >
-            <option value="">Month</option>
+            <option value="">{t("Month")}</option>
             {MONTHS.map((month, index) => (
               <option key={month} value={index + 1}>
                 {month}
@@ -282,7 +285,7 @@ export function PersonForm({
 
       <details className="group rounded-xl border border-border px-3 py-2" open={!!person}>
         <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
-          Goal, phone and notes
+          {t("Goal, phone and notes")}
         </summary>
         <div className="mt-3 space-y-4">
           <Field label="Goal with them (optional)" htmlFor="person-goal">

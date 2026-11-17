@@ -32,6 +32,7 @@ import {
 import { showTimerNotice } from "@/lib/native";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** Seconds since `from`, updating every second while `from` is set. */
 export function useClock(from: string | null): number {
@@ -225,7 +226,7 @@ export function TimerBar() {
         disabled={stop.isPending}
       >
         <Square className="size-3.5 fill-current" aria-hidden="true" />
-        Stop
+        {t("Stop")}
       </Button>
     </div>
   );

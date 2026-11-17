@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { CalendarClock, ChevronLeft, ChevronRight, Plus, Receipt } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +30,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/week")({
   head: () => ({
@@ -134,12 +136,12 @@ function WeekPage() {
           </ol>
 
           <p className="text-sm text-muted-foreground">
-            Looking back?{" "}
+            {t("Looking back?")}{" "}
             <Link
               to="/insights"
               className="font-medium text-primary underline-offset-2 hover:underline"
             >
-              Week by week is in Insights
+              {t("Week by week is in Insights")}
             </Link>
             .
           </p>
@@ -189,13 +191,13 @@ function DayAhead({ day, today, onPlan }: { day: AheadDay; today: string; onPlan
           onClick={onPlan}
         >
           <Plus className="size-4" />
-          Plan
+          {t("Plan")}
         </Button>
       </div>
 
       {empty ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
-          Nothing planned yet.
+          {t("Nothing planned yet.")}
         </p>
       ) : (
         <RowList>
@@ -218,7 +220,9 @@ function DayAhead({ day, today, onPlan }: { day: AheadDay; today: string; onPlan
                 meta={
                   <>
                     {index < day.fromEarlier ? (
-                      <span>From {format(parseISO(task.due_date!), "d MMM")}</span>
+                      <span>
+                        {t("From")} {format(parseISO(task.due_date!), "d MMM")}
+                      </span>
                     ) : null}
                     {task.due_time ? <span>{task.due_time.slice(0, 5)}</span> : null}
                     {project ? <span className="truncate">{project.name}</span> : null}
@@ -249,10 +253,10 @@ function DayAhead({ day, today, onPlan }: { day: AheadDay; today: string; onPlan
                   <Receipt className="size-5" aria-hidden />
                 </span>
               }
-              title={<span className="min-w-0 truncate">{bill.name}</span>}
-              openLabel={`Open ${bill.name} in Recurring`}
+              title={<span className="min-w-0 truncate">{t(bill.name)}</span>}
+              openLabel={`Open ${t(bill.name)} in Recurring`}
               onOpen={() => void navigate({ to: "/finance/recurring" })}
-              meta={<span>Expected, not logged yet</span>}
+              meta={<span>{t("Expected, not logged yet")}</span>}
               trailing={<span className="font-medium">{fmtMoney(Number(bill.amount))}</span>}
             />
           ))}
@@ -314,8 +318,10 @@ function PlanDialog({
     <Dialog open={day !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Plan for {day ? format(parseISO(day), "EEEE d MMM") : ""}</DialogTitle>
-          <DialogDescription>Pick a task to do on this day.</DialogDescription>
+          <DialogTitle>
+            {t("Plan for")} {day ? format(parseISO(day), "EEEE d MMM") : ""}
+          </DialogTitle>
+          <DialogDescription>{t("Pick a task to do on this day.")}</DialogDescription>
         </DialogHeader>
         {options.unsorted.length || options.upcoming.length ? (
           <div className="space-y-4">
@@ -324,9 +330,9 @@ function PlanDialog({
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Nothing to plan: every open task already has an earlier day.{" "}
+            {t("Nothing to plan: every open task already has an earlier day.")}{" "}
             <Link to="/tasks" className="font-medium text-primary">
-              Add a task
+              {t("Add a task")}
             </Link>
           </p>
         )}

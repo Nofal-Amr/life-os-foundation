@@ -26,6 +26,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const num = (text: string) => (text.trim() === "" ? null : Number(text));
 
@@ -133,7 +134,9 @@ export function TopUpDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Top up · {resource.name}</DialogTitle>
+          <DialogTitle>
+            {t("Top up ·")} {resource.name}
+          </DialogTitle>
           <DialogDescription>
             {current != null && current < 0
               ? `The balance is ${current} ${resource.unit}; that is paid back first.`
@@ -148,7 +151,10 @@ export function TopUpDialog({
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="topup-before">Meter now, before the top-up ({resource.unit})</Label>
+            <Label htmlFor="topup-before">
+              {t("Meter now, before the top-up (")}
+              {resource.unit})
+            </Label>
             <Input
               id="topup-before"
               inputMode="decimal"
@@ -160,14 +166,14 @@ export function TopUpDialog({
             <PhotoReader kind="number" onNumber={(value) => setBefore(String(value))} />
             {balance != null ? (
               <p className="text-xs text-muted-foreground">
-                Last reading {balance} {resource.unit}. Change it if the meter shows something else
-                now.
+                {t("Last reading")} {balance} {resource.unit}. Change it if the meter shows
+                something else now.
               </p>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="topup-paid">You paid</Label>
+            <Label htmlFor="topup-paid">{t("You paid")}</Label>
             <Input
               id="topup-paid"
               autoFocus
@@ -203,7 +209,7 @@ export function TopUpDialog({
                       : "text-muted-foreground",
                   )}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </button>
               ))}
             </div>
@@ -219,7 +225,7 @@ export function TopUpDialog({
 
           {plan.balanceAfter != null ? (
             <p className="rounded-lg bg-secondary p-3 text-sm tabular-nums">
-              New balance {plan.balanceAfter} {resource.unit}
+              {t("New balance")} {plan.balanceAfter} {resource.unit}
               {plan.fees ? (
                 <span className="text-muted-foreground"> · {fmtMoney(plan.fees)} went to fees</span>
               ) : null}
@@ -227,13 +233,13 @@ export function TopUpDialog({
           ) : null}
 
           <div className="space-y-2">
-            <Label>Paid from</Label>
+            <Label>{t("Paid from")}</Label>
             <Select value={accountId} onValueChange={setAccountId}>
               <SelectTrigger className="h-12">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Don't log spending</SelectItem>
+                <SelectItem value="none">{t("Don't log spending")}</SelectItem>
                 {(accounts.data ?? [])
                   .filter((account) => account.active)
                   .map((account) => (
@@ -244,7 +250,7 @@ export function TopUpDialog({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Logs the spending in Money for you, under this resource's category.
+              {t("Logs the spending in Money for you, under this resource's category.")}
             </p>
           </div>
 

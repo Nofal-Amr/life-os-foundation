@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { findTarget, lifeConnect, type ConnectRole } from "@/lib/native";
+import { t } from "@/lib/i18n";
 
 type Sent = "find" | "stop" | "failed" | null;
 
@@ -38,21 +39,24 @@ export function FindPhoneControl({
   return (
     <div className="space-y-3 rounded-lg bg-secondary p-3">
       <div>
-        <p className="text-sm font-medium">Find {target}</p>
+        <p className="text-sm font-medium">
+          {t("Find")} {target}
+        </p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          It rings or flashes for a minute, and stops when someone picks it up. It rings even on
-          silent or vibrate. With Do Not Disturb on, it rings only if alarms are allowed there.
+          {t(
+            "It rings or flashes for a minute, and stops when someone picks it up. It rings even on silent or vibrate. With Do Not Disturb on, it rings only if alarms are allowed there.",
+          )}
         </p>
       </div>
       <div className="flex items-center justify-between gap-3">
         <Label htmlFor="find-ring" className="flex items-center gap-2">
-          <Volume2 className="size-4" aria-hidden="true" /> Ring loudly
+          <Volume2 className="size-4" aria-hidden="true" /> {t("Ring loudly")}
         </Label>
         <Switch id="find-ring" checked={ring} onCheckedChange={setRing} />
       </div>
       <div className="flex items-center justify-between gap-3">
         <Label htmlFor="find-flash" className="flex items-center gap-2">
-          <Flashlight className="size-4" aria-hidden="true" /> Flash
+          <Flashlight className="size-4" aria-hidden="true" /> {t("Flash")}
         </Label>
         <Switch id="find-flash" checked={flash} onCheckedChange={setFlash} />
       </div>
@@ -76,7 +80,7 @@ export function FindPhoneControl({
             lifeConnect.stopFind();
           }}
         >
-          <Square className="size-3.5" aria-hidden="true" /> Stop
+          <Square className="size-3.5" aria-hidden="true" /> {t("Stop")}
         </Button>
       </div>
       <p className="text-xs text-muted-foreground" aria-live="polite">

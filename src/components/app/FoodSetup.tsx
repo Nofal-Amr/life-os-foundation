@@ -23,6 +23,7 @@ import {
 } from "@/data/preferences";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const MEAL_STEPS: { value: LibraryMeal; label: string; question: string }[] = [
   { value: "breakfast", label: "Breakfast", question: "What do you usually have for breakfast?" },
@@ -175,14 +176,16 @@ export function FoodSetup({
                       {selected ? (
                         <Check className="size-3.5 text-primary" aria-hidden="true" />
                       ) : null}
-                      {option.label}
+                      {t(option.label)}
                     </button>
                   );
                 })}
           </div>
           {meal && !options.length ? (
             <p className="py-4 text-sm text-muted-foreground">
-              Nothing in the list for this meal yet. You can add your own foods on the Food page.
+              {t(
+                "Nothing in the list for this meal yet. You can add your own foods on the Food page.",
+              )}
             </p>
           ) : null}
         </div>

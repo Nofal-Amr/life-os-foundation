@@ -2,6 +2,7 @@ import { Target } from "lucide-react";
 
 import type { Goal } from "@/data/goals";
 import type { Count, GoalHabit, GoalLinks } from "@/data/links";
+import { t } from "@/lib/i18n";
 
 /** A thin bar for "done of total"; nothing is drawn without a real total. */
 export function CountBar({ count, label }: { count: Count; label: string }) {
@@ -36,7 +37,7 @@ export function GoalChips({ goals }: { goals: Goal[] }) {
           className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary"
         >
           <Target className="size-3.5" aria-hidden="true" />
-          Moves your goal: {goal.name}
+          {t("Moves your goal:")} {goal.name}
         </span>
       ))}
     </div>
@@ -48,13 +49,13 @@ export function GoalLinksList({ links }: { links: GoalLinks }) {
   if (!links.projects.length && !links.next.length) {
     return (
       <p className="text-xs text-muted-foreground">
-        Link tasks to this goal (from a task's goal field) to see what moves it forward.
+        {t("Link tasks to this goal (from a task's goal field) to see what moves it forward.")}
       </p>
     );
   }
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">Moved forward by</p>
+      <p className="text-xs font-medium text-muted-foreground">{t("Moved forward by")}</p>
       <ul className="space-y-1.5">
         {links.projects.map(({ project, progress }) => (
           <li
@@ -73,7 +74,7 @@ export function GoalLinksList({ links }: { links: GoalLinks }) {
             className="flex items-center justify-between gap-3 rounded-lg border border-dashed border-border px-3 py-2 text-sm"
           >
             <span className="min-w-0 truncate">{task.title}</span>
-            <span className="shrink-0 text-xs text-muted-foreground">Next</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{t("Next")}</span>
           </li>
         ))}
       </ul>
@@ -86,7 +87,7 @@ export function GoalHabitsList({ items }: { items: GoalHabit[] }) {
   if (!items.length) return null;
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">Habits for this goal</p>
+      <p className="text-xs font-medium text-muted-foreground">{t("Habits for this goal")}</p>
       <ul className="space-y-1.5">
         {items.map(({ habit, lastSeven }) => (
           <li

@@ -48,6 +48,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/quests")({
   head: () => ({ meta: [{ title: "Quests · Life OS" }] }),
@@ -108,7 +109,7 @@ function QuestsPage() {
     mutationFn: buyReward,
     onSuccess: (_, reward) => {
       refreshShop();
-      toast.success(`Enjoy: ${reward.title}.`);
+      toast.success(`Enjoy: ${t(reward.title)}.`);
     },
     onError,
   });
@@ -123,9 +124,9 @@ function QuestsPage() {
       />
       {skin !== "rpg" ? (
         <p className="mb-5 rounded-lg border border-border bg-secondary/60 p-3 text-sm text-muted-foreground">
-          This is the RPG skin's page. Switch the look to RPG in{" "}
+          {t("This is the RPG skin's page. Switch the look to RPG in")}{" "}
           <Link to="/settings" search={{ section: "look" }} className="underline">
-            Settings
+            {t("Settings")}
           </Link>{" "}
           to see it on Today too.
         </p>
@@ -135,11 +136,11 @@ function QuestsPage() {
         <section className="stat-card flex flex-wrap items-center justify-between gap-4 p-5">
           <div>
             <p className="text-2xl font-semibold">
-              Level {level.level} <span className="text-primary">{title}</span>
+              {t("Level")} {level.level} <span className="text-primary">{title}</span>
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {level.into} of {level.span} XP to level {level.level + 1}
-              {next ? ` · "${next.title}" at level ${next.level}` : ""}
+              {next ? ` · "${t(next.title)}" at level ${next.level}` : ""}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 text-sm">
@@ -162,7 +163,7 @@ function QuestsPage() {
 
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Swords className="size-5" /> Bosses
+            <Swords className="size-5" /> {t("Bosses")}
           </h2>
           {fights.length ? (
             <ul className="grid gap-3 sm:grid-cols-2">
@@ -172,7 +173,7 @@ function QuestsPage() {
                   <li key={boss.project.id} className="stat-card p-4">
                     <div className="flex items-baseline justify-between gap-2">
                       <Link to="/projects" className="font-semibold hover:underline">
-                        {boss.project.name}
+                        {t(boss.project.name)}
                       </Link>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         {boss.defeated ? "Defeated" : `${left} of ${boss.hp} HP left`}
@@ -188,7 +189,7 @@ function QuestsPage() {
                       />
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Every task done in it is a hit.
+                      {t("Every task done in it is a hit.")}
                     </p>
                   </li>
                 );
@@ -196,14 +197,14 @@ function QuestsPage() {
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Projects with tasks show up here as bosses.
+              {t("Projects with tasks show up here as bosses.")}
             </p>
           )}
         </section>
 
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Award className="size-5" /> Achievements
+            <Award className="size-5" /> {t("Achievements")}
             <span className="text-sm font-normal text-muted-foreground">
               {earned.length} of {list.length}
             </span>
@@ -215,7 +216,7 @@ function QuestsPage() {
                 <span>
                   <span className="block text-sm font-semibold">{item.title}</span>
                   <span className="block text-xs text-muted-foreground">
-                    {item.description} Earned {fmtDate(item.earnedOn)}.
+                    {t(item.description)} Earned {fmtDate(item.earnedOn)}.
                   </span>
                 </span>
               </li>
@@ -229,7 +230,7 @@ function QuestsPage() {
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium">{item.title}</span>
                   <span className="block text-xs text-muted-foreground">
-                    {item.description} {item.progress.have.toLocaleString()} of{" "}
+                    {t(item.description)} {item.progress.have.toLocaleString()} of{" "}
                     {item.progress.need.toLocaleString()}.
                   </span>
                 </span>
@@ -240,19 +241,19 @@ function QuestsPage() {
 
         <section className="space-y-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Coins className="size-5" /> Shop
+            <Coins className="size-5" /> {t("Shop")}
             <span className="text-sm font-normal text-muted-foreground">
               {gold.balance} gold to spend
             </span>
           </h2>
           <p className="text-sm text-muted-foreground">
-            Rewards you set yourself. Gold is {XP_PER_GOLD} XP each: {gold.earned} earned,{" "}
+            {t("Rewards you set yourself. Gold is")} {XP_PER_GOLD} XP each: {gold.earned} earned,{" "}
             {gold.spent} spent.
           </p>
           <ul className="space-y-2">
             {(rewards.data ?? []).map((reward) => (
               <li key={reward.id} className="stat-card flex items-center justify-between gap-3 p-3">
-                <span className="text-sm font-medium">{reward.title}</span>
+                <span className="text-sm font-medium">{t(reward.title)}</span>
                 <span className="flex items-center gap-2">
                   <Button
                     size="sm"
@@ -264,7 +265,7 @@ function QuestsPage() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label={`Remove ${reward.title}`}
+                    aria-label={`Remove ${t(reward.title)}`}
                     onClick={() => removeReward.mutate(reward.id)}
                   >
                     <Trash2 className="size-4" />
@@ -299,12 +300,12 @@ function QuestsPage() {
               className="h-11"
               disabled={!rewardTitle.trim() || !rewardCost || add.isPending}
             >
-              <Plus className="size-4" /> Add
+              <Plus className="size-4" /> {t("Add")}
             </Button>
           </form>
           {(purchases.data ?? []).length ? (
             <div className="space-y-1 pt-2">
-              <p className="text-xs font-medium text-muted-foreground">Bought</p>
+              <p className="text-xs font-medium text-muted-foreground">{t("Bought")}</p>
               <ul className="space-y-1 text-sm">
                 {(purchases.data ?? []).slice(0, 8).map((item) => (
                   <li key={item.id} className="flex items-center justify-between gap-2">
@@ -315,7 +316,7 @@ function QuestsPage() {
                       </span>
                     </span>
                     <Button size="sm" variant="ghost" onClick={() => undo.mutate(item.id)}>
-                      <Undo2 className="size-4" /> Undo
+                      <Undo2 className="size-4" /> {t("Undo")}
                     </Button>
                   </li>
                 ))}
@@ -345,7 +346,7 @@ function QuestList({ title, quests }: { title: string; quests: Quest[] }) {
                 className={cn("flex items-center gap-2", quest.done && "text-muted-foreground")}
               >
                 {quest.done ? <Check className="size-4 text-primary" /> : null}
-                {quest.title}
+                {t(quest.title)}
               </span>
               <span className="text-xs tabular-nums text-muted-foreground">
                 {quest.have} / {quest.need}

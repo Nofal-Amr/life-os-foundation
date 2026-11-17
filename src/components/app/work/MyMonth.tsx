@@ -1,4 +1,5 @@
-import { addMonths, format, parseISO } from "date-fns";
+import { addMonths, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

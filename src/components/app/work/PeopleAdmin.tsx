@@ -195,7 +195,7 @@ function MemberRow({
           />
         </label>
         <Button type="submit" size="sm" variant="outline" disabled={save.isPending}>
-          Save
+          {t("Save")}
         </Button>
       </form>
       {used !== null && (Number(member.annual_leave_days) > 0 || used > 0) ? (

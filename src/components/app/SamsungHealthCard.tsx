@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { Activity, Flame, Footprints, HeartPulse, Moon, RefreshCw, Scale } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ import {
   type HealthStatus,
 } from "@/lib/native";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const AUTO_SYNC_AFTER_MS = 30 * 60_000;
 type Range = 7 | 30 | 90;
@@ -139,7 +141,7 @@ export function SamsungHealthCard() {
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">Health apps</p>
+          <p className="text-sm font-semibold">{t("Health apps")}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {hasData
               ? `From your phone and watch${lastHealthSync() ? ` · synced ${format(lastHealthSync()!, "d MMM, HH:mm")}` : ""}`
@@ -164,19 +166,22 @@ export function SamsungHealthCard() {
         <div className="space-y-3 rounded-xl bg-secondary p-4 text-sm">
           <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
             <li>
-              In your health app (<span className="text-foreground">Samsung Health</span>, Mi
-              Fitness, Fitbit…), open its Health Connect settings and allow it to share your data.
+              {t("In your health app (")}
+              <span className="text-foreground">{t("Samsung Health")}</span>
+              {t(
+                ", Mi Fitness, Fitbit…), open its Health Connect settings and allow it to share your data.",
+              )}
             </li>
-            <li>Then connect Life OS here and pick what it may read.</li>
+            <li>{t("Then connect Life OS here and pick what it may read.")}</li>
           </ol>
           <Button type="button" onClick={requestHealthAccess}>
-            Connect health data
+            {t("Connect health data")}
           </Button>
         </div>
       ) : null}
       {android && status === "unsupported" ? (
         <p className="text-sm text-muted-foreground">
-          Reading Health Connect needs Android 14 or later on this phone.
+          {t("Reading Health Connect needs Android 14 or later on this phone.")}
         </p>
       ) : null}
 
@@ -199,7 +204,7 @@ export function SamsungHealthCard() {
           </div>
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium">History</p>
+            <p className="text-sm font-medium">{t("History")}</p>
             <RangeToggle
               label="History range"
               value={range}
@@ -228,8 +233,9 @@ export function SamsungHealthCard() {
         </>
       ) : !android ? (
         <p className="text-sm text-muted-foreground">
-          Connect it from the Life OS Android app, or import a Samsung Health or Zepp Life download
-          below.
+          {t(
+            "Connect it from the Life OS Android app, or import a Samsung Health or Zepp Life download below.",
+          )}
         </p>
       ) : null}
       <SamsungImport />
@@ -319,10 +325,11 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
   const kinds = Object.entries(report.byKind);
   return (
     <div className="space-y-3 rounded-xl border border-border p-4 text-sm">
-      <p className="font-medium">Last sync</p>
+      <p className="font-medium">{t("Last sync")}</p>
       {kinds.length ? (
         <p className="text-muted-foreground">
-          Read {kinds.map(([kind, count]) => `${count} ${kind.replace(/_/g, " ")}`).join(", ")}
+          {t("Read")}{" "}
+          {kinds.map(([kind, count]) => `${count} ${kind.replace(/_/g, " ")}`).join(", ")}
           {report.sources.length
             ? ` from ${report.sources.map((s) => (s === SAMSUNG_HEALTH ? "Samsung Health" : s)).join(", ")}`
             : ""}
@@ -330,12 +337,14 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
         </p>
       ) : (
         <p className="text-muted-foreground">
-          Health Connect returned nothing for the last 30 days.
+          {t("Health Connect returned nothing for the last 30 days.")}
         </p>
       )}
       {missing.length ? (
         <div className="space-y-2">
-          <p>Life OS isn't allowed to read: {missing.join(", ")}.</p>
+          <p>
+            {t("Life OS isn't allowed to read:")} {missing.join(", ")}.
+          </p>
           <Button type="button" size="sm" onClick={() => openHealthSettings("app")}>
             Allow in Health Connect
           </Button>
@@ -349,7 +358,7 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
         </ul>
       ) : null}
       <details className="rounded-lg bg-secondary px-3 py-2 text-xs">
-        <summary className="cursor-pointer font-medium">Technical details</summary>
+        <summary className="cursor-pointer font-medium">{t("Technical details")}</summary>
         <pre className="mt-2 whitespace-pre-wrap break-all font-mono text-xs text-muted-foreground">
           {JSON.stringify(report.diagnostics, null, 1)}
         </pre>
@@ -357,10 +366,13 @@ function SyncReport({ report }: { report: HealthSyncReport }) {
       {!kinds.length ? (
         <div className="space-y-2 text-muted-foreground">
           <p>
-            Samsung Health only shares what it's told to. Open{" "}
-            <span className="text-foreground">Samsung Health → Settings → Health Connect</span>,
-            turn on sharing for steps, sleep, heart rate, exercise and weight, then tap Sync now.
-            Samsung Health may take a few minutes to copy its data over.
+            {t("Samsung Health only shares what it's told to. Open")}{" "}
+            <span className="text-foreground">
+              {t("Samsung Health → Settings → Health Connect")}
+            </span>
+            {t(
+              ", turn on sharing for steps, sleep, heart rate, exercise and weight, then tap Sync now. Samsung Health may take a few minutes to copy its data over.",
+            )}
           </p>
           <Button
             type="button"

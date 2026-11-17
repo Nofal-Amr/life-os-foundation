@@ -2,7 +2,8 @@
  * Phone reminders, worked out here and handed to the Android app, which
  * schedules them as notifications (see src/lib/native.ts).
  */
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { Reminder } from "@/lib/native";
 import type { Task } from "./tasks";

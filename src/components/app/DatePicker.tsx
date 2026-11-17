@@ -1,4 +1,5 @@
-import { format, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { CalendarIcon, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";

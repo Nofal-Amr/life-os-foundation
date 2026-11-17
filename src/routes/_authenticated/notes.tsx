@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
+import { format } from "@/lib/dates";
 import {
   Archive,
   ArchiveRestore,
@@ -394,7 +395,7 @@ function AllNotes({ onToday }: { onToday: () => void }) {
           }}
         >
           <Archive className="size-3" aria-hidden="true" />
-          Archive
+          {t("Archive")}
         </Chip>
       </div>
 
@@ -452,7 +453,7 @@ function AllNotes({ onToday }: { onToday: () => void }) {
             <DropdownMenuContent align="end">
               {NOTE_TEMPLATES.map((template) => (
                 <DropdownMenuItem key={template.id} onSelect={() => startFromTemplate(template)}>
-                  {template.label}
+                  {t(template.label)}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -591,14 +592,14 @@ function NoteCard({
           </ul>
         ) : isLockedNote(note) ? (
           <p className="text-sm text-muted-foreground">
-            Locked. Open it in the Life OS Android app.
+            {t("Locked. Open it in the Life OS Android app.")}
           </p>
         ) : note.body ? (
           <p className="line-clamp-[12] whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/85">
             {note.body}
           </p>
         ) : !note.title ? (
-          <p className="text-sm text-muted-foreground">Empty note</p>
+          <p className="text-sm text-muted-foreground">{t("Empty note")}</p>
         ) : null}
         {note.tags.length ? (
           <div className="mt-3 flex flex-wrap gap-1">
@@ -873,7 +874,7 @@ function NoteEditor({
               onClick={turnIntoPoints}
             >
               <List className="size-4" />
-              Into points
+              {t("Into points")}
             </Button>
           ) : null}
           {ai.ready && noteText.trim().length > 20 ? (
@@ -885,7 +886,7 @@ function NoteEditor({
               onClick={() => setFindingTasks(true)}
             >
               <Sparkles className="size-4" />
-              Into tasks
+              {t("Into tasks")}
             </Button>
           ) : null}
           <AiSuggestDialog
@@ -1092,7 +1093,7 @@ function ChecklistEditor({
         onClick={() => addAfter(open.at(-1)?.id ?? null)}
         className="mt-1 flex items-center gap-2 py-1.5 text-sm text-muted-foreground hover:text-foreground"
       >
-        <Plus className="size-4" /> List item
+        <Plus className="size-4" /> {t("List item")}
       </button>
       {done.length ? (
         <div className="mt-3 border-t border-border/60 pt-2">

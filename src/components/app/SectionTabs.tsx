@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 import type { ModuleKey } from "@/data/modules";
 import { useModules } from "@/hooks/useModules";
+import { t } from "@/lib/i18n";
 
 type SectionTab = {
   to:
@@ -98,7 +99,7 @@ export function SectionTabs() {
     <nav
       ref={listRef}
       className="relative mb-4 flex min-w-0 sm:mb-6 gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] max-md:[mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
-      aria-label={`${section.label} sections`}
+      aria-label={`${t(section.label)} sections`}
     >
       {bar ? (
         <span
@@ -114,7 +115,7 @@ export function SectionTabs() {
           activeOptions={{ exact: tab.exact ?? true }}
           className="shrink-0 px-3 pb-2.5 pt-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-foreground data-[status=active]:font-medium data-[status=active]:text-foreground"
         >
-          {tab.label}
+          {t(tab.label)}
         </Link>
       ))}
     </nav>

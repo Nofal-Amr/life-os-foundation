@@ -142,7 +142,7 @@ function PlaceForm({
       }}
     >
       <div className="space-y-1.5">
-        <Label htmlFor="place-name">Name</Label>
+        <Label htmlFor="place-name">{t("Name")}</Label>
         <Input
           id="place-name"
           value={place.name}
@@ -170,7 +170,7 @@ function PlaceForm({
         ))}
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="place-where">Where</Label>
+        <Label htmlFor="place-where">{t("Where")}</Label>
         <div className="flex gap-2">
           <Input
             id="place-where"
@@ -217,10 +217,10 @@ function PlaceForm({
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={!place.name.trim() || !point || save.isPending}>
-          Save
+          {t("Save")}
         </Button>
         <Button type="button" variant="ghost" onClick={onDone}>
-          Cancel
+          {t("Cancel")}
         </Button>
       </div>
     </form>
