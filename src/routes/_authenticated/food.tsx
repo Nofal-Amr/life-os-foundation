@@ -9,6 +9,7 @@ import { DateNav } from "@/components/app/DateNav";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
 import { FoodPlanTab, PlannedToday, RecipeDialog } from "@/components/app/food/FoodPlan";
+import { FoodThumb } from "@/components/app/food/FoodThumb";
 import { FoodLibraryDialog } from "@/components/app/FoodLibraryDialog";
 import { FoodSetup } from "@/components/app/FoodSetup";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -348,7 +349,15 @@ function FoodPage() {
                                 key={log.id}
                                 className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-card p-3"
                               >
-                                <div className="min-w-0">
+                                <FoodThumb
+                                  food={
+                                    (foods.data ?? []).find((item) => item.id === log.food_id) ?? {
+                                      name: log.name ?? "",
+                                      icon: null,
+                                    }
+                                  }
+                                />
+                                <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-medium">
                                     {log.name ?? "Food"}
                                   </p>
@@ -669,7 +678,8 @@ function FoodsList({
         return (
           <li key={food.id} className="rounded-xl border border-border bg-card p-3">
             <div className="flex min-w-0 items-center justify-between gap-3">
-              <div className="min-w-0">
+              <FoodThumb food={food} />
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{food.name}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {food.serving_label ? `${food.serving_label} · ` : ""}

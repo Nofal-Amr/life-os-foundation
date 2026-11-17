@@ -20,6 +20,7 @@ import {
   searchExercises,
   type LibraryExercise,
 } from "@/data/exerciseLibrary";
+import { ExerciseMotion } from "@/components/app/gym/ExerciseMedia";
 import { t } from "@/lib/i18n";
 
 const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -175,24 +176,7 @@ export function ExerciseDetail({
                 ].join(" · ")}
               </DialogDescription>
             </DialogHeader>
-            {exercise.images.length ? (
-              <div className="grid grid-cols-2 gap-2">
-                {exercise.images.slice(0, 2).map((path, index) => (
-                  <figure key={path} className="space-y-1">
-                    <img
-                      src={exerciseImageUrl(path)}
-                      alt={`${exercise.name}: ${t(index === 0 ? "start" : "end")}`}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                      className="aspect-[4/3] w-full rounded-lg bg-secondary object-cover"
-                    />
-                    <figcaption className="text-center text-2xs text-muted-foreground">
-                      {t(index === 0 ? "Start" : "End")}
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            ) : null}
+            <ExerciseMotion exercise={exercise} />
             <dl className="space-y-1 text-sm">
               <div className="flex gap-2">
                 <dt className="text-muted-foreground">{t("Works")}:</dt>
