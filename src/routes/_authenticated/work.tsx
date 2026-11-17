@@ -24,9 +24,13 @@ import {
   type WorkOrg,
 } from "@/data/work/api";
 import type { WorkRules } from "@/data/work/rules";
+import { SpaceTabContent, TabRow } from "@/components/app/spaces/SpaceTabs";
+import { SPACE_TABS, type SpaceTab } from "@/data/spaces";
 import { useAuth } from "@/hooks/useAuth";
 import { t } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
+
+const isSpaceTab = (tab: string): tab is SpaceTab =>
+  SPACE_TABS.some((option) => option.value === tab);
 
 export const Route = createFileRoute("/_authenticated/work")({
   head: () => ({
@@ -56,24 +60,7 @@ function WorkPage() {
   if (orgs.isLoading) return <LoadingState rows={4} />;
   if (orgs.error) return <ErrorState error={orgs.error} onRetry={() => void orgs.refetch()} />;
   const list = orgs.data ?? [];
-  if (!list.length) {
-    return (
-      <>
-        <PageHeader title="Work" />
-        <EmptyState
-          title="You're not in a company yet"
-          description="Make a test company or join one with a code in Settings → Work."
-          action={
-            <Button asChild>
-              <Link to="/settings" search={{ section: "work" }}>
-                {t("Open Settings")}
-              </Link>
-            </Button>
-          }
-        />
-      </>
-    );
-  }
+  if (!list.length) return <WorkOnItsOwn />;
   const org = list.find((item) => item.id === chosen) ?? list[0]!;
   return (
     <WorkSpace
@@ -92,7 +79,25 @@ function WorkPage() {
   );
 }
 
-export type WorkTab = "today" | "people" | "places" | "rules" | "sheets";
+export type WorkTab = "today" | SpaceTab | "people" | "places" | "rules" | "sheets";
+
+/** Work without a company: your own tasks, notes, ideas and calendar. */
+function WorkOnItsOwn() {
+  const [tab, setTab] = useState<SpaceTab>("tasks");
+  return (
+    <>
+      <PageHeader title="Work" description="Tasks, notes, ideas and dates for work." />
+      <TabRow tabs={SPACE_TABS} value={tab} onChange={setTab} label="Work" />
+      <SpaceTabContent space="work" tab={tab} />
+      <p className="mt-8 text-sm text-muted-foreground">
+        {t("Clocking in and the month's pay sheet need a company.")}{" "}
+        <Link to="/settings" search={{ section: "work" }} className="underline underline-offset-4">
+          {t("Make or join one in Settings → Work")}
+        </Link>
+      </p>
+    </>
+  );
+}
 
 function WorkSpace({
   org,
@@ -117,6 +122,7 @@ function WorkSpace({
 
   const tabs: { value: WorkTab; label: string }[] = [
     { value: "today", label: "Today" },
+    ...SPACE_TABS,
     ...(admin
       ? ([
           { value: "people", label: "People" },
@@ -149,30 +155,12 @@ function WorkSpace({
           ) : null
         }
       />
-      {tabs.length > 1 ? (
-        <div className="mb-5 flex flex-wrap gap-1 rounded-xl bg-secondary p-1" role="tablist">
-          {tabs.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="tab"
-              aria-selected={tab === option.value}
-              onClick={() => setTab(option.value)}
-              className={cn(
-                "rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors",
-                tab === option.value
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground",
-              )}
-            >
-              {t(option.label)}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <TabRow tabs={tabs} value={tab} onChange={setTab} label="Work" />
 
       {tab === "today" ? (
         <TodayTab org={org} rules={rules} me={me} />
+      ) : isSpaceTab(tab) ? (
+        <SpaceTabContent space="work" tab={tab} />
       ) : (
         <AdminTab tab={tab} org={org} rules={rules} me={me} />
       )}

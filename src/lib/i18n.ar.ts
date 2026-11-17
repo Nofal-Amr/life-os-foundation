@@ -965,6 +965,63 @@ export const AR: Record<string, string> = {
   "How to do it": "طريقة الأداء",
   Pause: "إيقاف مؤقت",
   Play: "تشغيل",
+  "Something went wrong.": "حدث خطأ ما.",
+  "Mark done": "تم",
+  "Mark not done": "لم يتم",
+  "Hide done": "إخفاء المنجز",
+  "Show done": "إظهار المنجز",
+  "Write it down": "اكتبها",
+  Untitled: "بدون عنوان",
+  "The next 60 days": "الـ 60 يومًا القادمة",
+  "Open the full calendar": "فتح التقويم كاملًا",
+  "Type one above. They also show in Tasks and on the calendar when they have a date.":
+    "اكتب واحدة بالأعلى. تظهر أيضًا في المهام وفي التقويم إذا كان لها تاريخ.",
+  "Nothing dated in the next 60 days": "لا شيء بتاريخ في الـ 60 يومًا القادمة",
+  Ideas: "الأفكار",
+  "Work and Study in the calendar": "العمل والدراسة في التقويم",
+  "Show them with everything else, or keep the main calendar for life only. Each space still has its own calendar tab, and you can switch them for one visit on the Calendar page.":
+    "اعرضهما مع كل شيء، أو اجعل التقويم الرئيسي للحياة فقط. لكل مساحة تبويب تقويم خاص بها، ويمكنك تبديلهما لزيارة واحدة من صفحة التقويم.",
+  "Work in the calendar": "العمل في التقويم",
+  "Study in the calendar": "الدراسة في التقويم",
+  "Work tasks with a date, next to the rest of your day.":
+    "مهام العمل ذات التاريخ، بجانب باقي يومك.",
+  "Study tasks, assignments and exams with a date.":
+    "مهام الدراسة والتكليفات والامتحانات ذات التاريخ.",
+  "Clocking in and the month's pay sheet need a company.":
+    "تسجيل الحضور وكشف راتب الشهر يحتاجان شركة.",
+  "Make or join one in Settings → Work": "أنشئ شركة أو انضم لواحدة من الإعدادات ← العمل",
+  "Tasks, notes, ideas and dates for work.": "مهام وملاحظات وأفكار ومواعيد للعمل.",
+  "Show or hide spaces": "إظهار أو إخفاء المساحات",
+  "Assignments and exams": "التكليفات والامتحانات",
+  Life: "الحياة",
+  "A work task": "مهمة عمل",
+  "A study task": "مهمة دراسة",
+  "No work tasks yet": "لا توجد مهام عمل بعد",
+  "No study tasks yet": "لا توجد مهام دراسة بعد",
+  "An idea, in a line": "فكرة، في سطر",
+  "New idea": "فكرة جديدة",
+  "Note title": "عنوان الملاحظة",
+  "Add idea": "إضافة فكرة",
+  "Add note": "إضافة ملاحظة",
+  "No ideas yet": "لا توجد أفكار بعد",
+  "No notes yet": "لا توجد ملاحظات بعد",
+  "Catch an idea in one line before it goes. You can grow it into a note or a task later.":
+    "التقط الفكرة في سطر قبل أن تضيع. يمكنك تحويلها لملاحظة أو مهمة لاحقًا.",
+  "Notes here are also in Notes, tagged so they stay together.":
+    "الملاحظات هنا موجودة أيضًا في الملاحظات، بوسم يبقيها معًا.",
+  "Tasks with a date and assignments or exams with a due date show here.":
+    "تظهر هنا المهام ذات التاريخ والتكليفات أو الامتحانات ذات الموعد.",
+  "Tasks with a date show here.": "تظهر هنا المهام ذات التاريخ.",
+  Assignment: "تكليف",
+  Exam: "امتحان",
+  Quiz: "اختبار قصير",
+  Reading: "قراءة",
+  "Work tasks, notes, ideas and dates in their own space. Always on while you're in a company.":
+    "مهام العمل وملاحظاته وأفكاره ومواعيده في مساحة خاصة. تعمل دائمًا ما دمت في شركة.",
+  "Student mode: courses, timetable, tasks, notes, ideas and exams.":
+    "وضع الطالب: المواد والجدول والمهام والملاحظات والأفكار والامتحانات.",
+  "Work and Study, holidays and Google Calendar.": "العمل والدراسة، والعطلات وتقويم Google.",
+  "No date": "بدون تاريخ",
 
   // Notes: canvas
   Canvas: "لوحة",

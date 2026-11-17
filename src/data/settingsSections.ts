@@ -43,7 +43,11 @@ export const SETTINGS_SECTIONS: {
     description: "Life Connect, the watch and the on-phone assistant.",
   },
   { key: "work", label: "Work", description: "Your company and clocking in." },
-  { key: "calendar", label: "Calendar", description: "Holidays and Google Calendar." },
+  {
+    key: "calendar",
+    label: "Calendar",
+    description: "Work and Study, holidays and Google Calendar.",
+  },
   {
     key: "look",
     label: "Language and look",
