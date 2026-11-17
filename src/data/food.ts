@@ -51,6 +51,10 @@ export type FoodInput = {
   carbs_g: number | null;
   fat_g: number | null;
   icon: string | null;
+  /** How to make it, as plain text. */
+  recipe?: string | null;
+  /** Rough cost per serving. */
+  cost?: number | null;
 };
 
 export async function createFood(input: FoodInput): Promise<Food> {

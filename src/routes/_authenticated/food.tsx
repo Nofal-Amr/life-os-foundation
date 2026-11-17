@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DateNav } from "@/components/app/DateNav";
 import { EntityIcon } from "@/components/app/EntityIdentity";
 import { FormDialog } from "@/components/app/FormDialog";
+import { FoodPlanTab, PlannedToday, RecipeDialog } from "@/components/app/food/FoodPlan";
 import { FoodLibraryDialog } from "@/components/app/FoodLibraryDialog";
 import { FoodSetup } from "@/components/app/FoodSetup";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -39,7 +40,11 @@ import {
   type FoodInput,
   type FoodLog,
 } from "@/data/food";
+import { foodCost, foodRecipe, mealPlanQuery } from "@/data/mealPlan";
+import { isMissingTable } from "@/data/relationshipsApi";
+import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
+import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/food")({
@@ -70,6 +75,13 @@ const emptyFood: FoodInput = {
   icon: null,
 };
 
+type FoodTab = "today" | "plan" | "foods";
+const TABS: { value: FoodTab; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "plan", label: "Plan" },
+  { value: "foods", label: "Foods" },
+];
+
 function round(value: number) {
   return Math.round(value * 10) / 10;
 }
@@ -78,6 +90,10 @@ function FoodPage() {
   const queryClient = useQueryClient();
   const foods = useQuery(foodsQuery());
   const logs = useQuery(foodLogsQuery());
+  const plan = useQuery(mealPlanQuery());
+  const { prefs } = usePreferences();
+  const [tab, setTab] = useState<FoodTab>("today");
+  const [recipeFor, setRecipeFor] = useState<Food | null>(null);
 
   const [date, setDate] = useState(todayISO());
   const [meal, setMeal] = useState<string>("breakfast");
@@ -210,7 +226,27 @@ function FoodPage() {
       />
 
       <div className="space-y-6">
-        <DateNav value={date} onChange={setDate} />
+        <div className="flex gap-1 rounded-xl bg-secondary p-1" role="tablist">
+          {TABS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={tab === option.value}
+              onClick={() => setTab(option.value)}
+              className={cn(
+                "flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                tab === option.value
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground",
+              )}
+            >
+              {t(option.label)}
+            </button>
+          ))}
+        </div>
+
+        {tab === "today" ? <DateNav value={date} onChange={setDate} /> : null}
 
         {loading ? (
           <LoadingState rows={3} />
@@ -222,28 +258,59 @@ function FoodPage() {
               logs.refetch();
             }}
           />
+        ) : tab === "plan" ? (
+          isMissingTable(plan.error) ? (
+            <EmptyState
+              title="The plan needs a one-time database update"
+              description="Your food log keeps working; the weekly plan appears as soon as it's added."
+            />
+          ) : (
+            <FoodPlanTab
+              foods={foods.data ?? []}
+              plan={plan.data ?? []}
+              currency={prefs.currency ?? ""}
+            />
+          )
+        ) : tab === "foods" ? (
+          <FoodsList
+            foods={foods.data ?? []}
+            currency={prefs.currency ?? ""}
+            onLog={(food) => {
+              setPickFood(food);
+              setServings("1");
+            }}
+            onRecipe={setRecipeFor}
+            onDelete={setFoodToDelete}
+          />
         ) : (
           <>
             <section className="system-card p-6">
-              <p className="text-sm text-muted-foreground">Logged this day</p>
+              <p className="text-sm text-muted-foreground">{t("Logged this day")}</p>
               <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight">
                 {round(totals.calories)} kcal
               </p>
               <dl className="mt-4 grid min-w-0 gap-3 text-sm sm:grid-cols-3">
                 <div>
-                  <dt className="text-muted-foreground">Protein</dt>
+                  <dt className="text-muted-foreground">{t("Protein")}</dt>
                   <dd className="tabular-nums">{round(totals.protein)} g</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Carbs</dt>
+                  <dt className="text-muted-foreground">{t("Carbs")}</dt>
                   <dd className="tabular-nums">{round(totals.carbs)} g</dd>
                 </div>
                 <div>
-                  <dt className="text-muted-foreground">Fat</dt>
+                  <dt className="text-muted-foreground">{t("Fat")}</dt>
                   <dd className="tabular-nums">{round(totals.fat)} g</dd>
                 </div>
               </dl>
             </section>
+
+            <PlannedToday
+              date={date}
+              foods={foods.data ?? []}
+              plan={plan.data ?? []}
+              logs={logs.data ?? []}
+            />
 
             <section className="stat-card p-4">
               <QuickMeals date={date} showDay={false} />
@@ -255,7 +322,7 @@ function FoodPage() {
             </section>
 
             <section>
-              <h2 className="mb-3 section-title">Entries</h2>
+              <h2 className="mb-3 section-title">{t("Entries")}</h2>
               {dayLogs.length === 0 ? (
                 <EmptyState
                   title="Nothing logged yet today"
@@ -270,7 +337,7 @@ function FoodPage() {
                       return (
                         <div key={option.value}>
                           <div className="mb-2 flex items-baseline justify-between gap-3">
-                            <h3 className="text-sm font-medium">{option.label}</h3>
+                            <h3 className="text-sm font-medium">{t(option.label)}</h3>
                             <span className="text-xs tabular-nums text-muted-foreground">
                               {round(mealTotals.calories)} kcal
                             </span>
@@ -309,7 +376,7 @@ function FoodPage() {
                   )}
                   {dayLogs.some((log) => !log.meal) ? (
                     <div>
-                      <h3 className="mb-2 text-sm font-medium">No meal set</h3>
+                      <h3 className="mb-2 text-sm font-medium">{t("No meal set")}</h3>
                       <ul className="space-y-2">
                         {dayLogs
                           .filter((log) => !log.meal)
@@ -341,46 +408,6 @@ function FoodPage() {
                 </div>
               )}
             </section>
-
-            {(foods.data ?? []).length ? (
-              <section>
-                <h2 className="mb-3 section-title">Your food library</h2>
-                <ul className="space-y-2">
-                  {(foods.data ?? []).map((food) => (
-                    <li
-                      key={food.id}
-                      className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-card p-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{food.name}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {food.serving_label ? `${food.serving_label} · ` : ""}
-                          {round(Number(food.calories))} kcal
-                          {food.protein_g == null ? "" : ` · P ${round(Number(food.protein_g))} g`}
-                          {food.carbs_g == null ? "" : ` · C ${round(Number(food.carbs_g))} g`}
-                          {food.fat_g == null ? "" : ` · F ${round(Number(food.fat_g))} g`}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setPickFood(food);
-                            setServings("1");
-                          }}
-                        >
-                          Log
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setFoodToDelete(food)}>
-                          Delete
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
           </>
         )}
       </div>
@@ -423,7 +450,7 @@ function FoodPage() {
                 <SelectContent>
                   {MEALS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -588,6 +615,12 @@ function FoodPage() {
         </div>
       </FormDialog>
 
+      <RecipeDialog
+        food={recipeFor}
+        onOpenChange={(open) => !open && setRecipeFor(null)}
+        currency={prefs.currency ?? ""}
+      />
+
       <ConfirmDialog
         open={!!logToDelete}
         onOpenChange={(open) => !open && setLogToDelete(null)}
@@ -604,5 +637,72 @@ function FoodPage() {
         onConfirm={() => foodToDelete && removeFood.mutate(foodToDelete.id)}
       />
     </>
+  );
+}
+
+/** Your food library, with each food's recipe and rough cost. */
+function FoodsList({
+  foods,
+  currency,
+  onLog,
+  onRecipe,
+  onDelete,
+}: {
+  foods: Food[];
+  currency: string;
+  onLog: (food: Food) => void;
+  onRecipe: (food: Food) => void;
+  onDelete: (food: Food) => void;
+}) {
+  if (!foods.length)
+    return (
+      <EmptyState
+        title="No foods in your library yet"
+        description="Add your usual foods, pick from common foods, or import a file in Plan."
+      />
+    );
+  return (
+    <ul className="space-y-2">
+      {foods.map((food) => {
+        const recipe = foodRecipe(food);
+        const cost = foodCost(food);
+        return (
+          <li key={food.id} className="rounded-xl border border-border bg-card p-3">
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{food.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {food.serving_label ? `${food.serving_label} · ` : ""}
+                  {round(Number(food.calories))} kcal
+                  {food.protein_g == null ? "" : ` · P ${round(Number(food.protein_g))} g`}
+                  {food.carbs_g == null ? "" : ` · C ${round(Number(food.carbs_g))} g`}
+                  {food.fat_g == null ? "" : ` · F ${round(Number(food.fat_g))} g`}
+                  {cost == null ? "" : ` · ~${round(cost)} ${currency}`}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap justify-end gap-1">
+                <Button size="sm" variant="ghost" onClick={() => onLog(food)}>
+                  {t("Log")}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onRecipe(food)}>
+                  {recipe || cost != null ? t("Recipe and cost") : t("Add recipe")}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => onDelete(food)}>
+                  {t("Delete")}
+                </Button>
+              </div>
+            </div>
+            {recipe ? (
+              <details className="mt-2 text-sm">
+                <summary className="cursor-pointer text-xs text-muted-foreground">
+                  {t("Recipe")}
+                </summary>
+                <p className="mt-2 whitespace-pre-line text-sm">{recipe}</p>
+              </details>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
