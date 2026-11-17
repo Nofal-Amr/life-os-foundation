@@ -1,6 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Briefcase,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  HeartPulse,
+  LayoutGrid,
+  Monitor,
+  Moon,
+  Palette,
+  Smartphone,
+  Sun,
+  UserRound,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -87,6 +105,36 @@ import {
   weightToDisplay,
   weightToStored,
 } from "@/lib/format";
+
+/** Each part's icon, the same ones the website's navigation uses where there is one. */
+const SECTION_ICONS: Record<SettingsSectionKey, LucideIcon> = {
+  profile: UserRound,
+  areas: LayoutGrid,
+  prayer: Moon,
+  money: Wallet,
+  body: HeartPulse,
+  phone: Smartphone,
+  work: Briefcase,
+  calendar: CalendarDays,
+  look: Palette,
+  data: Database,
+};
+
+function SectionIcon({ section, large }: { section: SettingsSectionKey; large?: boolean }) {
+  const Icon = SECTION_ICONS[section];
+  return (
+    <span
+      aria-hidden="true"
+      className={
+        large
+          ? "grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"
+          : "grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"
+      }
+    >
+      <Icon className={large ? "size-5" : "size-[18px]"} strokeWidth={1.75} />
+    </span>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -372,7 +420,8 @@ function SettingsPage() {
                   search={{ section: item.key }}
                   className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
                 >
-                  <span className="min-w-0">
+                  <SectionIcon section={item.key} />
+                  <span className="min-w-0 flex-1">
                     <span className="block text-sm font-medium text-foreground">
                       {t(item.label)}
                     </span>
@@ -399,7 +448,14 @@ function SettingsPage() {
         <ChevronLeft className="size-4 rtl:rotate-180" />
         {t("Settings")}
       </Link>
-      <PageHeader title={current.label} description={current.description} />
+      <div className="flex items-start gap-3">
+        <span className="mt-1">
+          <SectionIcon section={current.key} large />
+        </span>
+        <div className="min-w-0 flex-1">
+          <PageHeader title={current.label} description={current.description} />
+        </div>
+      </div>
 
       <SectionBoundary label={current.label}>
         <div className="space-y-6">
