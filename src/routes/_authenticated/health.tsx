@@ -1000,7 +1000,9 @@ function HealthPage() {
                     </Button>
                     {!heightCm ? null : (
                       <Button asChild variant="ghost" className="h-12">
-                        <Link to="/settings">Body setup</Link>
+                        <Link to="/settings" search={{ section: "body" }}>
+                          Body setup
+                        </Link>
                       </Button>
                     )}
                   </form>

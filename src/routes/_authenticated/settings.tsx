@@ -1,10 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, Monitor, Moon, Sun } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
+import { t } from "@/lib/i18n";
+import { SectionBoundary } from "@/components/app/SectionBoundary";
+import {
+  SETTINGS_SECTIONS,
+  settingsSection,
+  visibleSettingsSections,
+  type SettingsSectionKey,
+} from "@/data/settingsSections";
 import { CrashReportCard } from "@/components/app/CrashReportCard";
 import { LifeConnectCard } from "@/components/app/LifeConnectCard";
 import { LocalAiCard } from "@/components/app/LocalAi";
@@ -99,6 +107,10 @@ export const Route = createFileRoute("/_authenticated/settings")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { section?: SettingsSectionKey } => {
+    const section = settingsSection(search["section"]);
+    return section ? { section } : {};
+  },
   component: SettingsPage,
 });
 
@@ -108,6 +120,7 @@ function num(value: string): number | null {
 }
 
 function SettingsPage() {
+  const { section } = Route.useSearch();
   const queryClient = useQueryClient();
   const profile = useQuery(profileQuery());
   const preferences = useQuery(preferencesQuery());
@@ -343,732 +356,799 @@ function SettingsPage() {
 
   const prayerConfig = prayer.data;
 
+  const current = SETTINGS_SECTIONS.find((item) => item.key === section);
+  const show = (key: SettingsSectionKey) => current?.key === key;
+
+  if (!current) {
+    return (
+      <>
+        <PageHeader title="Settings" description="Set things up once. Pick a part to open it." />
+        <nav aria-label={t("Settings")}>
+          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+            {visibleSettingsSections(enabledModuleKeys).map((item) => (
+              <li key={item.key}>
+                <Link
+                  to="/settings"
+                  search={{ section: item.key }}
+                  className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-foreground">
+                      {t(item.label)}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {t(item.description)}
+                    </span>
+                  </span>
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader
-        title="Profile & Settings"
-        description="Everything you only set once: you, your body, your prayers, and how things look."
-      />
+      <Link
+        to="/settings"
+        className="mb-2 inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ChevronLeft className="size-4 rtl:rotate-180" />
+        {t("Settings")}
+      </Link>
+      <PageHeader title={current.label} description={current.description} />
 
-      <div className="space-y-6">
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Identity</CardTitle>
-            <CardDescription>
-              Your name is used across the app instead of your email.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-              <UserAvatar size="lg" />
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={upload.isPending}
-                    onClick={() => fileInput.current?.click()}
-                  >
-                    {upload.isPending
-                      ? "Uploading…"
-                      : profile.data?.avatar_url
-                        ? "Replace picture"
-                        : "Upload picture"}
-                  </Button>
-                  {profile.data?.avatar_url ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      disabled={clearPicture.isPending}
-                      onClick={() => clearPicture.mutate()}
-                    >
-                      Remove
-                    </Button>
-                  ) : null}
+      <SectionBoundary label={current.label}>
+        <div className="space-y-6">
+          {show("profile") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Identity</CardTitle>
+                <CardDescription>
+                  Your name is used across the app instead of your email.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                  <UserAvatar size="lg" />
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={upload.isPending}
+                        onClick={() => fileInput.current?.click()}
+                      >
+                        {upload.isPending
+                          ? "Uploading…"
+                          : profile.data?.avatar_url
+                            ? "Replace picture"
+                            : "Upload picture"}
+                      </Button>
+                      {profile.data?.avatar_url ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          disabled={clearPicture.isPending}
+                          onClick={() => clearPicture.mutate()}
+                        >
+                          Remove
+                        </Button>
+                      ) : null}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPEG, WebP or GIF, up to 2MB. Without a picture, your initials are shown.
+                    </p>
+                    <input
+                      ref={fileInput}
+                      type="file"
+                      accept={ACCEPTED_AVATAR_TYPES.join(",")}
+                      className="sr-only"
+                      aria-label="Choose a profile picture"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.target.value = "";
+                        if (file) upload.mutate(file);
+                      }}
+                    />
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  PNG, JPEG, WebP or GIF, up to 2MB. Without a picture, your initials are shown.
-                </p>
-                <input
-                  ref={fileInput}
-                  type="file"
-                  accept={ACCEPTED_AVATAR_TYPES.join(",")}
-                  className="sr-only"
-                  aria-label="Choose a profile picture"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    event.target.value = "";
-                    if (file) upload.mutate(file);
+
+                <form
+                  className="grid gap-4 sm:max-w-md"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    saveName.mutate();
                   }}
-                />
-              </div>
-            </div>
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="display-name">Display name</Label>
+                    <Input
+                      id="display-name"
+                      className="h-12"
+                      value={name}
+                      placeholder="Your name"
+                      onChange={(event) => setName(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="account-email">Account email</Label>
+                    <Input id="account-email" value={email} readOnly disabled />
+                  </div>
+                  <div>
+                    <Button type="submit" className="h-12" disabled={saveName.isPending}>
+                      {saveName.isPending ? "Saving…" : "Save name"}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
-            <form
-              className="grid gap-4 sm:max-w-md"
-              onSubmit={(event) => {
-                event.preventDefault();
-                saveName.mutate();
-              }}
-            >
-              <div className="space-y-2">
-                <Label htmlFor="display-name">Display name</Label>
-                <Input
-                  id="display-name"
-                  className="h-12"
-                  value={name}
-                  placeholder="Your name"
-                  onChange={(event) => setName(event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="account-email">Account email</Label>
-                <Input id="account-email" value={email} readOnly disabled />
-              </div>
-              <div>
-                <Button type="submit" className="h-12" disabled={saveName.isPending}>
-                  {saveName.isPending ? "Saving…" : "Save name"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+          {show("profile") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Units & formats</CardTitle>
+                <CardDescription>
+                  These change how values are shown everywhere. Your data is always stored the same
+                  way.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Units</Label>
+                  <Select
+                    value={prefs.unit_system}
+                    onValueChange={(value) => savePrefs.mutate({ unit_system: value })}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNIT_SYSTEMS.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Time</Label>
+                  <Select
+                    value={prefs.time_format}
+                    onValueChange={(value) => savePrefs.mutate({ time_format: value })}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TIME_FORMATS.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Week starts on</Label>
+                  <Select
+                    value={String(weekStartsOn)}
+                    onValueChange={(value) => savePrefs.mutate({ week_start: Number(value) })}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {WEEK_START_OPTIONS.map((item) => (
+                        <SelectItem key={item.value} value={String(item.value)}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                      <SelectSeparator />
+                      <SelectGroup>
+                        <SelectLabel>Other days</SelectLabel>
+                        {OTHER_WEEK_START_OPTIONS.map((item) => (
+                          <SelectItem key={item.value} value={String(item.value)}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Dates</Label>
+                  <Select
+                    value={prefs.date_format}
+                    onValueChange={(value) => savePrefs.mutate({ date_format: value })}
+                  >
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DATE_FORMATS.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Units & formats</CardTitle>
-            <CardDescription>
-              These change how values are shown everywhere. Your data is always stored the same way.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label>Units</Label>
-              <Select
-                value={prefs.unit_system}
-                onValueChange={(value) => savePrefs.mutate({ unit_system: value })}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {UNIT_SYSTEMS.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Time</Label>
-              <Select
-                value={prefs.time_format}
-                onValueChange={(value) => savePrefs.mutate({ time_format: value })}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIME_FORMATS.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Week starts on</Label>
-              <Select
-                value={String(weekStartsOn)}
-                onValueChange={(value) => savePrefs.mutate({ week_start: Number(value) })}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {WEEK_START_OPTIONS.map((item) => (
-                    <SelectItem key={item.value} value={String(item.value)}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                  <SelectSeparator />
-                  <SelectGroup>
-                    <SelectLabel>Other days</SelectLabel>
-                    {OTHER_WEEK_START_OPTIONS.map((item) => (
-                      <SelectItem key={item.value} value={String(item.value)}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Dates</Label>
-              <Select
-                value={prefs.date_format}
-                onValueChange={(value) => savePrefs.mutate({ date_format: value })}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DATE_FORMATS.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Body setup</CardTitle>
-            <CardDescription>
-              Height, birthdate and target weight. Your current weight is logged on the Health page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                saveBody.mutate();
-              }}
-            >
-              <div className="grid gap-4 sm:grid-cols-3">
-                {prefs.unit_system === "imperial" ? (
-                  <div className="space-y-2 sm:col-span-1">
-                    <Label htmlFor="height-ft">Height (ft / in)</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="height-ft"
-                        type="number"
-                        inputMode="numeric"
-                        className="h-12"
-                        aria-label="Height feet"
-                        value={heightFeet ?? ""}
-                        onChange={(event) => setHeightFeet(num(event.target.value))}
+          {show("body") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Body setup</CardTitle>
+                <CardDescription>
+                  Height, birthdate and target weight. Your current weight is logged on the Health
+                  page.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form
+                  className="space-y-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    saveBody.mutate();
+                  }}
+                >
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {prefs.unit_system === "imperial" ? (
+                      <div className="space-y-2 sm:col-span-1">
+                        <Label htmlFor="height-ft">Height (ft / in)</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="height-ft"
+                            type="number"
+                            inputMode="numeric"
+                            className="h-12"
+                            aria-label="Height feet"
+                            value={heightFeet ?? ""}
+                            onChange={(event) => setHeightFeet(num(event.target.value))}
+                          />
+                          <Input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.5"
+                            className="h-12"
+                            aria-label="Height inches"
+                            value={heightInches ?? ""}
+                            onChange={(event) => setHeightInches(num(event.target.value))}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="height-cm">Height (cm)</Label>
+                        <Input
+                          id="height-cm"
+                          type="number"
+                          inputMode="decimal"
+                          step="0.1"
+                          className="h-12"
+                          value={heightCm ?? ""}
+                          onChange={(event) => setHeightCm(num(event.target.value))}
+                        />
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="birthdate">Birthdate</Label>
+                      <DatePicker
+                        id="birthdate"
+                        value={birthdate}
+                        disableFuture
+                        onChange={setBirthdate}
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="target-weight">Target weight ({weightUnit})</Label>
                       <Input
+                        id="target-weight"
                         type="number"
                         inputMode="decimal"
-                        step="0.5"
+                        step="0.1"
                         className="h-12"
-                        aria-label="Height inches"
-                        value={heightInches ?? ""}
-                        onChange={(event) => setHeightInches(num(event.target.value))}
+                        value={targetWeight ?? ""}
+                        onChange={(event) => setTargetWeight(num(event.target.value))}
                       />
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="height-cm">Height (cm)</Label>
+                  <Button type="submit" className="h-12" disabled={saveBody.isPending}>
+                    {saveBody.isPending ? "Saving…" : "Save body setup"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {show("prayer") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Prayer setup</CardTitle>
+                <CardDescription>
+                  {prayerConfig?.city
+                    ? `Prayer times are calculated for ${prayerConfig.city}.`
+                    : prayerConfig?.latitude != null
+                      ? "Prayer times are calculated for your saved coordinates."
+                      : "Set a location so prayer times can be calculated."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1 space-y-2">
+                    <Label htmlFor="city">City</Label>
                     <Input
-                      id="height-cm"
-                      type="number"
-                      inputMode="decimal"
-                      step="0.1"
+                      id="city"
                       className="h-12"
-                      value={heightCm ?? ""}
-                      onChange={(event) => setHeightCm(num(event.target.value))}
+                      value={city}
+                      placeholder="e.g. Manchester"
+                      onChange={(event) => setCity(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && city.trim()) {
+                          event.preventDefault();
+                          lookupCity.mutate(city.trim());
+                        }
+                      }}
                     />
                   </div>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="birthdate">Birthdate</Label>
-                  <DatePicker
-                    id="birthdate"
-                    value={birthdate}
-                    disableFuture
-                    onChange={setBirthdate}
-                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      className="h-12"
+                      disabled={!city.trim() || lookupCity.isPending}
+                      onClick={() => lookupCity.mutate(city.trim())}
+                    >
+                      {lookupCity.isPending ? "Looking up…" : "Use city"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12"
+                      disabled={useDevice.isPending}
+                      onClick={() => useDevice.mutate()}
+                    >
+                      {useDevice.isPending ? "Locating…" : "Use my location"}
+                    </Button>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="target-weight">Target weight ({weightUnit})</Label>
-                  <Input
-                    id="target-weight"
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    className="h-12"
-                    value={targetWeight ?? ""}
-                    onChange={(event) => setTargetWeight(num(event.target.value))}
-                  />
-                </div>
-              </div>
-              <Button type="submit" className="h-12" disabled={saveBody.isPending}>
-                {saveBody.isPending ? "Saving…" : "Save body setup"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
 
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Prayer setup</CardTitle>
-            <CardDescription>
-              {prayerConfig?.city
-                ? `Prayer times are calculated for ${prayerConfig.city}.`
-                : prayerConfig?.latitude != null
-                  ? "Prayer times are calculated for your saved coordinates."
-                  : "Set a location so prayer times can be calculated."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  className="h-12"
-                  value={city}
-                  placeholder="e.g. Manchester"
-                  onChange={(event) => setCity(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && city.trim()) {
-                      event.preventDefault();
-                      lookupCity.mutate(city.trim());
-                    }
-                  }}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  className="h-12"
-                  disabled={!city.trim() || lookupCity.isPending}
-                  onClick={() => lookupCity.mutate(city.trim())}
-                >
-                  {lookupCity.isPending ? "Looking up…" : "Use city"}
-                </Button>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Calculation method</Label>
+                    <Select
+                      value={prayerConfig?.calc_method ?? "MuslimWorldLeague"}
+                      onValueChange={(value) => savePrayer.mutate({ calc_method: value })}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CALC_METHODS.map((method) => (
+                          <SelectItem key={method.value} value={method.value}>
+                            {method.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Asr school</Label>
+                    <Select
+                      value={prayerConfig?.asr_school ?? "shafi"}
+                      onValueChange={(value) => savePrayer.mutate({ asr_school: value })}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ASR_SCHOOLS.map((school) => (
+                          <SelectItem key={school.value} value={school.value}>
+                            {school.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {show("money") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Money setup</CardTitle>
+                <CardDescription>
+                  When you are paid and how much you want left untouched. Left empty until you fill
+                  it in; Life OS never guesses these.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="pay-day">Pay day of the month</Label>
+                    <Input
+                      id="pay-day"
+                      type="number"
+                      min="1"
+                      max="31"
+                      inputMode="numeric"
+                      className="h-12 tabular-nums"
+                      value={payDay}
+                      placeholder="e.g. 28"
+                      onChange={(event) => setPayDay(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="expected-net">Expected net pay</Label>
+                    <Input
+                      id="expected-net"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="h-12 tabular-nums"
+                      value={expectedNet}
+                      onChange={(event) => setExpectedNet(event.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="safety-buffer">Safety buffer</Label>
+                    <Input
+                      id="safety-buffer"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="h-12 tabular-nums"
+                      value={safetyBuffer}
+                      onChange={(event) => setSafetyBuffer(event.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Currency</Label>
+                  <CurrencyCombobox
+                    value={prefs.currency}
+                    onChange={(currency) => savePrefs.mutate({ currency })}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    className="h-12"
+                    disabled={savePayday.isPending}
+                    onClick={() => savePayday.mutate()}
+                  >
+                    {savePayday.isPending ? "Saving…" : "Save money setup"}
+                  </Button>
+                  {!hasPaydaySetup(payday.data) ? (
+                    <p className="text-sm text-muted-foreground">
+                      Until a pay day is saved, the Money page shows a setup prompt instead of a
+                      countdown.
+                    </p>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {show("areas") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Dimension priority</CardTitle>
+                <CardDescription>
+                  The order your life dimensions matter to you right now. Saved as you move them.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ol className="space-y-2">
+                  {order.map((dimension, index) => (
+                    <li
+                      key={dimension}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3"
+                    >
+                      <span className="flex items-center gap-3 text-sm">
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {index + 1}
+                        </span>
+                        {dimensionLabel(dimension)}
+                      </span>
+                      <span className="flex gap-1">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="size-11"
+                          aria-label={`Move ${dimensionLabel(dimension)} up`}
+                          disabled={index === 0}
+                          onClick={() => move(index, -1)}
+                        >
+                          <ArrowUp className="size-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="size-11"
+                          aria-label={`Move ${dimensionLabel(dimension)} down`}
+                          disabled={index === order.length - 1}
+                          onClick={() => move(index, 1)}
+                        >
+                          <ArrowDown className="size-4" />
+                        </Button>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </CardContent>
+            </Card>
+          )}
+
+          {show("areas") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Modules</CardTitle>
+                <CardDescription>
+                  Choose which parts of Life OS you see. Switching one off hides it everywhere and
+                  never deletes anything you saved.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {MODULES.map((module) => {
+                  const on = enabledModuleKeys.includes(module.key);
+                  return (
+                    <div
+                      key={module.key}
+                      className="flex min-h-14 items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">{module.label}</p>
+                        <p className="text-xs text-muted-foreground">{module.description}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{on ? "On" : "Off"}</span>
+                        <Switch
+                          checked={on}
+                          aria-label={`${module.label} module`}
+                          disabled={isSaving}
+                          onCheckedChange={(next) => toggleModule(module.key, next)}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {show("areas") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Setup</CardTitle>
+                <CardDescription>
+                  Walk through the first-run questions again. Nothing is cleared; you just confirm
+                  or change your answers.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <Button
                   type="button"
                   variant="outline"
                   className="h-12"
-                  disabled={useDevice.isPending}
-                  onClick={() => useDevice.mutate()}
+                  disabled={savePrefs.isPending}
+                  onClick={() => savePrefs.mutate({ onboarding_completed_at: null })}
                 >
-                  {useDevice.isPending ? "Locating…" : "Use my location"}
+                  Run setup again
                 </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          )}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Calculation method</Label>
-                <Select
-                  value={prayerConfig?.calc_method ?? "MuslimWorldLeague"}
-                  onValueChange={(value) => savePrayer.mutate({ calc_method: value })}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CALC_METHODS.map((method) => (
-                      <SelectItem key={method.value} value={method.value}>
-                        {method.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Asr school</Label>
-                <Select
-                  value={prayerConfig?.asr_school ?? "shafi"}
-                  onValueChange={(value) => savePrayer.mutate({ asr_school: value })}
-                >
-                  <SelectTrigger className="h-12">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ASR_SCHOOLS.map((school) => (
-                      <SelectItem key={school.value} value={school.value}>
-                        {school.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Money setup</CardTitle>
-            <CardDescription>
-              When you are paid and how much you want left untouched. Left empty until you fill it
-              in; Life OS never guesses these.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="pay-day">Pay day of the month</Label>
-                <Input
-                  id="pay-day"
-                  type="number"
-                  min="1"
-                  max="31"
-                  inputMode="numeric"
-                  className="h-12 tabular-nums"
-                  value={payDay}
-                  placeholder="e.g. 28"
-                  onChange={(event) => setPayDay(event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expected-net">Expected net pay</Label>
-                <Input
-                  id="expected-net"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="h-12 tabular-nums"
-                  value={expectedNet}
-                  onChange={(event) => setExpectedNet(event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="safety-buffer">Safety buffer</Label>
-                <Input
-                  id="safety-buffer"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="h-12 tabular-nums"
-                  value={safetyBuffer}
-                  onChange={(event) => setSafetyBuffer(event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <CurrencyCombobox
-                value={prefs.currency}
-                onChange={(currency) => savePrefs.mutate({ currency })}
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                className="h-12"
-                disabled={savePayday.isPending}
-                onClick={() => savePayday.mutate()}
-              >
-                {savePayday.isPending ? "Saving…" : "Save money setup"}
-              </Button>
-              {!hasPaydaySetup(payday.data) ? (
-                <p className="text-sm text-muted-foreground">
-                  Until a pay day is saved, the Money page shows a setup prompt instead of a
-                  countdown.
-                </p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Dimension priority</CardTitle>
-            <CardDescription>
-              The order your life dimensions matter to you right now. Saved as you move them.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol className="space-y-2">
-              {order.map((dimension, index) => (
-                <li
-                  key={dimension}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3"
-                >
-                  <span className="flex items-center gap-3 text-sm">
-                    <span className="text-xs tabular-nums text-muted-foreground">{index + 1}</span>
-                    {dimensionLabel(dimension)}
-                  </span>
-                  <span className="flex gap-1">
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-11"
-                      aria-label={`Move ${dimensionLabel(dimension)} up`}
-                      disabled={index === 0}
-                      onClick={() => move(index, -1)}
-                    >
-                      <ArrowUp className="size-4" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-11"
-                      aria-label={`Move ${dimensionLabel(dimension)} down`}
-                      disabled={index === order.length - 1}
-                      onClick={() => move(index, 1)}
-                    >
-                      <ArrowDown className="size-4" />
-                    </Button>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
-
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Modules</CardTitle>
-            <CardDescription>
-              Choose which parts of Life OS you see. Switching one off hides it everywhere and never
-              deletes anything you saved.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {MODULES.map((module) => {
-              const on = enabledModuleKeys.includes(module.key);
-              return (
+          {show("look") && (
+            <Card className="system-card">
+              <CardHeader>
+                <CardTitle className="text-base">Appearance</CardTitle>
+                <CardDescription>
+                  Light uses Executive Crisp, dark uses Pro Dark. System follows your device.
+                  Remembered on this device.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div
-                  key={module.key}
-                  className="flex min-h-14 items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3"
+                  role="radiogroup"
+                  aria-label="Theme"
+                  className="inline-flex gap-1 rounded-xl bg-secondary p-1"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground">{module.label}</p>
-                    <p className="text-xs text-muted-foreground">{module.description}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{on ? "On" : "Off"}</span>
-                    <Switch
-                      checked={on}
-                      aria-label={`${module.label} module`}
-                      disabled={isSaving}
-                      onCheckedChange={(next) => toggleModule(module.key, next)}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Setup</CardTitle>
-            <CardDescription>
-              Walk through the first-run questions again. Nothing is cleared; you just confirm or
-              change your answers.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12"
-              disabled={savePrefs.isPending}
-              onClick={() => savePrefs.mutate({ onboarding_completed_at: null })}
-            >
-              Run setup again
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="system-card">
-          <CardHeader>
-            <CardTitle className="text-base">Appearance</CardTitle>
-            <CardDescription>
-              Light uses Executive Crisp, dark uses Pro Dark. System follows your device. Remembered
-              on this device.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div
-              role="radiogroup"
-              aria-label="Theme"
-              className="inline-flex gap-1 rounded-xl bg-secondary p-1"
-            >
-              {(
-                [
-                  { value: "light", label: "Light", icon: Sun },
-                  { value: "dark", label: "Dark", icon: Moon },
-                  { value: "system", label: "System", icon: Monitor },
-                ] as { value: ThemePreference; label: string; icon: typeof Sun }[]
-              ).map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  type="button"
-                  role="radio"
-                  aria-checked={preference === value}
-                  onClick={() => setPreference(value)}
-                  className={`inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${preference === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  <Icon className="size-4" aria-hidden="true" />
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-6 space-y-2">
-              <p className="text-sm font-medium">Text size</p>
-              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Text size">
-                {TEXT_SIZES.map((size) => (
-                  <button
-                    key={size.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={textSize === size.value}
-                    onClick={() => setTextSize(size.value)}
-                    className={`min-h-10 rounded-full border px-4 text-sm transition-colors ${textSize === size.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
-                  >
-                    {size.label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Changes every screen at once, on this device.
-              </p>
-            </div>
-
-            <div className="mt-6 space-y-2">
-              <p className="text-sm font-medium">Accent colour</p>
-              <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Accent colour">
-                {ACCENTS.filter(
-                  (item) => item.value !== "system" || onPhone || phoneAccents.system,
-                ).map((item) => {
-                  const missing = item.value === "system" && !phoneAccents.system;
-                  // No wallpaper colour yet: the chip asks for a picture instead.
-                  const needsPhoto = item.value === "wallpaper" && !phoneAccents.wallpaper;
-                  return (
+                  {(
+                    [
+                      { value: "light", label: "Light", icon: Sun },
+                      { value: "dark", label: "Dark", icon: Moon },
+                      { value: "system", label: "System", icon: Monitor },
+                    ] as { value: ThemePreference; label: string; icon: typeof Sun }[]
+                  ).map(({ value, label, icon: Icon }) => (
                     <button
-                      key={item.value}
+                      key={value}
                       type="button"
                       role="radio"
-                      aria-checked={accent === item.value}
-                      disabled={missing}
-                      onClick={() =>
-                        needsPhoto ? photoInput.current?.click() : setAccent(item.value)
-                      }
-                      className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm transition-colors ${missing ? "cursor-not-allowed border-border text-muted-foreground/60" : accent === item.value ? "border-primary text-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                      aria-checked={preference === value}
+                      onClick={() => setPreference(value)}
+                      className={`inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${preference === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                     >
-                      <span
-                        aria-hidden="true"
-                        className="size-3.5 rounded-full border border-border"
-                        style={{
-                          background:
-                            item.value === "wallpaper"
-                              ? (phoneAccents.wallpaper ??
-                                "conic-gradient(oklch(0.7 0.15 250), oklch(0.75 0.15 150), oklch(0.8 0.14 75), oklch(0.7 0.17 10), oklch(0.7 0.15 250))")
-                              : item.value === "system"
-                                ? (phoneAccents.system ?? "var(--primary)")
-                                : item.value === "default"
-                                  ? "var(--primary)"
-                                  : ((theme === "dark" ? item.dark : item.light) ??
-                                    "var(--primary)"),
-                        }}
-                      />
-                      {item.value === "wallpaper"
-                        ? fromPhoto
-                          ? "From photo"
-                          : needsPhoto
-                            ? "From a photo…"
-                            : item.label
-                        : item.label}
+                      <Icon className="size-4" aria-hidden="true" />
+                      {label}
                     </button>
-                  );
-                })}
-              </div>
-              <input
-                ref={photoInput}
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                tabIndex={-1}
-                aria-hidden="true"
-                onChange={async (event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (!file) return;
-                  const ok = await takeColorsFromPhoto(file);
-                  if (ok) toast.success("Accent taken from your photo.");
-                  else toast.error("That picture has no clear colour. Try a more colourful one.");
-                }}
-              />
-              <p className="text-xs text-muted-foreground">
-                {phoneAccents.wallpaper && !fromPhoto
-                  ? "From wallpaper takes the colour from your home-screen picture. System palette follows Wallpaper and style."
-                  : fromPhoto
-                    ? "The colour comes from the photo you picked."
-                    : onPhone
-                      ? "This phone doesn't share its wallpaper colours with apps. Pick your wallpaper image from the gallery instead, or use System palette."
-                      : "Pick a photo to take its colour. In the Android app, System palette follows your phone."}{" "}
-                {phoneAccents.wallpaper ? (
-                  <button
-                    type="button"
-                    className="font-medium text-foreground underline underline-offset-2"
-                    onClick={() => photoInput.current?.click()}
+                  ))}
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <p className="text-sm font-medium">Text size</p>
+                  <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Text size">
+                    {TEXT_SIZES.map((size) => (
+                      <button
+                        key={size.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={textSize === size.value}
+                        onClick={() => setTextSize(size.value)}
+                        className={`min-h-10 rounded-full border px-4 text-sm transition-colors ${textSize === size.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                      >
+                        {size.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Changes every screen at once, on this device.
+                  </p>
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <p className="text-sm font-medium">Accent colour</p>
+                  <div
+                    className="flex flex-wrap gap-2"
+                    role="radiogroup"
+                    aria-label="Accent colour"
                   >
-                    {fromPhoto ? "Pick another photo" : "Use a photo instead"}
-                  </button>
-                ) : null}
-              </p>
-            </div>
+                    {ACCENTS.filter(
+                      (item) => item.value !== "system" || onPhone || phoneAccents.system,
+                    ).map((item) => {
+                      const missing = item.value === "system" && !phoneAccents.system;
+                      // No wallpaper colour yet: the chip asks for a picture instead.
+                      const needsPhoto = item.value === "wallpaper" && !phoneAccents.wallpaper;
+                      return (
+                        <button
+                          key={item.value}
+                          type="button"
+                          role="radio"
+                          aria-checked={accent === item.value}
+                          disabled={missing}
+                          onClick={() =>
+                            needsPhoto ? photoInput.current?.click() : setAccent(item.value)
+                          }
+                          className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm transition-colors ${missing ? "cursor-not-allowed border-border text-muted-foreground/60" : accent === item.value ? "border-primary text-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="size-3.5 rounded-full border border-border"
+                            style={{
+                              background:
+                                item.value === "wallpaper"
+                                  ? (phoneAccents.wallpaper ??
+                                    "conic-gradient(oklch(0.7 0.15 250), oklch(0.75 0.15 150), oklch(0.8 0.14 75), oklch(0.7 0.17 10), oklch(0.7 0.15 250))")
+                                  : item.value === "system"
+                                    ? (phoneAccents.system ?? "var(--primary)")
+                                    : item.value === "default"
+                                      ? "var(--primary)"
+                                      : ((theme === "dark" ? item.dark : item.light) ??
+                                        "var(--primary)"),
+                            }}
+                          />
+                          {item.value === "wallpaper"
+                            ? fromPhoto
+                              ? "From photo"
+                              : needsPhoto
+                                ? "From a photo…"
+                                : item.label
+                            : item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <input
+                    ref={photoInput}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = "";
+                      if (!file) return;
+                      const ok = await takeColorsFromPhoto(file);
+                      if (ok) toast.success("Accent taken from your photo.");
+                      else
+                        toast.error("That picture has no clear colour. Try a more colourful one.");
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {phoneAccents.wallpaper && !fromPhoto
+                      ? "From wallpaper takes the colour from your home-screen picture. System palette follows Wallpaper and style."
+                      : fromPhoto
+                        ? "The colour comes from the photo you picked."
+                        : onPhone
+                          ? "This phone doesn't share its wallpaper colours with apps. Pick your wallpaper image from the gallery instead, or use System palette."
+                          : "Pick a photo to take its colour. In the Android app, System palette follows your phone."}{" "}
+                    {phoneAccents.wallpaper ? (
+                      <button
+                        type="button"
+                        className="font-medium text-foreground underline underline-offset-2"
+                        onClick={() => photoInput.current?.click()}
+                      >
+                        {fromPhoto ? "Pick another photo" : "Use a photo instead"}
+                      </button>
+                    ) : null}
+                  </p>
+                </div>
 
-            <div className="mt-6 space-y-2">
-              <p className="text-sm font-medium">Skin</p>
-              <p className="text-xs text-muted-foreground">
-                Same data, two ways to see it. Serious shows plain counts. RPG shows the same logs
-                as XP, levels and 0–100 stats, each with how it is worked out.
-              </p>
-              <div
-                role="radiogroup"
-                aria-label="Skin"
-                className="inline-flex gap-1 rounded-xl bg-secondary p-1"
-              >
-                {(
-                  [
-                    { value: "serious", label: "Serious" },
-                    { value: "rpg", label: "RPG" },
-                  ] as const
-                ).map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={skin === value}
-                    onClick={() => savePrefs.mutate({ skin: value })}
-                    className={`inline-flex h-10 items-center rounded-lg px-4 text-sm font-medium transition-colors ${skin === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                <div className="mt-6 space-y-2">
+                  <p className="text-sm font-medium">Skin</p>
+                  <p className="text-xs text-muted-foreground">
+                    Same data, two ways to see it. Serious shows plain counts. RPG shows the same
+                    logs as XP, levels and 0–100 stats, each with how it is worked out.
+                  </p>
+                  <div
+                    role="radiogroup"
+                    aria-label="Skin"
+                    className="inline-flex gap-1 rounded-xl bg-secondary p-1"
                   >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                    {(
+                      [
+                        { value: "serious", label: "Serious" },
+                        { value: "rpg", label: "RPG" },
+                      ] as const
+                    ).map(({ value, label }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        role="radio"
+                        aria-checked={skin === value}
+                        onClick={() => savePrefs.mutate({ skin: value })}
+                        className={`inline-flex h-10 items-center rounded-lg px-4 text-sm font-medium transition-colors ${skin === value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        <LanguageCard />
-        <ReminderSettingsCard />
-        <LifeConnectCard />
-        <WatchCard />
-        <WorkSettingsCard />
-        <SpendingSettingsCard />
-        <LocalAiCard />
-        <HolidaysCard />
-        <GoogleCalendarCard />
+          {show("look") && <LanguageCard />}
+          {show("prayer") && <ReminderSettingsCard />}
+          {show("phone") && <LifeConnectCard />}
+          {show("phone") && <WatchCard />}
+          {show("work") && <WorkSettingsCard />}
+          {show("money") && <SpendingSettingsCard />}
+          {show("phone") && <LocalAiCard />}
+          {show("calendar") && <HolidaysCard />}
+          {show("calendar") && <GoogleCalendarCard />}
 
-        <UsageInsights />
-        <CrashReportCard />
+          {show("data") && <UsageInsights />}
+          {show("data") && <CrashReportCard />}
 
-        <ExportDataCard />
+          {show("data") && <ExportDataCard />}
 
-        <DeleteAccountCard />
-      </div>
+          {show("data") && <DeleteAccountCard />}
+        </div>
+      </SectionBoundary>
     </>
   );
 }

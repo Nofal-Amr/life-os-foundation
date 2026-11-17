@@ -350,7 +350,9 @@ function FinanceOverview() {
                       then.
                     </p>
                     <Button asChild size="sm" variant="outline">
-                      <Link to="/settings">Set up payday</Link>
+                      <Link to="/settings" search={{ section: "money" }}>
+                        Set up payday
+                      </Link>
                     </Button>
                   </div>
                 )}
@@ -377,7 +379,11 @@ function FinanceOverview() {
                   <StatCard title="Payday cycle" icon={CalendarDays}>
                     <p className="text-sm text-muted-foreground">
                       Set your payday in{" "}
-                      <Link to="/settings" className="text-foreground underline underline-offset-4">
+                      <Link
+                        to="/settings"
+                        search={{ section: "money" }}
+                        className="text-foreground underline underline-offset-4"
+                      >
                         Settings
                       </Link>{" "}
                       to see how far through the cycle you are.

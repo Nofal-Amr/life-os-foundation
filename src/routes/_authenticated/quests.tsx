@@ -124,7 +124,7 @@ function QuestsPage() {
       {skin !== "rpg" ? (
         <p className="mb-5 rounded-lg border border-border bg-secondary/60 p-3 text-sm text-muted-foreground">
           This is the RPG skin's page. Switch the look to RPG in{" "}
-          <Link to="/settings" className="underline">
+          <Link to="/settings" search={{ section: "look" }} className="underline">
             Settings
           </Link>{" "}
           to see it on Today too.
