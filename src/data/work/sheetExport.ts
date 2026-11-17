@@ -26,7 +26,9 @@ function dayCells(row: DayRow, { labels, fmt, leaveName }: SheetOptions): Cell[]
         ? labels("Absent, not explained")
         : row.kind === "holiday"
           ? labels("Holiday")
-          : labels("Day off");
+          : row.kind === "work"
+            ? ""
+            : labels("Day off");
     return [date, weekday, what, "", "", "", "", ""];
   }
   const mark = (field: "in" | "out") => (row.corrected.includes(field) ? " *" : "");
@@ -34,7 +36,9 @@ function dayCells(row: DayRow, { labels, fmt, leaveName }: SheetOptions): Cell[]
     date,
     weekday,
     fmt.time(row.in) + mark("in"),
-    row.out ? fmt.time(row.out) + mark("out") : labels("No clock-out"),
+    row.out
+      ? fmt.time(row.out) + mark("out")
+      : labels(row.when === "today" ? "At work" : "No clock-out"),
     row.late,
     row.dayPenalty ? labels("A day") : row.penalty,
     row.earlyLeave,

@@ -93,7 +93,7 @@ export function islamicDays(year: number): Holiday[] {
 
 type NagerHoliday = { date: string; name: string; localName: string };
 
-async function publicHolidays(year: number, country: string): Promise<Holiday[]> {
+export async function publicHolidays(year: number, country: string): Promise<Holiday[]> {
   const cacheKey = `holidays:${country}:${year}`;
   try {
     const cached = localStorage.getItem(cacheKey);

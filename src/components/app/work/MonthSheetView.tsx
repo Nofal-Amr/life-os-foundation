@@ -65,6 +65,7 @@ export function MonthSheetView({
                   </span>
                 ) : null;
               const blank = row.kind === "leave" || !row.in;
+              const holidayName = rules.holidays.find((item) => item.day === row.day)?.name;
               return (
                 <tr
                   key={row.day}
@@ -84,7 +85,11 @@ export function MonthSheetView({
                       ) : row.note === "absent-unexplained" ? (
                         <span className="text-destructive">{t("Absent, not explained")}</span>
                       ) : row.kind === "holiday" ? (
-                        t("Holiday")
+                        holidayName || t("Holiday")
+                      ) : row.kind === "work" ? (
+                        <span className="text-muted-foreground">
+                          {row.when === "today" ? t("Not clocked in yet") : ""}
+                        </span>
                       ) : (
                         t("Day off")
                       )}
@@ -111,6 +116,8 @@ export function MonthSheetView({
                             {time(row.out)}
                             {mark("out")}
                           </>
+                        ) : row.when === "today" ? (
+                          <span className="text-muted-foreground">{t("At work")}</span>
                         ) : (
                           <span className="text-destructive">{t("No clock-out")}</span>
                         )}
