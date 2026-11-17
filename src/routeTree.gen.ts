@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
+import { Route as AuthenticatedCanvasRouteImport } from './routes/_authenticated/canvas'
 import { Route as AuthenticatedCapabilitiesRouteImport } from './routes/_authenticated/capabilities'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
@@ -76,6 +77,11 @@ const TermsRoute = TermsRouteImport.update({
 const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCanvasRoute = AuthenticatedCanvasRouteImport.update({
+  id: '/canvas',
+  path: '/canvas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCapabilitiesRoute =
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/canvas': typeof AuthenticatedCanvasRoute
   '/capabilities': typeof AuthenticatedCapabilitiesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRouteWithChildren
@@ -298,6 +305,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/calendar': typeof AuthenticatedCalendarRoute
+  '/canvas': typeof AuthenticatedCanvasRoute
   '/capabilities': typeof AuthenticatedCapabilitiesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/food': typeof AuthenticatedFoodRoute
@@ -339,6 +347,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_authenticated/calendar': typeof AuthenticatedCalendarRoute
+  '/_authenticated/canvas': typeof AuthenticatedCanvasRoute
   '/_authenticated/capabilities': typeof AuthenticatedCapabilitiesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finance': typeof AuthenticatedFinanceRouteWithChildren
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/calendar'
+    | '/canvas'
     | '/capabilities'
     | '/dashboard'
     | '/finance'
@@ -421,6 +431,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/calendar'
+    | '/canvas'
     | '/capabilities'
     | '/dashboard'
     | '/food'
@@ -461,6 +472,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/_authenticated/calendar'
+    | '/_authenticated/canvas'
     | '/_authenticated/capabilities'
     | '/_authenticated/dashboard'
     | '/_authenticated/finance'
@@ -546,6 +558,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/canvas': {
+      id: '/_authenticated/canvas'
+      path: '/canvas'
+      fullPath: '/canvas'
+      preLoaderRoute: typeof AuthenticatedCanvasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/capabilities': {
@@ -803,6 +822,7 @@ const AuthenticatedFinanceRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRoute
+  AuthenticatedCanvasRoute: typeof AuthenticatedCanvasRoute
   AuthenticatedCapabilitiesRoute: typeof AuthenticatedCapabilitiesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRouteWithChildren
@@ -834,6 +854,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarRoute: AuthenticatedCalendarRoute,
+  AuthenticatedCanvasRoute: AuthenticatedCanvasRoute,
   AuthenticatedCapabilitiesRoute: AuthenticatedCapabilitiesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceRoute: AuthenticatedFinanceRouteWithChildren,

@@ -24,6 +24,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import { toast } from "sonner";
 
+import { CanvasList } from "@/components/app/canvas/CanvasList";
 import { DailyNote } from "@/components/app/DailyNote";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { AiSuggestDialog, useLocalAi } from "@/components/app/LocalAi";
@@ -56,8 +57,10 @@ import {
   type Note,
   type NoteInput,
 } from "@/data/notes";
+import { isCanvasNote } from "@/data/canvas";
 import { dailyDateOf, isDailyNote, isISODate } from "@/data/dailyNotes";
 import { track } from "@/lib/analytics";
+import { t } from "@/lib/i18n";
 import { todayISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
@@ -75,14 +78,14 @@ export const Route = createFileRoute("/_authenticated/notes")({
   validateSearch: (search: Record<string, unknown>): NotesSearch => {
     const out: NotesSearch = {};
     if (typeof search["open"] === "string") out.open = search["open"];
-    if (search["view"] === "all") out.view = "all";
+    if (search["view"] === "all" || search["view"] === "canvas") out.view = search["view"];
     if (typeof search["day"] === "string" && isISODate(search["day"])) out.day = search["day"];
     return out;
   },
   component: NotesPage,
 });
 
-type NotesSearch = { open?: string; view?: "all"; day?: string };
+type NotesSearch = { open?: string; view?: "all" | "canvas"; day?: string };
 
 /** Notes opens on the day's note; every other note is under "All notes". */
 function NotesPage() {
@@ -101,19 +104,34 @@ function NotesPage() {
   useEffect(() => {
     if (linkedDay) void navigate({ search: { day: linkedDay }, replace: true });
   }, [linkedDay, navigate]);
+  // A link to a canvas (search) opens the canvas.
+  const linkedCanvas = useMemo(
+    () =>
+      search.open && notes.data?.some((note) => note.id === search.open && isCanvasNote(note))
+        ? search.open
+        : null,
+    [search.open, notes.data],
+  );
+  useEffect(() => {
+    if (linkedCanvas) void navigate({ to: "/canvas", search: { id: linkedCanvas }, replace: true });
+  }, [linkedCanvas, navigate]);
 
-  const showAll = search.view === "all" || startNew || (!!search.open && !linkedDay);
+  const showCanvas = search.view === "canvas" && !startNew;
+  const showAll =
+    !showCanvas &&
+    (search.view === "all" || startNew || (!!search.open && !linkedDay && !linkedCanvas));
   const day = search.day ?? todayISO();
   const tabs = [
-    { key: "day", label: "Today", active: !showAll, search: {} },
+    { key: "day", label: "Today", active: !showAll && !showCanvas, search: {} },
     { key: "all", label: "All notes", active: showAll, search: { view: "all" as const } },
+    { key: "canvas", label: "Canvas", active: showCanvas, search: { view: "canvas" as const } },
   ];
   return (
     <div className="space-y-4">
       <div
         role="tablist"
         aria-label="Notes"
-        className="mx-auto flex max-w-xs rounded-full border border-border bg-card p-1"
+        className="mx-auto flex max-w-sm rounded-full border border-border bg-card p-1"
       >
         {tabs.map((tab) => (
           <button
@@ -129,11 +147,13 @@ function NotesPage() {
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {tab.label}
+            {t(tab.label)}
           </button>
         ))}
       </div>
-      {showAll ? (
+      {showCanvas ? (
+        <CanvasList />
+      ) : showAll ? (
         <AllNotes onToday={() => void navigate({ search: {} })} />
       ) : (
         <DailyNote
@@ -169,12 +189,15 @@ function AllNotes({ onToday }: { onToday: () => void }) {
   useEffect(() => {
     if (!openId || !notes.data) return;
     const found = notes.data.find((note) => note.id === openId);
-    if (found) setEditing({ note: found, isNew: false });
+    if (found && !isCanvasNote(found)) setEditing({ note: found, isNew: false });
     void navigate({ search: { view: "all" }, replace: true });
   }, [openId, notes.data, navigate]);
 
-  // Daily notes live on the Today tab.
-  const all = useMemo(() => (notes.data ?? []).filter((note) => !isDailyNote(note)), [notes.data]);
+  // Daily notes live on the Today tab, canvases on the Canvas tab.
+  const all = useMemo(
+    () => (notes.data ?? []).filter((note) => !isDailyNote(note) && !isCanvasNote(note)),
+    [notes.data],
+  );
   const labels = useMemo(
     () => [...new Set(all.flatMap((note) => note.tags))].sort((a, b) => a.localeCompare(b)),
     [all],

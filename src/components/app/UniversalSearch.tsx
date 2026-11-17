@@ -28,6 +28,7 @@ import { financeCategoriesQuery, transactionsQuery } from "@/data/finance";
 import { foodsQuery } from "@/data/food";
 import { goalsQuery } from "@/data/goals";
 import { habitsQuery } from "@/data/habits";
+import { canvasText, isCanvasNote, parseCanvas } from "@/data/canvas";
 import { notesQuery } from "@/data/notes";
 import { projectsQuery } from "@/data/projects";
 import { resourcesQuery } from "@/data/resources";
@@ -144,7 +145,8 @@ export function UniversalSearch({
         kind: "note" as const,
         id: note.id,
         title: note.title || (note.body ?? "").split("\n")[0]?.slice(0, 80) || "Untitled note",
-        body: note.body,
+        // A canvas is searched by the words on its cards, not its stored form.
+        body: isCanvasNote(note) ? canvasText(parseCanvas(note.body)) : note.body,
       })),
       ...(habits.data ?? []).map((habit) => ({
         kind: "habit" as const,
