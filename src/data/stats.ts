@@ -3,7 +3,8 @@
  * rows the user already stored — no targets, scores or verdicts. Every ring has
  * a real stored denominator; every series returns only points backed by rows.
  */
-import { addDays, differenceInCalendarDays, format, parseISO, startOfWeek } from "date-fns";
+import { addDays, differenceInCalendarDays, parseISO, startOfWeek } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { FinanceCategory, PaydayConfig, Transaction } from "@/data/finance";
 import { hasPaydaySetup, nextPayday, previousPayday } from "@/data/finance";

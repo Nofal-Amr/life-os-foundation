@@ -2,7 +2,7 @@
  * Ready-made starting points for a note. A template only fills in the new
  * note — it's an ordinary note afterwards, edited like any other.
  */
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type NoteTemplate = {
   id: string;

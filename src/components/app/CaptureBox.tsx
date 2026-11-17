@@ -12,6 +12,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { canListen, listen } from "@/lib/native";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
+import { t } from "@/lib/i18n";
 
 /**
  * Type it how you'd say it: "120 lunch" logs spending, "+500 bonus" income,
@@ -82,7 +83,7 @@ export function CaptureBox({ onDone }: { onDone: () => void }) {
       : capture.kind === "task"
         ? {
             icon: CheckSquare,
-            text: `Task: ${capture.title}${capture.due ? ` · due ${fmtDate(capture.due)}` : ""}`,
+            text: `Task: ${t(capture.title)}${capture.due ? ` · due ${fmtDate(capture.due)}` : ""}`,
           }
         : capture.kind === "income"
           ? {

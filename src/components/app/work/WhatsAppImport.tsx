@@ -115,7 +115,7 @@ export function WhatsAppImport({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>From WhatsApp</DialogTitle>
+          <DialogTitle>{t("From WhatsApp")}</DialogTitle>
           <DialogDescription>
             {t(
               "For past days. In WhatsApp, select the messages and copy them, or export the chat (More, Export chat, Without media). Paste the text or pick the file. It stays on this device; only the times you save are sent.",

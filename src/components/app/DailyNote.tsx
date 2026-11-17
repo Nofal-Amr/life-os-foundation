@@ -18,6 +18,7 @@ import { REFLECTION_TAG, reflectionNotesOn } from "@/data/reflections";
 import { todayISO } from "@/lib/date";
 import { LIVE_POLL_MS, useLiveNotes } from "@/lib/liveNotes";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** How long after the last key press the day's note is saved. */
 const SAVE_DELAY_MS = 800;
@@ -86,7 +87,9 @@ export function DailyNote({ date, onDate }: { date: string; onDate: (date: strin
               </button>
             ))
           ) : (
-            <p className="py-8 text-center text-sm text-muted-foreground">No day mentions that.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {t("No day mentions that.")}
+            </p>
           )}
         </section>
       ) : (
@@ -127,7 +130,7 @@ export function DailyNote({ date, onDate }: { date: string; onDate: (date: strin
             ) : null}
             <label className="inline-flex items-center gap-1.5 text-muted-foreground">
               <CalendarDays className="size-4" aria-hidden="true" />
-              <span className="sr-only">Go to a day</span>
+              <span className="sr-only">{t("Go to a day")}</span>
               <input
                 type="date"
                 value={date}
@@ -150,7 +153,7 @@ export function DailyNote({ date, onDate }: { date: string; onDate: (date: strin
             <section className="space-y-2 rounded-xl border border-border bg-card p-4">
               <h3 className="flex items-center gap-2 text-sm font-medium">
                 <Lightbulb className="size-4 text-muted-foreground" aria-hidden="true" />
-                From Reflect
+                {t("From Reflect")}
               </h3>
               <ul className="space-y-1.5 text-sm">
                 {reflections.map((item) => (
@@ -167,7 +170,7 @@ export function DailyNote({ date, onDate }: { date: string; onDate: (date: strin
 
           {recent.length ? (
             <section aria-label="Other days" className="space-y-1">
-              <h3 className="text-xs font-medium text-muted-foreground">Other days</h3>
+              <h3 className="text-xs font-medium text-muted-foreground">{t("Other days")}</h3>
               <div className="flex flex-wrap gap-2">
                 {recent.map((day) => (
                   <button

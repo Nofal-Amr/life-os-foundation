@@ -4,6 +4,7 @@ import { Zap } from "lucide-react";
 
 import { meterFacts, quotaFacts, resourceReadingsQuery, resourcesQuery } from "@/data/resources";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const round = (value: number) => String(Math.round(value * 100) / 100);
 
@@ -56,9 +57,9 @@ export function ResourcesSummary({ className }: { className?: string }) {
   return (
     <section className={cn("min-w-0", className)} aria-label="Home and bills">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="section-title">Home and bills</h2>
+        <h2 className="section-title">{t("Home and bills")}</h2>
         <Link to="/resources" className="text-xs text-muted-foreground hover:text-foreground">
-          All meters
+          {t("All meters")}
         </Link>
       </div>
       <ul className="space-y-2">

@@ -1,4 +1,5 @@
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { Note } from "@/data/notes";
 import { supabase } from "@/integrations/supabase/client";

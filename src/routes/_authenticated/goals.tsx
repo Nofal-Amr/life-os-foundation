@@ -44,6 +44,7 @@ import { CountBar, GoalHabitsList, GoalLinksList } from "@/components/app/Linked
 import { usePreferences } from "@/hooks/usePreferences";
 import { goalStatusLabel, goalStatusTone } from "@/lib/semantics";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/goals")({
   head: () => ({
@@ -163,7 +164,7 @@ function GoalsPage() {
       <PageHeader
         title="Goals"
         description="Longer horizons, updated by hand when things move."
-        actions={<Button onClick={openCreate}>New goal</Button>}
+        actions={<Button onClick={openCreate}>{t("New goal")}</Button>}
       />
 
       {goals.isLoading ? (
@@ -174,7 +175,7 @@ function GoalsPage() {
         <EmptyState
           title="No goals yet"
           description="A goal names what you are working towards, so the tasks under it have a point."
-          action={<Button onClick={openCreate}>New goal</Button>}
+          action={<Button onClick={openCreate}>{t("New goal")}</Button>}
         />
       ) : (
         <ul className="space-y-3">
@@ -187,7 +188,7 @@ function GoalsPage() {
                     <p className="truncate font-medium">{goal.name}</p>
                     {goal.description ? (
                       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                        {goal.description}
+                        {t(goal.description)}
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -197,7 +198,9 @@ function GoalsPage() {
                       {goal.category ? (
                         <SemanticBadge tone="neutral">{goal.category}</SemanticBadge>
                       ) : null}
-                      <span>Target {fmtDate(goal.target_date)}</span>
+                      <span>
+                        {t("Target")} {fmtDate(goal.target_date)}
+                      </span>
                     </div>
                     {(() => {
                       const links = goalLinks(tasks.data ?? [], projects.data ?? [], goal.id);
@@ -235,7 +238,7 @@ function GoalsPage() {
                     })()}
                     <div className="mt-4 max-w-md space-y-2">
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Your own estimate</span>
+                        <span>{t("Your own estimate")}</span>
                         <span className="tabular-nums">{goal.progress}%</span>
                       </div>
                       <Progress value={goal.progress} />
@@ -283,7 +286,7 @@ function GoalsPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="goal-name">Name</Label>
+          <Label htmlFor="goal-name">{t("Name")}</Label>
           <Input
             id="goal-name"
             required
@@ -296,7 +299,7 @@ function GoalsPage() {
           onChange={(identity) => setForm({ ...form, ...identity })}
         />
         <div className="space-y-2">
-          <Label htmlFor="goal-description">Description</Label>
+          <Label htmlFor="goal-description">{t("Description")}</Label>
           <Textarea
             id="goal-description"
             value={form.description ?? ""}
@@ -305,7 +308,7 @@ function GoalsPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="goal-category">Category</Label>
+            <Label htmlFor="goal-category">{t("Category")}</Label>
             <Input
               id="goal-category"
               value={form.category ?? ""}
@@ -313,7 +316,7 @@ function GoalsPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="goal-target">Target date</Label>
+            <Label htmlFor="goal-target">{t("Target date")}</Label>
             <DatePicker
               id="goal-target"
               value={form.target_date}
@@ -321,7 +324,7 @@ function GoalsPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{t("Status")}</Label>
             <Select
               value={form.status}
               onValueChange={(v) => setForm({ ...form, status: v as Goal["status"] })}
@@ -332,14 +335,14 @@ function GoalsPage() {
               <SelectContent>
                 {GOAL_STATUSES.map((s) => (
                   <SelectItem key={s.value} value={s.value}>
-                    {s.label}
+                    {t(s.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="goal-progress">Progress (%)</Label>
+            <Label htmlFor="goal-progress">{t("Progress (%)")}</Label>
             <Input
               id="goal-progress"
               type="number"
@@ -357,7 +360,7 @@ function GoalsPage() {
         </div>
         {canLinkHabits && activeHabits.length ? (
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Habits that count toward it</legend>
+            <legend className="text-sm font-medium">{t("Habits that count toward it")}</legend>
             <div className="flex flex-wrap gap-1.5">
               {activeHabits.map((habit) => {
                 const checked = linkedHabits.includes(habit.id);
@@ -380,7 +383,7 @@ function GoalsPage() {
               })}
             </div>
             <p className="text-xs text-muted-foreground">
-              Their entries show on this goal. A habit counts toward one goal at a time.
+              {t("Their entries show on this goal. A habit counts toward one goal at a time.")}
             </p>
           </fieldset>
         ) : null}

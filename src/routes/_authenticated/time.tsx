@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { Clock, Play, Plus, Square, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { isoToLocalInput, localInputToISO, todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/time")({
   head: () => ({
@@ -142,7 +143,7 @@ function TimePage() {
         actions={
           <Button type="button" variant="outline" onClick={() => setLogging("pick")}>
             <Clock className="size-4" />
-            Log time
+            {t("Log time")}
           </Button>
         }
       />
@@ -161,13 +162,13 @@ function TimePage() {
                   {formatClock(elapsed)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Started {fmtTime(new Date(running.started_at))}
+                  {t("Started")} {fmtTime(new Date(running.started_at))}
                 </p>
               </div>
             </div>
             <Button type="button" size="lg" onClick={() => stop.mutate(running)}>
               <Square className="size-4 fill-current" />
-              Stop
+              {t("Stop")}
             </Button>
           </section>
         ) : null}
@@ -175,10 +176,10 @@ function TimePage() {
         {/* Activities: tap to start. */}
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold">Start a timer</h2>
+            <h2 className="text-sm font-semibold">{t("Start a timer")}</h2>
             <Button type="button" size="sm" variant="ghost" onClick={() => setAdding(true)}>
               <Plus className="size-4" />
-              Activity
+              {t("Activity")}
             </Button>
           </div>
           {list.length ? (
@@ -243,8 +244,9 @@ function TimePage() {
           ) : (
             <div className="stat-card space-y-3 p-4 sm:p-5 text-sm">
               <p className="text-muted-foreground">
-                Activities are what you want to time: gaming, reading, time with friends. Start with
-                a set you can rename, or add your own.
+                {t(
+                  "Activities are what you want to time: gaming, reading, time with friends. Start with a set you can rename, or add your own.",
+                )}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -265,7 +267,7 @@ function TimePage() {
         {/* Tasks to work on: in progress, due today or overdue. */}
         {focusTasks.length ? (
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold">Tasks to work on</h2>
+            <h2 className="text-sm font-semibold">{t("Tasks to work on")}</h2>
             <ul className="space-y-1.5">
               {focusTasks.map((task) => (
                 <li key={task.id} className="stat-card flex items-center gap-2 py-1.5 pl-4 pr-1.5">
@@ -292,7 +294,7 @@ function TimePage() {
         {/* This week, per activity. */}
         <section className="stat-card space-y-3 p-4 sm:p-5">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-sm font-semibold">Last 7 days</h2>
+            <h2 className="text-sm font-semibold">{t("Last 7 days")}</h2>
             <span className="text-xs tabular-nums text-muted-foreground">
               {formatMinutes(weekTotal)} logged
             </span>
@@ -320,7 +322,9 @@ function TimePage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">Nothing logged in the last 7 days.</p>
+            <p className="text-sm text-muted-foreground">
+              {t("Nothing logged in the last 7 days.")}
+            </p>
           )}
           <div className="grid grid-cols-7 items-end gap-1.5 pt-2" style={{ height: 72 }}>
             {week.map((day, index) => {
@@ -344,7 +348,7 @@ function TimePage() {
 
         {/* Today's entries. */}
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold">Today</h2>
+          <h2 className="text-sm font-semibold">{t("Today")}</h2>
           {todayEntries.length ? (
             <ul className="space-y-1.5">
               {todayEntries.map((entry) => (
@@ -374,7 +378,7 @@ function TimePage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">Nothing logged today yet.</p>
+            <p className="text-sm text-muted-foreground">{t("Nothing logged today yet.")}</p>
           )}
         </section>
       </div>
@@ -451,7 +455,7 @@ function LogTimeDialog({
       onSubmit={() => save.mutate()}
     >
       <div className="space-y-2">
-        <Label>Activity</Label>
+        <Label>{t("Activity")}</Label>
         <div className="flex flex-wrap gap-1.5">
           {activities.map((activity) => (
             <button
@@ -472,7 +476,7 @@ function LogTimeDialog({
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="log-minutes">How long</Label>
+        <Label htmlFor="log-minutes">{t("How long")}</Label>
         <div className="flex flex-wrap gap-1.5">
           {DURATIONS.map((value) => (
             <button
@@ -503,7 +507,7 @@ function LogTimeDialog({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="log-ended">Finished at</Label>
+        <Label htmlFor="log-ended">{t("Finished at")}</Label>
         <Input
           id="log-ended"
           type="datetime-local"
@@ -514,7 +518,7 @@ function LogTimeDialog({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="log-note">Note</Label>
+        <Label htmlFor="log-note">{t("Note")}</Label>
         <Input
           id="log-note"
           className="h-11"
@@ -565,7 +569,7 @@ function ActivityDialog({
       onSubmit={() => save.mutate()}
     >
       <div className="space-y-2">
-        <Label htmlFor="activity-name">Name</Label>
+        <Label htmlFor="activity-name">{t("Name")}</Label>
         <Input
           id="activity-name"
           className="h-12"

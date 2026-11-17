@@ -9,7 +9,8 @@
  *   one missed day later;
  * - gold (one per 10 XP) to spend on rewards you set yourself.
  */
-import { addDays, format, parseISO, startOfWeek } from "date-fns";
+import { addDays, parseISO, startOfWeek } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { DhikrLog } from "./azkar";
 import type { Transaction } from "./finance";

@@ -4,7 +4,8 @@
  * record; re-syncing the same record updates it instead of duplicating it.
  */
 import { queryOptions } from "@tanstack/react-query";
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";

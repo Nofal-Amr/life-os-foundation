@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import type { ReactNode } from "react";
 
 import {
@@ -22,6 +22,7 @@ import {
   transactionsQuery,
 } from "@/data/finance";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 
 /**
  * Every line here is a real row: the balance you have logged, the recurring
@@ -71,7 +72,7 @@ export function MoneyBreakdownDialog({ trigger }: { trigger: ReactNode }) {
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>How this figure is worked out</DialogTitle>
+          <DialogTitle>{t("How this figure is worked out")}</DialogTitle>
           <DialogDescription>
             {paydayDate
               ? `Up to your next payday on ${fmtDate(format(paydayDate, "yyyy-MM-dd"))}${
@@ -87,12 +88,12 @@ export function MoneyBreakdownDialog({ trigger }: { trigger: ReactNode }) {
 
         <dl className="space-y-3 text-sm">
           <div className="flex items-baseline justify-between gap-3 border-b border-border pb-2">
-            <dt className="text-muted-foreground">Money in your accounts now</dt>
+            <dt className="text-muted-foreground">{t("Money in your accounts now")}</dt>
             <dd className="tabular-nums">{fmtMoney(liquid)}</dd>
           </div>
 
           <div className="space-y-2 border-b border-border pb-2">
-            <dt className="text-muted-foreground">Recurring costs due before payday</dt>
+            <dt className="text-muted-foreground">{t("Recurring costs due before payday")}</dt>
             {upcoming.length ? (
               <ul className="space-y-1.5">
                 {upcoming.map(({ cost, dates, total }) => (
@@ -110,27 +111,27 @@ export function MoneyBreakdownDialog({ trigger }: { trigger: ReactNode }) {
                 ))}
               </ul>
             ) : (
-              <dd className="text-muted-foreground">None set up for this period.</dd>
+              <dd className="text-muted-foreground">{t("None set up for this period.")}</dd>
             )}
             <div className="flex items-baseline justify-between gap-3 pt-1 text-xs text-muted-foreground">
-              <span>Total</span>
+              <span>{t("Total")}</span>
               <span className="tabular-nums">−{fmtMoney(committed)}</span>
             </div>
           </div>
 
           <div className="flex items-baseline justify-between gap-3 border-b border-border pb-2">
-            <dt className="text-muted-foreground">Safety buffer you chose</dt>
+            <dt className="text-muted-foreground">{t("Safety buffer you chose")}</dt>
             <dd className="tabular-nums">−{fmtMoney(buffer)}</dd>
           </div>
 
           <div className="flex items-baseline justify-between gap-3 pt-1">
-            <dt className="font-medium">Estimated left to spend</dt>
+            <dt className="font-medium">{t("Estimated left to spend")}</dt>
             <dd className="text-lg font-semibold tabular-nums">{fmtMoney(available)}</dd>
           </div>
         </dl>
 
         <p className="text-xs text-muted-foreground">
-          Recurring costs are projections. They only change your balance when you log one.
+          {t("Recurring costs are projections. They only change your balance when you log one.")}
         </p>
       </DialogContent>
     </Dialog>

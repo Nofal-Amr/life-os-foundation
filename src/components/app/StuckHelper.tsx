@@ -65,7 +65,7 @@ export function StuckCard({ item, onSnooze }: { item: StuckTask; onSnooze: () =>
           Help me start
         </Button>
         <Button type="button" variant="ghost" onClick={onSnooze}>
-          Not today
+          {t("Not today")}
         </Button>
       </div>
       <StuckHelperDialog task={item.task} open={open} onOpenChange={setOpen} />
@@ -151,7 +151,7 @@ export function StuckHelperDialog({
                   className="h-auto min-h-12 justify-start whitespace-normal py-3 text-start"
                   onClick={() => setBlock(option.value)}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </Button>
               ))}
               <p className="pt-1 text-xs text-muted-foreground">

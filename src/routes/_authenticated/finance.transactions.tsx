@@ -40,6 +40,7 @@ import {
 import { usePreferences } from "@/hooks/usePreferences";
 import { amountDirectionLabel, amountTone } from "@/lib/semantics";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/finance/transactions")({
   head: () => ({
@@ -172,13 +173,13 @@ function TransactionsPage() {
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
-          <Label>Account</Label>
+          <Label>{t("Account")}</Label>
           <Select value={accountFilter} onValueChange={setAccountFilter}>
             <SelectTrigger className="h-11">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All accounts</SelectItem>
+              <SelectItem value="all">{t("All accounts")}</SelectItem>
               {(accounts.data ?? []).map((a) => (
                 <SelectItem key={a.id} value={a.id}>
                   <span className="flex items-center gap-2">
@@ -188,7 +189,7 @@ function TransactionsPage() {
                       containerClassName="size-5 rounded"
                       className="size-3"
                     />
-                    {a.name}
+                    {t(a.name)}
                   </span>
                 </SelectItem>
               ))}
@@ -196,14 +197,14 @@ function TransactionsPage() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label>Category</Label>
+          <Label>{t("Category")}</Label>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="h-11">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              <SelectItem value="none">No category</SelectItem>
+              <SelectItem value="all">{t("All categories")}</SelectItem>
+              <SelectItem value="none">{t("No category")}</SelectItem>
               {(categories.data ?? []).map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   <span className="flex items-center gap-2">
@@ -213,7 +214,7 @@ function TransactionsPage() {
                       containerClassName="size-5 rounded"
                       className="size-3"
                     />
-                    {c.name}
+                    {t(c.name)}
                   </span>
                 </SelectItem>
               ))}
@@ -221,7 +222,7 @@ function TransactionsPage() {
           </Select>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="filter-from">From</Label>
+          <Label htmlFor="filter-from">{t("From")}</Label>
           <DatePicker
             id="filter-from"
             value={from}
@@ -230,7 +231,7 @@ function TransactionsPage() {
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="filter-to">To</Label>
+          <Label htmlFor="filter-to">{t("To")}</Label>
           <DatePicker id="filter-to" value={to} onChange={setTo} className="[&_button]:h-11" />
         </div>
       </div>
@@ -312,7 +313,7 @@ function TransactionsPage() {
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-amount">Amount</Label>
+                <Label htmlFor="edit-amount">{t("Amount")}</Label>
                 <Input
                   id="edit-amount"
                   type="number"
@@ -331,7 +332,7 @@ function TransactionsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Direction</Label>
+                <Label>{t("Direction")}</Label>
                 <Select
                   value={form.amount < 0 ? "expense" : "income"}
                   onValueChange={(v) =>
@@ -346,13 +347,13 @@ function TransactionsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="expense">Money out</SelectItem>
-                    <SelectItem value="income">Money in</SelectItem>
+                    <SelectItem value="expense">{t("Money out")}</SelectItem>
+                    <SelectItem value="income">{t("Money in")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-date">Date</Label>
+                <Label htmlFor="edit-date">{t("Date")}</Label>
                 <DatePicker
                   id="edit-date"
                   value={form.date}
@@ -360,7 +361,7 @@ function TransactionsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-time">Time</Label>
+                <Label htmlFor="edit-time">{t("Time")}</Label>
                 <Input
                   id="edit-time"
                   type="time"
@@ -372,7 +373,7 @@ function TransactionsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Account</Label>
+                <Label>{t("Account")}</Label>
                 <Select
                   value={form.account_id}
                   onValueChange={(v) => setForm({ ...form, account_id: v })}
@@ -390,7 +391,7 @@ function TransactionsPage() {
                             containerClassName="size-5 rounded"
                             className="size-3"
                           />
-                          {a.name}
+                          {t(a.name)}
                         </span>
                       </SelectItem>
                     ))}
@@ -399,7 +400,7 @@ function TransactionsPage() {
               </div>
               {(pockets.data ?? []).some((pocket) => pocket.account_id === form.account_id) ? (
                 <div className="space-y-2">
-                  <Label>Pocket</Label>
+                  <Label>{t("Pocket")}</Label>
                   <Select
                     value={form.pocket_id ?? "none"}
                     onValueChange={(v) => setForm({ ...form, pocket_id: v === "none" ? null : v })}
@@ -408,12 +409,12 @@ function TransactionsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No pocket</SelectItem>
+                      <SelectItem value="none">{t("No pocket")}</SelectItem>
                       {(pockets.data ?? [])
                         .filter((pocket) => pocket.account_id === form.account_id)
                         .map((pocket) => (
                           <SelectItem key={pocket.id} value={pocket.id}>
-                            {pocket.name} · {pocketKindLabel(pocket.kind)}
+                            {t(pocket.name)} · {pocketKindLabel(pocket.kind)}
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -421,7 +422,7 @@ function TransactionsPage() {
                 </div>
               ) : null}
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label>{t("Category")}</Label>
                 <Select
                   value={form.category_id ?? "none"}
                   onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? null : v })}
@@ -430,7 +431,7 @@ function TransactionsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No category</SelectItem>
+                    <SelectItem value="none">{t("No category")}</SelectItem>
                     {(categories.data ?? []).map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         <span className="flex items-center gap-2">
@@ -440,7 +441,7 @@ function TransactionsPage() {
                             containerClassName="size-5 rounded"
                             className="size-3"
                           />
-                          {c.name}
+                          {t(c.name)}
                         </span>
                       </SelectItem>
                     ))}
@@ -474,7 +475,7 @@ function TransactionsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-note">Note</Label>
+              <Label htmlFor="edit-note">{t("Note")}</Label>
               <Input
                 id="edit-note"
                 className="h-12"

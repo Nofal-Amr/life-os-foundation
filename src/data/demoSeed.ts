@@ -3,7 +3,8 @@
  * dated around today so every screen has something real-looking to show.
  * Only used in demo mode; never sent anywhere.
  */
-import { addDays, format, subDays } from "date-fns";
+import { addDays, subDays } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { relationshipsSeed } from "./relationshipsDemo";
 import { ADO_PRESET } from "./work/rules";

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { addDays, addHours, format, isToday, isTomorrow } from "date-fns";
+import { addDays, addHours, isToday, isTomorrow } from "date-fns";
+import { format } from "@/lib/dates";
 import { Bell, Repeat } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ import {
 } from "@/data/userReminders";
 import { usePreferences } from "@/hooks/usePreferences";
 import { toError } from "@/lib/supabase-helpers";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/reminders")({
   head: () => ({
@@ -97,7 +99,7 @@ function RemindersPage() {
       ) : (
         <div className="space-y-8">
           <section className="space-y-3">
-            <h2 className="section-title">Coming up</h2>
+            <h2 className="section-title">{t("Coming up")}</h2>
             {upcoming.length ? (
               <ul className="space-y-2">
                 {upcoming.map(({ reminder, next }) => {
@@ -181,13 +183,13 @@ function RemindersPage() {
                 })}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">Nothing coming up.</p>
+              <p className="text-sm text-muted-foreground">{t("Nothing coming up.")}</p>
             )}
           </section>
 
           {earlier.length ? (
             <section className="space-y-3">
-              <h2 className="section-title">Done or past</h2>
+              <h2 className="section-title">{t("Done or past")}</h2>
               <ul className="divide-y divide-border rounded-xl border border-border">
                 {earlier.map(({ reminder }) => (
                   <li

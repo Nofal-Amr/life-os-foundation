@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { t } from "@/lib/i18n";
 
 /** Pages reachable with "g" then a letter. */
 const GO: Record<string, { to: string; label: string }> = {
@@ -100,8 +101,8 @@ export function KeyboardShortcuts() {
     <Dialog open={help} onOpenChange={setHelp}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Keyboard shortcuts</DialogTitle>
-          <DialogDescription>When you're not typing in a box.</DialogDescription>
+          <DialogTitle>{t("Keyboard shortcuts")}</DialogTitle>
+          <DialogDescription>{t("When you're not typing in a box.")}</DialogDescription>
         </DialogHeader>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           {ACTIONS.map((item) => (
@@ -111,7 +112,7 @@ export function KeyboardShortcuts() {
                   {item.keys}
                 </kbd>
               </dt>
-              <dd className="text-muted-foreground">{item.label}</dd>
+              <dd className="text-muted-foreground">{t(item.label)}</dd>
             </div>
           ))}
           {Object.entries(GO).map(([key, page]) => (
@@ -121,7 +122,9 @@ export function KeyboardShortcuts() {
                   g {key}
                 </kbd>
               </dt>
-              <dd className="text-muted-foreground">Go to {page.label}</dd>
+              <dd className="text-muted-foreground">
+                {t("Go to")} {t(page.label)}
+              </dd>
             </div>
           ))}
         </dl>

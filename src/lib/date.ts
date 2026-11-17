@@ -1,4 +1,5 @@
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 export function todayISO(): string {
   return format(new Date(), "yyyy-MM-dd");

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/app/PageHeader";

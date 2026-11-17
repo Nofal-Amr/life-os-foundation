@@ -5,13 +5,13 @@ import {
   addMonths,
   eachDayOfInterval,
   endOfMonth,
-  format,
   isSameDay,
   isSameMonth,
   isToday,
   startOfDay,
   startOfMonth,
 } from "date-fns";
+import { format } from "@/lib/dates";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -720,7 +720,7 @@ function CalendarPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="event-title">Title</Label>
+          <Label htmlFor="event-title">{t("Title")}</Label>
           <Input
             id="event-title"
             required
@@ -731,7 +731,7 @@ function CalendarPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="event-start">Starts</Label>
+            <Label htmlFor="event-start">{t("Starts")}</Label>
             <DateTimePicker
               id="event-start"
               required
@@ -740,7 +740,7 @@ function CalendarPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="event-end">Ends</Label>
+            <Label htmlFor="event-end">{t("Ends")}</Label>
             <DateTimePicker
               id="event-end"
               value={form.end}
@@ -749,7 +749,7 @@ function CalendarPage() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="event-description">Description</Label>
+          <Label htmlFor="event-description">{t("Description")}</Label>
           <Textarea
             id="event-description"
             value={form.description ?? ""}
@@ -963,7 +963,7 @@ function DayList({
                 <p className="truncate font-medium">{item.title}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
                 {item.event?.description ? (
-                  <p className="mt-1 text-sm text-muted-foreground">{item.event.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t(item.event.description)}</p>
                 ) : null}
               </div>
             </div>

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * One row pattern for every list (Tasks, Projects, Habits, Transactions,
@@ -139,7 +140,7 @@ export function ListRow({
                     className="min-h-11"
                     onSelect={action.onSelect}
                   >
-                    {action.label}
+                    {t(action.label)}
                   </DropdownMenuItem>
                 ))}
                 {regular.length && destructive.length ? <DropdownMenuSeparator /> : null}
@@ -150,7 +151,7 @@ export function ListRow({
                     className="min-h-11 text-destructive focus:text-destructive"
                     onSelect={action.onSelect}
                   >
-                    {action.label}
+                    {t(action.label)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

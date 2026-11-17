@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { track } from "@/lib/analytics";
 import { currentUserId, toError } from "@/lib/supabase-helpers";
 import { readZip } from "@/lib/zip";
+import { t } from "@/lib/i18n";
 
 /**
  * Imports a Samsung Health data download: the .zip, or the CSV files from
@@ -92,30 +93,30 @@ export function SamsungImport() {
     <div className="space-y-3 rounded-xl border border-dashed border-border p-4 text-sm">
       <details className="rounded-lg bg-secondary px-3 py-2 text-xs">
         <summary className="min-h-8 cursor-pointer py-1 font-medium">
-          Which health apps work, and how
+          {t("Which health apps work, and how")}
         </summary>
         <ul className="mt-2 space-y-2 text-muted-foreground">
           <li>
             <span className="text-foreground">
-              Samsung Health, Mi Fitness (Xiaomi), Fitbit, Google Fit and others
+              {t("Samsung Health, Mi Fitness (Xiaomi), Fitbit, Google Fit and others")}
             </span>{" "}
             that write to Health Connect: turn on sharing in that app's Health Connect settings, and
             the Android app reads it with Sync.
           </li>
           <li>
-            <span className="text-foreground">Zepp Life (Mi Band 1 to 7)</span>: it syncs to Google
-            Fit rather than Health Connect, so import its data export here.
+            <span className="text-foreground">{t("Zepp Life (Mi Band 1 to 7)")}</span>: it syncs to
+            Google Fit rather than Health Connect, so import its data export here.
           </li>
           <li>
-            <span className="text-foreground">Huawei Health</span>: it doesn't share with Health
-            Connect. The separate Health Sync app can copy it into Health Connect, and then Life OS
-            reads it like any other.
+            <span className="text-foreground">{t("Huawei Health")}</span>: it doesn't share with
+            Health Connect. The separate Health Sync app can copy it into Health Connect, and then
+            Life OS reads it like any other.
           </li>
         </ul>
       </details>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-medium">Import your history</p>
+          <p className="font-medium">{t("Import your history")}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             From Samsung Health (Settings → Download personal data: pick the .zip or its CSV files)
             or Zepp Life (Profile → Settings → Export data: it arrives as a zip with a password by
@@ -146,13 +147,12 @@ export function SamsungImport() {
       {unread ? (
         <div className="space-y-2 rounded-lg bg-secondary p-3 text-xs">
           <p className="text-sm font-medium">
-            None of these had steps, sleep, heart rate, weight or workouts
+            {t("None of these had steps, sleep, heart rate, weight or workouts")}
           </p>
           <p className="text-muted-foreground">
-            Pick all the files in the folder (long-press one, then tap the rest). The ones needed
-            are named like com.samsung.shealth.tracker.pedometer_day_summary, …sleep, …heart_rate,
-            com.samsung.health.weight and …exercise. If they're there and still not read, send a
-            screenshot of this list.
+            {t(
+              "Pick all the files in the folder (long-press one, then tap the rest). The ones needed are named like com.samsung.shealth.tracker.pedometer_day_summary, …sleep, …heart_rate, com.samsung.health.weight and …exercise. If they're there and still not read, send a screenshot of this list.",
+            )}
           </p>
           <ul className="max-h-40 space-y-0.5 overflow-y-auto font-mono text-xs text-muted-foreground">
             {unread.map((name) => (
@@ -166,7 +166,7 @@ export function SamsungImport() {
 
       {result ? (
         <div className="space-y-3 rounded-lg bg-secondary p-3">
-          <p className="font-medium">Found in your download</p>
+          <p className="font-medium">{t("Found in your download")}</p>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
             {Object.entries(result.counts).map(([kind, count]) => (
               <li key={kind} className="flex justify-between gap-2">

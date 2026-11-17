@@ -463,9 +463,9 @@ function SettingsPage() {
           {show("profile") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Identity</CardTitle>
+                <CardTitle className="text-base">{t("Identity")}</CardTitle>
                 <CardDescription>
-                  Your name is used across the app instead of your email.
+                  {t("Your name is used across the app instead of your email.")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -497,7 +497,9 @@ function SettingsPage() {
                       ) : null}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      PNG, JPEG, WebP or GIF, up to 2MB. Without a picture, your initials are shown.
+                      {t(
+                        "PNG, JPEG, WebP or GIF, up to 2MB. Without a picture, your initials are shown.",
+                      )}
                     </p>
                     <input
                       ref={fileInput}
@@ -522,7 +524,7 @@ function SettingsPage() {
                   }}
                 >
                   <div className="space-y-2">
-                    <Label htmlFor="display-name">Display name</Label>
+                    <Label htmlFor="display-name">{t("Display name")}</Label>
                     <Input
                       id="display-name"
                       className="h-12"
@@ -532,7 +534,7 @@ function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="account-email">Account email</Label>
+                    <Label htmlFor="account-email">{t("Account email")}</Label>
                     <Input id="account-email" value={email} readOnly disabled />
                   </div>
                   <div>
@@ -550,13 +552,14 @@ function SettingsPage() {
               <CardHeader>
                 <CardTitle className="text-base">Units & formats</CardTitle>
                 <CardDescription>
-                  These change how values are shown everywhere. Your data is always stored the same
-                  way.
+                  {t(
+                    "These change how values are shown everywhere. Your data is always stored the same way.",
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Units</Label>
+                  <Label>{t("Units")}</Label>
                   <Select
                     value={prefs.unit_system}
                     onValueChange={(value) => savePrefs.mutate({ unit_system: value })}
@@ -567,14 +570,14 @@ function SettingsPage() {
                     <SelectContent>
                       {UNIT_SYSTEMS.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
-                          {item.label}
+                          {t(item.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Time</Label>
+                  <Label>{t("Time")}</Label>
                   <Select
                     value={prefs.time_format}
                     onValueChange={(value) => savePrefs.mutate({ time_format: value })}
@@ -585,14 +588,14 @@ function SettingsPage() {
                     <SelectContent>
                       {TIME_FORMATS.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
-                          {item.label}
+                          {t(item.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Week starts on</Label>
+                  <Label>{t("Week starts on")}</Label>
                   <Select
                     value={String(weekStartsOn)}
                     onValueChange={(value) => savePrefs.mutate({ week_start: Number(value) })}
@@ -603,15 +606,15 @@ function SettingsPage() {
                     <SelectContent>
                       {WEEK_START_OPTIONS.map((item) => (
                         <SelectItem key={item.value} value={String(item.value)}>
-                          {item.label}
+                          {t(item.label)}
                         </SelectItem>
                       ))}
                       <SelectSeparator />
                       <SelectGroup>
-                        <SelectLabel>Other days</SelectLabel>
+                        <SelectLabel>{t("Other days")}</SelectLabel>
                         {OTHER_WEEK_START_OPTIONS.map((item) => (
                           <SelectItem key={item.value} value={String(item.value)}>
-                            {item.label}
+                            {t(item.label)}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -619,7 +622,7 @@ function SettingsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Dates</Label>
+                  <Label>{t("Dates")}</Label>
                   <Select
                     value={prefs.date_format}
                     onValueChange={(value) => savePrefs.mutate({ date_format: value })}
@@ -630,7 +633,7 @@ function SettingsPage() {
                     <SelectContent>
                       {DATE_FORMATS.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
-                          {item.label}
+                          {t(item.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -643,10 +646,11 @@ function SettingsPage() {
           {show("body") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Body setup</CardTitle>
+                <CardTitle className="text-base">{t("Body setup")}</CardTitle>
                 <CardDescription>
-                  Height, birthdate and target weight. Your current weight is logged on the Health
-                  page.
+                  {t(
+                    "Height, birthdate and target weight. Your current weight is logged on the Health page.",
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -660,7 +664,7 @@ function SettingsPage() {
                   <div className="grid gap-4 sm:grid-cols-3">
                     {prefs.unit_system === "imperial" ? (
                       <div className="space-y-2 sm:col-span-1">
-                        <Label htmlFor="height-ft">Height (ft / in)</Label>
+                        <Label htmlFor="height-ft">{t("Height (ft / in)")}</Label>
                         <div className="flex gap-2">
                           <Input
                             id="height-ft"
@@ -684,7 +688,7 @@ function SettingsPage() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Label htmlFor="height-cm">Height (cm)</Label>
+                        <Label htmlFor="height-cm">{t("Height (cm)")}</Label>
                         <Input
                           id="height-cm"
                           type="number"
@@ -697,7 +701,7 @@ function SettingsPage() {
                       </div>
                     )}
                     <div className="space-y-2">
-                      <Label htmlFor="birthdate">Birthdate</Label>
+                      <Label htmlFor="birthdate">{t("Birthdate")}</Label>
                       <DatePicker
                         id="birthdate"
                         value={birthdate}
@@ -706,7 +710,10 @@ function SettingsPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="target-weight">Target weight ({weightUnit})</Label>
+                      <Label htmlFor="target-weight">
+                        {t("Target weight (")}
+                        {weightUnit})
+                      </Label>
                       <Input
                         id="target-weight"
                         type="number"
@@ -729,7 +736,7 @@ function SettingsPage() {
           {show("prayer") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Prayer setup</CardTitle>
+                <CardTitle className="text-base">{t("Prayer setup")}</CardTitle>
                 <CardDescription>
                   {prayerConfig?.city
                     ? `Prayer times are calculated for ${prayerConfig.city}.`
@@ -741,7 +748,7 @@ function SettingsPage() {
               <CardContent className="space-y-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <div className="flex-1 space-y-2">
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city">{t("City")}</Label>
                     <Input
                       id="city"
                       className="h-12"
@@ -779,7 +786,7 @@ function SettingsPage() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Calculation method</Label>
+                    <Label>{t("Calculation method")}</Label>
                     <Select
                       value={prayerConfig?.calc_method ?? "MuslimWorldLeague"}
                       onValueChange={(value) => savePrayer.mutate({ calc_method: value })}
@@ -790,14 +797,14 @@ function SettingsPage() {
                       <SelectContent>
                         {CALC_METHODS.map((method) => (
                           <SelectItem key={method.value} value={method.value}>
-                            {method.label}
+                            {t(method.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label>Asr school</Label>
+                    <Label>{t("Asr school")}</Label>
                     <Select
                       value={prayerConfig?.asr_school ?? "shafi"}
                       onValueChange={(value) => savePrayer.mutate({ asr_school: value })}
@@ -808,7 +815,7 @@ function SettingsPage() {
                       <SelectContent>
                         {ASR_SCHOOLS.map((school) => (
                           <SelectItem key={school.value} value={school.value}>
-                            {school.label}
+                            {t(school.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -822,7 +829,7 @@ function SettingsPage() {
           {show("money") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Money setup</CardTitle>
+                <CardTitle className="text-base">{t("Money setup")}</CardTitle>
                 <CardDescription>
                   When you are paid and how much you want left untouched. Left empty until you fill
                   it in; Life OS never guesses these.
@@ -831,7 +838,7 @@ function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="space-y-2">
-                    <Label htmlFor="pay-day">Pay day of the month</Label>
+                    <Label htmlFor="pay-day">{t("Pay day of the month")}</Label>
                     <Input
                       id="pay-day"
                       type="number"
@@ -845,7 +852,7 @@ function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="expected-net">Expected net pay</Label>
+                    <Label htmlFor="expected-net">{t("Expected net pay")}</Label>
                     <Input
                       id="expected-net"
                       type="number"
@@ -857,7 +864,7 @@ function SettingsPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="safety-buffer">Safety buffer</Label>
+                    <Label htmlFor="safety-buffer">{t("Safety buffer")}</Label>
                     <Input
                       id="safety-buffer"
                       type="number"
@@ -870,7 +877,7 @@ function SettingsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Currency</Label>
+                  <Label>{t("Currency")}</Label>
                   <CurrencyCombobox
                     value={prefs.currency}
                     onChange={(currency) => savePrefs.mutate({ currency })}
@@ -887,8 +894,9 @@ function SettingsPage() {
                   </Button>
                   {!hasPaydaySetup(payday.data) ? (
                     <p className="text-sm text-muted-foreground">
-                      Until a pay day is saved, the Money page shows a setup prompt instead of a
-                      countdown.
+                      {t(
+                        "Until a pay day is saved, the Money page shows a setup prompt instead of a countdown.",
+                      )}
                     </p>
                   ) : null}
                 </div>
@@ -899,9 +907,11 @@ function SettingsPage() {
           {show("areas") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Dimension priority</CardTitle>
+                <CardTitle className="text-base">{t("Dimension priority")}</CardTitle>
                 <CardDescription>
-                  The order your life dimensions matter to you right now. Saved as you move them.
+                  {t(
+                    "The order your life dimensions matter to you right now. Saved as you move them.",
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -951,10 +961,11 @@ function SettingsPage() {
           {show("areas") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Modules</CardTitle>
+                <CardTitle className="text-base">{t("Modules")}</CardTitle>
                 <CardDescription>
-                  Choose which parts of Life OS you see. Switching one off hides it everywhere and
-                  never deletes anything you saved.
+                  {t(
+                    "Choose which parts of Life OS you see. Switching one off hides it everywhere and never deletes anything you saved.",
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -966,14 +977,14 @@ function SettingsPage() {
                       className="flex min-h-14 items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground">{module.label}</p>
-                        <p className="text-xs text-muted-foreground">{module.description}</p>
+                        <p className="text-sm font-medium text-foreground">{t(module.label)}</p>
+                        <p className="text-xs text-muted-foreground">{t(module.description)}</p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="text-xs text-muted-foreground">{on ? "On" : "Off"}</span>
                         <Switch
                           checked={on}
-                          aria-label={`${module.label} module`}
+                          aria-label={`${t(module.label)} module`}
                           disabled={isSaving}
                           onCheckedChange={(next) => toggleModule(module.key, next)}
                         />
@@ -988,7 +999,7 @@ function SettingsPage() {
           {show("areas") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Setup</CardTitle>
+                <CardTitle className="text-base">{t("Setup")}</CardTitle>
                 <CardDescription>
                   Walk through the first-run questions again. Nothing is cleared; you just confirm
                   or change your answers.
@@ -1011,10 +1022,11 @@ function SettingsPage() {
           {show("look") && (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">Appearance</CardTitle>
+                <CardTitle className="text-base">{t("Appearance")}</CardTitle>
                 <CardDescription>
-                  Light uses Executive Crisp, dark uses Pro Dark. System follows your device.
-                  Remembered on this device.
+                  {t(
+                    "Light uses Executive Crisp, dark uses Pro Dark. System follows your device. Remembered on this device.",
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1045,7 +1057,7 @@ function SettingsPage() {
                 </div>
 
                 <div className="mt-6 space-y-2">
-                  <p className="text-sm font-medium">Text size</p>
+                  <p className="text-sm font-medium">{t("Text size")}</p>
                   <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Text size">
                     {TEXT_SIZES.map((size) => (
                       <button
@@ -1056,17 +1068,17 @@ function SettingsPage() {
                         onClick={() => setTextSize(size.value)}
                         className={`min-h-10 rounded-full border px-4 text-sm transition-colors ${textSize === size.value ? "border-transparent bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"}`}
                       >
-                        {size.label}
+                        {t(size.label)}
                       </button>
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Changes every screen at once, on this device.
+                    {t("Changes every screen at once, on this device.")}
                   </p>
                 </div>
 
                 <div className="mt-6 space-y-2">
-                  <p className="text-sm font-medium">Accent colour</p>
+                  <p className="text-sm font-medium">{t("Accent colour")}</p>
                   <div
                     className="flex flex-wrap gap-2"
                     role="radiogroup"
@@ -1155,10 +1167,11 @@ function SettingsPage() {
                 </div>
 
                 <div className="mt-6 space-y-2">
-                  <p className="text-sm font-medium">Skin</p>
+                  <p className="text-sm font-medium">{t("Skin")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Same data, two ways to see it. Serious shows plain counts. RPG shows the same
-                    logs as XP, levels and 0–100 stats, each with how it is worked out.
+                    {t(
+                      "Same data, two ways to see it. Serious shows plain counts. RPG shows the same logs as XP, levels and 0–100 stats, each with how it is worked out.",
+                    )}
                   </p>
                   <div
                     role="radiogroup"

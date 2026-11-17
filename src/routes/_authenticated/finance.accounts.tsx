@@ -40,6 +40,7 @@ import {
   type AccountInput,
 } from "@/data/finance";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/finance/accounts")({
   head: () => ({
@@ -183,7 +184,7 @@ function AccountsPage() {
       <PageHeader
         title="Accounts"
         description="Where your money is. Balances are worked out from the opening balance and what you log."
-        actions={<Button onClick={openCreate}>New account</Button>}
+        actions={<Button onClick={openCreate}>{t("New account")}</Button>}
       />
 
       {loading ? (
@@ -203,7 +204,7 @@ function AccountsPage() {
             <EmptyState
               title="Nothing logged yet"
               description="An account holds your money. Add it with its opening balance, and every balance after that is worked out from what you log."
-              action={<Button onClick={openCreate}>Add an account</Button>}
+              action={<Button onClick={openCreate}>{t("Add an account")}</Button>}
             />
           ) : (
             <RowList>
@@ -226,8 +227,8 @@ function AccountsPage() {
                     meta={
                       <>
                         <span>{ACCOUNT_TYPES.find((t) => t.value === account.type)?.label}</span>
-                        {!account.active ? <span>Inactive</span> : null}
-                        {!countsTowardSpendable(account) ? <span>Kept separate</span> : null}
+                        {!account.active ? <span>{t("Inactive")}</span> : null}
+                        {!countsTowardSpendable(account) ? <span>{t("Kept separate")}</span> : null}
                       </>
                     }
                     trailing={
@@ -249,7 +250,7 @@ function AccountsPage() {
                             className="flex min-w-0 items-center justify-between gap-3 text-sm"
                           >
                             <span className="min-w-0 truncate">
-                              {pocket.name}
+                              {t(pocket.name)}
                               <span className="ml-2 text-xs text-muted-foreground">
                                 {pocketKindLabel(pocket.kind)}
                               </span>
@@ -277,7 +278,7 @@ function AccountsPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="account-name">Name</Label>
+          <Label htmlFor="account-name">{t("Name")}</Label>
           <Input
             id="account-name"
             required
@@ -292,7 +293,7 @@ function AccountsPage() {
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Type</Label>
+            <Label>{t("Type")}</Label>
             <Select
               value={form.type}
               onValueChange={(v) => setForm({ ...form, type: v as AccountInput["type"] })}
@@ -301,16 +302,16 @@ function AccountsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ACCOUNT_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
+                {ACCOUNT_TYPES.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {t(type.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="account-opening">Opening balance</Label>
+            <Label htmlFor="account-opening">{t("Opening balance")}</Label>
             <Input
               id="account-opening"
               type="number"
@@ -321,7 +322,7 @@ function AccountsPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{t("Status")}</Label>
             <Select
               value={form.active ? "active" : "inactive"}
               onValueChange={(v) => setForm({ ...form, active: v === "active" })}
@@ -330,13 +331,13 @@ function AccountsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="active">{t("Active")}</SelectItem>
+                <SelectItem value="inactive">{t("Inactive")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Left to spend</Label>
+            <Label>{t("Left to spend")}</Label>
             <Select
               value={form.counts_toward_spendable ? "counts" : "separate"}
               onValueChange={(v) => setForm({ ...form, counts_toward_spendable: v === "counts" })}
@@ -345,25 +346,26 @@ function AccountsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="counts">Counts toward it</SelectItem>
-                <SelectItem value="separate">Kept separate</SelectItem>
+                <SelectItem value="counts">{t("Counts toward it")}</SelectItem>
+                <SelectItem value="separate">{t("Kept separate")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         {!form.counts_toward_spendable ? (
           <p className="text-xs text-muted-foreground">
-            Still tracked with its own balance and history, but left out of left to spend. Useful
-            for a home fund or money you look after for someone else.
+            {t(
+              "Still tracked with its own balance and history, but left out of left to spend. Useful for a home fund or money you look after for someone else.",
+            )}
           </p>
         ) : null}
 
         {editing ? (
           <div className="space-y-3 rounded-lg border border-border p-3">
             <div className="min-w-0">
-              <p className="text-sm font-medium">Pockets</p>
+              <p className="text-sm font-medium">{t("Pockets")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Split one account into parts, like cash in hand and the bank balance.
+                {t("Split one account into parts, like cash in hand and the bank balance.")}
               </p>
             </div>
             {editingPockets.length ? (
@@ -374,7 +376,7 @@ function AccountsPage() {
                     className="flex min-w-0 items-center justify-between gap-2 text-sm"
                   >
                     <span className="min-w-0 truncate">
-                      {pocket.name}
+                      {t(pocket.name)}
                       <span className="ml-2 text-xs text-muted-foreground">
                         {pocketKindLabel(pocket.kind)}
                       </span>
@@ -387,7 +389,7 @@ function AccountsPage() {
                         type="button"
                         size="icon"
                         variant="ghost"
-                        aria-label={`Remove ${pocket.name}`}
+                        aria-label={`Remove ${t(pocket.name)}`}
                         onClick={() => removePocket.mutate(pocket.id)}
                       >
                         <Trash2 className="size-4" />
@@ -397,7 +399,7 @@ function AccountsPage() {
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-muted-foreground">No pockets yet.</p>
+              <p className="text-xs text-muted-foreground">{t("No pockets yet.")}</p>
             )}
             <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem_7rem_auto]">
               <Input
@@ -413,7 +415,7 @@ function AccountsPage() {
                 <SelectContent>
                   {POCKET_KINDS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      {t(option.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -435,7 +437,7 @@ function AccountsPage() {
                 onClick={() => addPocket.mutate()}
               >
                 <Plus className="size-4" />
-                Add
+                {t("Add")}
               </Button>
             </div>
           </div>

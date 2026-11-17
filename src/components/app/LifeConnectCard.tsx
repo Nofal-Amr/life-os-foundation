@@ -20,6 +20,7 @@ import {
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
 import { MusicRemote } from "@/components/app/MusicRemote";
+import { t } from "@/lib/i18n";
 
 /** Per phone: which role this phone plays, and what to call it. */
 const ROLE_KEY = "life-connect:role";
@@ -131,11 +132,12 @@ export function LifeConnectCard() {
     return (
       <section className="stat-card space-y-2 p-4 sm:p-5">
         <p className="flex items-center gap-2 text-base font-semibold">
-          <PhoneCall className="size-4" /> Life Connect
+          <PhoneCall className="size-4" /> {t("Life Connect")}
         </p>
         <p className="text-sm text-muted-foreground">
-          Calls to a phone with your SIM card ring on your main phone. It runs in the Life OS
-          Android app, on both phones.
+          {t(
+            "Calls to a phone with your SIM card ring on your main phone. It runs in the Life OS Android app, on both phones.",
+          )}
         </p>
       </section>
     );
@@ -199,13 +201,12 @@ export function LifeConnectCard() {
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div>
         <p className="flex items-center gap-2 text-base font-semibold">
-          <PhoneCall className="size-4" /> Life Connect
+          <PhoneCall className="size-4" /> {t("Life Connect")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Calls to the phone with your SIM card ring on your main phone (and your watch), with
-          Answer, Decline and Mute, and its SMS show up there with Reply. “Answer on” picks up on
-          the SIM phone: talk on it, or on earbuds connected to it. Set this up on both phones,
-          signed in to this account.
+          {t(
+            "Calls to the phone with your SIM card ring on your main phone (and your watch), with Answer, Decline and Mute, and its SMS show up there with Reply. “Answer on” picks up on the SIM phone: talk on it, or on earbuds connected to it. Set this up on both phones, signed in to this account.",
+          )}
         </p>
       </div>
 
@@ -232,14 +233,14 @@ export function LifeConnectCard() {
               role === option.value ? "bg-card text-foreground shadow-sm" : "text-muted-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>
 
       {role === "sim" ? (
         <div className="space-y-2">
-          <Label htmlFor="connect-device">Call this phone</Label>
+          <Label htmlFor="connect-device">{t("Call this phone")}</Label>
           <Input
             id="connect-device"
             className="h-11"
@@ -251,22 +252,25 @@ export function LifeConnectCard() {
             }}
           />
           <p className="text-xs text-muted-foreground">
-            Shown on the main phone: "Calling {device || "SIM phone"}".
+            {t('Shown on the main phone: "Calling')} {device || "SIM phone"}".
           </p>
           <p className="text-xs text-muted-foreground">
-            Music playing here can be paused, skipped and turned up or down from the main phone.
+            {t(
+              "Music playing here can be paused, skipped and turned up or down from the main phone.",
+            )}
             {smsBuild ? " Song names are shared too, while the remote is in use." : ""}
           </p>
           {!smsBuild ? (
             <p className="pt-2 text-xs text-muted-foreground">
-              Passing SMS on needs Life OS Full on this phone (installed from a computer — Google
-              blocks SMS access for apps installed from WhatsApp or a browser). Calls work as is.
+              {t(
+                "Passing SMS on needs Life OS Full on this phone (installed from a computer — Google blocks SMS access for apps installed from WhatsApp or a browser). Calls work as is.",
+              )}
             </p>
           ) : null}
           <div
             className={cn("flex items-center justify-between gap-3 pt-2", !smsBuild && "hidden")}
           >
-            <Label htmlFor="connect-sms">Pass SMS on to the main phone</Label>
+            <Label htmlFor="connect-sms">{t("Pass SMS on to the main phone")}</Label>
             <Switch
               id="connect-sms"
               checked={sms}
@@ -279,9 +283,9 @@ export function LifeConnectCard() {
           {sms && smsBuild ? (
             <div className="flex items-center justify-between gap-3">
               <Label htmlFor="connect-codes" className="block">
-                Include one-time codes
+                {t("Include one-time codes")}
                 <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                  Off keeps OTPs and verification codes on this phone only.
+                  {t("Off keeps OTPs and verification codes on this phone only.")}
                 </span>
               </Label>
               <Switch
@@ -299,8 +303,9 @@ export function LifeConnectCard() {
       {role === "main" ? (
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            For your watch: in Galaxy Wearable → Watch settings → Notifications → App notifications,
-            turn on Life OS. Calls then ring on the watch with Decline.
+            {t(
+              "For your watch: in Galaxy Wearable → Watch settings → Notifications → App notifications, turn on Life OS. Calls then ring on the watch with Decline.",
+            )}
           </p>
           {secret ? <MusicRemote /> : null}
         </div>
@@ -308,8 +313,9 @@ export function LifeConnectCard() {
       {role === "sim" && /xiaomi|poco|redmi/.test(status?.brand ?? "") ? (
         <div className="space-y-2 rounded-lg bg-secondary p-3 text-xs text-muted-foreground">
           <p>
-            On this phone, Xiaomi stops Life OS from hearing calls unless you allow it: turn on
-            Autostart for Life OS, and in its battery saver choose "No restrictions".
+            {t(
+              'On this phone, Xiaomi stops Life OS from hearing calls unless you allow it: turn on Autostart for Life OS, and in its battery saver choose "No restrictions".',
+            )}
           </p>
           <Button
             type="button"
@@ -317,7 +323,7 @@ export function LifeConnectCard() {
             variant="outline"
             onClick={lifeConnect.openAutostartSettings}
           >
-            Open Autostart
+            {t("Open Autostart")}
           </Button>
         </div>
       ) : null}
@@ -338,14 +344,14 @@ export function LifeConnectCard() {
                 >
                   {check.ok ? <Check className="size-3.5" /> : null}
                 </span>
-                {check.label}
+                {t(check.label)}
               </span>
               {!check.ok && check.fix ? (
                 <Button type="button" size="sm" variant="outline" onClick={check.fix}>
-                  Allow
+                  {t("Allow")}
                 </Button>
               ) : !check.ok ? (
-                <span className="text-xs text-muted-foreground">Connecting…</span>
+                <span className="text-xs text-muted-foreground">{t("Connecting…")}</span>
               ) : null}
             </li>
           ))}
@@ -358,13 +364,14 @@ export function LifeConnectCard() {
 
       {role !== "off" ? (
         <Button type="button" variant="outline" onClick={() => lifeConnect.test()}>
-          <Send className="size-4" /> Send a test to the other phone
+          <Send className="size-4" /> {t("Send a test to the other phone")}
         </Button>
       ) : null}
 
       <p className="text-xs text-muted-foreground">
-        Only who's calling (and the SMS you pass on) crosses the internet, encrypted with a key only
-        your phones have. Nothing is stored.
+        {t(
+          "Only who's calling (and the SMS you pass on) crosses the internet, encrypted with a key only your phones have. Nothing is stored.",
+        )}
       </p>
     </section>
   );

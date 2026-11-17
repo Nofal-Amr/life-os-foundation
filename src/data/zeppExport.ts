@@ -12,7 +12,7 @@
  * Steps and heart rate use the same daily ids as the Samsung import and the
  * Health Connect sync, so importing the same day twice replaces it.
  */
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { HealthKind } from "./healthSamples";
 import { parseCsvLine, type ImportResult, type ImportedSample } from "./samsungExport";

@@ -220,7 +220,7 @@ function FoodPage() {
               }}
             >
               <Plus className="size-4" />
-              New food
+              {t("New food")}
             </Button>
           </>
         }
@@ -425,7 +425,7 @@ function FoodPage() {
       <FormDialog
         open={!!pickFood}
         onOpenChange={(open) => !open && setPickFood(null)}
-        title={pickFood ? `Log ${pickFood.name}` : "Log food"}
+        title={pickFood ? `Log ${t(pickFood.name)}` : "Log food"}
         submitLabel="Log it"
         pending={addLog.isPending}
         onSubmit={() => addLog.mutate()}
@@ -433,7 +433,7 @@ function FoodPage() {
         {pickFood ? (
           <>
             <div className="space-y-2">
-              <Label htmlFor="food-servings">Servings</Label>
+              <Label htmlFor="food-servings">{t("Servings")}</Label>
               <Input
                 id="food-servings"
                 autoFocus
@@ -451,7 +451,7 @@ function FoodPage() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Meal</Label>
+              <Label>{t("Meal")}</Label>
               <Select value={meal} onValueChange={setMeal}>
                 <SelectTrigger className="h-12">
                   <SelectValue />
@@ -480,7 +480,7 @@ function FoodPage() {
         onSubmit={() => addQuickLog.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="quick-food-name">Name</Label>
+          <Label htmlFor="quick-food-name">{t("Name")}</Label>
           <Input
             id="quick-food-name"
             autoFocus
@@ -490,7 +490,7 @@ function FoodPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="quick-food-calories">Calories</Label>
+          <Label htmlFor="quick-food-calories">{t("Calories")}</Label>
           <Input
             id="quick-food-calories"
             inputMode="numeric"
@@ -513,7 +513,7 @@ function FoodPage() {
         onSubmit={() => saveFood.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="new-food-name">Name</Label>
+          <Label htmlFor="new-food-name">{t("Name")}</Label>
           <Input
             id="new-food-name"
             required
@@ -524,7 +524,7 @@ function FoodPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="new-food-serving">Serving</Label>
+            <Label htmlFor="new-food-serving">{t("Serving")}</Label>
             <Input
               id="new-food-serving"
               className="h-12"
@@ -536,7 +536,7 @@ function FoodPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-food-grams">Serving in grams</Label>
+            <Label htmlFor="new-food-grams">{t("Serving in grams")}</Label>
             <Input
               id="new-food-grams"
               type="number"
@@ -553,7 +553,7 @@ function FoodPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-food-calories">Calories a serving</Label>
+            <Label htmlFor="new-food-calories">{t("Calories a serving")}</Label>
             <Input
               id="new-food-calories"
               required
@@ -568,7 +568,7 @@ function FoodPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-food-protein">Protein (g)</Label>
+            <Label htmlFor="new-food-protein">{t("Protein (g)")}</Label>
             <Input
               id="new-food-protein"
               type="number"
@@ -586,7 +586,7 @@ function FoodPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-food-carbs">Carbs (g)</Label>
+            <Label htmlFor="new-food-carbs">{t("Carbs (g)")}</Label>
             <Input
               id="new-food-carbs"
               type="number"
@@ -604,7 +604,7 @@ function FoodPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-food-fat">Fat (g)</Label>
+            <Label htmlFor="new-food-fat">{t("Fat (g)")}</Label>
             <Input
               id="new-food-fat"
               type="number"

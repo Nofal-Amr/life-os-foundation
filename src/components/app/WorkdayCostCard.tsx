@@ -7,6 +7,7 @@ import { financeCategoriesQuery, transactionsQuery } from "@/data/finance";
 import { workdayCost } from "@/data/workdayCost";
 import { usePreferences } from "@/hooks/usePreferences";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const STORE = "money:workday-cost";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -57,7 +58,7 @@ export function WorkdayCostCard() {
     <section className="stat-card space-y-3 p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <p className="flex items-center gap-2 text-sm font-semibold">
-          <Briefcase className="size-4" aria-hidden="true" /> Going to work
+          <Briefcase className="size-4" aria-hidden="true" /> {t("Going to work")}
         </p>
         <Button size="sm" variant="ghost" onClick={() => setEditing((value) => !value)}>
           <Settings2 className="size-4" /> {editing ? "Done" : "Choose"}
@@ -69,7 +70,9 @@ export function WorkdayCostCard() {
           <div>
             <p className="text-2xl font-semibold tabular-nums">
               {fmtMoney(result.perWorkday ?? 0)}
-              <span className="ml-1 text-sm font-normal text-muted-foreground">a workday</span>
+              <span className="ml-1 text-sm font-normal text-muted-foreground">
+                {t("a workday")}
+              </span>
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
               {fmtMoney(result.total)} over {result.workdays} workdays in the last 30 days, from{" "}
@@ -81,22 +84,23 @@ export function WorkdayCostCard() {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Nothing logged in those categories on workdays in the last 30 days.
+            {t("Nothing logged in those categories on workdays in the last 30 days.")}
           </p>
         )
       ) : null}
 
       {!configured && !editing ? (
         <p className="text-sm text-muted-foreground">
-          Pick the categories that are the cost of going to work (fuel, transport, lunch out) and
-          your workdays.
+          {t(
+            "Pick the categories that are the cost of going to work (fuel, transport, lunch out) and your workdays.",
+          )}
         </p>
       ) : null}
 
       {editing ? (
         <div className="space-y-3">
           <div>
-            <p className="mb-1.5 text-xs text-muted-foreground">Workdays</p>
+            <p className="mb-1.5 text-xs text-muted-foreground">{t("Workdays")}</p>
             <div className="flex flex-wrap gap-1.5">
               {DAY_LABELS.map((label, day) => {
                 const on = setup.workdays.includes(day);
@@ -118,14 +122,16 @@ export function WorkdayCostCard() {
                       on ? "border-primary bg-primary/15" : "border-border text-muted-foreground",
                     )}
                   >
-                    {label}
+                    {t(label)}
                   </button>
                 );
               })}
             </div>
           </div>
           <div>
-            <p className="mb-1.5 text-xs text-muted-foreground">Categories that are work costs</p>
+            <p className="mb-1.5 text-xs text-muted-foreground">
+              {t("Categories that are work costs")}
+            </p>
             {expenseCategories.length ? (
               <div className="flex flex-wrap gap-1.5">
                 {expenseCategories.map((category) => {
@@ -155,7 +161,7 @@ export function WorkdayCostCard() {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Add spending categories in Money first.
+                {t("Add spending categories in Money first.")}
               </p>
             )}
           </div>

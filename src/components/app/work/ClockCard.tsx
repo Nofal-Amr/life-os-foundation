@@ -138,7 +138,7 @@ export function ClockCard({
         return;
       }
       const away = result.nearest
-        ? `${t("You're")} ${Math.round(result.distance ?? 0)} m ${t("from")} ${result.nearest.name}.`
+        ? `${t("You're")} ${Math.round(result.distance ?? 0)} m ${t("from")} ${t(result.nearest.name)}.`
         : "";
       const near = {
         place_id: result.nearest?.id ?? null,

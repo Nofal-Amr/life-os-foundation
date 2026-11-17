@@ -3,7 +3,8 @@
  * (fuel, transport, food out…) on your workdays, over the last N days.
  * Only real transactions count; recurring costs that weren't logged don't.
  */
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { Transaction } from "./finance";
 

@@ -17,6 +17,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { currentUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -107,9 +108,9 @@ function Intro() {
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-8">
-        <span className="text-base font-semibold tracking-tight">Life OS</span>
+        <span className="text-base font-semibold tracking-tight">{t("Life OS")}</span>
         <Button asChild variant="ghost" size="sm">
-          <Link to="/auth">Sign in</Link>
+          <Link to="/auth">{t("Sign in")}</Link>
         </Button>
       </header>
 
@@ -121,16 +122,16 @@ function Intro() {
       </main>
 
       <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-6 text-sm text-muted-foreground md:px-8">
-        <span>Life OS</span>
+        <span>{t("Life OS")}</span>
         <nav className="flex flex-wrap gap-4">
           <Link to="/privacy" className="underline-offset-4 hover:text-foreground hover:underline">
-            Privacy
+            {t("Privacy")}
           </Link>
           <Link to="/terms" className="underline-offset-4 hover:text-foreground hover:underline">
-            Terms
+            {t("Terms")}
           </Link>
           <Link to="/auth" className="underline-offset-4 hover:text-foreground hover:underline">
-            Sign in
+            {t("Sign in")}
           </Link>
         </nav>
       </footer>
@@ -146,16 +147,17 @@ function Hero() {
     <section className="mx-auto grid max-w-6xl gap-10 px-4 pb-20 pt-10 md:grid-cols-[1.05fr_1fr] md:items-center md:gap-14 md:px-8 md:pb-28 md:pt-16">
       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out">
         <h1 className="text-4xl font-semibold leading-[1.05] tracking-[-0.035em] md:text-6xl">
-          Your day, money, body and prayers in one calm place.
+          {t("Your day, money, body and prayers in one calm place.")}
         </h1>
         <p className="mt-5 max-w-[46ch] text-lg text-muted-foreground">
-          A private personal system that only shows what you logged, and keeps working when you are
-          offline.
+          {t(
+            "A private personal system that only shows what you logged, and keeps working when you are offline.",
+          )}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg" className="px-6">
             <Link to="/auth" search={{ mode: "signup" } as never}>
-              Get started
+              {t("Get started")}
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </Button>
@@ -220,7 +222,7 @@ function Hero() {
             key={section.key}
             className="animate-in fade-in slide-in-from-bottom-1 duration-200 ease-out"
           >
-            <h2 className="text-xl font-semibold tracking-[-0.015em]">{section.title}</h2>
+            <h2 className="text-xl font-semibold tracking-[-0.015em]">{t(section.title)}</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{section.body}</p>
             <ul className="mt-5 flex flex-wrap gap-2">
               {section.points.map((point) => (
@@ -244,7 +246,7 @@ function Principles() {
     <section className="border-y border-border bg-card/40">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 md:grid-cols-[0.8fr_1.2fr] md:px-8 md:py-24">
         <h2 className="max-w-[16ch] text-3xl font-semibold leading-tight tracking-[-0.025em] md:text-4xl">
-          Built to be honest with you.
+          {t("Built to be honest with you.")}
         </h2>
         <dl className="grid gap-x-10 gap-y-9 sm:grid-cols-2">
           {PRINCIPLES.map(({ icon: Icon, title, body }) => (
@@ -266,23 +268,27 @@ function Everywhere() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-20 md:px-8 md:py-24">
       <h2 className="max-w-[20ch] text-3xl font-semibold leading-tight tracking-[-0.025em] md:text-4xl">
-        On your laptop and in your pocket.
+        {t("On your laptop and in your pocket.")}
       </h2>
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         <div className="stat-card p-4 sm:p-6 md:col-span-2">
           <Smartphone className="size-6 text-primary" strokeWidth={1.75} aria-hidden="true" />
-          <h3 className="mt-4 text-lg font-semibold">The web and the Android app stay in sync</h3>
+          <h3 className="mt-4 text-lg font-semibold">
+            {t("The web and the Android app stay in sync")}
+          </h3>
           <p className="mt-2 max-w-[52ch] text-sm leading-relaxed text-muted-foreground">
-            Log a meal on your phone and it is on your laptop the next time you open it. On Android
-            you also get reminders for prayers and tasks, a timer in your notifications, and Samsung
-            Health.
+            {t(
+              "Log a meal on your phone and it is on your laptop the next time you open it. On Android you also get reminders for prayers and tasks, a timer in your notifications, and Samsung Health.",
+            )}
           </p>
         </div>
         <div className="stat-card p-4 sm:p-6">
           <BellRing className="size-6 text-primary" strokeWidth={1.75} aria-hidden="true" />
-          <h3 className="mt-4 text-lg font-semibold">One button to log anything</h3>
+          <h3 className="mt-4 text-lg font-semibold">{t("One button to log anything")}</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Spending, a meal, a timer, a task, a note or a prayer, from any page in a tap or two.
+            {t(
+              "Spending, a meal, a timer, a task, a note or a prayer, from any page in a tap or two.",
+            )}
           </p>
         </div>
       </div>
@@ -296,16 +302,17 @@ function Closing() {
       <div className="stat-card flex flex-col items-start gap-6 p-8 md:flex-row md:items-center md:justify-between md:p-10">
         <div>
           <h2 className="text-2xl font-semibold tracking-[-0.02em] md:text-3xl">
-            Start with a blank page.
+            {t("Start with a blank page.")}
           </h2>
           <p className="mt-2 max-w-[48ch] text-muted-foreground">
-            Nothing is filled in for you. Setup lets you switch off what you don't need, and you can
-            change it any time.
+            {t(
+              "Nothing is filled in for you. Setup lets you switch off what you don't need, and you can change it any time.",
+            )}
           </p>
         </div>
         <Button asChild size="lg" className="px-6">
           <Link to="/auth" search={{ mode: "signup" } as never}>
-            Get started
+            {t("Get started")}
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </Button>

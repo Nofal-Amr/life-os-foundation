@@ -9,7 +9,7 @@
  * heart rate, weight readings and workouts. Steps use the same daily id as
  * the Health Connect sync, so a later sync replaces a day, not doubles it.
  */
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { HealthKind } from "./healthSamples";
 

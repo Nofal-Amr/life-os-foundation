@@ -11,6 +11,7 @@ import {
   syncNow,
   useSyncStatus,
 } from "@/lib/offline";
+import { t } from "@/lib/i18n";
 
 /**
  * Quiet status chip: shown only while offline, while changes wait to sync, or
@@ -73,10 +74,11 @@ function RejectedChanges({ className }: { className: string }) {
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 space-y-3">
         <div>
-          <p className="text-sm font-semibold">Not saved yet</p>
+          <p className="text-sm font-semibold">{t("Not saved yet")}</p>
           <p className="text-sm text-muted-foreground">
-            The server refused these. They're kept on this device until you try again or discard
-            them.
+            {t(
+              "The server refused these. They're kept on this device until you try again or discard them.",
+            )}
           </p>
         </div>
         <ul className="space-y-2">

@@ -47,6 +47,7 @@ import {
 } from "@/data/habits";
 import { todayISO } from "@/lib/date";
 import { usePreferences } from "@/hooks/usePreferences";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/habits")({
   head: () => ({
@@ -162,7 +163,7 @@ function HabitsPage() {
       <PageHeader
         title="Habits"
         description="Small repeated actions, logged daily or weekly."
-        actions={<Button onClick={openCreate}>New habit</Button>}
+        actions={<Button onClick={openCreate}>{t("New habit")}</Button>}
       />
 
       {habits.isLoading || logs.isLoading ? (
@@ -179,7 +180,7 @@ function HabitsPage() {
         <EmptyState
           title="No habits yet"
           description="A habit is a small thing you want to keep doing. Life OS records the days you did it, nothing more."
-          action={<Button onClick={openCreate}>New habit</Button>}
+          action={<Button onClick={openCreate}>{t("New habit")}</Button>}
         />
       ) : (
         <div className="space-y-8">
@@ -233,7 +234,7 @@ function HabitsPage() {
                             {!habit.category ? (
                               <span>{categoryLabel(habitCategory(habit))} (guessed)</span>
                             ) : null}
-                            {!habit.active ? <span>Archived</span> : null}
+                            {!habit.active ? <span>{t("Archived")}</span> : null}
                           </>
                         }
                         actions={[
@@ -271,7 +272,7 @@ function HabitsPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="habit-name">Name</Label>
+          <Label htmlFor="habit-name">{t("Name")}</Label>
           <Input
             id="habit-name"
             required
@@ -293,7 +294,7 @@ function HabitsPage() {
           setCount={habitExtrasSet(form)}
         >
           <div className="space-y-2">
-            <Label>Part of life</Label>
+            <Label>{t("Part of life")}</Label>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Part of life">
               {HABIT_CATEGORIES.map(({ value, label }) => {
                 const selected = (form.category ?? guessHabitCategory(form.name)) === value;
@@ -315,7 +316,7 @@ function HabitsPage() {
               })}
             </div>
             <p className="text-xs text-muted-foreground">
-              It shows up in that part of the app, like Health habits on the Health page.
+              {t("It shows up in that part of the app, like Health habits on the Health page.")}
             </p>
           </div>
           <EntityIdentityPicker
@@ -323,7 +324,7 @@ function HabitsPage() {
             onChange={(identity) => setForm({ ...form, ...identity })}
           />
           <div className="space-y-2">
-            <Label htmlFor="habit-description">Description</Label>
+            <Label htmlFor="habit-description">{t("Description")}</Label>
             <Textarea
               id="habit-description"
               value={form.description ?? ""}
@@ -332,7 +333,7 @@ function HabitsPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label>Frequency</Label>
+              <Label>{t("Frequency")}</Label>
               <Select
                 value={form.frequency}
                 onValueChange={(v) => setForm({ ...form, frequency: v as Habit["frequency"] })}
@@ -343,14 +344,14 @@ function HabitsPage() {
                 <SelectContent>
                   {HABIT_FREQUENCIES.map((f) => (
                     <SelectItem key={f.value} value={f.value}>
-                      {f.label}
+                      {t(f.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="habit-target">Target per period</Label>
+              <Label htmlFor="habit-target">{t("Target per period")}</Label>
               <Input
                 id="habit-target"
                 type="number"
@@ -366,7 +367,7 @@ function HabitsPage() {
               checked={form.active}
               onCheckedChange={(v) => setForm({ ...form, active: v })}
             />
-            <Label htmlFor="habit-active">Active</Label>
+            <Label htmlFor="habit-active">{t("Active")}</Label>
           </div>
         </MoreOptions>
       </FormDialog>

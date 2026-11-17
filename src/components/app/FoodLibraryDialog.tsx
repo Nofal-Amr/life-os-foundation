@@ -10,6 +10,7 @@ import { createFood, foodKeys, foodsQuery } from "@/data/food";
 import { libraryNotYetAdded, toFoodInput, type LibraryFood } from "@/data/foodLibrary";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * Everyday foods with typical figures, so the library doesn't start empty.
@@ -62,10 +63,11 @@ export function FoodLibraryDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] flex-col gap-0 sm:max-w-lg">
-        <DialogTitle>Add common foods</DialogTitle>
+        <DialogTitle>{t("Add common foods")}</DialogTitle>
         <DialogDescription className="mt-1">
-          Typical figures from public food tables, rounded. Portions and recipes vary, so edit
-          anything after adding it.
+          {t(
+            "Typical figures from public food tables, rounded. Portions and recipes vary, so edit anything after adding it.",
+          )}
         </DialogDescription>
 
         <Input

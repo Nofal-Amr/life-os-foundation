@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import {
 import { createStep, estimateLabel, taskKeys, type Task } from "@/data/tasks";
 import { splitPlan } from "@/data/week";
 import { differenceInCalendarDays } from "date-fns";
+import { t } from "@/lib/i18n";
 
 /**
  * Splits a task due later into dated parts (steps), one per day from `from`
@@ -80,7 +82,7 @@ export function SplitAcrossDaysDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Split across days</DialogTitle>
+          <DialogTitle>{t("Split across days")}</DialogTitle>
           <DialogDescription>
             {task.title}
             {estimate ? ` · ${estimate}` : ""} is due{" "}
@@ -91,12 +93,12 @@ export function SplitAcrossDaysDialog({
 
         {days < 2 ? (
           <p className="text-sm text-muted-foreground">
-            It's due today, so there are no earlier days to spread it over.
+            {t("It's due today, so there are no earlier days to spread it over.")}
           </p>
         ) : (
           <>
             <div className="flex items-center justify-between rounded-xl bg-secondary px-4 py-3">
-              <span className="text-sm font-medium">Parts</span>
+              <span className="text-sm font-medium">{t("Parts")}</span>
               <div className="flex items-center gap-3">
                 <Button
                   type="button"
@@ -130,7 +132,7 @@ export function SplitAcrossDaysDialog({
                   className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
                 >
                   <span>
-                    Part {index + 1}
+                    {t("Part")} {index + 1}
                     <span className="ml-2 text-muted-foreground">
                       {format(parseISO(part.date), "EEE d MMM")}
                     </span>

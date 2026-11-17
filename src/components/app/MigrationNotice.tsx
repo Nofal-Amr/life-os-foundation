@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getMissingColumns, onMissingColumns } from "@/lib/supabase-helpers";
+import { t } from "@/lib/i18n";
 
 /** What each new column powers, in plain words. */
 const FEATURES: Record<string, string> = {
@@ -79,9 +80,9 @@ export function MigrationNotice() {
     >
       <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="font-medium">Your database needs a one-time update</p>
+        <p className="font-medium">{t("Your database needs a one-time update")}</p>
         <p>
-          Until it's done, these can't be saved: {features.join(", ")}. Run{" "}
+          {t("Until it's done, these can't be saved:")} {features.join(", ")}. Run{" "}
           {files.map((file, index) => (
             <span key={file}>
               {index ? " and " : ""}

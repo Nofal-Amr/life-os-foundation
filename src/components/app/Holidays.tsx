@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { PartyPopper } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -25,6 +26,7 @@ import {
   type HolidaySettings,
 } from "@/data/holidays";
 import { todayISO } from "@/lib/date";
+import { t } from "@/lib/i18n";
 
 /** The holiday settings on this device, kept in step across the app. */
 export function useHolidaySettings() {
@@ -64,7 +66,7 @@ export function HolidaysCard() {
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div>
         <p className="flex items-center gap-2 text-base font-semibold">
-          <PartyPopper className="size-4" /> Holidays
+          <PartyPopper className="size-4" /> {t("Holidays")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           Shown on the Calendar and in Today's Coming up. Public holidays come from Nager.Date (only
@@ -73,7 +75,7 @@ export function HolidaysCard() {
         </p>
       </div>
       <div className="space-y-2">
-        <Label>Public holidays for</Label>
+        <Label>{t("Public holidays for")}</Label>
         <Select
           value={settings.country ?? "none"}
           onValueChange={(value) => update({ country: value === "none" ? null : value })}
@@ -82,17 +84,17 @@ export function HolidaysCard() {
             <SelectValue placeholder="Choose a country" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="none">{t("None")}</SelectItem>
             {(countries.data ?? [{ countryCode: "EG", name: "Egypt" }]).map((country) => (
               <SelectItem key={country.countryCode} value={country.countryCode}>
-                {country.name}
+                {t(country.name)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
       <div className="flex items-center justify-between gap-3">
-        <Label htmlFor="islamic-days">Islamic occasions (Ramadan, Eids, Arafah…)</Label>
+        <Label htmlFor="islamic-days">{t("Islamic occasions (Ramadan, Eids, Arafah…)")}</Label>
         <Switch
           id="islamic-days"
           checked={settings.islamic}

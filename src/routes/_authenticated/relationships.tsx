@@ -46,6 +46,7 @@ import {
 } from "@/data/relationshipsApi";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/relationships")({
   head: () => ({
@@ -195,10 +196,10 @@ function RelationshipsPage() {
         actions={
           <>
             <Button variant="outline" onClick={() => setRulesOpen(true)}>
-              <Settings2 className="size-4" /> Rules
+              <Settings2 className="size-4" /> {t("Rules")}
             </Button>
             <Button onClick={openAdd}>
-              <UserPlus className="size-4" /> Add person
+              <UserPlus className="size-4" /> {t("Add person")}
             </Button>
           </>
         }
@@ -208,7 +209,7 @@ function RelationshipsPage() {
         <EmptyState
           title="Start with one person"
           description="Add someone close: a parent, a sibling, a friend. Then add the people they connect to, and the map grows from you outward."
-          action={<Button onClick={openAdd}>Add person</Button>}
+          action={<Button onClick={openAdd}>{t("Add person")}</Button>}
         />
       ) : (
         <div className="space-y-4">
@@ -376,7 +377,9 @@ function SelectedPanel({
   if (!person) {
     return (
       <aside className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-        Select someone to see their side of the family, when you last spoke, and to log a call.
+        {t(
+          "Select someone to see their side of the family, when you last spoke, and to log a call.",
+        )}
       </aside>
     );
   }
@@ -390,21 +393,23 @@ function SelectedPanel({
         )}
       </div>
       {person.is_me ? (
-        <p className="text-sm text-muted-foreground">Everyone on the map connects back to you.</p>
+        <p className="text-sm text-muted-foreground">
+          {t("Everyone on the map connects back to you.")}
+        </p>
       ) : (
         <>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Contact</dt>
+              <dt className="text-muted-foreground">{t("Contact")}</dt>
               <dd className="text-right">{lastLine(person, interactions, today)}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Check in</dt>
+              <dt className="text-muted-foreground">{t("Check in")}</dt>
               <dd className="text-right">{cadenceLabel(person.checkin_every_days)}</dd>
             </div>
             {birthdayIn !== null ? (
               <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Birthday</dt>
+                <dt className="text-muted-foreground">{t("Birthday")}</dt>
                 <dd className="text-right">
                   {birthdayIn === 0
                     ? "Today"
@@ -427,7 +432,7 @@ function SelectedPanel({
                 disabled={pending}
                 onClick={() => onLog(person, kind.value)}
               >
-                {kind.label}
+                {t(kind.label)}
               </Button>
             ))}
           </div>
@@ -467,7 +472,7 @@ function PeopleList({
       {groups.map((group) => (
         <section key={group.circle} aria-labelledby={`circle-${group.circle}`}>
           <h2 id={`circle-${group.circle}`} className="section-title mb-2">
-            {group.label}
+            {t(group.label)}
           </h2>
           <ul className="space-y-1">
             {group.people.map((person) => {

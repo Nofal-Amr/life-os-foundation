@@ -4,7 +4,8 @@
  * share of the work. Nothing is guessed: a step's time is what you typed, and
  * the weekly load is worked out from those times only.
  */
-import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { splitTaskLines } from "./tasks";
 

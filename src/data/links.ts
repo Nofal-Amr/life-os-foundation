@@ -1,4 +1,5 @@
-import { format, parseISO, subDays } from "date-fns";
+import { parseISO, subDays } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { Goal } from "./goals";
 import type { Habit, HabitLog } from "./habits";

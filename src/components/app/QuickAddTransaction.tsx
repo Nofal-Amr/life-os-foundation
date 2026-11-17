@@ -38,6 +38,7 @@ import {
 import { todayISO } from "@/lib/date";
 import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /**
  * Fast money capture: amount plus a one-tap category, with the last-used
@@ -157,8 +158,10 @@ export function QuickAddTransactionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Log money</DialogTitle>
-          <DialogDescription>Amount and category. Everything else is optional.</DialogDescription>
+          <DialogTitle>{t("Log money")}</DialogTitle>
+          <DialogDescription>
+            {t("Amount and category. Everything else is optional.")}
+          </DialogDescription>
         </DialogHeader>
         <form
           className="space-y-4"
@@ -186,7 +189,7 @@ export function QuickAddTransactionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quick-amount">Amount</Label>
+            <Label htmlFor="quick-amount">{t("Amount")}</Label>
             <Input
               id="quick-amount"
               autoFocus
@@ -210,7 +213,7 @@ export function QuickAddTransactionDialog({
 
           {chips.length > 0 ? (
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>{t("Category")}</Label>
               <div className="flex flex-wrap gap-2">
                 {chips.map((category) => (
                   <Button
@@ -248,7 +251,7 @@ export function QuickAddTransactionDialog({
               className="px-0"
               onClick={() => setShowNewCategory((current) => !current)}
             >
-              <Plus className="size-4" /> New category
+              <Plus className="size-4" /> {t("New category")}
             </Button>
             {showNewCategory ? (
               <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
@@ -277,7 +280,7 @@ export function QuickAddTransactionDialog({
 
           {(pockets.data ?? []).some((pocket) => pocket.account_id === accountId) ? (
             <div className="space-y-2">
-              <Label>Pocket</Label>
+              <Label>{t("Pocket")}</Label>
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
@@ -307,7 +310,7 @@ export function QuickAddTransactionDialog({
                       )}
                       onClick={() => setPocketId(pocket.id)}
                     >
-                      {pocket.name}
+                      {t(pocket.name)}
                     </Button>
                   ))}
               </div>
@@ -316,7 +319,7 @@ export function QuickAddTransactionDialog({
 
           {activeAccounts.length > 1 ? (
             <div className="space-y-2">
-              <Label>Account</Label>
+              <Label>{t("Account")}</Label>
               <Select value={accountId} onValueChange={setAccountId}>
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Choose an account" />
@@ -334,7 +337,7 @@ export function QuickAddTransactionDialog({
 
           <div className="grid grid-cols-[minmax(0,1fr)_8rem] gap-3">
             <div className="space-y-2">
-              <Label htmlFor="quick-date">Date</Label>
+              <Label htmlFor="quick-date">{t("Date")}</Label>
               <Input
                 id="quick-date"
                 type="date"
@@ -345,7 +348,7 @@ export function QuickAddTransactionDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="quick-time">Time</Label>
+              <Label htmlFor="quick-time">{t("Time")}</Label>
               <Input
                 id="quick-time"
                 type="time"
@@ -357,7 +360,7 @@ export function QuickAddTransactionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="quick-note">Note</Label>
+            <Label htmlFor="quick-note">{t("Note")}</Label>
             <Input
               id="quick-note"
               className="h-12"
@@ -369,7 +372,7 @@ export function QuickAddTransactionDialog({
 
           {activeAccounts.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Add an account under Money, Accounts first, then you can log straight away.
+              {t("Add an account under Money, Accounts first, then you can log straight away.")}
             </p>
           ) : null}
 

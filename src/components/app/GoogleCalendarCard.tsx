@@ -35,6 +35,7 @@ import {
 } from "@/lib/googleCalendar.functions";
 import { isDemo } from "@/lib/demo";
 import { createPkcePair, PKCE_STORAGE_KEY } from "@/lib/google/pkce";
+import { t } from "@/lib/i18n";
 
 const statusKey = ["google-calendar", "status"] as const;
 const AUTO_SYNC_AFTER_MS = 10 * 60_000;
@@ -94,19 +95,20 @@ export function GoogleCalendarCard() {
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5" aria-labelledby="gcal-title">
       <div>
         <p id="gcal-title" className="flex items-center gap-2 text-base font-semibold">
-          <CalendarSync className="size-4" /> Google Calendar
+          <CalendarSync className="size-4" /> {t("Google Calendar")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Two-way sync of events with the Google calendars you choose. Life OS can read and change
-          events and see your calendar names, nothing else. Details in the{" "}
+          {t(
+            "Two-way sync of events with the Google calendars you choose. Life OS can read and change events and see your calendar names, nothing else. Details in the",
+          )}{" "}
           <Link to="/privacy" className="underline">
-            privacy policy
+            {t("privacy policy")}
           </Link>
           .
         </p>
       </div>
       {!s || s.state === "not_configured" ? (
-        <p className="text-sm text-muted-foreground">Not set up yet.</p>
+        <p className="text-sm text-muted-foreground">{t("Not set up yet.")}</p>
       ) : s.state === "disconnected" ? (
         <Button onClick={() => void connect()}>Connect Google Calendar</Button>
       ) : (
@@ -123,7 +125,8 @@ function Connected({ status }: { status: Extract<GoogleCalendarStatus, { state: 
   return (
     <div className="space-y-3">
       <p className="text-sm">
-        Connected{status.email ? ` as ${status.email}` : ""}.{" "}
+        {t("Connected")}
+        {status.email ? ` as ${status.email}` : ""}.{" "}
         {status.syncEnabled ? lastSynced(status.lastSyncAt) : null}
       </p>
       {status.lastError ? (
@@ -134,7 +137,8 @@ function Connected({ status }: { status: Extract<GoogleCalendarStatus, { state: 
       ) : (
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => sync.mutate()} disabled={sync.isPending}>
-            <RefreshCw className={sync.isPending ? "size-4 animate-spin" : "size-4"} /> Sync now
+            <RefreshCw className={sync.isPending ? "size-4 animate-spin" : "size-4"} />{" "}
+            {t("Sync now")}
           </Button>
           <Button variant="outline" onClick={() => setChoosing(true)}>
             Change calendars
@@ -183,18 +187,18 @@ function CalendarPicker({
   });
 
   if (calendars.isLoading)
-    return <p className="text-sm text-muted-foreground">Loading your calendars…</p>;
+    return <p className="text-sm text-muted-foreground">{t("Loading your calendars…")}</p>;
   if (calendars.isError)
     return (
       <p className="text-sm text-muted-foreground">
-        Couldn't load your calendars. Try again later.
+        {t("Couldn't load your calendars. Try again later.")}
       </p>
     );
 
   return (
     <div className="space-y-3">
       <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Show in Life OS</legend>
+        <legend className="text-sm font-medium">{t("Show in Life OS")}</legend>
         {(calendars.data ?? []).map((c) => (
           <div key={c.id} className="flex items-center gap-2">
             <Checkbox
@@ -205,26 +209,26 @@ function CalendarPicker({
               }
             />
             <Label htmlFor={`gcal-read-${c.id}`} className="font-normal">
-              {c.name}
+              {t(c.name)}
               {c.canWrite ? "" : " (read only)"}
             </Label>
           </div>
         ))}
       </fieldset>
       <div className="space-y-1">
-        <Label htmlFor="gcal-write">New Life OS events go to</Label>
+        <Label htmlFor="gcal-write">{t("New Life OS events go to")}</Label>
         <select
           id="gcal-write"
           className="h-11 w-full max-w-xs rounded-md border bg-background px-3 text-sm"
           value={write ?? ""}
           onChange={(e) => setWrite(e.target.value || null)}
         >
-          <option value="">Nowhere (keep them in Life OS only)</option>
+          <option value="">{t("Nowhere (keep them in Life OS only)")}</option>
           {(calendars.data ?? [])
             .filter((c) => c.canWrite && read.includes(c.id))
             .map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {t(c.name)}
               </option>
             ))}
         </select>
@@ -235,7 +239,7 @@ function CalendarPicker({
         </Button>
         {status.syncEnabled ? (
           <Button variant="ghost" onClick={onDone}>
-            Cancel
+            {t("Cancel")}
           </Button>
         ) : null}
       </div>
@@ -265,10 +269,11 @@ function DisconnectDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Disconnect Google Calendar?</AlertDialogTitle>
+          <AlertDialogTitle>{t("Disconnect Google Calendar?")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Life OS stops syncing and gives up its access at Google. Your Google calendar isn't
-            changed.
+            {t(
+              "Life OS stops syncing and gives up its access at Google. Your Google calendar isn't changed.",
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex items-center gap-2">
@@ -278,11 +283,11 @@ function DisconnectDialog({
             onCheckedChange={(v) => setRemoveImported(v === true)}
           />
           <Label htmlFor="gcal-remove" className="font-normal">
-            Also remove the events copied from Google (events you made in Life OS stay)
+            {t("Also remove the events copied from Google (events you made in Life OS stay)")}
           </Label>
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={() => leave.mutate()}>Disconnect</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -313,14 +318,14 @@ export function GoogleCalendarBar() {
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
       <CalendarSync className="size-3.5" aria-hidden />
       {s.state === "not_configured" ? (
-        <span>Google Calendar: not set up yet</span>
+        <span>{t("Google Calendar: not set up yet")}</span>
       ) : s.state === "disconnected" ? (
         <Link to="/settings" search={{ section: "calendar" }} className="underline">
-          Connect Google Calendar
+          {t("Connect Google Calendar")}
         </Link>
       ) : !s.syncEnabled ? (
         <Link to="/settings" search={{ section: "calendar" }} className="underline">
-          Choose Google calendars to sync
+          {t("Choose Google calendars to sync")}
         </Link>
       ) : (
         <>

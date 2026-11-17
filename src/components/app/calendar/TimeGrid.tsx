@@ -1,4 +1,5 @@
-import { format, isSameDay, isToday } from "date-fns";
+import { isSameDay, isToday } from "date-fns";
+import { format } from "@/lib/dates";
 import { useEffect, useRef, useState } from "react";
 
 import { layoutTimed } from "@/data/calendarLayout";
@@ -163,7 +164,7 @@ export function TimeGrid({
                       {/* The name once, in the first column; lines alone across the week. */}
                       {dayIndex === 0 ? (
                         <span className="absolute start-0.5 -top-3.5 text-[9px] text-primary/70">
-                          {mark.label}
+                          {t(mark.label)}
                         </span>
                       ) : null}
                     </div>

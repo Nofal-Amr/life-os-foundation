@@ -8,7 +8,8 @@
  * You can hide any day you don't want to see.
  */
 import { queryOptions } from "@tanstack/react-query";
-import { addDays, format } from "date-fns";
+import { addDays } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type Holiday = {
   date: string;

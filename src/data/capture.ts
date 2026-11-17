@@ -3,7 +3,8 @@
  * "call mom tomorrow" is a task due tomorrow. Plain rules, no guessing
  * beyond what's typed — the preview always shows what it will save.
  */
-import { addDays, format, nextDay, type Day } from "date-fns";
+import { addDays, nextDay, type Day } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type Capture =
   | { kind: "spending"; amount: number; note: string }

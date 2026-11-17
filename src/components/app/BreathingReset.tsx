@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { t } from "@/lib/i18n";
 
 /** 4-4-6-2: a longer out-breath settles the body. Four rounds is about a minute. */
 const PHASES = [
@@ -64,9 +65,9 @@ export function BreathingReset({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex flex-col items-center gap-6 py-10 sm:max-w-sm">
-        <DialogTitle className="sr-only">One-minute reset</DialogTitle>
+        <DialogTitle className="sr-only">{t("One-minute reset")}</DialogTitle>
         <DialogDescription className="sr-only">
-          Breathe in for 4, hold for 4, out for 6, rest for 2. Four rounds.
+          {t("Breathe in for 4, hold for 4, out for 6, rest for 2. Four rounds.")}
         </DialogDescription>
         <div className="relative grid size-56 place-items-center" aria-hidden="true">
           <div

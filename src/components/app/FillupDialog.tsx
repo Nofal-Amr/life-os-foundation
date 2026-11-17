@@ -35,6 +35,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const num = (text: string) => (text.trim() === "" ? null : Number(text));
 
@@ -130,7 +131,9 @@ export function FillupDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Fill-up · {vehicle.name}</DialogTitle>
+          <DialogTitle>
+            {t("Fill-up ·")} {vehicle.name}
+          </DialogTitle>
           <DialogDescription>
             Any two of litres, price and total; the third is worked out.
           </DialogDescription>
@@ -143,7 +146,7 @@ export function FillupDialog({
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="fill-odometer">Odometer now (km)</Label>
+            <Label htmlFor="fill-odometer">{t("Odometer now (km)")}</Label>
             <Input
               id="fill-odometer"
               inputMode="numeric"
@@ -157,13 +160,14 @@ export function FillupDialog({
             />
             {tooLow ? (
               <p className="text-xs text-muted-foreground">
-                That's below the last reading ({currentKm} km).
+                {t("That's below the last reading (")}
+                {currentKm} km).
               </p>
             ) : null}
           </div>
 
           <div className="space-y-2">
-            <Label>Fuel</Label>
+            <Label>{t("Fuel")}</Label>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Fuel grade">
               {FUEL_GRADES.map((option) => (
                 <button
@@ -183,7 +187,7 @@ export function FillupDialog({
                       : "border-border text-muted-foreground hover:bg-accent",
                   )}
                 >
-                  {option.label}
+                  {t(option.label)}
                 </button>
               ))}
             </div>
@@ -191,7 +195,7 @@ export function FillupDialog({
 
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-2">
-              <Label htmlFor="fill-price">Price / L</Label>
+              <Label htmlFor="fill-price">{t("Price / L")}</Label>
               <Input
                 id="fill-price"
                 inputMode="decimal"
@@ -202,7 +206,7 @@ export function FillupDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fill-litres">Litres</Label>
+              <Label htmlFor="fill-litres">{t("Litres")}</Label>
               <Input
                 id="fill-litres"
                 inputMode="decimal"
@@ -213,7 +217,7 @@ export function FillupDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fill-total">Paid</Label>
+              <Label htmlFor="fill-total">{t("Paid")}</Label>
               <Input
                 id="fill-total"
                 inputMode="decimal"
@@ -232,27 +236,27 @@ export function FillupDialog({
 
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="fill-full" className="block">
-              Filled to full
+              {t("Filled to full")}
               <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-                Full tanks are what km per litre is measured between.
+                {t("Full tanks are what km per litre is measured between.")}
               </span>
             </Label>
             <Switch id="fill-full" checked={full} onCheckedChange={setFull} />
           </div>
 
           <div className="space-y-2">
-            <Label>Also log as spending</Label>
+            <Label>{t("Also log as spending")}</Label>
             <Select value={accountId} onValueChange={setAccountId}>
               <SelectTrigger className="h-12">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Don't log spending</SelectItem>
+                <SelectItem value="none">{t("Don't log spending")}</SelectItem>
                 {(accounts.data ?? [])
                   .filter((account) => account.active)
                   .map((account) => (
                     <SelectItem key={account.id} value={account.id}>
-                      From {account.name}
+                      {t("From")} {account.name}
                     </SelectItem>
                   ))}
               </SelectContent>

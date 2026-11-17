@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 export type LogTile = {
   key: string;
@@ -22,7 +23,7 @@ export function TodayLog({ tiles }: { tiles: LogTile[] }) {
   return (
     <section aria-labelledby="today-log">
       <h2 id="today-log" className="mb-3 text-sm font-semibold text-foreground">
-        Log
+        {t("Log")}
       </h2>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-2">
         {tiles.map((tile) => {
@@ -33,7 +34,7 @@ export function TodayLog({ tiles }: { tiles: LogTile[] }) {
               </span>
               <span className="min-w-0">
                 <span className="block truncate text-sm font-medium text-foreground">
-                  {tile.label}
+                  {t(tile.label)}
                 </span>
                 <span className="block truncate text-xs tabular-nums text-muted-foreground">
                   {tile.detail}

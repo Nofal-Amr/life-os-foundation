@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { lifeConnect, type MediaAction, type MediaState } from "@/lib/native";
+import { t } from "@/lib/i18n";
 
 /**
  * Life Connect's music remote, on the main phone: what's playing on the SIM
@@ -75,7 +76,9 @@ export function MusicRemote() {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{heading}</p>
           <p className="truncate text-xs text-muted-foreground">{detail}</p>
-          {stale ? <p className="text-xs text-muted-foreground">Last heard a while ago.</p> : null}
+          {stale ? (
+            <p className="text-xs text-muted-foreground">{t("Last heard a while ago.")}</p>
+          ) : null}
         </div>
         <Button
           type="button"
@@ -165,8 +168,9 @@ export function MusicRemote() {
       </div>
       {state && !state.known ? (
         <p className="text-xs text-muted-foreground">
-          Song names show when the SIM phone runs Life OS Full with notification access. Playback
-          and volume work either way.
+          {t(
+            "Song names show when the SIM phone runs Life OS Full with notification access. Playback and volume work either way.",
+          )}
         </p>
       ) : null}
     </div>

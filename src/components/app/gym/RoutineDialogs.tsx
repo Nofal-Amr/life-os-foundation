@@ -196,7 +196,7 @@ export function RoutineDialog({
                           type="button"
                           size="icon"
                           variant="ghost"
-                          aria-label={`${t("How to do it")}: ${known.name}`}
+                          aria-label={`${t("How to do it")}: ${t(known.name)}`}
                           onClick={() => setHowTo(known)}
                         >
                           <BookOpen className="size-4" />

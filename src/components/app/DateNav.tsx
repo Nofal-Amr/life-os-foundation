@@ -1,4 +1,5 @@
-import { addDays, format, isToday, parseISO } from "date-fns";
+import { addDays, isToday, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";

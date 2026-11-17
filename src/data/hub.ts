@@ -9,7 +9,8 @@
  * Dimensions follow Maslow loosely: body (physiological), money (safety),
  * work (esteem), spirit and habits (self-actualisation).
  */
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { Transaction } from "./finance";
 import type { HabitLog, Habit } from "./habits";

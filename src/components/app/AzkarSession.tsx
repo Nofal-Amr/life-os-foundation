@@ -166,7 +166,7 @@ export function AzkarSession({
           {after && prayer ? `${t("After")} ${prayerLabel(prayer, date)} · ` : null}
           {done && !after ? (
             <span className="inline-flex items-center gap-1 text-foreground">
-              <Check className="size-4" /> Logged today
+              <Check className="size-4" /> {t("Logged today")}
             </span>
           ) : (
             `${finished} ${t("of")} ${items.length} ${t("read")}`
@@ -181,7 +181,7 @@ export function AzkarSession({
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">Tap a card each time you say it.</p>
+      <p className="text-xs text-muted-foreground">{t("Tap a card each time you say it.")}</p>
 
       <ol className="space-y-3">
         {items.map(({ zikr, text }, index) => {
@@ -195,7 +195,7 @@ export function AzkarSession({
                   cardRefs.current[zikr.id] = element;
                 }}
                 onClick={() => tap(zikr.id, zikr.count, index)}
-                aria-label={`${zikr.title}: ${complete ? "done" : `${count} left`}`}
+                aria-label={`${t(zikr.title)}: ${complete ? "done" : `${count} left`}`}
                 className={cn(
                   "w-full rounded-xl border border-border bg-card p-4 text-start transition-[opacity,transform] active:scale-[0.99]",
                   complete && "opacity-50",
@@ -247,11 +247,11 @@ export function AzkarSession({
             onClick={() => log.mutate()}
             disabled={log.isPending}
           >
-            <Check className="size-4" /> Log as read
+            <Check className="size-4" /> {t("Log as read")}
           </Button>
         ) : null}
         <Button type="button" variant="ghost" onClick={() => setLeft({})}>
-          <RotateCcw className="size-4" /> Start again
+          <RotateCcw className="size-4" /> {t("Start again")}
         </Button>
       </div>
     </section>

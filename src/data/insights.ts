@@ -6,7 +6,8 @@
  * - habit patterns by weekday ("Mondays: 5 of the last 7").
  * Anything with too few days says so instead of guessing.
  */
-import { addMonths, format, parseISO, startOfMonth } from "date-fns";
+import { addMonths, parseISO, startOfMonth } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { Transaction } from "./finance";
 import type { Habit, HabitLog } from "./habits";

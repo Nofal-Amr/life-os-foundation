@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { Bell, Check, ShieldCheck, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import {
   type SpendingStatus,
 } from "@/lib/native";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** Per phone: which account spending from notifications goes to. */
 const ACCOUNT_KEY = "spending:account";
@@ -153,7 +154,7 @@ export function SpendingReview() {
   return (
     <section className="stat-card space-y-3 p-4 sm:p-5">
       <p className="flex items-center gap-2 text-sm font-semibold">
-        <Bell className="size-4" /> From your bank notifications
+        <Bell className="size-4" /> {t("From your bank notifications")}
       </p>
       <ul className="space-y-2">
         {items.map((spend) => (
@@ -171,10 +172,10 @@ export function SpendingReview() {
             </span>
             <span className="flex gap-1">
               <Button size="sm" onClick={() => void answer(spend, true)}>
-                <Check className="size-4" /> Log it
+                <Check className="size-4" /> {t("Log it")}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => void answer(spend, false)}>
-                <X className="size-4" /> Not spending
+                <X className="size-4" /> {t("Not spending")}
               </Button>
             </span>
           </li>
@@ -210,11 +211,12 @@ export function SpendingSettingsCard() {
     return (
       <section className="stat-card space-y-2 p-4 sm:p-5">
         <p className="flex items-center gap-2 text-base font-semibold">
-          <Bell className="size-4" /> Spending from bank notifications
+          <Bell className="size-4" /> {t("Spending from bank notifications")}
         </p>
         <p className="text-sm text-muted-foreground">
-          This needs Life OS Full. Google blocks notification access for apps installed from
-          WhatsApp or a browser, so the Full version is installed from a computer.
+          {t(
+            "This needs Life OS Full. Google blocks notification access for apps installed from WhatsApp or a browser, so the Full version is installed from a computer.",
+          )}
         </p>
       </section>
     );
@@ -240,11 +242,12 @@ export function SpendingSettingsCard() {
     <section className="stat-card space-y-3 p-4 sm:space-y-4 sm:p-5">
       <div>
         <p className="flex items-center gap-2 text-base font-semibold">
-          <Bell className="size-4" /> Spending from bank notifications
+          <Bell className="size-4" /> {t("Spending from bank notifications")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          When a bank or wallet app (or a bank SMS) says you paid, you get "Spent 250 EGP at
-          Carrefour? Log it". Nothing is logged without your yes.
+          {t(
+            'When a bank or wallet app (or a bank SMS) says you paid, you get "Spent 250 EGP at Carrefour? Log it". Nothing is logged without your yes.',
+          )}
           {forwards
             ? " This phone is your Life Connect SIM phone, so the question goes to your main phone."
             : ""}
@@ -262,7 +265,7 @@ export function SpendingSettingsCard() {
           >
             {status?.access ? <Check className="size-3.5" /> : null}
           </span>
-          Notification access
+          {t("Notification access")}
         </span>
         {!status?.access ? (
           <Button size="sm" variant="outline" onClick={() => spendingInbox.openAccess()}>
@@ -273,7 +276,7 @@ export function SpendingSettingsCard() {
 
       {status?.access ? (
         <div className="space-y-2">
-          <Label>Apps to watch</Label>
+          <Label>{t("Apps to watch")}</Label>
           {seen.length ? (
             <ul className="max-h-64 space-y-1 overflow-y-auto">
               {seen.map(([pkg, name]) => (
@@ -297,15 +300,16 @@ export function SpendingSettingsCard() {
             </ul>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Apps show up here once they've sent a notification. Come back after your bank app or
-              an SMS has.
+              {t(
+                "Apps show up here once they've sent a notification. Come back after your bank app or an SMS has.",
+              )}
             </p>
           )}
         </div>
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="spending-senders">SMS senders that are banks</Label>
+        <Label htmlFor="spending-senders">{t("SMS senders that are banks")}</Label>
         <Input
           id="spending-senders"
           className="h-11"
@@ -314,12 +318,12 @@ export function SpendingSettingsCard() {
           onBlur={() => save(watched)}
         />
         <p className="text-xs text-muted-foreground">
-          For your Messages app: only SMS from these names are read. Tick Messages above too.
+          {t("For your Messages app: only SMS from these names are read. Tick Messages above too.")}
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label>Log to</Label>
+        <Label>{t("Log to")}</Label>
         <Select
           value={account}
           onValueChange={(value) => {
@@ -336,7 +340,7 @@ export function SpendingSettingsCard() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="auto">My first account</SelectItem>
+            <SelectItem value="auto">{t("My first account")}</SelectItem>
             {(accounts.data ?? [])
               .filter((item) => item.active)
               .map((item) => (
@@ -350,9 +354,9 @@ export function SpendingSettingsCard() {
 
       <p className="flex gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-        Read on this phone only. Messages with a one-time code, password or verification are dropped
-        unread, money coming in is ignored, and only the amount, shop and app name are kept — never
-        the message.
+        {t(
+          "Read on this phone only. Messages with a one-time code, password or verification are dropped unread, money coming in is ignored, and only the amount, shop and app name are kept — never the message.",
+        )}
       </p>
     </section>
   );

@@ -8,7 +8,8 @@
  * invents a date. A date it can't read exactly is left out with a warning,
  * and "Week 2" or "@d3" only turn into dates from a start date you choose.
  */
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type PlanPriority = "low" | "medium" | "high" | "critical";
 

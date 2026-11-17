@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { addDays, format } from "date-fns";
+import { addDays } from "date-fns";
+import { format } from "@/lib/dates";
 import { toast } from "sonner";
 import { AreaHabits } from "@/components/app/AreaHabits";
 import { AzkarSession } from "@/components/app/AzkarSession";
@@ -253,15 +254,15 @@ function SpiritPage() {
           {!hasLocation ? (
             <Card className="system-card">
               <CardHeader>
-                <CardTitle className="text-base">No location set yet</CardTitle>
+                <CardTitle className="text-base">{t("No location set yet")}</CardTitle>
                 <CardDescription>
-                  Prayer times are calculated from your location. Set it once in Settings.
+                  {t("Prayer times are calculated from your location. Set it once in Settings.")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild>
                   <Link to="/settings" search={{ section: "prayer" }}>
-                    Open Settings
+                    {t("Open Settings")}
                   </Link>
                 </Button>
               </CardContent>
@@ -285,7 +286,7 @@ function SpiritPage() {
                       onCheckedChange={toggleSunrise}
                       aria-label="Show sunrise"
                     />
-                    Sunrise
+                    {t("Sunrise")}
                   </label>
                 </span>
               </div>

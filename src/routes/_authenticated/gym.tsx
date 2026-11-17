@@ -567,7 +567,7 @@ function LogWorkoutDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Log a workout</DialogTitle>
+          <DialogTitle>{t("Log a workout")}</DialogTitle>
           <DialogDescription>
             {t(
               start.routineId
@@ -601,8 +601,8 @@ function LogWorkoutDialog({
                 value={unit}
                 onChange={(event) => setUnit(event.target.value === "lb" ? "lb" : "kg")}
               >
-                <option value="kg">kg</option>
-                <option value="lb">lb</option>
+                <option value="kg">{t("kg")}</option>
+                <option value="lb">{t("lb")}</option>
               </select>
             </div>
           </div>
@@ -632,7 +632,7 @@ function LogWorkoutDialog({
                       type="button"
                       size="icon"
                       variant="ghost"
-                      aria-label={`${t("How to do it")}: ${known.name}`}
+                      aria-label={`${t("How to do it")}: ${t(known.name)}`}
                       onClick={() => setHowTo(known)}
                     >
                       <BookOpen className="size-4" />

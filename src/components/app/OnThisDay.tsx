@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { differenceInCalendarDays, format, parseISO } from "date-fns";
+import { differenceInCalendarDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { notesQuery } from "@/data/notes";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/data/reviews";
 import { todayISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** A review with something written in it, not only a mood tap. */
 export function isWrittenReview(review: DailyReview): boolean {
@@ -44,7 +46,7 @@ export function OnThisDay({ className }: { className?: string }) {
 
   return (
     <section className={cn("stat-card p-4 sm:p-5", className)} aria-label="On this day">
-      <h2 className="section-title">On this day</h2>
+      <h2 className="section-title">{t("On this day")}</h2>
       <ul className="mt-3 space-y-3">
         {past.map((review) => (
           <li key={review.id} className="text-sm">
@@ -59,7 +61,9 @@ export function OnThisDay({ className }: { className?: string }) {
         {diary.map((note) => (
           <li key={note.id} className="text-sm">
             <Link to="/notes" search={{ open: note.id }} className="block hover:underline">
-              <p className="text-xs text-muted-foreground">Diary · {note.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("Diary ·")} {note.title}
+              </p>
               <p className="mt-0.5 line-clamp-2">{note.body}</p>
             </Link>
           </li>
@@ -78,9 +82,9 @@ export function ReflectionNudge({ className }: { className?: string }) {
   if (days < 2) return null;
   return (
     <p className={cn("text-xs text-muted-foreground", className)}>
-      Last daily review {days} days ago.{" "}
+      {t("Last daily review")} {days} days ago.{" "}
       <Link to="/review" className="font-medium text-foreground underline underline-offset-2">
-        Write today's
+        {t("Write today's")}
       </Link>
     </p>
   );

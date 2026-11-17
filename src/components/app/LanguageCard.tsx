@@ -2,6 +2,7 @@ import { Languages } from "lucide-react";
 
 import { getLang, setLang, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 /** English or Arabic for this device; Arabic also turns the layout right-to-left. */
 export function LanguageCard() {
@@ -15,7 +16,7 @@ export function LanguageCard() {
   return (
     <section className="stat-card space-y-3 p-4 sm:p-5">
       <p className="flex items-center gap-2 text-base font-semibold">
-        <Languages className="size-4" /> Language · اللغة
+        <Languages className="size-4" /> {t("Language · اللغة")}
       </p>
       <div
         className="flex gap-1 rounded-lg bg-secondary p-1"
@@ -42,7 +43,7 @@ export function LanguageCard() {
                 : "text-muted-foreground",
             )}
           >
-            {option.label}
+            {t(option.label)}
           </button>
         ))}
       </div>

@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Wallet, Wifi, Zap } from "lucide-react";
@@ -72,6 +72,7 @@ import {
   type Tariff,
 } from "@/data/tariff";
 import { isoToLocalInput, localInputToISO, todayISO } from "@/lib/date";
+import { t } from "@/lib/i18n";
 
 const STARTER_RESOURCES: { name: string; kind: ResourceKind; unit: string }[] = [
   { name: "Electricity", kind: "meter", unit: "kWh" },
@@ -329,7 +330,7 @@ function ResourcesPage() {
           >
             <Button size="sm" variant="outline" onClick={() => openReading(resource)}>
               <Plus className="size-4" />
-              Add reading
+              {t("Add reading")}
             </Button>
           </RingStat>
         );
@@ -366,7 +367,7 @@ function ResourcesPage() {
                 onClick={() => openReading(resource)}
               >
                 <Plus className="size-4" />
-                Add reading
+                {t("Add reading")}
               </Button>
             </StatCard>
           );
@@ -379,7 +380,7 @@ function ResourcesPage() {
               icon={entityIconOf(resource.icon)}
             >
               <p className="text-sm text-muted-foreground">
-                Add a quota amount and a reading to see this.
+                {t("Add a quota amount and a reading to see this.")}
               </p>
             </StatCard>
           );
@@ -399,7 +400,7 @@ function ResourcesPage() {
           >
             <Button size="sm" variant="outline" onClick={() => openReading(resource)}>
               <Plus className="size-4" />
-              Add reading
+              {t("Add reading")}
             </Button>
           </RingStat>
         );
@@ -411,7 +412,7 @@ function ResourcesPage() {
             title={`${resource.name} cost per day`}
             icon={entityIconOf(resource.icon)}
           >
-            <p className="text-sm text-muted-foreground">Set a unit cost to see this.</p>
+            <p className="text-sm text-muted-foreground">{t("Set a unit cost to see this.")}</p>
           </StatCard>
         );
       }
@@ -447,7 +448,7 @@ function ResourcesPage() {
       <PageHeader
         title="Resources"
         description="Electricity, water and data: usage and cost worked out from your own readings."
-        actions={<Button onClick={openCreate}>New resource</Button>}
+        actions={<Button onClick={openCreate}>{t("New resource")}</Button>}
       />
 
       {loading ? (
@@ -466,7 +467,7 @@ function ResourcesPage() {
           description="Track a meter like electricity or a quota like internet data, and Life OS works out usage and cost from your own readings."
           action={
             <div className="space-y-3">
-              <Button onClick={openCreate}>Add a resource</Button>
+              <Button onClick={openCreate}>{t("Add a resource")}</Button>
               <div className="flex flex-wrap justify-center gap-2">
                 {STARTER_RESOURCES.map((starter) => (
                   <Button
@@ -478,12 +479,12 @@ function ResourcesPage() {
                     disabled={addStarter.isPending}
                     onClick={() => addStarter.mutate(starter)}
                   >
-                    Add {starter.name}
+                    Add {t(starter.name)}
                   </Button>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                These are empty starting points with no figures. Edit or delete them freely.
+                {t("These are empty starting points with no figures. Edit or delete them freely.")}
               </p>
             </div>
           }
@@ -514,7 +515,7 @@ function ResourcesPage() {
                           </SemanticBadge>
                           <span className="text-muted-foreground">{resource.unit}</span>
                           {!resource.active ? (
-                            <SemanticBadge tone="quiet">Inactive</SemanticBadge>
+                            <SemanticBadge tone="quiet">{t("Inactive")}</SemanticBadge>
                           ) : null}
                         </div>
                       </div>
@@ -523,7 +524,7 @@ function ResourcesPage() {
                       {resource.kind === "quota" ? (
                         <Button size="sm" onClick={() => setTopUpFor(resource)}>
                           <Plus className="size-4" />
-                          Top up
+                          {t("Top up")}
                         </Button>
                       ) : null}
                       {resource.kind !== "vehicle" ? (
@@ -556,21 +557,23 @@ function ResourcesPage() {
                     <div className="mt-4 space-y-2 text-sm">
                       {latest ? (
                         <p className="text-muted-foreground">
-                          Last reading {round(Number(latest.reading))} {resource.unit} ·{" "}
+                          {t("Last reading")} {round(Number(latest.reading))} {resource.unit} ·{" "}
                           {fmtDate(latest.reading_at.slice(0, 10))}
                         </p>
                       ) : (
-                        <p className="text-muted-foreground">No readings yet.</p>
+                        <p className="text-muted-foreground">{t("No readings yet.")}</p>
                       )}
 
                       {needsMore ? (
                         <p className="text-muted-foreground">
-                          Add at least two readings and usage can be worked out.
+                          {t("Add at least two readings and usage can be worked out.")}
                         </p>
                       ) : meter ? (
                         <dl className="grid min-w-0 gap-3 sm:grid-cols-3">
                           <div>
-                            <dt className="text-muted-foreground">Used since last reading</dt>
+                            <dt className="text-muted-foreground">
+                              {t("Used since last reading")}
+                            </dt>
                             <dd className="tabular-nums">
                               {meter.lastConsumption == null
                                 ? "—"
@@ -579,7 +582,7 @@ function ResourcesPage() {
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-muted-foreground">Average a day</dt>
+                            <dt className="text-muted-foreground">{t("Average a day")}</dt>
                             <dd className="tabular-nums">
                               {meter.perDay == null
                                 ? "—"
@@ -587,7 +590,7 @@ function ResourcesPage() {
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-muted-foreground">This cycle so far</dt>
+                            <dt className="text-muted-foreground">{t("This cycle so far")}</dt>
                             <dd className="tabular-nums">
                               {meter.cycleConsumption == null
                                 ? "—"
@@ -608,7 +611,7 @@ function ResourcesPage() {
                           {meter.projectedCycleCost != null ? (
                             <div className="sm:col-span-3">
                               <dt className="text-muted-foreground">
-                                Projected cost for the full cycle
+                                {t("Projected cost for the full cycle")}
                                 {meter.cycleEnd ? ` to ${fmtDate(meter.cycleEnd)}` : ""}
                               </dt>
                               <dd className="tabular-nums">{fmtMoney(meter.projectedCycleCost)}</dd>
@@ -635,12 +638,12 @@ function ResourcesPage() {
                               </dd>
                               {quota.owed > 0 ? (
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                  Paid back first from your next top-up.
+                                  {t("Paid back first from your next top-up.")}
                                 </p>
                               ) : null}
                             </div>
                             <div>
-                              <dt className="text-muted-foreground">Average a day</dt>
+                              <dt className="text-muted-foreground">{t("Average a day")}</dt>
                               <dd className="tabular-nums">
                                 {quota.perDay == null
                                   ? "—"
@@ -648,7 +651,7 @@ function ResourcesPage() {
                               </dd>
                             </div>
                             <div>
-                              <dt className="text-muted-foreground">At that rate</dt>
+                              <dt className="text-muted-foreground">{t("At that rate")}</dt>
                               <dd className="tabular-nums">
                                 {quota.daysLeft == null
                                   ? "—"
@@ -761,7 +764,7 @@ function ResourcesPage() {
         onSubmit={() => save.mutate()}
       >
         <div className="space-y-2">
-          <Label htmlFor="resource-name">Name</Label>
+          <Label htmlFor="resource-name">{t("Name")}</Label>
           <Input
             id="resource-name"
             required
@@ -776,7 +779,7 @@ function ResourcesPage() {
         />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Kind</Label>
+            <Label>{t("Kind")}</Label>
             <Select
               value={form.kind}
               onValueChange={(v) =>
@@ -793,7 +796,7 @@ function ResourcesPage() {
               <SelectContent>
                 {RESOURCE_KINDS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -803,7 +806,7 @@ function ResourcesPage() {
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="resource-unit">Unit</Label>
+            <Label htmlFor="resource-unit">{t("Unit")}</Label>
             <Input
               id="resource-unit"
               required
@@ -815,7 +818,7 @@ function ResourcesPage() {
           </div>
           {form.kind === "meter" || form.kind === "quota" ? (
             <div className="space-y-2 sm:col-span-2">
-              <Label>Pricing</Label>
+              <Label>{t("Pricing")}</Label>
               <Select
                 value={form.tariff ? "tiered" : "flat"}
                 onValueChange={(value) =>
@@ -826,8 +829,8 @@ function ResourcesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="flat">One price per unit</SelectItem>
-                  <SelectItem value="tiered">Tiers 1–7 (Egypt residential)</SelectItem>
+                  <SelectItem value="flat">{t("One price per unit")}</SelectItem>
+                  <SelectItem value="tiered">{t("Tiers 1–7 (Egypt residential)")}</SelectItem>
                 </SelectContent>
               </Select>
               {form.tariff ? (
@@ -841,7 +844,7 @@ function ResourcesPage() {
           {form.kind === "vehicle" ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="resource-tank">Tank size (litres)</Label>
+                <Label htmlFor="resource-tank">{t("Tank size (litres)")}</Label>
                 <Input
                   id="resource-tank"
                   type="number"
@@ -858,11 +861,11 @@ function ResourcesPage() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Optional. With it, km left follows your real consumption.
+                  {t("Optional. With it, km left follows your real consumption.")}
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="resource-full-tank">A full tank lasts about (km)</Label>
+                <Label htmlFor="resource-full-tank">{t("A full tank lasts about (km)")}</Label>
                 <Input
                   id="resource-full-tank"
                   type="number"
@@ -879,13 +882,13 @@ function ResourcesPage() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Your own figure, used until two full-tank fill-ups give the real one.
+                  {t("Your own figure, used until two full-tank fill-ups give the real one.")}
                 </p>
               </div>
             </>
           ) : null}
           <div className={form.tariff || form.kind === "vehicle" ? "hidden" : "space-y-2"}>
-            <Label htmlFor="resource-cost">Cost per unit</Label>
+            <Label htmlFor="resource-cost">{t("Cost per unit")}</Label>
             <Input
               id="resource-cost"
               type="number"
@@ -904,7 +907,7 @@ function ResourcesPage() {
           </div>
           {form.kind === "quota" ? (
             <div className="space-y-2">
-              <Label htmlFor="resource-quota">Quota amount</Label>
+              <Label htmlFor="resource-quota">{t("Quota amount")}</Label>
               <Input
                 id="resource-quota"
                 type="number"
@@ -923,7 +926,7 @@ function ResourcesPage() {
             </div>
           ) : null}
           <div className={form.kind === "vehicle" ? "hidden" : "space-y-2"}>
-            <Label htmlFor="resource-cycle-start">Cycle starts</Label>
+            <Label htmlFor="resource-cycle-start">{t("Cycle starts")}</Label>
             <DatePicker
               id="resource-cycle-start"
               value={form.cycle_start_date}
@@ -931,7 +934,7 @@ function ResourcesPage() {
             />
           </div>
           <div className={form.kind === "vehicle" ? "hidden" : "space-y-2"}>
-            <Label htmlFor="resource-cycle-count">Cycle length</Label>
+            <Label htmlFor="resource-cycle-count">{t("Cycle length")}</Label>
             <div className="flex gap-2">
               <Input
                 id="resource-cycle-count"
@@ -965,17 +968,17 @@ function ResourcesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="months">months</SelectItem>
-                  <SelectItem value="days">days</SelectItem>
+                  <SelectItem value="months">{t("months")}</SelectItem>
+                  <SelectItem value="days">{t("days")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <p className="text-xs text-muted-foreground">
-              Months follow the calendar, so a cycle keeps its start day each month.
+              {t("Months follow the calendar, so a cycle keeps its start day each month.")}
             </p>
           </div>
           <div className="space-y-2">
-            <Label>Money category</Label>
+            <Label>{t("Money category")}</Label>
             <Select
               value={form.category_id ?? "none"}
               onValueChange={(v) => setForm({ ...form, category_id: v === "none" ? null : v })}
@@ -984,7 +987,7 @@ function ResourcesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No category</SelectItem>
+                <SelectItem value="none">{t("No category")}</SelectItem>
                 {(categories.data ?? []).map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
@@ -994,7 +997,7 @@ function ResourcesPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Account for costs</Label>
+            <Label>{t("Account for costs")}</Label>
             <Select
               value={form.account_id ?? "none"}
               onValueChange={(v) => setForm({ ...form, account_id: v === "none" ? null : v })}
@@ -1003,7 +1006,7 @@ function ResourcesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No account</SelectItem>
+                <SelectItem value="none">{t("No account")}</SelectItem>
                 {(accounts.data ?? []).map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name}
@@ -1013,7 +1016,7 @@ function ResourcesPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{t("Status")}</Label>
             <Select
               value={form.active ? "active" : "inactive"}
               onValueChange={(v) => setForm({ ...form, active: v === "active" })}
@@ -1022,8 +1025,8 @@ function ResourcesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="active">{t("Active")}</SelectItem>
+                <SelectItem value="inactive">{t("Inactive")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1035,7 +1038,7 @@ function ResourcesPage() {
         onOpenChange={(open) => !open && setReadingFor(null)}
         title={
           readingFor
-            ? `${editingReading ? "Edit reading" : "Add reading"} · ${readingFor.name}`
+            ? `${editingReading ? "Edit reading" : "Add reading"} · ${t(readingFor.name)}`
             : "Add reading"
         }
         submitLabel="Add reading"
@@ -1061,7 +1064,7 @@ function ResourcesPage() {
             />
             <PhotoReader kind="number" onNumber={(value) => setReadingValue(String(value))} />
             <div className="space-y-1.5 pt-1">
-              <Label htmlFor="reading-at">Taken on</Label>
+              <Label htmlFor="reading-at">{t("Taken on")}</Label>
               <Input
                 id="reading-at"
                 type="datetime-local"
@@ -1071,7 +1074,7 @@ function ResourcesPage() {
                 onChange={(event) => setReadingAt(event.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Change this to add a reading from earlier.
+                {t("Change this to add a reading from earlier.")}
               </p>
             </div>
             {(() => {
@@ -1079,11 +1082,13 @@ function ResourcesPage() {
               const last = own[own.length - 1];
               return last ? (
                 <p className="text-xs text-muted-foreground">
-                  Last reading: {round(Number(last.reading))} {readingFor.unit} on{" "}
+                  {t("Last reading:")} {round(Number(last.reading))} {readingFor.unit} on{" "}
                   {fmtDate(last.reading_at.slice(0, 10))}
                 </p>
               ) : (
-                <p className="text-xs text-muted-foreground">This will be your first reading.</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("This will be your first reading.")}
+                </p>
               );
             })()}
             {(() => {
@@ -1097,8 +1102,8 @@ function ResourcesPage() {
               return (
                 <div className="rounded-lg bg-secondary p-3 text-sm">
                   <p className="font-medium">
-                    With this reading: {round(usage.used)} {readingFor.unit} this month · tier{" "}
-                    {usage.bill.tier} of {usage.tariff.tiers.length}
+                    {t("With this reading:")} {round(usage.used)} {readingFor.unit} this month ·
+                    tier {usage.bill.tier} of {usage.tariff.tiers.length}
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {usage.until
@@ -1154,7 +1159,7 @@ function TierMeter({
     <div className="space-y-2 rounded-lg bg-secondary p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-medium">
-          Tier {tier} of {tariff.tiers.length}
+          {t("Tier")} {tier} of {tariff.tiers.length}
           <span className="ml-2 font-normal text-muted-foreground">
             {tierRangeLabel(tariff, tier, unit)}
           </span>
@@ -1187,7 +1192,7 @@ function TierMeter({
         ))}
       </div>
       <p className="text-xs text-muted-foreground">
-        {tariff.name} · {tariff.source}
+        {t(tariff.name)} · {tariff.source}
       </p>
     </div>
   );
@@ -1214,9 +1219,9 @@ function TariffEditor({
       <table className="w-full text-sm">
         <thead className="bg-secondary text-xs text-muted-foreground">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Tier</th>
-            <th className="px-3 py-2 text-left font-medium">Per kWh</th>
-            <th className="px-3 py-2 text-left font-medium">Monthly fee</th>
+            <th className="px-3 py-2 text-left font-medium">{t("Tier")}</th>
+            <th className="px-3 py-2 text-left font-medium">{t("Per kWh")}</th>
+            <th className="px-3 py-2 text-left font-medium">{t("Monthly fee")}</th>
           </tr>
         </thead>
         <tbody>

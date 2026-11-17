@@ -2,7 +2,8 @@
  * Today's focus list: what to do, grouped by when, in plain words. Late
  * things are "from earlier", never red or "overdue".
  */
-import { differenceInCalendarDays, format, parseISO } from "date-fns";
+import { differenceInCalendarDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type FocusGroup = "earlier" | "today" | "soon" | "unsorted";
 

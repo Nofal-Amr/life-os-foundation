@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { AiSuggestDialog, useLocalAi } from "@/components/app/LocalAi";
 import { createStep, taskKeys, type Task } from "@/data/tasks";
 import { suggestSteps } from "@/lib/localAi";
+import { t } from "@/lib/i18n";
 
 /** UI scaffolding to get past a blank field — never stored as data. */
 const STARTERS = [
@@ -79,7 +80,7 @@ export function ShrinkItDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>What’s the smallest first step?</DialogTitle>
+          <DialogTitle>{t("What’s the smallest first step?")}</DialogTitle>
           <DialogDescription>
             {task ? `For “${task.title}”. ` : ""}
             {existingSteps
@@ -95,7 +96,7 @@ export function ShrinkItDialog({
           }}
         >
           <div className="space-y-2">
-            <Label htmlFor="shrink-step">First step</Label>
+            <Label htmlFor="shrink-step">{t("First step")}</Label>
             <Input
               id="shrink-step"
               autoFocus
@@ -126,11 +127,11 @@ export function ShrinkItDialog({
               className="h-10 w-full"
               onClick={() => setSuggesting(true)}
             >
-              <Sparkles className="size-4" /> Suggest steps (on-device AI)
+              <Sparkles className="size-4" /> {t("Suggest steps (on-device AI)")}
             </Button>
           ) : null}
           <div className="space-y-2">
-            <Label htmlFor="shrink-minutes">Minutes (optional)</Label>
+            <Label htmlFor="shrink-minutes">{t("Minutes (optional)")}</Label>
             <Input
               id="shrink-minutes"
               type="number"
@@ -187,7 +188,7 @@ export function ShrinkItButton({
   return (
     <Button type="button" variant="outline" size={size} className={className} onClick={onClick}>
       <Scissors className="size-4" />
-      This feels hard
+      {t("This feels hard")}
     </Button>
   );
 }

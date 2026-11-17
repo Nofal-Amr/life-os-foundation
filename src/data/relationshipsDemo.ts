@@ -2,7 +2,8 @@
  * Demo people for Relationships: a believable family with a father's side and
  * a mother's side, a few friends, dated contacts and one rule. Demo mode only.
  */
-import { addDays, format, subDays } from "date-fns";
+import { addDays, subDays } from "date-fns";
+import { format } from "@/lib/dates";
 
 type Row = Record<string, unknown>;
 

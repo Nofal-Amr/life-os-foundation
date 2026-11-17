@@ -19,6 +19,7 @@ import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 
 import { useRelationships } from "./useRelationships";
+import { t } from "@/lib/i18n";
 
 /**
  * Today's people: a birthday coming up, or a check-in whose rhythm has come
@@ -44,8 +45,8 @@ export function RelationshipsToday({ className }: { className?: string }) {
       createTask({
         title:
           nudge.kind === "birthday"
-            ? `Congratulate ${nudge.person.name}`
-            : `Call ${nudge.person.name}`,
+            ? `Congratulate ${t(nudge.person.name)}`
+            : `Call ${t(nudge.person.name)}`,
         description: null,
         due_date: today,
         status: "todo",
@@ -81,7 +82,7 @@ export function RelationshipsToday({ className }: { className?: string }) {
     <section className={className} aria-labelledby="today-people">
       <div className="mb-2 flex items-baseline justify-between">
         <h2 id="today-people" className="section-title">
-          People
+          {t("People")}
         </h2>
         <Link to="/relationships" className="text-xs text-muted-foreground hover:text-foreground">
           {more > 0 ? `${more} more` : "See everyone"}
@@ -98,7 +99,7 @@ export function RelationshipsToday({ className }: { className?: string }) {
               )}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{nudge.title}</p>
+              <p className="truncate text-sm font-medium">{t(nudge.title)}</p>
               <p className="truncate text-xs text-muted-foreground">{nudge.detail}</p>
             </div>
             {nudge.kind === "checkin" ? (
@@ -110,7 +111,7 @@ export function RelationshipsToday({ className }: { className?: string }) {
                 onClick={() => log.mutate(nudge.person.id)}
               >
                 <Check className="size-4" aria-hidden="true" />
-                Called
+                {t("Called")}
               </Button>
             ) : null}
             <DropdownMenu>
@@ -119,7 +120,7 @@ export function RelationshipsToday({ className }: { className?: string }) {
                   size="icon"
                   variant="ghost"
                   className="size-11 shrink-0"
-                  aria-label={`More for ${nudge.person.name}`}
+                  aria-label={`More for ${t(nudge.person.name)}`}
                 >
                   <MoreHorizontal className="size-4" aria-hidden="true" />
                 </Button>

@@ -16,6 +16,7 @@ import {
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const MOOD_ICONS: LucideIcon[] = [Frown, Meh, Smile, SmilePlus, Laugh];
 
@@ -54,7 +55,7 @@ export function CheckIn({ className }: { className?: string }) {
     <section className={cn("stat-card p-4 sm:p-5", className)} aria-label="Check in">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="section-title">How are you right now?</h2>
+          <h2 className="section-title">{t("How are you right now?")}</h2>
           <p className="mt-1 text-xs text-muted-foreground">
             {mood && energy
               ? `${MOOD_LABELS[mood - 1]} · ${ENERGY_LABELS[energy - 1]} energy. Tap to change.`
@@ -67,7 +68,7 @@ export function CheckIn({ className }: { className?: string }) {
           className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-border px-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           <Wind className="size-3.5" aria-hidden="true" />
-          1-minute reset
+          {t("1-minute reset")}
         </button>
       </div>
 
@@ -96,7 +97,7 @@ export function CheckIn({ className }: { className?: string }) {
         })}
       </div>
 
-      <p className="mt-4 mb-1.5 text-xs text-muted-foreground">Energy</p>
+      <p className="mt-4 mb-1.5 text-xs text-muted-foreground">{t("Energy")}</p>
       <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Energy">
         {ENERGY_LABELS.map((label, index) => {
           const selected = energy === index + 1;

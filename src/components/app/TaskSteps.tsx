@@ -21,6 +21,7 @@ import {
   updateTask,
   type Task,
 } from "@/data/tasks";
+import { t } from "@/lib/i18n";
 
 export function stepsLine(done: number, total: number) {
   return `${done} of ${total} ${total === 1 ? "step" : "steps"} done`;
@@ -123,7 +124,7 @@ export function TaskStepsEditor({ parent }: { parent: Task }) {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Label>Steps</Label>
+        <Label>{t("Steps")}</Label>
         {steps.length ? (
           <span className="flex items-center gap-2 text-xs text-muted-foreground">
             <Ring
@@ -210,7 +211,7 @@ export function TaskStepsEditor({ parent }: { parent: Task }) {
           })}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">No steps yet. Add one when it helps.</p>
+        <p className="text-sm text-muted-foreground">{t("No steps yet. Add one when it helps.")}</p>
       )}
 
       <div className="flex gap-2">

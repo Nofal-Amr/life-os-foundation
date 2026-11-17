@@ -1,4 +1,5 @@
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import type { CalendarEvent } from "@/data/events";
 import type { RecurringCost } from "@/data/finance";

@@ -18,6 +18,7 @@ import {
   loadGoogleIdentity,
   makeNonce,
 } from "@/lib/googleIdentity";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -197,11 +198,11 @@ function AuthPage() {
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
             <Link to="/" className="rounded-md">
-              Life OS
+              {t("Life OS")}
             </Link>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your calm, private space for projects, habits and reflection.
+            {t("Your calm, private space for projects, habits and reflection.")}
           </p>
         </div>
 
@@ -231,10 +232,10 @@ function AuthPage() {
           >
             <TabsList className="w-full">
               <TabsTrigger value="signin" className="flex-1">
-                Sign in
+                {t("Sign in")}
               </TabsTrigger>
               <TabsTrigger value="signup" className="flex-1">
-                Sign up
+                {t("Sign up")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="signin" />
@@ -259,12 +260,12 @@ function AuthPage() {
                   onClick={() => signInWith("google")}
                 >
                   <GoogleMark />
-                  Continue with Google
+                  {t("Continue with Google")}
                 </Button>
               )}
               <div className="flex items-center gap-3 pt-2 text-xs text-muted-foreground">
                 <span className="h-px flex-1 bg-border" />
-                or with email
+                {t("or with email")}
                 <span className="h-px flex-1 bg-border" />
               </div>
             </div>
@@ -278,7 +279,7 @@ function AuthPage() {
             }}
           >
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("Email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -291,7 +292,7 @@ function AuthPage() {
 
             {mode !== "reset" ? (
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("Password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -305,13 +306,13 @@ function AuthPage() {
                 />
                 {mode === "signup" ? (
                   <p id="password-hint" className="text-xs text-muted-foreground">
-                    At least 8 characters. A short phrase is easier to remember.
+                    {t("At least 8 characters. A short phrase is easier to remember.")}
                   </p>
                 ) : null}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                We'll email you a link to choose a new password.
+                {t("We'll email you a link to choose a new password.")}
               </p>
             )}
 
@@ -327,13 +328,13 @@ function AuthPage() {
           </form>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            By continuing, you agree to the{" "}
+            {t("By continuing, you agree to the")}{" "}
             <Link to="/terms" className="underline underline-offset-4 hover:text-foreground">
-              terms
+              {t("terms")}
             </Link>{" "}
             and the{" "}
             <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground">
-              privacy policy
+              {t("privacy policy")}
             </Link>
             .
           </p>

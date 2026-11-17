@@ -1,4 +1,5 @@
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type UnitSystem = "metric" | "imperial";
 export type TimeFormat = "24h" | "12h";

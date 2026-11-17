@@ -228,7 +228,7 @@ export function BottomNav() {
               strokeWidth={1.75}
               aria-hidden="true"
             />
-            More
+            {t("More")}
           </button>
         </li>
       </ul>
@@ -237,7 +237,7 @@ export function BottomNav() {
           side="bottom"
           className="max-h-[85vh] overflow-y-auto rounded-t-3xl px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5"
         >
-          <SheetTitle className="sr-only">More</SheetTitle>
+          <SheetTitle className="sr-only">{t("More")}</SheetTitle>
           {tools.length ? <ToolLinks onNavigate={() => setMoreOpen(false)} /> : null}
           <div className="mt-4 flex flex-col gap-0.5 border-t border-border pt-4">
             <button type="button" onClick={toggleTheme} className={itemClass(false)}>
@@ -257,7 +257,7 @@ export function BottomNav() {
               className={itemClass(false)}
             >
               <LogOut className="size-[18px]" strokeWidth={1.75} aria-hidden="true" />
-              Sign out
+              {t("Sign out")}
             </button>
           </div>
         </SheetContent>

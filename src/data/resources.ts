@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import { addDays, addMonths, differenceInCalendarDays, format, parseISO } from "date-fns";
+import { addDays, addMonths, differenceInCalendarDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";

@@ -1,4 +1,5 @@
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 import { Cake, Link2, Pencil, Phone, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
@@ -24,6 +25,7 @@ import {
 } from "@/data/relationships";
 
 import { selectClass } from "./personFormHelpers";
+import { t } from "@/lib/i18n";
 
 /**
  * Everything about one person: who they are, the rhythm you chose, your goal,
@@ -163,7 +165,7 @@ function SheetBody({
       {person.is_me ? null : (
         <section className="space-y-2 text-sm">
           <p className="tabular-nums">
-            <span className="text-muted-foreground">Check in: </span>
+            <span className="text-muted-foreground">{t("Check in:")} </span>
             {cadenceLabel(person.checkin_every_days)}
             {state
               ? state.last
@@ -189,7 +191,7 @@ function SheetBody({
           ) : null}
           {person.goal ? (
             <div className="rounded-xl bg-secondary p-3">
-              <p className="text-xs font-medium text-muted-foreground">Goal</p>
+              <p className="text-xs font-medium text-muted-foreground">{t("Goal")}</p>
               <p className="mt-0.5">{person.goal}</p>
             </div>
           ) : null}
@@ -201,18 +203,18 @@ function SheetBody({
 
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={() => onEdit(person)}>
-          <Pencil className="size-4" /> Edit
+          <Pencil className="size-4" /> {t("Edit")}
         </Button>
         {person.is_me ? null : (
           <Button variant="ghost" size="sm" onClick={() => onDelete(person)}>
-            <Trash2 className="size-4" /> Delete
+            <Trash2 className="size-4" /> {t("Delete")}
           </Button>
         )}
       </div>
 
       {person.is_me ? null : (
         <section className="space-y-3">
-          <h3 className="section-title">Log</h3>
+          <h3 className="section-title">{t("Log")}</h3>
           <Input
             aria-label="Note for this entry (optional)"
             placeholder="A note (optional)"
@@ -263,13 +265,13 @@ function SheetBody({
               ))}
             </ol>
           ) : (
-            <p className="text-sm text-muted-foreground">Nothing logged yet.</p>
+            <p className="text-sm text-muted-foreground">{t("Nothing logged yet.")}</p>
           )}
         </section>
       )}
 
       <section className="space-y-3">
-        <h3 className="section-title">Connections</h3>
+        <h3 className="section-title">{t("Connections")}</h3>
         {mine.length ? (
           <ul className="space-y-1.5 text-sm">
             {mine.map((link) => {
@@ -294,7 +296,7 @@ function SheetBody({
             })}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">Not linked to anyone yet.</p>
+          <p className="text-sm text-muted-foreground">{t("Not linked to anyone yet.")}</p>
         )}
         {candidates.length ? (
           <form
@@ -317,7 +319,7 @@ function SheetBody({
             >
               {LINK_KINDS.map((kind) => (
                 <option key={kind.value} value={kind.value}>
-                  {kind.label}
+                  {t(kind.label)}
                 </option>
               ))}
             </select>
@@ -334,7 +336,7 @@ function SheetBody({
               ))}
             </select>
             <Button type="submit" size="sm" variant="outline">
-              Link
+              {t("Link")}
             </Button>
           </form>
         ) : null}

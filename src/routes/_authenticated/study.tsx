@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { BookOpen, CalendarClock, FileUp, GraduationCap, Plus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -46,6 +46,7 @@ import { usePreferences } from "@/hooks/usePreferences";
 import { todayISO } from "@/lib/date";
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/study")({
   head: () => ({ meta: [{ title: "Study · Life OS" }] }),
@@ -95,7 +96,7 @@ function StudyPage() {
       <div className="space-y-5">
         <section className="stat-card p-4">
           <p className="mb-2 flex items-center gap-2 text-sm font-semibold">
-            <CalendarClock className="size-4" /> Today's classes
+            <CalendarClock className="size-4" /> {t("Today's classes")}
           </p>
           {today.length ? (
             <ul className="space-y-1.5 text-sm">
@@ -114,7 +115,7 @@ function StudyPage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No classes today.</p>
+            <p className="text-sm text-muted-foreground">{t("No classes today.")}</p>
           )}
         </section>
 
@@ -156,7 +157,7 @@ function CourseSelect({
         <SelectValue placeholder="Course" />
       </SelectTrigger>
       <SelectContent>
-        {allowNone ? <SelectItem value="none">No course</SelectItem> : null}
+        {allowNone ? <SelectItem value="none">{t("No course")}</SelectItem> : null}
         {courses.map((course) => (
           <SelectItem key={course.id} value={course.id}>
             {course.name}
@@ -234,7 +235,7 @@ function DueTab({ courses }: { courses: Course[] }) {
         }}
       >
         <div className="space-y-1.5 sm:col-span-2">
-          <Label htmlFor="study-title">What's due</Label>
+          <Label htmlFor="study-title">{t("What's due")}</Label>
           <Input
             id="study-title"
             className="h-11"
@@ -245,7 +246,7 @@ function DueTab({ courses }: { courses: Course[] }) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label>Kind</Label>
+          <Label>{t("Kind")}</Label>
           <Select value={kind} onValueChange={(value) => setKind(value as StudyKind)}>
             <SelectTrigger className="h-11">
               <SelectValue />
@@ -253,22 +254,22 @@ function DueTab({ courses }: { courses: Course[] }) {
             <SelectContent>
               {STUDY_KINDS.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>Course</Label>
+          <Label>{t("Course")}</Label>
           <CourseSelect courses={courses} value={course} onChange={setCourse} allowNone />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="study-date">Due</Label>
+          <Label htmlFor="study-date">{t("Due")}</Label>
           <DatePicker id="study-date" value={date} onChange={(value) => value && setDate(value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="study-time">Time</Label>
+          <Label htmlFor="study-time">{t("Time")}</Label>
           <Input
             id="study-time"
             type="time"
@@ -282,7 +283,7 @@ function DueTab({ courses }: { courses: Course[] }) {
           className="h-11 sm:col-span-2"
           disabled={!title.trim() || add.isPending}
         >
-          <Plus className="size-4" /> Add
+          <Plus className="size-4" /> {t("Add")}
         </Button>
       </form>
 
@@ -331,13 +332,13 @@ function DueTab({ courses }: { courses: Course[] }) {
         </ul>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Nothing due. Add assignments and exams above.
+          {t("Nothing due. Add assignments and exams above.")}
         </p>
       )}
 
       {done.length ? (
         <section className="space-y-2">
-          <p className="text-sm font-semibold">Done</p>
+          <p className="text-sm font-semibold">{t("Done")}</p>
           <ul className="space-y-1.5">
             {done.map((item) => (
               <li
@@ -433,11 +434,11 @@ function TimetableTab({ courses }: { courses: Course[] }) {
           }}
         >
           <div className="space-y-1.5 sm:col-span-2">
-            <Label>Course</Label>
+            <Label>{t("Course")}</Label>
             <CourseSelect courses={courses} value={course} onChange={setCourse} />
           </div>
           <div className="space-y-1.5">
-            <Label>Day</Label>
+            <Label>{t("Day")}</Label>
             <Select value={day} onValueChange={setDay}>
               <SelectTrigger className="h-11">
                 <SelectValue />
@@ -452,7 +453,7 @@ function TimetableTab({ courses }: { courses: Course[] }) {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="class-start">From</Label>
+            <Label htmlFor="class-start">{t("From")}</Label>
             <Input
               id="class-start"
               type="time"
@@ -462,7 +463,7 @@ function TimetableTab({ courses }: { courses: Course[] }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="class-end">To</Label>
+            <Label htmlFor="class-end">{t("To")}</Label>
             <Input
               id="class-end"
               type="time"
@@ -472,7 +473,7 @@ function TimetableTab({ courses }: { courses: Course[] }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="class-room">Room</Label>
+            <Label htmlFor="class-room">{t("Room")}</Label>
             <Input
               id="class-room"
               className="h-11"
@@ -486,12 +487,12 @@ function TimetableTab({ courses }: { courses: Course[] }) {
             className="h-11 sm:col-span-3"
             disabled={!course || ends <= starts || add.isPending}
           >
-            <Plus className="size-4" /> Add class
+            <Plus className="size-4" /> {t("Add class")}
           </Button>
         </form>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Add a course first (Courses tab), or import your timetable.
+          {t("Add a course first (Courses tab), or import your timetable.")}
         </p>
       )}
 
@@ -589,7 +590,7 @@ function IcsImport({ courses }: { courses: Course[] }) {
   return (
     <section className="rounded-xl border border-dashed border-border p-4">
       <p className="flex items-center gap-2 text-sm font-semibold">
-        <FileUp className="size-4" /> Import from your university portal
+        <FileUp className="size-4" /> {t("Import from your university portal")}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
         Export your timetable as a calendar file (.ics) and choose it here. Repeating classes become
@@ -617,8 +618,9 @@ function IcsImport({ courses }: { courses: Course[] }) {
       {preview ? (
         <div className="mt-3 space-y-2 text-sm">
           <p>
-            Found {preview.slots.length} weekly {preview.slots.length === 1 ? "class" : "classes"}{" "}
-            and {preview.exams.length} {preview.exams.length === 1 ? "exam" : "exams"}.
+            {t("Found")} {preview.slots.length} weekly{" "}
+            {preview.slots.length === 1 ? "class" : "classes"} and {preview.exams.length}{" "}
+            {preview.exams.length === 1 ? "exam" : "exams"}.
           </p>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => run.mutate(preview)} disabled={run.isPending}>
@@ -680,7 +682,7 @@ function CoursesTab({ courses }: { courses: Course[] }) {
           onChange={(e) => setCode(e.target.value)}
         />
         <Button type="submit" className="h-11" disabled={!name.trim() || add.isPending}>
-          <Plus className="size-4" /> Add
+          <Plus className="size-4" /> {t("Add")}
         </Button>
       </form>
       {courses.length ? (
@@ -725,7 +727,7 @@ function CoursesTab({ courses }: { courses: Course[] }) {
         </ul>
       ) : (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <GraduationCap className="size-4" /> No courses yet.
+          <GraduationCap className="size-4" /> {t("No courses yet.")}
         </p>
       )}
     </div>

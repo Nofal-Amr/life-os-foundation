@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format } from "@/lib/dates";
 import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/chart";
 import { usageBuckets, type UsagePeriod } from "@/data/resourceUsage";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const axisProps = {
   tickLine: false,
@@ -131,7 +132,9 @@ export function ResourceUsage({
 
       {covered.length ? (
         <details className="mt-2 text-xs text-muted-foreground">
-          <summary className="min-h-8 cursor-pointer select-none py-1">Show as a table</summary>
+          <summary className="min-h-8 cursor-pointer select-none py-1">
+            {t("Show as a table")}
+          </summary>
           <table className="mt-1 w-full max-w-xs tabular-nums">
             <tbody>
               {rows

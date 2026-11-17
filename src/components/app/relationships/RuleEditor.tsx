@@ -25,6 +25,7 @@ import {
 import type { RuleInput } from "@/data/relationshipsApi";
 
 import { selectClass } from "./personFormHelpers";
+import { t } from "@/lib/i18n";
 
 const SCOPES: { value: ScopeType; label: string }[] = [
   { value: "everyone", label: "Everyone" },
@@ -111,10 +112,11 @@ export function RuleEditor({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Reminder rules</DialogTitle>
+          <DialogTitle>{t("Reminder rules")}</DialogTitle>
           <DialogDescription>
-            Without a rule, you're reminded of birthdays and of the check-ins you set. The most
-            specific rule wins: one person, then a relation, then a circle, then everyone.
+            {t(
+              "Without a rule, you're reminded of birthdays and of the check-ins you set. The most specific rule wins: one person, then a relation, then a circle, then everyone.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -138,7 +140,7 @@ export function RuleEditor({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">No rules yet.</p>
+          <p className="text-sm text-muted-foreground">{t("No rules yet.")}</p>
         )}
 
         <form
@@ -150,35 +152,35 @@ export function RuleEditor({
             setDraft(blank);
           }}
         >
-          <p className="text-sm font-medium">New rule</p>
+          <p className="text-sm font-medium">{t("New rule")}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="rule-action">Does</Label>
+              <Label htmlFor="rule-action">{t("Does")}</Label>
               <select
                 id="rule-action"
                 className={selectClass}
                 value={draft.action}
                 onChange={(event) => set({ action: event.target.value as RuleAction })}
               >
-                <option value="quiet">Don't remind me</option>
-                <option value="remind">Remind me</option>
+                <option value="quiet">{t("Don't remind me")}</option>
+                <option value="remind">{t("Remind me")}</option>
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="rule-topic">Of</Label>
+              <Label htmlFor="rule-topic">{t("Of")}</Label>
               <select
                 id="rule-topic"
                 className={selectClass}
                 value={draft.topic}
                 onChange={(event) => set({ topic: event.target.value as RuleTopic })}
               >
-                <option value="birthday">Birthdays</option>
-                <option value="checkin">Check-ins</option>
-                <option value="both">Both</option>
+                <option value="birthday">{t("Birthdays")}</option>
+                <option value="checkin">{t("Check-ins")}</option>
+                <option value="both">{t("Both")}</option>
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="rule-scope">For</Label>
+              <Label htmlFor="rule-scope">{t("For")}</Label>
               <select
                 id="rule-scope"
                 className={selectClass}
@@ -187,14 +189,14 @@ export function RuleEditor({
               >
                 {SCOPES.map((item) => (
                   <option key={item.value} value={item.value}>
-                    {item.label}
+                    {t(item.label)}
                   </option>
                 ))}
               </select>
             </div>
             {draft.scope_type !== "everyone" ? (
               <div className="space-y-1.5">
-                <Label htmlFor="rule-value">Which</Label>
+                <Label htmlFor="rule-value">{t("Which")}</Label>
                 <select
                   id="rule-value"
                   className={selectClass}
@@ -208,7 +210,7 @@ export function RuleEditor({
                       : others.map((person) => ({ value: person.id, label: person.name }))
                   ).map((item) => (
                     <option key={item.value} value={item.value}>
-                      {item.label}
+                      {t(item.label)}
                     </option>
                   ))}
                 </select>
@@ -218,7 +220,7 @@ export function RuleEditor({
 
           {draft.scope_type !== "person" && covered.length ? (
             <fieldset className="space-y-2">
-              <legend className="text-sm font-medium">Except</legend>
+              <legend className="text-sm font-medium">{t("Except")}</legend>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
                 {covered.map((person) => {
                   const checked = draft.except.includes(person.id);

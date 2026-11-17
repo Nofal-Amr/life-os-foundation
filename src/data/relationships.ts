@@ -4,7 +4,8 @@
  * reminder rules, the check-in rhythm, birthdays and the map layout. Nothing
  * is scored. "Last contact" is only ever what the user logged.
  */
-import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
+import { addDays, differenceInCalendarDays, parseISO } from "date-fns";
+import { format } from "@/lib/dates";
 
 export type Circle = "me" | "closest" | "family" | "relatives" | "friends" | "work";
 export type Relation =

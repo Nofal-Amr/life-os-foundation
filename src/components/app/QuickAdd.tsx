@@ -26,6 +26,7 @@ import { useModules } from "@/hooks/useModules";
 import { todayISO } from "@/lib/date";
 import { useQuery } from "@tanstack/react-query";
 import { prayerLogsQuery } from "@/data/spirit";
+import { t } from "@/lib/i18n";
 
 type Panel = "menu" | "meal" | "timer" | "prayer";
 
@@ -200,9 +201,9 @@ export function QuickAdd() {
               >
                 <Timer className="size-5 text-primary" aria-hidden="true" />
                 <span>
-                  <span className="block text-sm font-medium">Focus session</span>
+                  <span className="block text-sm font-medium">{t("Focus session")}</span>
                   <span className="block text-xs text-muted-foreground">
-                    25 minutes on one thing, with a chime at the end
+                    {t("25 minutes on one thing, with a chime at the end")}
                   </span>
                 </span>
               </button>
@@ -268,7 +269,7 @@ function Back({ onBack, children }: { onBack: () => void; children: ReactNode })
         className="-ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
-        Back
+        {t("Back")}
       </button>
       {children}
     </div>
