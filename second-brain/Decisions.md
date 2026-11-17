@@ -90,3 +90,27 @@ Quran passages carry full standard tashkeel, from Tanzil's text, never typed by 
 ## Everything on GitHub (2026-11-17)
 
 The owner must be able to continue without any AI: `docs/owner/README.md`, with the rules in `.claude/skills/life-os/`.
+
+## Plan side and doing side (2026-11-17)
+
+Food and Gym each have a **plan** (what you mean to do) and a **log** (what happened), plus a `.md` import like Import a plan. Tables applied with the owner's OK (`20261117120000_food_gym_plans.sql`). Gym is built (#65); Food's plan side is next. Planned vs logged is shown side by side, never scored.
+
+## Exercise library (2026-11-17)
+
+Gym uses free-exercise-db (public domain, 876 exercises with steps and photos), not a typed list. Text ships with the app; photos load on tap from the source, pinned to one commit. English first.
+
+## Work: corrections and holidays (2026-11-17)
+
+Admin corrections win over raw taps everywhere, the clock card included. A wrong tap can be removed (the original stays stored). Every tap shows; pay is first in → last out. Days still to come are never "absent". Company official holidays live in the rules JSON. The day-penalty size is the company's setting (VONKAI is at 30 = 3.33%; the owner wants 5% = 20, and sets it).
+
+## Quran verse signs (2026-11-17)
+
+Each verse ends with its number in ornate brackets (﴿١﴾); the basmala sits on its own line when it isn't a numbered verse.
+
+## Egypt holidays (2026-11-17)
+
+Nager.Date is the source, with its decree-shifted dates (moved to Thursday). Egypt's missing Islamic days (Eid al-Fitr, Arafah) are filled in from Umm al-Qura as expected dates. Don't guess the Thursday shift for future years.
+
+## InBody (2026-11-17, next)
+
+InBody results go into `health_samples` (`source: "inbody"`), no new table.

@@ -5,6 +5,31 @@ updated: 2026-11-17
 
 # Handoff for the next session
 
+## Next, after 2026-11-17 part 2 (read [[2026-11-17 - Work fixes, Gym plan, verse signs, holidays]])
+
+- **Merged today:** #63, #64, #65, #66, #67. The food and gym plans migration is applied.
+- **Do next, in order:**
+  1. **Food plan side:**
+     - recipe and cost on foods;
+     - a weekly menu (`meal_plan_items`);
+     - "Ate it" on Today, with planned vs logged and no score;
+     - `.md` import (foods with kcal, protein/carbs/fat, cost and recipe, plus the week's menu).
+
+     Mirror Gym's tabs: Today · Plan · Foods.
+  2. **InBody input** in Body → `health_samples` (`source: "inbody"`), with a trend. Check
+     `external_id` uniqueness first.
+  3. **Vacation allowance:** waiting for the owner's "yes, vacation days" on
+     `alter table public.work_members add column annual_leave_days numeric(5,1) not null default 0 check (annual_leave_days >= 0);`.
+     Then show "X of Y days used this year" and a warning (not a block) when it runs out.
+  4. **A new standard APK** (`life-os-debug.apk`) with everything since 17 Nov. The owner tests
+     Settings and the Work fixes on the phone.
+  5. **Egypt holidays:** if the owner still misses 23 July / 30 June, check the cached
+     `holidays:EG:2026` and the Calendar settings.
+- **The owner's own to-dos:**
+  - set the VONKAI day-penalty divisor to 20 (5%) in Work → Rules;
+  - Google Calendar env vars (see the session note).
+- **Then continue** "Next, after 2026-11-17" below (simplify plan, segments, Work items).
+
 ## Next, after 2026-11-17 (read [[2026-11-17 - Simplify, handbook, Settings]])
 
 - **Done today:**
