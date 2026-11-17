@@ -31,6 +31,7 @@ import {
   type FoodLog,
 } from "@/data/food";
 import { WEEKDAY_SHORT } from "@/data/gymRoutines";
+import { FoodThumb } from "@/components/app/food/FoodThumb";
 import {
   addPlanItems,
   clearPlan,
@@ -107,11 +108,14 @@ export function PlannedToday({
           );
           return (
             <li key={item.id} className="flex min-w-0 items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{food.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {`${mealLabel(item.meal)} · ${servingsLabel(item.servings)} · ${Math.round(Number(food.calories) * Number(item.servings))} kcal`}
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                <FoodThumb food={food} />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{food.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {`${mealLabel(item.meal)} · ${servingsLabel(item.servings)} · ${Math.round(Number(food.calories) * Number(item.servings))} kcal`}
+                  </p>
+                </div>
               </div>
               {done ? (
                 <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
@@ -219,7 +223,8 @@ export function FoodPlanTab({
                     const cost = foodCost(food);
                     return (
                       <li key={item.id} className="flex min-w-0 items-center justify-between gap-2">
-                        <div className="min-w-0">
+                        <FoodThumb food={food} />
+                        <div className="min-w-0 flex-1">
                           <p className="truncate text-sm">{food.name}</p>
                           <p className="text-xs tabular-nums text-muted-foreground">
                             {`${servingsLabel(item.servings)} · ${Math.round(Number(food.calories) * Number(item.servings))} kcal`}

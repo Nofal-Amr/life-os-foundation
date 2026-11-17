@@ -961,4 +961,8 @@ export const AR: Record<string, string> = {
   "This part couldn't load.": "تعذّر تحميل هذا الجزء.",
   "The rest of Life OS still works. Leave this page and come back to try again.":
     "باقي Life OS يعمل. اترك هذه الصفحة وعُد لتحاول مرة أخرى.",
+  "how to do it": "طريقة الأداء",
+  "How to do it": "طريقة الأداء",
+  Pause: "إيقاف مؤقت",
+  Play: "تشغيل",
 };

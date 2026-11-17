@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DatePicker } from "@/components/app/DatePicker";
 import { ExerciseBrowser, ExerciseDetail } from "@/components/app/gym/ExerciseLibrary";
+import { ExerciseThumb } from "@/components/app/gym/ExerciseMedia";
 import { ImportRoutinesDialog, RoutineDialog } from "@/components/app/gym/RoutineDialogs";
 import { PageHeader } from "@/components/app/PageHeader";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
@@ -92,6 +93,7 @@ function GymPage() {
   const [importing, setImporting] = useState(false);
   const [toDelete, setToDelete] = useState<Workout | null>(null);
   const [focus, setFocus] = useState<string>("");
+  const [howTo, setHowTo] = useState<LibraryExercise | null>(null);
 
   const remove = useMutation({
     mutationFn: (id: string) => deleteWorkout(id),
@@ -193,6 +195,7 @@ function GymPage() {
           onEdit={setEditing}
           onImport={() => setImporting(true)}
           onStart={start}
+          onHowTo={setHowTo}
         />
       ) : tab === "exercises" ? (
         <ExerciseBrowser />
@@ -209,7 +212,17 @@ function GymPage() {
                   >
                     <div className="min-w-0">
                       <p className="font-medium">{routine.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
+                      <div className="mt-2 flex gap-1.5 overflow-hidden">
+                        {routine.exercises.slice(0, 6).map((item, index) => (
+                          <ExerciseThumb
+                            key={`${item.exercise}-${index}`}
+                            name={item.exercise}
+                            onOpen={setHowTo}
+                            className="size-9"
+                          />
+                        ))}
+                      </div>
+                      <p className="mt-1.5 truncate text-xs text-muted-foreground">
                         {routine.exercises.map((item) => item.exercise).join(" · ")}
                       </p>
                     </div>
@@ -331,6 +344,7 @@ function GymPage() {
         />
       ) : null}
       <ImportRoutinesDialog open={importing} onOpenChange={setImporting} />
+      <ExerciseDetail exercise={howTo} onOpenChange={(value) => !value && setHowTo(null)} />
       <ConfirmDialog
         open={!!toDelete}
         onOpenChange={(open) => !open && setToDelete(null)}
@@ -351,12 +365,14 @@ function PlanTab({
   onEdit,
   onImport,
   onStart,
+  onHowTo: setHowTo,
 }: {
   routines: Routine[];
   onNew: () => void;
   onEdit: (routine: Routine) => void;
   onImport: () => void;
   onStart: (routine: Routine) => void;
+  onHowTo: (exercise: LibraryExercise) => void;
 }) {
   const actions = (
     <div className="flex flex-wrap gap-2">
@@ -412,11 +428,16 @@ function PlanTab({
                 </Button>
               </div>
             </div>
-            <ul className="mt-2 space-y-0.5 text-sm">
+            <ul className="mt-3 space-y-2 text-sm">
               {routine.exercises.map((item, index) => (
-                <li key={index}>
-                  <span className="font-medium">{item.exercise}</span>
-                  <span className="text-muted-foreground"> · {plannedLabel(item)}</span>
+                <li key={index} className="flex min-w-0 items-center gap-3">
+                  <ExerciseThumb name={item.exercise} onOpen={setHowTo} />
+                  <span className="min-w-0">
+                    <span className="font-medium">{item.exercise}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {plannedLabel(item)}
+                    </span>
+                  </span>
                 </li>
               ))}
             </ul>
