@@ -18,6 +18,8 @@ import {
   workMembersQuery,
   workOrgsQuery,
   workPlacesQuery,
+  workYearLeavesQuery,
+  allowanceUsed,
   type WorkMember,
   type WorkOrg,
 } from "@/data/work/api";
@@ -199,6 +201,7 @@ function TodayTab({ org, rules, me }: { org: WorkOrg; rules: WorkRules; me: Work
         recent={events ?? []}
         corrections={corrections ?? []}
       />
+      <VacationLine org={org} rules={rules} me={me} />
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-semibold">{t("Your month")}</h2>
@@ -227,4 +230,18 @@ function AdminTab({
   if (tab === "rules") return <RulesEditor key={org.updated_at} org={org} rules={rules} />;
   if (tab === "sheets") return <SheetsAdmin org={org} rules={rules} />;
   return null;
+}
+
+/** "Paid vacation: 4 of 21 days used in 2026", when the company gives you days. */
+function VacationLine({ org, rules, me }: { org: WorkOrg; rules: WorkRules; me: WorkMember }) {
+  const year = new Date().getFullYear();
+  const leaves = useQuery(workYearLeavesQuery(org.id, year));
+  const total = Number(me.annual_leave_days ?? 0);
+  if (!leaves.data || total <= 0) return null;
+  const used = allowanceUsed({ userId: me.user_id, rules, ...leaves.data });
+  return (
+    <p className="text-sm text-muted-foreground">
+      {`${t("Paid vacation")}: ${used} ${t("of")} ${total} ${t("days used in")} ${year}`}
+    </p>
+  );
 }

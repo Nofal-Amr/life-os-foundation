@@ -17,6 +17,9 @@ import { Input } from "@/components/ui/input";
 import { XLSX_MIME } from "@/data/exportData";
 import {
   addCorrection,
+  allowanceUsed,
+  usesAllowance,
+  workYearLeavesQuery,
   approveLeave,
   deleteLeave,
   sheetInputFor,
@@ -45,6 +48,7 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
   const monthEvents = useQuery(workEventsQuery(org.id, month));
   const corrections = useQuery(workCorrectionsQuery(org.id, month));
   const leaves = useQuery(workLeavesQuery(org.id, month));
+  const yearLeaves = useQuery(workYearLeavesQuery(org.id, Number(month.slice(0, 4))));
   const [who, setWho] = useState<string | null>(null);
   const [day, setDay] = useState<{ row: DayRow; member: WorkMember } | null>(null);
   const [importing, setImporting] = useState(false);
@@ -241,6 +245,14 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
         onOpenChange={(open) => !open && setDay(null)}
         day={day}
         rules={rules}
+        allowance={
+          day && yearLeaves.data
+            ? {
+                used: allowanceUsed({ userId: day.member.user_id, rules, ...yearLeaves.data }),
+                total: Number(day.member.annual_leave_days ?? 0),
+              }
+            : null
+        }
         onSave={(field, value, reason) => {
           if (!day) return;
           correct.mutate(
@@ -258,12 +270,15 @@ function CorrectionDialog({
   onOpenChange,
   day,
   rules,
+  allowance,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   day: { row: DayRow; member: WorkMember } | null;
   rules: WorkRules;
+  /** This person's paid vacation this year. */
+  allowance: { used: number; total: number } | null;
   onSave: (field: "in" | "out" | "leave", value: string | null, reason: string) => void;
 }) {
   const [field, setField] = useState<"in" | "out" | "leave" | "remove-in" | "remove-out">("out");
@@ -319,7 +334,24 @@ function CorrectionDialog({
                 </option>
               ))}
             </select>
-          ) : field === "in" || field === "out" ? (
+          ) : null}
+          {field === "leave" &&
+          allowance &&
+          usesAllowance(rules.leaveTypes.find((type) => type.id === leave)) ? (
+            <p
+              className={
+                allowance.used >= allowance.total
+                  ? "text-xs text-destructive"
+                  : "text-xs text-muted-foreground"
+              }
+            >
+              {`${t("Paid vacation used this year")}: ${allowance.used} ${t("of")} ${allowance.total} ${t("days")}`}
+              {allowance.used >= allowance.total
+                ? `. ${t("This day goes past their allowance; it can still be saved.")}`
+                : ""}
+            </p>
+          ) : null}
+          {field === "in" || field === "out" ? (
             <Input type="time" value={clock} onChange={(event) => setClock(event.target.value)} />
           ) : null}
           <Input

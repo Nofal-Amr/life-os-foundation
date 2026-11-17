@@ -6,12 +6,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  allowanceUsed,
+  readRules,
   removeWorkMember,
   renewWorkCode,
   saveMember,
   workKeys,
   workMembersQuery,
   workPlacesQuery,
+  workYearLeavesQuery,
   type MemberPatch,
   type WorkMember,
   type WorkOrg,
@@ -23,6 +26,9 @@ import { toError } from "@/lib/supabase-helpers";
 export function PeopleAdmin({ org, me }: { org: WorkOrg; me: WorkMember }) {
   const queryClient = useQueryClient();
   const members = useQuery(workMembersQuery(org.id));
+  const year = new Date().getFullYear();
+  const yearLeaves = useQuery(workYearLeavesQuery(org.id, year));
+  const rules = readRules(org.rules);
   const refresh = () => void queryClient.invalidateQueries({ queryKey: workKeys.all });
   const renew = useMutation({
     mutationFn: () => renewWorkCode(org.id),
@@ -57,7 +63,18 @@ export function PeopleAdmin({ org, me }: { org: WorkOrg; me: WorkMember }) {
       </section>
       <ul className="space-y-3">
         {(members.data ?? []).map((member) => (
-          <MemberRow key={member.user_id} org={org} member={member} me={me} onSaved={refresh} />
+          <MemberRow
+            key={member.user_id}
+            org={org}
+            member={member}
+            me={me}
+            onSaved={refresh}
+            used={
+              yearLeaves.data
+                ? allowanceUsed({ userId: member.user_id, rules, ...yearLeaves.data })
+                : null
+            }
+          />
         ))}
       </ul>
     </div>
@@ -69,17 +86,21 @@ function MemberRow({
   member,
   me,
   onSaved,
+  used,
 }: {
   org: WorkOrg;
   member: WorkMember;
   me: WorkMember;
   onSaved: () => void;
+  /** Paid-vacation days used this year; null while loading. */
+  used: number | null;
 }) {
   const places = useQuery(workPlacesQuery(org.id));
   const [salary, setSalary] = useState(String(member.base_salary ?? 0));
   const [rate, setRate] = useState(
     member.overtime_rate == null ? "" : String(member.overtime_rate),
   );
+  const [vacation, setVacation] = useState(String(member.annual_leave_days ?? 0));
   const save = useMutation({
     mutationFn: (patch: MemberPatch) => saveMember(org.id, member.user_id, patch),
     onSuccess: () => {
@@ -129,11 +150,21 @@ function MemberRow({
           event.preventDefault();
           const base = Number(salary);
           const ownRate = rate.trim() === "" ? null : Number(rate);
-          if (!Number.isFinite(base) || base < 0 || (ownRate !== null && !(ownRate >= 0))) {
+          const days = Number(vacation || 0);
+          if (
+            !Number.isFinite(base) ||
+            base < 0 ||
+            (ownRate !== null && !(ownRate >= 0)) ||
+            !(days >= 0 && days <= 365)
+          ) {
             toast.error(t("Enter amounts as numbers."));
             return;
           }
-          save.mutate({ base_salary: base, overtime_rate: ownRate });
+          save.mutate({
+            base_salary: base,
+            overtime_rate: ownRate,
+            annual_leave_days: Math.round(days * 2) / 2,
+          });
         }}
       >
         <label className="space-y-1 text-xs text-muted-foreground">
@@ -154,10 +185,24 @@ function MemberRow({
             onChange={(event) => setRate(event.target.value)}
           />
         </label>
+        <label className="space-y-1 text-xs text-muted-foreground">
+          {t("Paid vacation days a year")}
+          <Input
+            inputMode="decimal"
+            className="h-9 w-24"
+            value={vacation}
+            onChange={(event) => setVacation(event.target.value)}
+          />
+        </label>
         <Button type="submit" size="sm" variant="outline" disabled={save.isPending}>
           Save
         </Button>
       </form>
+      {used !== null && (Number(member.annual_leave_days) > 0 || used > 0) ? (
+        <p className="text-xs text-muted-foreground">
+          {`${t("Paid vacation used this year")}: ${used} ${t("of")} ${Number(member.annual_leave_days)} ${t("days")}`}
+        </p>
+      ) : null}
       {(places.data ?? []).length > 1 ? (
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">

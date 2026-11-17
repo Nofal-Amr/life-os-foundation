@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
 
 import {
+  allowanceUsed,
   nextClockKind,
+  usesAllowance,
   todayClock,
   readRules,
   sheetInputFor,
@@ -167,5 +169,41 @@ describe("official holidays", () => {
     });
     expect(input.holidays).toEqual(["2026-11-03"]);
     expect(input.today).toBe("2026-11-17");
+  });
+});
+
+describe("paid vacation days used", () => {
+  const rules = {
+    leaveTypes: [
+      { id: "annual", name: "Annual leave", percent: 0 },
+      { id: "with", name: "With permission", percent: 5 },
+      { id: "sick", name: "Sick", percent: 0, fromAllowance: true },
+    ],
+  };
+  it("counts approved allowance leave and admin leave marks, one per day", () => {
+    const used = allowanceUsed({
+      userId: "u",
+      rules,
+      leaves: [
+        { user_id: "u", day: "2026-11-01", type_id: "annual", status: "approved" },
+        { user_id: "u", day: "2026-11-02", type_id: "annual", status: "requested" },
+        { user_id: "u", day: "2026-11-03", type_id: "with", status: "approved" },
+        { user_id: "x", day: "2026-11-04", type_id: "annual", status: "approved" },
+      ],
+      corrections: [
+        { user_id: "u", day: "2026-11-01", field: "leave", value: "annual" },
+        { user_id: "u", day: "2026-11-05", field: "leave", value: "sick" },
+        { user_id: "u", day: "2026-11-03", field: "leave", value: "annual" },
+        { user_id: "u", day: "2026-11-06", field: "out", value: null },
+      ],
+    });
+    // 1 Nov (once), 3 Nov (changed to annual), 5 Nov (sick uses the allowance).
+    expect(used).toBe(3);
+  });
+  it("knows which kinds use the allowance", () => {
+    expect(usesAllowance({ id: "annual" })).toBe(true);
+    expect(usesAllowance({ id: "with" })).toBe(false);
+    expect(usesAllowance({ id: "annual", fromAllowance: false })).toBe(false);
+    expect(usesAllowance(undefined)).toBe(false);
   });
 });

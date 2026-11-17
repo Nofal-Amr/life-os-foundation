@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { publicHolidays, readHolidaySettings } from "@/data/holidays";
-import { saveRules, workKeys, type WorkOrg } from "@/data/work/api";
+import { saveRules, usesAllowance, workKeys, type WorkOrg } from "@/data/work/api";
 import { ADO_PRESET, type LateStep, type WorkRules } from "@/data/work/rules";
 import { t } from "@/lib/i18n";
 import { toError } from "@/lib/supabase-helpers";
@@ -365,6 +365,20 @@ export function RulesEditor({ org, rules: saved }: { org: WorkOrg; rules: WorkRu
                 }
               />
             </Field>
+            <label className="flex h-9 items-center gap-2 text-xs text-muted-foreground">
+              <Switch
+                checked={usesAllowance(type)}
+                onCheckedChange={(checked) =>
+                  set(
+                    "leaveTypes",
+                    rules.leaveTypes.map((item, at) =>
+                      at === index ? { ...item, fromAllowance: checked } : item,
+                    ),
+                  )
+                }
+              />
+              {t("Uses vacation days")}
+            </label>
             <Button
               type="button"
               size="icon"
