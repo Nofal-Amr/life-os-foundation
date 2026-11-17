@@ -36,6 +36,7 @@ import { LifeConnectCard } from "@/components/app/LifeConnectCard";
 import { LocalAiCard } from "@/components/app/LocalAi";
 import { LanguageCard } from "@/components/app/LanguageCard";
 import { HolidaysCard } from "@/components/app/Holidays";
+import { CalendarSpacesCard } from "@/components/app/spaces/CalendarSpacesCard";
 import { GoogleCalendarCard } from "@/components/app/GoogleCalendarCard";
 import { SpendingSettingsCard } from "@/components/app/SpendingInbox";
 import { ReminderSettingsCard } from "@/components/app/PrayerReminders";
@@ -1194,6 +1195,7 @@ function SettingsPage() {
           {show("work") && <WorkSettingsCard />}
           {show("money") && <SpendingSettingsCard />}
           {show("phone") && <LocalAiCard />}
+          {show("calendar") && <CalendarSpacesCard />}
           {show("calendar") && <HolidaysCard />}
           {show("calendar") && <GoogleCalendarCard />}
 

@@ -6,6 +6,8 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { DatePicker } from "@/components/app/DatePicker";
+import { SpaceTabContent, TabRow } from "@/components/app/spaces/SpaceTabs";
+import { SPACE_TABS, type SpaceTab } from "@/data/spaces";
 import { PageHeader } from "@/components/app/PageHeader";
 import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
@@ -50,13 +52,21 @@ export const Route = createFileRoute("/_authenticated/study")({
   component: StudyPage,
 });
 
+type StudyTab = "due" | "week" | "courses" | SpaceTab;
+const STUDY_TABS: { value: StudyTab; label: string }[] = [
+  { value: "due", label: "Due" },
+  { value: "week", label: "Timetable" },
+  { value: "courses", label: "Courses" },
+  ...SPACE_TABS,
+];
+
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function StudyPage() {
   const courses = useQuery(coursesQuery());
   const sessions = useQuery(classSessionsQuery());
   const items = useQuery(studyItemsQuery());
-  const [tab, setTab] = useState<"due" | "week" | "courses">("due");
+  const [tab, setTab] = useState<StudyTab>("due");
 
   if (courses.isLoading || sessions.isLoading || items.isLoading) {
     return (
@@ -108,35 +118,14 @@ function StudyPage() {
           )}
         </section>
 
-        <div className="flex gap-1 rounded-lg bg-secondary p-1" role="tablist" aria-label="Study">
-          {(
-            [
-              { value: "due", label: "Due" },
-              { value: "week", label: "Timetable" },
-              { value: "courses", label: "Courses" },
-            ] as const
-          ).map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              role="tab"
-              aria-selected={tab === option.value}
-              onClick={() => setTab(option.value)}
-              className={cn(
-                "min-h-10 flex-1 rounded-md text-sm font-medium",
-                tab === option.value
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground",
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <TabRow tabs={STUDY_TABS} value={tab} onChange={setTab} label="Study" />
 
         {tab === "due" ? <DueTab courses={list} /> : null}
         {tab === "week" ? <TimetableTab courses={list} /> : null}
         {tab === "courses" ? <CoursesTab courses={list} /> : null}
+        {tab === "tasks" || tab === "notes" || tab === "ideas" || tab === "calendar" ? (
+          <SpaceTabContent space="study" tab={tab} />
+        ) : null}
       </div>
     </>
   );
