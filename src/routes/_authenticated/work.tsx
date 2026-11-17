@@ -182,7 +182,7 @@ function TodayTab({ org, rules, me }: { org: WorkOrg; rules: WorkRules; me: Work
   const places = useQuery(workPlacesQuery(org.id));
   const { month, step } = useMonthPicker();
   const thisMonth = format(new Date(), "yyyy-MM");
-  const { events } = useMonthSheet(org, rules, thisMonth, me);
+  const { events, corrections } = useMonthSheet(org, rules, thisMonth, me);
   const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: rules.timezone });
   const today = (events ?? []).filter(
     (event) =>
@@ -197,6 +197,7 @@ function TodayTab({ org, rules, me }: { org: WorkOrg; rules: WorkRules; me: Work
         places={places.data ?? []}
         today={today}
         recent={events ?? []}
+        corrections={corrections ?? []}
       />
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">

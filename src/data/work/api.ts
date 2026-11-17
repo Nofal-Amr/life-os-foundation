@@ -325,3 +325,46 @@ export function sheetInputFor(args: {
     holidays: args.holidays,
   };
 }
+
+export type TodayClock = {
+  in: string | null;
+  out: string | null;
+  corrected: ("in" | "out")[];
+  next: "in" | "out";
+};
+
+/**
+ * Today as the clock card should show it: the first clock-in and last
+ * clock-out, with an admin's corrections on top (the latest wins; `null`
+ * removes a time), the same way the month sheet counts them. The button
+ * offers clock-out while today has a clock-in and no clock-out yet, or a
+ * clock-out set ahead of now (a wrong clock-out an admin moved to the end of
+ * the day). Without a clock-in today it falls back to `nextClockKind`, so a
+ * shift that started last night still offers clock-out.
+ */
+export function todayClock(args: {
+  day: string;
+  events: Pick<WorkEvent, "kind" | "at">[];
+  corrections: Pick<WorkCorrection, "day" | "field" | "value">[];
+  recent: Pick<WorkEvent, "kind" | "at">[];
+  now: number;
+}): TodayClock {
+  const clocks = args.events
+    .filter((event) => event.kind === "in" || event.kind === "out")
+    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  let inAt = clocks.find((event) => event.kind === "in")?.at ?? null;
+  let outAt = clocks.filter((event) => event.kind === "out").at(-1)?.at ?? null;
+  const corrected: ("in" | "out")[] = [];
+  for (const item of args.corrections) {
+    if (item.day !== args.day || (item.field !== "in" && item.field !== "out")) continue;
+    if (item.field === "in") inAt = item.value;
+    else outAt = item.value;
+    if (!corrected.includes(item.field)) corrected.push(item.field);
+  }
+  const next: "in" | "out" = inAt
+    ? outAt === null || Date.parse(outAt) > args.now
+      ? "out"
+      : "in"
+    : nextClockKind(args.recent, args.now);
+  return { in: inAt, out: outAt, corrected, next };
+}

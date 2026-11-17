@@ -266,7 +266,7 @@ function CorrectionDialog({
   rules: WorkRules;
   onSave: (field: "in" | "out" | "leave", value: string | null, reason: string) => void;
 }) {
-  const [field, setField] = useState<"in" | "out" | "leave">("out");
+  const [field, setField] = useState<"in" | "out" | "leave" | "remove-in" | "remove-out">("out");
   const [clock, setClock] = useState("16:30");
   const [leave, setLeave] = useState(rules.leaveTypes[0]?.id ?? "");
   const [reason, setReason] = useState("");
@@ -283,21 +283,28 @@ function CorrectionDialog({
           onSubmit={(event) => {
             event.preventDefault();
             if (!reason.trim()) return;
-            onSave(
-              field,
-              field === "leave" ? leave : zonedIso(day.row.day, clock, rules.timezone),
-              reason.trim(),
-            );
+            if (field === "remove-in" || field === "remove-out")
+              onSave(field === "remove-in" ? "in" : "out", null, reason.trim());
+            else
+              onSave(
+                field,
+                field === "leave" ? leave : zonedIso(day.row.day, clock, rules.timezone),
+                reason.trim(),
+              );
             setReason("");
           }}
         >
           <select
             className="h-10 w-full rounded-lg border border-border bg-card px-2 text-sm"
             value={field}
-            onChange={(event) => setField(event.target.value as "in" | "out" | "leave")}
+            onChange={(event) => setField(event.target.value as typeof field)}
           >
             <option value="in">{t("Set the clock-in time")}</option>
             <option value="out">{t("Set the clock-out time")}</option>
+            {day.row.out ? (
+              <option value="remove-out">{t("Remove the clock-out (a wrong tap)")}</option>
+            ) : null}
+            {day.row.in ? <option value="remove-in">{t("Remove the clock-in")}</option> : null}
             <option value="leave">{t("Mark as leave")}</option>
           </select>
           {field === "leave" ? (
@@ -312,9 +319,9 @@ function CorrectionDialog({
                 </option>
               ))}
             </select>
-          ) : (
+          ) : field === "in" || field === "out" ? (
             <Input type="time" value={clock} onChange={(event) => setClock(event.target.value)} />
-          )}
+          ) : null}
           <Input
             value={reason}
             maxLength={300}

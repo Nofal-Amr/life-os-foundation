@@ -6,10 +6,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  nextClockKind,
   recordEvent,
+  todayClock,
   workKeys,
   type EventInput,
+  type WorkCorrection,
   type WorkEvent,
   type WorkMember,
   type WorkOrg,
@@ -43,6 +44,7 @@ export function ClockCard({
   places,
   today,
   recent,
+  corrections,
 }: {
   org: WorkOrg;
   rules: WorkRules;
@@ -52,6 +54,8 @@ export function ClockCard({
   today: WorkEvent[];
   /** Your events from the last day or so, to tell clock-in from clock-out. */
   recent: WorkEvent[];
+  /** This month's corrections for you; today's are shown on the card. */
+  corrections: WorkCorrection[];
 }) {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState<string | null>(null);
@@ -59,8 +63,14 @@ export function ClockCard({
   const [reason, setReason] = useState("");
   /** The last clock-in or clock-out, to offer posting it in WhatsApp. */
   const [toPost, setToPost] = useState<string | null>(null);
-  const clocks = today.filter((event) => event.kind !== "attempt");
-  const kind = nextClockKind(recent, Date.now());
+  const day = new Date().toLocaleDateString("en-CA", { timeZone: rules.timezone });
+  const state = todayClock({ day, events: today, corrections, recent, now: Date.now() });
+  const kind = state.next;
+  const placeOf = (field: "in" | "out") =>
+    state.corrected.includes(field)
+      ? null
+      : (today.filter((event) => event.kind === field).at(field === "in" ? 0 : -1)?.place_id ??
+        null);
   const allowed = (member.place_ids?.length
     ? places.filter((place) => member.place_ids!.includes(place.id))
     : places) as unknown as PlaceLike[];
@@ -163,12 +173,14 @@ export function ClockCard({
         <div>
           <p className="text-base font-semibold">{org.name}</p>
           <p className="text-xs text-muted-foreground">
-            {clocks.length
-              ? clocks
-                  .map(
-                    (event) =>
-                      `${t(event.kind === "in" ? "In" : "Out")} ${time(event.at)}${event.place_id ? ` · ${placeName(event.place_id)}` : ""}`,
-                  )
+            {state.in || state.out
+              ? (["in", "out"] as const)
+                  .filter((field) => state[field])
+                  .map((field) => {
+                    const place = placeOf(field);
+                    const mark = state.corrected.includes(field) ? ` (${t("corrected")})` : "";
+                    return `${t(field === "in" ? "In" : "Out")} ${time(state[field]!)}${mark}${place ? ` · ${placeName(place)}` : ""}`;
+                  })
                   .join("  ·  ")
               : t("Not clocked in today.")}
           </p>
