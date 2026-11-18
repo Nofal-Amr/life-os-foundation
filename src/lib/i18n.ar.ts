@@ -2585,4 +2585,39 @@ export const AR: Record<string, string> = {
   "No other projects to bring in.": "لا توجد مشاريع أخرى لإحضارها.",
   "Move to Work": "انقله إلى العمل",
   "Move to Study": "انقله إلى الدراسة",
+  classes: "حصص",
+  exams: "امتحانات",
+  "Prompt copied. Paste it in your AI chat with the screenshot.":
+    "نُسخت التعليمات. الصقها في محادثة الذكاء الاصطناعي مع لقطة الشاشة.",
+  "Couldn't copy. Select the prompt and copy it yourself.":
+    "تعذّر النسخ. حدّد التعليمات وانسخها بنفسك.",
+  "No classes or exams found in that text.": "لم نجد حصصًا أو امتحانات في هذا النص.",
+  "From a screenshot of your schedule": "من لقطة شاشة لجدولك",
+  "Show your timetable to any AI chat with our prompt, then paste its answer here. You check the list before anything is added.":
+    "اعرض جدولك على أي محادثة ذكاء اصطناعي مع تعليماتنا، ثم الصق إجابتها هنا. تراجع القائمة قبل إضافة أي شيء.",
+  "Make my schedule": "اصنع جدولي",
+  "Copy the prompt.": "انسخ التعليمات.",
+  "In ChatGPT, Gemini, Claude or any AI chat, paste it and attach the screenshot.":
+    "في ChatGPT أو Gemini أو Claude أو أي محادثة ذكاء اصطناعي، الصقها وأرفق لقطة الشاشة.",
+  "Paste its answer below and check the list.": "الصق إجابتها بالأسفل وراجع القائمة.",
+  "Copy the prompt": "انسخ التعليمات",
+  "Or read it on this phone": "أو اقرأها على هذا الهاتف",
+  "Couldn't read the photo on this device.": "تعذّرت قراءة الصورة على هذا الجهاز.",
+  "The AI's answer": "إجابة الذكاء الاصطناعي",
+  "Reading on the phone works best on a clear list; for a grid, the AI chat reads it better. Life OS doesn't send your screenshot anywhere.":
+    "القراءة على الهاتف أفضل مع قائمة واضحة؛ أما الجدول الشبكي فتقرؤه محادثة الذكاء الاصطناعي أفضل. لا يرسل Life OS لقطة شاشتك إلى أي مكان.",
+  "Check the list": "راجع القائمة",
+  Classes: "الحصص",
+  Exams: "الامتحانات",
+  "Leave out": "استبعد",
+  "lines couldn't be read and were left out": "أسطر تعذّرت قراءتها فاستُبعدت",
+  class: "حصة",
+  exam: "امتحان",
+  "Timetable imported.": "استُورد الجدول.",
+  "Export your timetable as a calendar file (.ics) and choose it here. Repeating classes become timetable slots; exams become exam items.":
+    "صدّر جدولك كملف تقويم (.ics) واختره هنا. تصبح الحصص المتكررة مواعيد في الجدول، والامتحانات عناصر امتحان.",
+  "That file is too big for a timetable.": "هذا الملف أكبر من أن يكون جدولًا.",
+  "No repeating classes or exams found in that file.":
+    "لم نجد حصصًا متكررة أو امتحانات في هذا الملف.",
+  "Choose .ics file": "اختر ملف .ics",
 };
