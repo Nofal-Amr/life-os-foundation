@@ -795,6 +795,7 @@ public class MainActivity extends Activity {
                 return new org.json.JSONObject()
                     .put("sms", declares(Manifest.permission.RECEIVE_SMS))
                     .put("spending", hasSpendingListener())
+                    .put("connect", ConnectService.inBuild(MainActivity.this))
                     .toString();
             } catch (Exception e) {
                 return "{}";
