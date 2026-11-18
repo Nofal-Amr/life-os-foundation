@@ -2620,4 +2620,5 @@ export const AR: Record<string, string> = {
   "No repeating classes or exams found in that file.":
     "لم نجد حصصًا متكررة أو امتحانات في هذا الملف.",
   "Choose .ics file": "اختر ملف .ics",
+  "Show what's playing (song and app)": "عرض ما يُشغَّل (الأغنية والتطبيق)",
 };

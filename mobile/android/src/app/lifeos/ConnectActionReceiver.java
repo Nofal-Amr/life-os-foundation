@@ -41,6 +41,10 @@ public class ConnectActionReceiver extends BroadcastReceiver {
             reply(context, intent, config);
             return;
         }
+        if ("media_dismiss".equals(what)) {
+            MediaAlert.release(context);
+            return;
+        }
         if (what.startsWith("media_")) {
             // The music remote: the SIM phone acts, then sends back what's playing.
             MediaAlert.send(context, what.substring("media_".length()), 0);

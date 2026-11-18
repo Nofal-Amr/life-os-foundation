@@ -619,6 +619,7 @@ public class MainActivity extends Activity {
                     .put("battery", getSystemService(android.os.PowerManager.class)
                         .isIgnoringBatteryOptimizations(getPackageName()))
                     .put("brand", android.os.Build.MANUFACTURER.toLowerCase(java.util.Locale.ROOT))
+                    .put("media", hasNotificationAccess())
                     .put("peer", ConnectConfig.peer(MainActivity.this));
                 return status.toString();
             } catch (Exception e) {
@@ -820,6 +821,12 @@ public class MainActivity extends Activity {
         public void setSpendingWatch(String json) {
             if (!trusted() || json == null || json.length() > 20_000) return;
             SpendingStore.setWatch(MainActivity.this, json);
+        }
+
+        private boolean hasNotificationAccess() {
+            String enabled = android.provider.Settings.Secure.getString(
+                getContentResolver(), "enabled_notification_listeners");
+            return enabled != null && enabled.contains(getPackageName() + "/");
         }
 
         @JavascriptInterface
