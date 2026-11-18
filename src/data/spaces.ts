@@ -55,13 +55,17 @@ export function spaceProject(projects: Project[], space: SpaceKey): Project | nu
   );
 }
 
-/** Which space a task belongs to: by its project, otherwise "life". */
-export function spaceOfTask(task: Pick<Task, "project_id">, projects: Project[]): CalendarSpace {
+/**
+ * Which space a task belongs to: by its project (the space's own, or one
+ * moved into it), otherwise "life". Subtasks carry their project too.
+ */
+export function spaceOfTask(
+  task: Pick<Task, "project_id">,
+  projects: Project[],
+  enabled: readonly string[] = [],
+): CalendarSpace {
   if (!task.project_id) return "life";
-  for (const space of ["work", "study"] as const) {
-    if (spaceProject(projects, space)?.id === task.project_id) return space;
-  }
-  return "life";
+  return projectSpace(enabled, { id: task.project_id }, projects);
 }
 
 const hasTag = (note: Pick<Note, "tags">, tag: string) =>
@@ -95,4 +99,51 @@ export function withCalendarSpace(
 ): string[] {
   const rest = enabled.filter((item) => item !== HIDE_FLAG(space));
   return show ? rest : [...rest, HIDE_FLAG(space)];
+}
+
+/* Whole projects moved into a space, kept with the area choices too. */
+const PROJECT_FLAG = "space:";
+const projectFlag = (space: SpaceKey, projectId: string) => `${PROJECT_FLAG}${space}:${projectId}`;
+
+/** The space a project was moved into, or "life". The space's own project counts too. */
+export function projectSpace(
+  enabled: readonly string[],
+  project: Pick<Project, "id">,
+  projects: Project[] = [],
+): CalendarSpace {
+  for (const space of ["work", "study"] as const) {
+    if (spaceProject(projects, space)?.id === project.id) return space;
+    if (enabled.includes(projectFlag(space, project.id))) return space;
+  }
+  return "life";
+}
+
+/**
+ * Move a project (with every task and subtask in it) to a space, or back to
+ * life. Moving into a space also switches that space on.
+ */
+export function withProjectSpace(
+  enabled: readonly string[],
+  projectId: string,
+  space: CalendarSpace,
+): string[] {
+  const rest = enabled.filter(
+    (item) => !(item.startsWith(PROJECT_FLAG) && item.endsWith(`:${projectId}`)),
+  );
+  if (space === "life") return rest;
+  return [...new Set([...rest, space, projectFlag(space, projectId)])];
+}
+
+/** Every project whose tasks belong to a space: its own, then the ones moved in. */
+export function spaceProjectIds(
+  projects: Project[],
+  enabled: readonly string[],
+  space: SpaceKey,
+): Set<string> {
+  const ids = new Set<string>();
+  const home = spaceProject(projects, space);
+  if (home) ids.add(home.id);
+  for (const project of projects)
+    if (enabled.includes(projectFlag(space, project.id))) ids.add(project.id);
+  return ids;
 }

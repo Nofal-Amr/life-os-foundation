@@ -43,6 +43,8 @@ import { goalsQuery } from "@/data/goals";
 import { projectGoals, projectProgress } from "@/data/links";
 import { CountBar, GoalChips } from "@/components/app/LinkedProgress";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useModules } from "@/hooks/useModules";
+import { projectSpace, spaceProject, withProjectSpace, type CalendarSpace } from "@/data/spaces";
 import { priorityLabel, priorityTone, projectStatusTone } from "@/lib/semantics";
 import { SemanticBadge } from "@/components/app/SemanticBadge";
 import { t } from "@/lib/i18n";
@@ -77,6 +79,7 @@ function ProjectsPage() {
   const tasks = useQuery(tasksQuery());
   const goals = useQuery(goalsQuery());
   const { fmtDate } = usePreferences();
+  const { enabled, setModules } = useModules();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Project | null>(null);
   const [form, setForm] = useState<ProjectInput>(emptyForm);
@@ -125,6 +128,32 @@ function ProjectsPage() {
     },
     onError,
   });
+
+  /** Move a project, with its tasks and subtasks, to Work, Study or back to Life. */
+  function moveActions(project: Project) {
+    const all = projects.data ?? [];
+    // The spaces' own projects stay where they are.
+    if (
+      spaceProject(all, "work")?.id === project.id ||
+      spaceProject(all, "study")?.id === project.id
+    )
+      return [];
+    const here = projectSpace(enabled, project, all);
+    const targets: { space: CalendarSpace; label: string }[] = [
+      { space: "work", label: "Move to Work" },
+      { space: "study", label: "Move to Study" },
+      { space: "life", label: "Move back to Life" },
+    ];
+    return targets
+      .filter((target) => target.space !== here)
+      .map((target) => ({
+        label: target.label,
+        onSelect: () => {
+          setModules(withProjectSpace(enabled, project.id, target.space));
+          toast.success(`${project.name} · ${t(target.label)}`);
+        },
+      }));
+  }
 
   function openCreate() {
     setEditing(null);
@@ -219,6 +248,15 @@ function ProjectsPage() {
                               {priorityLabel(project.priority)} priority
                             </SemanticBadge>
                           ) : null}
+                          {projectSpace(enabled, project, projects.data ?? []) !== "life" ? (
+                            <SemanticBadge tone="info">
+                              {t(
+                                projectSpace(enabled, project, projects.data ?? []) === "work"
+                                  ? "Work"
+                                  : "Study",
+                              )}
+                            </SemanticBadge>
+                          ) : null}
                           {project.due_date ? (
                             <span>
                               {t("Due")} {fmtDate(project.due_date)}
@@ -230,6 +268,7 @@ function ProjectsPage() {
                         </>
                       }
                       actions={[
+                        ...moveActions(project),
                         ...(project.status !== "archived"
                           ? [{ label: "Archive", onSelect: () => archive.mutate(project.id) }]
                           : []),

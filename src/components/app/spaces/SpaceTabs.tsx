@@ -2,13 +2,28 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { addDays, parseISO } from "date-fns";
 import { format } from "@/lib/dates";
-import { CalendarDays, Check, Lightbulb, Plus, StickyNote, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  Check,
+  FolderInput,
+  Lightbulb,
+  Plus,
+  StickyNote,
+  Trash2,
+} from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { DatePicker } from "@/components/app/DatePicker";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createNote, deleteNote, noteKeys, notesQuery, type Note } from "@/data/notes";
@@ -16,8 +31,11 @@ import { createProject, projectKeys, projectsQuery, type Project } from "@/data/
 import {
   SPACES,
   spaceNotes,
+  projectSpace,
   spaceProject,
+  spaceProjectIds,
   spaceTags,
+  withProjectSpace,
   type SpaceKey,
   type SpaceTab,
 } from "@/data/spaces";
@@ -32,6 +50,7 @@ import {
   tasksQuery,
   type Task,
 } from "@/data/tasks";
+import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -97,8 +116,18 @@ function SpaceTasks({ space }: { space: SpaceKey }) {
   const [title, setTitle] = useState("");
   const [due, setDue] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
+  const [bringing, setBringing] = useState(false);
+  const { enabled, setModules } = useModules();
 
   const project = spaceProject(projects.data ?? [], space);
+  const movedIn = (projects.data ?? []).filter(
+    (item) =>
+      item.id !== project?.id && spaceProjectIds(projects.data ?? [], enabled, space).has(item.id),
+  );
+  const tasksOf = (projectId: string) =>
+    (tasks.data ?? []).filter((task) => task.project_id === projectId && !task.parent_task_id);
+  const subtaskCount = (taskId: string) =>
+    (tasks.data ?? []).filter((task) => task.parent_task_id === taskId).length;
   const mine = (tasks.data ?? []).filter(
     (task) => project && task.project_id === project.id && !task.parent_task_id,
   );
@@ -187,8 +216,15 @@ function SpaceTasks({ space }: { space: SpaceKey }) {
         >
           {task.title}
         </p>
-        {task.due_date ? (
-          <p className="text-xs text-muted-foreground">{fmtShortDate(task.due_date)}</p>
+        {task.due_date || subtaskCount(task.id) ? (
+          <p className="text-xs text-muted-foreground">
+            {[
+              task.due_date ? fmtShortDate(task.due_date) : null,
+              subtaskCount(task.id) ? `${subtaskCount(task.id)} ${t("subtasks")}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
         ) : null}
       </div>
       <Button
@@ -220,7 +256,7 @@ function SpaceTasks({ space }: { space: SpaceKey }) {
 
       {open.length ? (
         <ul className="space-y-2">{open.map(row)}</ul>
-      ) : (
+      ) : movedIn.length ? null : (
         <EmptyState
           title={space === "work" ? "No work tasks yet" : "No study tasks yet"}
           description="Type one above. They also show in Tasks and on the calendar when they have a date."
@@ -239,7 +275,130 @@ function SpaceTasks({ space }: { space: SpaceKey }) {
           {showDone ? <ul className="mt-2 space-y-2">{done.map(row)}</ul> : null}
         </div>
       ) : null}
+
+      {movedIn.map((item) => {
+        const list = tasksOf(item.id);
+        const openOnes = list.filter(isOpen);
+        return (
+          <section key={item.id} className="space-y-2 pt-2">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="min-w-0 truncate text-sm font-semibold">
+                {item.name}
+                <span className="ms-2 font-normal text-muted-foreground">
+                  {`${openOnes.length} ${t("open")} · ${list.length - openOnes.length} ${t("done")}`}
+                </span>
+              </h3>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setModules(withProjectSpace(enabled, item.id, "life"));
+                  toast.success(`${item.name} · ${t("moved back to Life")}`);
+                }}
+              >
+                {t("Move back to Life")}
+              </Button>
+            </div>
+            {openOnes.length ? (
+              <ul className="space-y-2">{openOnes.map(row)}</ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("Nothing open in this project.")}</p>
+            )}
+          </section>
+        );
+      })}
+
+      <Button type="button" variant="outline" onClick={() => setBringing(true)}>
+        <FolderInput className="size-4" /> {t("Bring in a project")}
+      </Button>
+      <BringProjectDialog
+        open={bringing}
+        onOpenChange={setBringing}
+        space={space}
+        projects={projects.data ?? []}
+        tasks={tasks.data ?? []}
+        enabled={enabled}
+        onPick={(item) => {
+          setModules(withProjectSpace(enabled, item.id, space));
+          setBringing(false);
+          toast.success(
+            `${item.name} · ${t(space === "work" ? "moved to Work" : "moved to Study")}`,
+          );
+        }}
+      />
     </div>
+  );
+}
+
+/** Pick one of your other projects to move here, with all its tasks and subtasks. */
+function BringProjectDialog({
+  open,
+  onOpenChange,
+  space,
+  projects,
+  tasks,
+  enabled,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  space: SpaceKey;
+  projects: Project[];
+  tasks: Task[];
+  enabled: readonly string[];
+  onPick: (project: Project) => void;
+}) {
+  const choices = projects.filter(
+    (item) => item.status !== "archived" && projectSpace(enabled, item, projects) !== space,
+  );
+  const where = (item: Project) => projectSpace(enabled, item, projects);
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {t(space === "work" ? "Bring a project into Work" : "Bring a project into Study")}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              "Its tasks and subtasks come with it. Nothing is copied or deleted, and you can move it back any time.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        {choices.length ? (
+          <ul className="max-h-[60vh] space-y-2 overflow-y-auto">
+            {choices
+              .filter(
+                (item) =>
+                  spaceProject(projects, "work")?.id !== item.id &&
+                  spaceProject(projects, "study")?.id !== item.id,
+              )
+              .map((item) => {
+                const count = tasks.filter((task) => task.project_id === item.id).length;
+                const from = where(item);
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => onPick(item)}
+                      className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 text-start hover:bg-accent"
+                    >
+                      <span className="min-w-0 truncate text-sm font-medium">{item.name}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {`${count} ${t("tasks")}`}
+                        {from !== "life" ? ` · ${t(from === "work" ? "in Work" : "in Study")}` : ""}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("No other projects to bring in.")}</p>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -370,15 +529,16 @@ function SpaceCalendar({ space }: { space: SpaceKey }) {
   const tasks = useQuery(tasksQuery());
   const items = useQuery({ ...studyItemsQuery(), enabled: space === "study" });
   const { fmtLongDate } = usePreferences();
+  const { enabled } = useModules();
 
   if (projects.isLoading || tasks.isLoading) return <LoadingState rows={3} />;
-  const project = spaceProject(projects.data ?? [], space);
+  const ids = spaceProjectIds(projects.data ?? [], enabled, space);
   const today = format(new Date(), "yyyy-MM-dd");
   const until = format(addDays(new Date(), 60), "yyyy-MM-dd");
 
   const list: Dated[] = [];
   for (const task of tasks.data ?? []) {
-    if (!project || task.project_id !== project.id || !task.due_date || task.parent_task_id)
+    if (!task.project_id || !ids.has(task.project_id) || !task.due_date || task.parent_task_id)
       continue;
     list.push({
       id: `task-${task.id}`,
