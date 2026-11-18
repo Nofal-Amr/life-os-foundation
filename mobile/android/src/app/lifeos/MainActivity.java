@@ -623,7 +623,8 @@ public class MainActivity extends Activity {
                     .put("peerBattery", PeerBattery.last(MainActivity.this))
                     .put("brand", android.os.Build.MANUFACTURER.toLowerCase(java.util.Locale.ROOT))
                     .put("media", hasNotificationAccess())
-                    .put("peer", ConnectConfig.peer(MainActivity.this));
+                    .put("peer", ConnectConfig.peer(MainActivity.this))
+                    .put("peerLink", ConnectService.peerLink(MainActivity.this));
                 return status.toString();
             } catch (Exception e) {
                 return "{}";

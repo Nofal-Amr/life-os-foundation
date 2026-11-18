@@ -13,6 +13,7 @@ import { trackScreen } from "@/lib/analytics";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { BottomNav, SidebarNav } from "@/components/app/Navigation";
+import { ConnectShortcut } from "@/components/app/ConnectShortcut";
 import { SectionTabs } from "@/components/app/SectionTabs";
 import { UniversalSearch, useSearchShortcut } from "@/components/app/UniversalSearch";
 import { UserAvatar, useDisplayName } from "@/components/app/UserAvatar";
@@ -121,6 +122,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
           </Button>
+          {/* Life Connect, one tap away (phone app only, once it's set up). */}
+          <ConnectShortcut />
           {/* Your picture opens Profile & Settings, as in most phone apps. */}
           <Link
             to="/settings"
