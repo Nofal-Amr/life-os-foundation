@@ -129,3 +129,18 @@ A wrong tap mid-day (e.g. out 9:12, in 9:44) is removed with a correction whose 
 
 ## Evening ritual (2026-11-18)
 "Close the day" from 6 pm on Today and in the daily review: tick what's done, move the rest to tomorrow, with Undo. (PR 80)
+
+## Three Android builds (2026-11-18)
+Full (the owner's: Life Connect + SMS and notification reading), Standard (Life Connect without SMS/notification reading) and Global (no Life Connect at all; the one for Google Play and other stores). Manifest markers `full:` and `connect:` decide what each build keeps. The native app will get the same split once it has Life Connect. (PR 89)
+
+## Life Connect: sender role in its own field (2026-11-18)
+Every Life Connect message names the sending phone in `by` ("main" or "sim"). `from` belongs to the payload (an SMS's number). Older apps that put the role in `from` are still understood. (PR 92)
+
+## Life Connect: music remote and battery (2026-11-18)
+The remote is a system media player (like KDE Connect's), so the lock screen, notification shade and volume keys control the SIM phone. The SIM phone's battery shows on the main phone with alerts at 20% and 10%, no more until it climbs back past 25%; charging clears the alert. Real readings only, no estimates. (PRs 87, 88)
+
+## Space projects (2026-11-18)
+A project belongs to one place: personal Projects, Work or Study. Projects shows a small "In Work: N projects" link instead of listing them twice. (PR 90)
+
+## Offline layer: device copy first, then answer (2026-11-18)
+A write that succeeds online updates the device copy before the app is told it's done, so the re-read after a save never shows old data. (PR 93)

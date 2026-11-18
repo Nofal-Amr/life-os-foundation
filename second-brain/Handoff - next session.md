@@ -5,7 +5,22 @@ updated: 2026-11-18
 
 # Handoff for the next session
 
-## Latest: 2026-11-18 (READ FIRST)
+## Latest: 2026-11-18, part 2 (READ FIRST)
+Read [[2026-11-18 - Life Connect fixes, three builds, space projects]]. Merged and live (CI green, live site 200):
+- **PR 86** Life Connect: no crash when a setting (the OTP switch) is changed; the socket closes off the main thread.
+- **PR 87** Music remote is a real player (MediaSession): play/pause/next/previous, phone volume keys and slider change the SIM phone's volume. "Show what's playing" needs notification access on the SIM phone (new checklist item).
+- **PR 88** SIM phone battery on the main phone ("POCO battery 64%"), alerts at 20% and 10%, re-arms at 25%, cleared when charging.
+- **PR 89** Three web-view builds: **Full** (`life-os-full.apk`, everything), **Standard** (`life-os-debug.apk`, no SMS/notification reading), **Global** (`life-os-global.apk`, no Life Connect at all, for the Play Store). `npm run build:android:global`.
+- **PR 90** Work and Study get a Projects tab; a project moved there leaves personal Projects ("In Work: N projects" link).
+- **PR 91** `PROJECT_FULL.md`: whole project in one file, secrets redacted. Regenerate with scratchpad `pf_build.py` (copy kept in `C:\Users\ASUS 030T\life-os-backup\2026-11-18\`).
+- **PR 92** Forwarded SMS keep their real sender. The phone role now travels in its own `by` field (it used to overwrite `from`). Texts forwarded 17–18 Nov stay in one "sim" thread; their number is lost.
+- **PR 93** Offline layer: a save now updates the phone's copy before answering, so lists no longer flick back to old data (the prayer "Log" flicker).
+
+Not yet checked on the real phones: PRs 87, 88, 89, 92, 93. Full APK from `8fc07c6` was sent. Battery cost of the Full app on the POCO is estimated at 2–6%/day (unmeasured); if Settings → Battery shows more than 5%, lengthen the 25 s heartbeat.
+
+Waiting on the owner (unchanged): PR 74 DB OK; native app catch-up (then port Life Connect and the Full/Standard/Global split there; the native app has no Life Connect today); optional: make the Global build Play-ready (release key, AAB).
+
+## 2026-11-18, part 1
 Merged and live on lifeos0.vercel.app (all CI green, live pages return 200):
 - **PR 78** Work and Study as spaces (Tasks, Notes, Ideas, Calendar tabs; calendar show/hide in Settings).
 - **PR 80** Close the day (evening ritual): from 6 pm, move unfinished tasks to tomorrow, with Undo.
