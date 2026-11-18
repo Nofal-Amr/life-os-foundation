@@ -32,10 +32,11 @@ export const SPACES: Record<
   },
 };
 
-export type SpaceTab = "tasks" | "notes" | "ideas" | "calendar";
+export type SpaceTab = "tasks" | "projects" | "notes" | "ideas" | "calendar";
 
 export const SPACE_TABS: { value: SpaceTab; label: string }[] = [
   { value: "tasks", label: "Tasks" },
+  { value: "projects", label: "Projects" },
   { value: "notes", label: "Notes" },
   { value: "ideas", label: "Ideas" },
   { value: "calendar", label: "Calendar" },

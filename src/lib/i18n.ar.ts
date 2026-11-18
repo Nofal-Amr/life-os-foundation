@@ -2625,4 +2625,11 @@ export const AR: Record<string, string> = {
   "battery shows here once it's connected.": "تظهر البطارية هنا بعد الاتصال.",
   charging: "يشحن",
   "as of": "حتى",
+  "In Work": "في العمل",
+  "In Study": "في الدراسة",
+  project: "مشروع",
+  projects: "مشاريع",
+  "No projects in": "لا مشاريع في",
+  "Start one here, or move one in from Projects with its ⋯ menu.":
+    "ابدأ مشروعًا هنا، أو انقل واحدًا من المشاريع عبر قائمة ⋯.",
 };

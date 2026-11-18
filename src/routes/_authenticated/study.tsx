@@ -67,6 +67,8 @@ import { t } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_authenticated/study")({
   head: () => ({ meta: [{ title: "Study · Life OS" }] }),
+  validateSearch: (search: Record<string, unknown>): { tab?: string } =>
+    typeof search["tab"] === "string" ? { tab: search["tab"] } : {},
   component: StudyPage,
 });
 
@@ -84,7 +86,10 @@ function StudyPage() {
   const courses = useQuery(coursesQuery());
   const sessions = useQuery(classSessionsQuery());
   const items = useQuery(studyItemsQuery());
-  const [tab, setTab] = useState<StudyTab>("due");
+  const asked = Route.useSearch().tab;
+  const [tab, setTab] = useState<StudyTab>(
+    STUDY_TABS.some((option) => option.value === asked) ? (asked as StudyTab) : "due",
+  );
 
   if (courses.isLoading || sessions.isLoading || items.isLoading) {
     return (
@@ -141,7 +146,11 @@ function StudyPage() {
         {tab === "due" ? <DueTab courses={list} /> : null}
         {tab === "week" ? <TimetableTab courses={list} /> : null}
         {tab === "courses" ? <CoursesTab courses={list} /> : null}
-        {tab === "tasks" || tab === "notes" || tab === "ideas" || tab === "calendar" ? (
+        {tab === "tasks" ||
+        tab === "projects" ||
+        tab === "notes" ||
+        tab === "ideas" ||
+        tab === "calendar" ? (
           <SpaceTabContent space="study" tab={tab} />
         ) : null}
       </div>
