@@ -51,7 +51,12 @@ import { projectsQuery } from "@/data/projects";
 import { PRAYER_NAMES, prayerLabel, prayerSettingsQuery } from "@/data/spirit";
 import { isOpen, tasksQuery } from "@/data/tasks";
 import { podEventsQuery, podsQuery } from "@/data/together";
-import { calendarShowsSpace, spaceOfTask, spaceProject, type CalendarSpace } from "@/data/spaces";
+import {
+  calendarShowsSpace,
+  spaceOfTask,
+  spaceProjectIds,
+  type CalendarSpace,
+} from "@/data/spaces";
 import { studyItemsQuery } from "@/data/study";
 import { useModules } from "@/hooks/useModules";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -327,7 +332,7 @@ function CalendarPage() {
         to: "/tasks",
         ...(start && !Number.isNaN(start.getTime()) ? { start, end: null } : {}),
         icon: project ? { icon: project.icon, color: project.color } : null,
-        space: spaceOfTask(task, projects.data ?? []),
+        space: spaceOfTask(task, projects.data ?? [], enabled),
       });
     }
     for (const item of studyOn ? (studyItems.data ?? []) : []) {
@@ -414,6 +419,7 @@ function CalendarPage() {
     studyItems.data,
     studyOn,
     projects.data,
+    enabled,
     goals.data,
     costs.data,
     healthLogs.data,
@@ -426,7 +432,7 @@ function CalendarPage() {
   const visible = items.filter(
     (item) => !hidden.includes(item.source) && spaceShown(item.space ?? "life"),
   );
-  const hasWork = !!spaceProject(projects.data ?? [], "work");
+  const hasWork = spaceProjectIds(projects.data ?? [], enabled, "work").size > 0;
   const spaceChips = SPACE_CHIPS.filter(
     (chip) => chip.id === "life" || (chip.id === "work" ? hasWork : studyOn),
   );
