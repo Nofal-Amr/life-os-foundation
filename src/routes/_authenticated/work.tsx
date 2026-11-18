@@ -42,6 +42,8 @@ export const Route = createFileRoute("/_authenticated/work")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { tab?: string } =>
+    typeof search["tab"] === "string" ? { tab: search["tab"] } : {},
   component: WorkPage,
 });
 
@@ -83,7 +85,8 @@ export type WorkTab = "today" | SpaceTab | "people" | "places" | "rules" | "shee
 
 /** Work without a company: your own tasks, notes, ideas and calendar. */
 function WorkOnItsOwn() {
-  const [tab, setTab] = useState<SpaceTab>("tasks");
+  const asked = Route.useSearch().tab;
+  const [tab, setTab] = useState<SpaceTab>(asked && isSpaceTab(asked) ? asked : "tasks");
   return (
     <>
       <PageHeader title="Work" description="Tasks, notes, ideas and dates for work." />
@@ -112,7 +115,8 @@ function WorkSpace({
   const rules = readRules(org.rules);
   const members = useQuery(workMembersQuery(org.id));
   const places = useQuery(workPlacesQuery(org.id));
-  const [tab, setTab] = useState<WorkTab>("today");
+  const asked = Route.useSearch().tab;
+  const [tab, setTab] = useState<WorkTab>(asked && isSpaceTab(asked) ? asked : "today");
   const me = (members.data ?? []).find((member) => member.user_id === user?.id) ?? null;
   const admin = me?.role === "owner" || me?.role === "admin";
 

@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { DatePicker } from "@/components/app/DatePicker";
 import { EmptyState, ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
+import { ProjectsView } from "@/components/app/projects/ProjectsView";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +99,7 @@ export function TabRow<T extends string>({
 
 export function SpaceTabContent({ space, tab }: { space: SpaceKey; tab: SpaceTab }) {
   if (tab === "tasks") return <SpaceTasks space={space} />;
+  if (tab === "projects") return <ProjectsView space={space} />;
   if (tab === "notes") return <SpaceNotes space={space} kind="notes" />;
   if (tab === "ideas") return <SpaceNotes space={space} kind="ideas" />;
   return <SpaceCalendar space={space} />;
