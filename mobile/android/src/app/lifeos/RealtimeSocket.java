@@ -70,15 +70,23 @@ final class RealtimeSocket {
         if (thread != null) thread.interrupt();
     }
 
+    /**
+     * Closes the current connection on its own thread: closing a TLS socket
+     * writes to the network, which Android forbids on the main thread (the
+     * service restarts on the main thread whenever a setting changes).
+     */
     private void closeQuietly() {
         Socket current = socket;
-        if (current != null) {
+        if (current == null) return;
+        Thread closer = new Thread(() -> {
             try {
                 current.close();
             } catch (IOException ignored) {
                 // Already gone.
             }
-        }
+        }, "life-connect-close");
+        closer.setDaemon(true);
+        closer.start();
     }
 
     private void loop() {
