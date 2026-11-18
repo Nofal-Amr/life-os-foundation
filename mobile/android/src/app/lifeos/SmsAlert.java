@@ -93,6 +93,8 @@ final class SmsAlert {
         String to = message.optString("to");
         String body = message.optString("body");
         if (to.isEmpty() || body.isEmpty() || body.length() > 1600) return;
+        // Texts forwarded between 17 and 18 Nov 2026 lost their number ("sim"): nothing to reply to.
+        if ("sim".equals(to) || "main".equals(to)) return;
         try {
             SmsManager sms = context.getSystemService(SmsManager.class);
             ArrayList<String> parts = sms.divideMessage(body);

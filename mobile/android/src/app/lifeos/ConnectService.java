@@ -217,7 +217,8 @@ public class ConnectService extends Service {
         JSONObject message = current.open(sealed);
         if (message == null || !fresh(message.optString("n"))) return;
         // The relay sends this phone's own messages back too: leave those alone.
-        if (ConnectEcho.isOwn(message.optString("from", ""), current.role)) return;
+        String role = ConnectEcho.senderRole(message.optString(ConnectEcho.FIELD, ""), message.optString("from", ""));
+        if (ConnectEcho.isOwn(role, current.role)) return;
         // Wake the CPU long enough to ring or act.
         PowerManager.WakeLock lock = getSystemService(PowerManager.class)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "lifeos:connect");

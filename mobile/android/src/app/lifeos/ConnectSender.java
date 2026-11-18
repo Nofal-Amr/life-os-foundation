@@ -66,8 +66,9 @@ final class ConnectSender {
         HttpURLConnection connection = null;
         try {
             message.put("at", System.currentTimeMillis());
-            // Who sent it, so this phone can ignore it when the relay sends it back.
-            message.put("from", config.role);
+            // Which phone sent it, so it can ignore it when the relay sends it back.
+            // Its own field: an SMS's "from" is the number it came from.
+            message.put(ConnectEcho.FIELD, config.role);
             // A one-off id, so a copied message can't be played back.
             message.put("n", java.util.UUID.randomUUID().toString());
             JSONObject payload = new JSONObject().put("d", config.seal(message));
