@@ -28,6 +28,9 @@ final class RealtimeSocket {
         void onMessage(String sealed);
 
         void onConnected(boolean connected);
+
+        /** A presence message ("presence_state" or "presence_diff") and its payload. */
+        void onPresence(String event, JSONObject payload);
     }
 
     private static final int MAX_FRAME = 1 << 20;
@@ -36,6 +39,8 @@ final class RealtimeSocket {
     private final String host;
     private final String anonKey;
     private final String topic;
+    /** This phone's role, which is how the other phone sees it on the channel. */
+    private final String presenceKey;
     private final Listener listener;
     private final SecureRandom random = new SecureRandom();
     private volatile boolean running;
@@ -43,10 +48,11 @@ final class RealtimeSocket {
     private Thread thread;
     private int ref = 0;
 
-    RealtimeSocket(String url, String anonKey, String topic, Listener listener) {
+    RealtimeSocket(String url, String anonKey, String topic, String presenceKey, Listener listener) {
         this.host = url.replaceFirst("^https://", "").replaceAll("/.*$", "");
         this.anonKey = anonKey;
         this.topic = topic;
+        this.presenceKey = presenceKey == null ? "" : presenceKey;
         this.listener = listener;
     }
 
@@ -102,6 +108,8 @@ final class RealtimeSocket {
                 OutputStream out = ssl.getOutputStream();
                 handshake(in, out);
                 send(out, join());
+                // Be seen on the channel, so the other phone knows this one is online.
+                send(out, track());
                 listener.onConnected(true);
                 pause = 2_000;
                 heartbeat = startHeartbeat(out);
@@ -153,12 +161,25 @@ final class RealtimeSocket {
     private String join() throws Exception {
         JSONObject config = new JSONObject()
             .put("broadcast", new JSONObject().put("self", false).put("ack", false))
-            .put("presence", new JSONObject().put("key", ""))
+            .put("presence", new JSONObject().put("key", presenceKey))
             .put("private", false);
         return new JSONObject()
             .put("topic", "realtime:" + topic)
             .put("event", "phx_join")
             .put("payload", new JSONObject().put("config", config).put("access_token", anonKey))
+            .put("ref", String.valueOf(++ref))
+            .toString();
+    }
+
+    /** Presence carries only the role; everything else stays sealed in messages. */
+    private String track() throws Exception {
+        return new JSONObject()
+            .put("topic", "realtime:" + topic)
+            .put("event", "presence")
+            .put("payload", new JSONObject()
+                .put("type", "presence")
+                .put("event", "track")
+                .put("payload", new JSONObject().put("r", presenceKey)))
             .put("ref", String.valueOf(++ref))
             .toString();
     }
@@ -228,8 +249,14 @@ final class RealtimeSocket {
     private void handle(String text) {
         try {
             JSONObject message = new JSONObject(text);
-            if (!"broadcast".equals(message.optString("event"))) return;
             if (!("realtime:" + topic).equals(message.optString("topic"))) return;
+            String event = message.optString("event");
+            if ("presence_state".equals(event) || "presence_diff".equals(event)) {
+                JSONObject payload = message.optJSONObject("payload");
+                if (payload != null) listener.onPresence(event, payload);
+                return;
+            }
+            if (!"broadcast".equals(event)) return;
             JSONObject outer = message.optJSONObject("payload");
             JSONObject inner = outer == null ? null : outer.optJSONObject("payload");
             String sealed = inner == null ? null : inner.optString("d", null);

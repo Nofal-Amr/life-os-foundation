@@ -21,6 +21,7 @@ import {
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
 import { MusicRemote } from "@/components/app/MusicRemote";
+import { peerName, peerState, peerStateLabel } from "@/lib/connectPeer";
 import { getLang, t } from "@/lib/i18n";
 
 /** Per phone: which role this phone plays, and what to call it. */
@@ -312,6 +313,7 @@ export function LifeConnectCard() {
           ) : null}
         </div>
       ) : null}
+      {role !== "off" ? <PeerLinkLine status={status} /> : null}
       {role === "main" ? (
         <div className="space-y-3">
           <PeerBatteryLine peer={status?.peer} reading={status?.peerBattery} />
@@ -394,6 +396,34 @@ export function LifeConnectCard() {
  * Main phone: the SIM phone's battery, as last sent (it sends on every change).
  * Low-battery alerts come as phone notifications at 20% and 10%.
  */
+/** Whether the other phone is on the relay right now; nothing until it has shown up. */
+function PeerLinkLine({ status }: { status: ConnectStatus | null }) {
+  const state = peerState(status);
+  if (state === "unknown") return null;
+  const name = t(peerName(status));
+  return (
+    <div className="space-y-1">
+      <p className="flex items-center gap-2 text-sm">
+        <span
+          className={cn(
+            "size-2 shrink-0 rounded-full border border-foreground",
+            state === "online" ? "bg-foreground" : "bg-background",
+          )}
+          aria-hidden="true"
+        />
+        <span>{peerStateLabel(state, name, status?.peerLink?.since)}</span>
+      </p>
+      {state === "offline" ? (
+        <p className="text-xs text-muted-foreground">
+          {t(
+            "Calls and texts can only pass between your phones while both are online. They come through again once it reconnects.",
+          )}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function PeerBatteryLine({
   peer,
   reading,

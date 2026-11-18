@@ -35,6 +35,11 @@ public class ConnectService extends Service {
     private ConnectConfig config;
     private ConnectivityManager.NetworkCallback networkCallback;
     private android.content.BroadcastReceiver screenOn;
+    /** Who's on the channel: tells whether the other phone is online. */
+    private final PeerPresence presence = new PeerPresence();
+    private static final String KEY_PEER_ONLINE = "peer_online";
+    private static final String KEY_PEER_SINCE = "peer_since";
+    private static final String KEY_PEER_SEEN = "peer_seen";
     /** SIM phone: follows the battery, to show it on the main phone. */
     private android.content.BroadcastReceiver battery;
 
@@ -102,15 +107,24 @@ public class ConnectService extends Service {
             startForeground(STATUS_ID, notification);
         }
         if (socket != null) socket.stop();
-        socket = new RealtimeSocket(config.url, config.anonKey, config.topic(), new RealtimeSocket.Listener() {
+        socket = new RealtimeSocket(config.url, config.anonKey, config.topic(), config.role, new RealtimeSocket.Listener() {
             @Override
             public void onMessage(String sealed) {
                 handle(sealed);
             }
 
             @Override
+            public void onPresence(String event, JSONObject payload) {
+                ConnectService.this.onPresence(event, payload);
+            }
+
+            @Override
             public void onConnected(boolean isConnected) {
+                boolean changed = connected != isConnected;
                 connected = isConnected;
+                // Disconnected: who else is there is unknown until the next full list.
+                if (!isConnected) presence.reset();
+                if (changed) refreshStatus();
                 // Just (re)connected: the main phone gets the battery straight away.
                 ConnectConfig current = config;
                 if (isConnected && current != null && "sim".equals(current.role)) {
@@ -119,10 +133,72 @@ public class ConnectService extends Service {
             }
         });
         socket.start();
+        refreshStatus();
         watchBattery();
         watchNetwork();
         watchScreen();
         return START_STICKY;
+    }
+
+    /** The relay's list of who's on the channel changed. */
+    private void onPresence(String event, JSONObject payload) {
+        ConnectConfig current = config;
+        if (current == null) return;
+        if ("presence_state".equals(event)) {
+            presence.reset();
+            addAll(payload, true);
+        } else {
+            addAll(payload.optJSONObject("joins"), true);
+            addAll(payload.optJSONObject("leaves"), false);
+        }
+        peerIs(this, presence.online(PeerPresence.peerOf(current.role)));
+    }
+
+    private void addAll(JSONObject byKey, boolean join) {
+        if (byKey == null) return;
+        java.util.Iterator<String> keys = byKey.keys();
+        while (keys.hasNext()) {
+            String key = keys.next();
+            JSONObject entry = byKey.optJSONObject(key);
+            org.json.JSONArray metas = entry == null ? null : entry.optJSONArray("metas");
+            if (metas == null) continue;
+            for (int i = 0; i < metas.length(); i++) {
+                JSONObject meta = metas.optJSONObject(i);
+                String ref = meta == null ? "" : meta.optString("phx_ref", "");
+                if (join) presence.join(key, ref);
+                else presence.leave(key, ref);
+            }
+        }
+    }
+
+    /** Saves the other phone's state when it changes, and updates the notification. */
+    private void peerIs(Context context, boolean online) {
+        android.content.SharedPreferences prefs = context.getSharedPreferences(ConnectConfig.PREFS, MODE_PRIVATE);
+        boolean seen = prefs.getBoolean(KEY_PEER_SEEN, false);
+        // An older app on the other phone never shows up: say nothing rather than "offline".
+        if (!seen && !online) return;
+        if (seen && prefs.getBoolean(KEY_PEER_ONLINE, false) == online) return;
+        prefs.edit()
+            .putBoolean(KEY_PEER_SEEN, true)
+            .putBoolean(KEY_PEER_ONLINE, online)
+            .putLong(KEY_PEER_SINCE, System.currentTimeMillis())
+            .apply();
+        refreshStatus();
+    }
+
+    /** The other phone, for the page: {seen, online, since} (online only means something once seen). */
+    static JSONObject peerLink(Context context) {
+        android.content.SharedPreferences prefs = context.getSharedPreferences(ConnectConfig.PREFS, MODE_PRIVATE);
+        JSONObject link = new JSONObject();
+        try {
+            boolean seen = prefs.getBoolean(KEY_PEER_SEEN, false);
+            link.put("seen", seen && connected);
+            link.put("online", prefs.getBoolean(KEY_PEER_ONLINE, false));
+            link.put("since", prefs.getLong(KEY_PEER_SINCE, 0));
+        } catch (Exception ignored) {
+            // Empty then.
+        }
+        return link;
     }
 
     private Notification statusNotification() {
@@ -131,17 +207,34 @@ public class ConnectService extends Service {
             .setData(Uri.parse("lifeos://open/settings"));
         PendingIntent tap = PendingIntent.getActivity(this, 7203, open,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        String text = "main".equals(config.role)
+        boolean main = "main".equals(config.role);
+        String peerName = main ? ConnectConfig.peer(this) : "";
+        if (peerName.isEmpty()) peerName = main ? "SIM phone" : "Main phone";
+        String title = "Life Connect is on";
+        String text = main
             ? "Rings here when your SIM phone gets a call."
             : "Sends this phone's calls to your main phone.";
-        String battery = "main".equals(config.role) ? PeerBattery.summary(this) : null;
-        if (battery != null) {
-            String peer = ConnectConfig.peer(this);
-            text = (peer.isEmpty() ? "SIM phone" : peer) + " battery " + battery + ". " + text;
+        JSONObject link = peerLink(this);
+        if (!connected) {
+            title = "Life Connect: connecting";
+            text = "This phone isn't reaching the relay yet (no internet, or reconnecting).";
+        } else if (link.optBoolean("seen") && !link.optBoolean("online")) {
+            String since = android.text.format.DateFormat.getTimeFormat(this)
+                .format(new java.util.Date(link.optLong("since")));
+            text = peerName + " offline since " + since + ". "
+                + (main ? "Its calls and texts can't reach this phone until it's back online."
+                        : "Calls won't ring there until it's back online.");
+        } else if (link.optBoolean("seen")) {
+            String battery = main ? PeerBattery.summary(this) : null;
+            text = peerName + " online" + (battery == null ? "" : ", battery " + battery) + ". " + text;
+        } else {
+            String battery = main ? PeerBattery.summary(this) : null;
+            if (battery != null) text = peerName + " battery " + battery + ". " + text;
         }
         Notification.Builder builder = new Notification.Builder(this, CHANNEL_STATUS)
             .setSmallIcon(R.drawable.ic_stat_prayer)
-            .setContentTitle("Life Connect is on")
+            .setContentTitle(title)
+            .setOnlyAlertOnce(true)
             .setContentText(text)
             .setContentIntent(tap)
             .setOngoing(true);
@@ -177,6 +270,7 @@ public class ConnectService extends Service {
 
     /** Main phone: the Life Connect notification shows the SIM phone's battery. */
     private void refreshStatus() {
+        if (config == null) return;
         try {
             getSystemService(NotificationManager.class).notify(STATUS_ID, statusNotification());
         } catch (Exception ignored) {

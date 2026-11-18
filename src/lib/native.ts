@@ -266,6 +266,11 @@ export type ConnectStatus = {
   peerBattery?: { level?: number; charging?: boolean; at?: number };
   /** Main phone: the SIM phone's name, once it has introduced itself. */
   peer?: string;
+  /**
+   * The other phone on the relay: seen = it has shown up since this phone
+   * connected; online/since = its state and when that last changed (ms).
+   */
+  peerLink?: { seen?: boolean; online?: boolean; since?: number };
 };
 
 /** "Find POCO" on the main phone, "Find main phone" on the SIM phone. */

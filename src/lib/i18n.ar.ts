@@ -2633,4 +2633,11 @@ export const AR: Record<string, string> = {
   "Start one here, or move one in from Projects with its ⋯ menu.":
     "ابدأ مشروعًا هنا، أو انقل واحدًا من المشاريع عبر قائمة ⋯.",
   "The watch and the on-phone assistant.": "الساعة والمساعد على الهاتف.",
+  "Life Connect: connecting": "Life Connect: جارٍ الاتصال",
+  online: "متصل",
+  offline: "غير متصل",
+  "offline since": "غير متصل منذ",
+  "Main phone": "الهاتف الرئيسي",
+  "Calls and texts can only pass between your phones while both are online. They come through again once it reconnects.":
+    "تنتقل المكالمات والرسائل بين هاتفيك فقط عندما يكون كلاهما متصلًا بالإنترنت. ستصل من جديد عندما يعود الاتصال.",
 };
