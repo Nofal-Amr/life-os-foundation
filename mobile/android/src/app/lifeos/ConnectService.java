@@ -33,6 +33,8 @@ public class ConnectService extends Service {
     private ConnectConfig config;
     private ConnectivityManager.NetworkCallback networkCallback;
     private android.content.BroadcastReceiver screenOn;
+    /** SIM phone: follows the battery, to show it on the main phone. */
+    private android.content.BroadcastReceiver battery;
 
     /** Starts or stops the service to match the saved role. */
     static void sync(Context context) {
@@ -85,9 +87,15 @@ public class ConnectService extends Service {
             @Override
             public void onConnected(boolean isConnected) {
                 connected = isConnected;
+                // Just (re)connected: the main phone gets the battery straight away.
+                ConnectConfig current = config;
+                if (isConnected && current != null && "sim".equals(current.role)) {
+                    PeerBattery.sendNow(ConnectService.this, current);
+                }
             }
         });
         socket.start();
+        watchBattery();
         watchNetwork();
         watchScreen();
         return START_STICKY;
@@ -102,6 +110,11 @@ public class ConnectService extends Service {
         String text = "main".equals(config.role)
             ? "Rings here when your SIM phone gets a call."
             : "Sends this phone's calls to your main phone.";
+        String battery = "main".equals(config.role) ? PeerBattery.summary(this) : null;
+        if (battery != null) {
+            String peer = ConnectConfig.peer(this);
+            text = (peer.isEmpty() ? "SIM phone" : peer) + " battery " + battery + ". " + text;
+        }
         Notification.Builder builder = new Notification.Builder(this, CHANNEL_STATUS)
             .setSmallIcon(R.drawable.ic_stat_prayer)
             .setContentTitle("Life Connect is on")
@@ -115,6 +128,36 @@ public class ConnectService extends Service {
                 PendingIntent.getBroadcast(this, 7240, music, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE)).build());
         }
         return builder.build();
+    }
+
+    /** SIM phone: send the battery to the main phone whenever it changes. */
+    private void watchBattery() {
+        stopBattery();
+        if (config == null || !"sim".equals(config.role)) return;
+        try {
+            battery = PeerBattery.watch(this, config);
+        } catch (Exception e) {
+            battery = null;
+        }
+    }
+
+    private void stopBattery() {
+        if (battery == null) return;
+        try {
+            unregisterReceiver(battery);
+        } catch (Exception ignored) {
+            // Already gone.
+        }
+        battery = null;
+    }
+
+    /** Main phone: the Life Connect notification shows the SIM phone's battery. */
+    private void refreshStatus() {
+        try {
+            getSystemService(NotificationManager.class).notify(STATUS_ID, statusNotification());
+        } catch (Exception ignored) {
+            // Shown again on the next start.
+        }
     }
 
     /** Screen turned on: if the connection dropped while asleep, reconnect now. */
@@ -190,6 +233,10 @@ public class ConnectService extends Service {
                     case "test": CallAlert.test(this, message); break;
                     case "sms": SmsAlert.show(this, message); break;
                     case "media_state": MediaAlert.show(this, message); break;
+                    case "battery":
+                        PeerBattery.received(this, message);
+                        refreshStatus();
+                        break;
                     case "spend":
                         SpendingStore.add(this, message.optDouble("amount"), message.optString("currency"),
                             message.optString("merchant"), message.optString("source"),
@@ -227,6 +274,7 @@ public class ConnectService extends Service {
         if (socket != null) socket.stop();
         socket = null;
         connected = false;
+        stopBattery();
         if (screenOn != null) {
             try {
                 unregisterReceiver(screenOn);

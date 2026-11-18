@@ -2621,4 +2621,8 @@ export const AR: Record<string, string> = {
     "لم نجد حصصًا متكررة أو امتحانات في هذا الملف.",
   "Choose .ics file": "اختر ملف .ics",
   "Show what's playing (song and app)": "عرض ما يُشغَّل (الأغنية والتطبيق)",
+  "SIM phone": "هاتف الشريحة",
+  "battery shows here once it's connected.": "تظهر البطارية هنا بعد الاتصال.",
+  charging: "يشحن",
+  "as of": "حتى",
 };
