@@ -28,6 +28,8 @@ public class ConnectService extends Service {
     private static final int STATUS_ID = 7200;
 
     static volatile boolean connected;
+    /** Whether the service is running in this process (it ends with the process). */
+    private static volatile boolean running;
 
     private RealtimeSocket socket;
     private ConnectConfig config;
@@ -51,6 +53,15 @@ public class ConnectService extends Service {
         }
     }
 
+    /**
+     * Opening the app: start Life Connect if it should run and isn't (after an
+     * update, or if Android stopped it). A running connection is left alone.
+     */
+    static void ensureRunning(Context context) {
+        if (running) return;
+        sync(context);
+    }
+
     /** False in the Global (Play Store) build, which leaves Life Connect out. */
     static boolean inBuild(Context context) {
         try {
@@ -65,6 +76,7 @@ public class ConnectService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        running = true;
         CrashLog.install(this);
         NotificationManager manager = getSystemService(NotificationManager.class);
         NotificationChannel status = new NotificationChannel(
@@ -284,6 +296,7 @@ public class ConnectService extends Service {
 
     @Override
     public void onDestroy() {
+        running = false;
         if (socket != null) socket.stop();
         socket = null;
         connected = false;

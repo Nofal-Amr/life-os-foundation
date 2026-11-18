@@ -523,6 +523,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Life Connect may have stopped (an app update stops it): start it again.
+        ConnectService.ensureRunning(this);
         // While the app is open, a new music state from the SIM phone updates the remote on the page.
         MediaAlert.onState = () -> runOnUiThread(() -> {
             if (webView != null) webView.evaluateJavascript("window.dispatchEvent(new Event('life-os-connect-media'))", null);
