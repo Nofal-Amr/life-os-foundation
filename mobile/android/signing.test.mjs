@@ -16,6 +16,20 @@ describe("Android signing", () => {
     );
   });
 
+  it("the Global (Play Store) build gets its own file names", () => {
+    const plan = (release) =>
+      signingPlan({
+        release,
+        full: false,
+        global: true,
+        env: { LIFEOS_KEYSTORE: "/keys/lifeos.jks", LIFEOS_KEYSTORE_PASSWORD: "secret" },
+        root,
+        debugKeystore,
+      });
+    expect(plan(false).apkName).toBe("life-os-global.apk");
+    expect(plan(true).apkName).toBe("life-os-global-release.apk");
+  });
+
   it("release builds are not debuggable and use the owner's key", () => {
     const env = { LIFEOS_KEYSTORE: "/keys/lifeos.jks", LIFEOS_KEYSTORE_PASSWORD: "secret" };
     const plan = signingPlan({ release: true, full: true, env, root, debugKeystore });

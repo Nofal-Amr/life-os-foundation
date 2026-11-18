@@ -2625,4 +2625,5 @@ export const AR: Record<string, string> = {
   "battery shows here once it's connected.": "تظهر البطارية هنا بعد الاتصال.",
   charging: "يشحن",
   "as of": "حتى",
+  "The watch and the on-phone assistant.": "الساعة والمساعد على الهاتف.",
 };

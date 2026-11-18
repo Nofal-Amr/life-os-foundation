@@ -5,6 +5,8 @@
 //   npm run build:android:full          -> mobile/android/build/life-os-full.apk
 //   npm run build:android:release       -> mobile/android/build/life-os-release.apk
 //   npm run build:android:full:release  -> mobile/android/build/life-os-full-release.apk
+//   npm run build:android:global        -> mobile/android/build/life-os-global.apk
+//   npm run build:android:global:release -> mobile/android/build/life-os-global-release.apk
 //
 // Debug builds are for your own phone only: they are debuggable and signed
 // with the standard debug key. Anything given to other people must be a
@@ -15,6 +17,11 @@
 // <!-- full:end --> in the manifest (SMS access, notification access): Google
 // Play Protect blocks sideloaded apps that ask for those. The Full build keeps
 // them and is meant to be installed from a computer (adb install).
+//
+// The Global build is the one for the Play Store and the public: it also
+// leaves out everything between <!-- connect:start --> and <!-- connect:end -->
+// (Life Connect: call log, phone state, answering calls, contacts, the
+// always-on connection), so the app asks for nothing Life Connect needs.
 //
 // Env overrides: ANDROID_HOME, JAVA_HOME, ANDROID_PLATFORM (e.g. android-34),
 // ANDROID_BUILD_TOOLS (e.g. 35.0.0), SKIP_WEB=1 to reuse an existing web build.
@@ -38,6 +45,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..", "..");
 const out = join(here, "build");
 const full = process.argv.includes("--full") || process.env.LIFEOS_FULL === "1";
+const global = process.argv.includes("--global") || process.env.LIFEOS_GLOBAL === "1";
+if (full && global) throw new Error("Pick one: --full (your own phones) or --global (Play Store).");
 const release = process.argv.includes("--release") || process.env.LIFEOS_RELEASE === "1";
 const win = process.platform === "win32";
 
@@ -72,7 +81,7 @@ const androidJar = join(sdk, "platforms", platform, "android.jar");
 
 // Decided first, so a release build without its key stops before any work.
 const debugKeystore = join(homedir(), ".android", "debug.keystore");
-const signing = signingPlan({ release, full, env: process.env, root, debugKeystore });
+const signing = signingPlan({ release, full, global, env: process.env, root, debugKeystore });
 
 for (const [label, path] of [
   ["Android SDK", sdk],
@@ -107,7 +116,7 @@ if (existsSync(out)) {
   // Keep the other builds' finished APKs (standard, Full, native and the watch app
   // share this folder).
   for (const entry of readdirSync(out)) {
-    if (/^life-os-(debug|full|wear|native)\.apk$/.test(entry)) continue;
+    if (/^life-os-(debug|full|global|wear|native)\.apk$/.test(entry)) continue;
     rmSync(join(out, entry), { recursive: true, force: true });
   }
 }
@@ -116,17 +125,32 @@ dirs.forEach((d) => mkdirSync(d, { recursive: true }));
 const [resOut, classesOut, dexOut, wwwOut, genOut] = dirs;
 cpSync(web, wwwOut, { recursive: true });
 
-/** The manifest for this build: the Full one as is, the standard one without the full-only parts. */
+/**
+ * The manifest for this build: the Full one as is, the standard one without the
+ * full-only parts, the Global one without those and without Life Connect.
+ */
 function manifestPath() {
   const source = readFileSync(join(here, "AndroidManifest.xml"), "utf8");
   if (full) return join(here, "AndroidManifest.xml");
-  const stripped = source.replace(/[ \t]*<!-- full:start[\s\S]*?<!-- full:end -->\r?\n?/g, "");
+  let stripped = source.replace(/[ \t]*<!-- full:start[\s\S]*?<!-- full:end -->\r?\n?/g, "");
   if (/RECEIVE_SMS|NotificationListenerService/.test(stripped)) {
     throw new Error(
       "Full-only parts of the manifest aren't all inside full:start/full:end markers",
     );
   }
-  const target = join(out, "AndroidManifest.standard.xml");
+  if (global) {
+    stripped = stripped.replace(/[ \t]*<!-- connect:start[\s\S]*?<!-- connect:end -->\r?\n?/g, "");
+    if (
+      /READ_CALL_LOG|READ_PHONE_STATE|ANSWER_PHONE_CALLS|READ_CONTACTS|ConnectService|CallStateReceiver/.test(
+        stripped,
+      )
+    ) {
+      throw new Error(
+        "Life Connect parts of the manifest aren't all inside connect:start/connect:end markers",
+      );
+    }
+  }
+  const target = join(out, global ? "AndroidManifest.global.xml" : "AndroidManifest.standard.xml");
   writeFileSync(target, stripped);
   return target;
 }

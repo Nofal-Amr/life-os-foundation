@@ -27,8 +27,9 @@ export const DEBUG_KEY = {
  * Passwords are returned as apksigner "env:" references, so they never appear
  * in the command line the build prints.
  */
-export function signingPlan({ release, full, env, root, debugKeystore }) {
-  const name = `life-os${full ? "-full" : ""}${release ? "-release" : full ? "" : "-debug"}.apk`;
+export function signingPlan({ release, full, global = false, env, root, debugKeystore }) {
+  const variant = full ? "-full" : global ? "-global" : "";
+  const name = `life-os${variant}${release ? "-release" : variant ? "" : "-debug"}.apk`;
   if (!release) {
     return {
       debuggable: true,
