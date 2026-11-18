@@ -10,12 +10,12 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
   (TanStack Start + React Query + Tailwind, Supabase backend).
 - **Android apps**, all built from `main` on 2026-11-18:
 
-  | App | File | Version |
-  |---|---|---|
-  | Standard phone app (web view) | `life-os-debug.apk` | 0.3.1 |
-  | Full phone app (adds bank-SMS reading) | `life-os-full.apk` | 0.3.1 |
-  | Native Kotlin/Compose app | `life-os-native.apk` | 0.2 |
-  | Wear OS watch app | `life-os-wear.apk` | 1.0 |
+  | App                                    | File                 | Version |
+  | -------------------------------------- | -------------------- | ------- |
+  | Standard phone app (web view)          | `life-os-debug.apk`  | 0.3.1   |
+  | Full phone app (adds bank-SMS reading) | `life-os-full.apk`   | 0.3.1   |
+  | Native Kotlin/Compose app              | `life-os-native.apk` | 0.2     |
+  | Wear OS watch app                      | `life-os-wear.apk`   | 1.0     |
 
 - **Checks on `main`:** CI green; 584 unit tests pass (the only local failure is
   `mobile/android/signing.test.mjs`, which needs the release key).
