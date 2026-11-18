@@ -6,7 +6,7 @@
 |---|---|
 | **Project** | Life OS (repo `life-os-foundation`, GitHub `Nofal-Amr/life-os-foundation`, public) |
 | **Date of this record** | 2026-11-18 |
-| **Commit** | `1572c60` on `main` |
+| **Commit** | `3284249` on `main` |
 | **Status** | Live and in daily use by the owner; being prepared for the general public. Website shipped first; native Android app paused. |
 | **Live URL** | https://lifeos0.vercel.app (Vercel, auto-deploys from `main`) |
 | **Stack** | TypeScript, React 19, TanStack Start/Router, TanStack Query, Tailwind CSS 4, shadcn/Radix UI, Vite, Nitro (server), Supabase (Postgres, Auth, Realtime, Storage, Edge Functions), Vitest, Playwright; Android web-view app in Java (built without Gradle); native Android app in Kotlin + Jetpack Compose (Gradle); Wear OS app in Kotlin; iOS shell in Swift (early). |
@@ -26,7 +26,7 @@ Life OS is one person's calm, honest operating system for the day: tasks and pro
 - **Study space** (PR 84): timetable, courses, exams, "Make my schedule" from a screenshot via any AI chat (paste answer → preview → add) or on-device OCR; `.ics` import.
 - **Close the day** evening ritual (PR 80). **Arabic** across the app, ~1,300 strings (PR 81).
 - **Android web-view app, three builds** (PR 89): Full (`life-os-full.apk`), Standard (`life-os-debug.apk`), Global (`life-os-global.apk`, no Life Connect; Play-store candidate). Permissions per build verified with `aapt2 dump permissions`.
-- **Life Connect** (Full/Standard): calls ring on the main phone with Answer/Decline/Mute; SMS forwarding with reply (Full only; one-time codes stay on the SIM phone unless enabled); find my phone; music remote as a real media session with the main phone's volume keys controlling the SIM phone's volume (PR 87); SIM phone battery on the main phone with alerts at 20% and 10% (PR 88); crash on changing a setting fixed (PR 86). Verified on the Android emulator against the real Supabase relay with a stand-in for the other phone.
+- **Life Connect** (Full/Standard): calls ring on the main phone with Answer/Decline/Mute; SMS forwarding with reply (Full only; one-time codes stay on the SIM phone unless enabled); find my phone; music remote as a real media session with the main phone's volume keys controlling the SIM phone's volume (PR 87); SIM phone battery on the main phone with alerts at 20% and 10% (PR 88); crash on changing a setting fixed (PR 86); forwarded texts keep their real sender (PR 92). Verified on the Android emulator against the real Supabase relay with a stand-in for the other phone.
 - Wear OS app (prayer tile, Qibla) builds; native Kotlin app builds.
 
 ### What's broken / known limits
@@ -36,6 +36,7 @@ Life OS is one person's calm, honest operating system for the day: tasks and pro
 - After an app update, Life Connect restarts only when the app is opened (Android blocks starting the service from the background). **unverified** on the owner's phones.
 - Song/app name on the music remote needs notification access on the SIM phone (Full build only).
 - Media Play/Pause hardware key on the main phone isn't routed to the remote player (volume keys are). Seen on the emulator.
+- Texts forwarded on 17–18 Nov stay merged in one "sim" thread on the main phone; their real number was never sent.
 - Two local-only test failures (Windows path in `signing.test.mjs`; `jsdom` missing locally for `.test.tsx`). CI passes.
 
 ### In progress / waiting on the owner
@@ -44,7 +45,7 @@ Life OS is one person's calm, honest operating system for the day: tasks and pro
 - **Native app catch-up** (paused since 2026-11-12): behind the website since late October; has no Life Connect. Owner asked for Full/Standard/Global versions of the native app too: needs a Kotlin port of Life Connect. Awaiting go-ahead.
 - Owner data fix: remove the wrong 9:12 tap on 17 Nov in Work → Sheets.
 - Battery drain of the Full app on the SIM phone: estimated 2–6%/day, **unverified** (owner to read Settings → Battery after a day).
-- Real-phone checks of PR 87 (music session), PR 88 (battery) and PR 89 (Global build): **unverified** on the owner's POCO / S25 Ultra (emulator only).
+- Real-phone checks of PR 87 (music session), PR 88 (battery), PR 89 (Global build), PR 92 (SMS sender) and PR 93 (no flicker after a save): **unverified** on the owner's POCO / S25 Ultra (emulator only; PR 93 can't be reproduced in demo mode).
 
 ### Next steps
 
@@ -586,6 +587,7 @@ Descriptions are taken from each file's own leading comment or title; "—" mean
 | `second-brain/Roadmap and known issues.md` | Roadmap and known issues |
 | `second-brain/Sessions/2026-11-17 - Simplify, handbook, Settings.md` | Session 2026-11-17: simplify, handbook, Settings |
 | `second-brain/Sessions/2026-11-17 - Work fixes, Gym plan, verse signs, holidays.md` | Session 2026-11-17 (part 2): Work fixes, Gym plan, verse signs, holidays |
+| `second-brain/Sessions/2026-11-18 - Life Connect fixes, three builds, space projects.md` | Session 2026-11-18 (part 2): Life Connect fixes, three builds, space projects |
 | `second-brain/Vision/Competitors and ADHD apps.md` | Competitors and ADHD apps (Oct 2026) |
 | `second-brain/Vision/Enterprise and business.md` | Enterprise and business (vision, not built) |
 | `second-brain/Vision/Original plan - Real-life RPG operating system.md` | LIFE OS — REAL-LIFE RPG OPERATING SYSTEM |
@@ -1120,6 +1122,13 @@ Descriptions are taken from each file's own leading comment or title; "—" mean
 ### `git log --all --date=short --pretty=format:'%h %ad %s'`
 
 ```
+3284249 2026-11-18 Progress and second brain: Life Connect fixes, three builds, space projects (PRs 86-93)
+8fc07c6 2026-11-18 Merge pull request #93 from Nofal-Amr/fix/offline-stale-after-save
+b8f3fcd 2026-11-18 Offline layer: update the device copy before answering a save
+1668477 2026-11-18 Merge pull request #92 from Nofal-Amr/fix/connect-sms-sender
+61cfff3 2026-11-18 Life Connect: forwarded SMS keep their sender
+9564f59 2026-11-18 Merge pull request #91 from Nofal-Amr/docs/project-full
+74aad27 2026-11-18 PROJECT_FULL.md: the whole project in one file
 1572c60 2026-11-18 Merge pull request #90 from Nofal-Amr/fix/space-projects
 23fa4ed 2026-11-18 Merge main into fix/space-projects
 5437c21 2026-11-18 Merge pull request #89 from Nofal-Amr/feat/android-global-build
@@ -1807,6 +1816,16 @@ f4aa939 2026-09-13 Changes
   *Rejected / replaced:* not recorded (*unsure*)
 - **Evening ritual (2026-11-18)** — "Close the day" from 6 pm on Today and in the daily review: tick what's done, move the rest to tomorrow, with Undo. (PR 80)  
   *Rejected / replaced:* not recorded (*unsure*)
+- **Three Android builds (2026-11-18)** — Full (the owner's: Life Connect + SMS and notification reading), Standard (Life Connect without SMS/notification reading) and Global (no Life Connect at all; the one for Google Play and other stores). Manifest markers `full:` and `connect:` decide what each build keeps. The native app will get the same split once it has Life Connect. (PR 89)  
+  *Rejected / replaced:* not recorded (*unsure*)
+- **Life Connect: sender role in its own field (2026-11-18)** — Every Life Connect message names the sending phone in `by` ("main" or "sim"). `from` belongs to the payload (an SMS's number). Older apps that put the role in `from` are still understood. (PR 92)  
+  *Rejected / replaced:* not recorded (*unsure*)
+- **Life Connect: music remote and battery (2026-11-18)** — The remote is a system media player (like KDE Connect's), so the lock screen, notification shade and volume keys control the SIM phone. The SIM phone's battery shows on the main phone with alerts at 20% and 10%, no more until it climbs back past 25%; charging clears the alert. Real readings only, no estimates. (PRs 87, 88)  
+  *Rejected / replaced:* not recorded (*unsure*)
+- **Space projects (2026-11-18)** — A project belongs to one place: personal Projects, Work or Study. Projects shows a small "In Work: N projects" link instead of listing them twice. (PR 90)  
+  *Rejected / replaced:* instead of listing them twice
+- **Offline layer: device copy first, then answer (2026-11-18)** — A write that succeeds online updates the device copy before the app is told it's done, so the re-read after a save never shows old data. (PR 93)  
+  *Rejected / replaced:* not recorded (*unsure*)
 
 ---
 
@@ -1821,12 +1840,18 @@ f4aa939 2026-09-13 Changes
 | Song name not shown on the main phone | SIM phone lacked notification access; no step asked for it | "Show what's playing" step in the SIM checklist — PR 87 |
 | Removed clock-in still showed in history; "Set clock in time" didn't show until toggling | Correction couldn't remove a single mid-day tap; form state reused across days | `drop:<iso>` correction; form keyed per user/day with prefilled time — PR 82 |
 | Moved project still in personal Projects | List didn't filter by space | `ProjectsView({space})` — PR 90 |
+| Every forwarded SMS showed under one sender ("sim" thread, first contact's name) and replies went nowhere | `ConnectSender` wrote the phone role into `from`, overwriting the SMS's number (since 17 Nov) | Role travels in its own `by` field; `ConnectEcho.senderRole`; replies to "sim"/"main" skipped — PR 92. Texts from 17–18 Nov can't be repaired |
+| A just-logged prayer flicked back to "Log", then returned | `handleWrite` answered before the IndexedDB copy was updated; the re-read after the save served the stale copy | Await `mirrorOnlineWrite`; upserts match on `on_conflict` columns — PR 93 (all lists) |
 | Vercel deploys failing across all code (Oct 2026) | Dependency CVE block (*partly unsure*) | Bump the flagged package |
 | Time ranges reversed in Arabic | RTL reordering | `dir="ltr"` on time ranges |
 | Local-only test failures | Windows path in `signing.test.mjs`; `jsdom` not installed locally | Not a product bug; CI passes |
 
 ### All commits mentioning a fix, crash or bug
 
+- `3284249` 2026-11-18 **Progress and second brain: Life Connect fixes, three builds, space projects (PRs 86-93)** — (no details in the commit; cause *unsure*)
+- `8fc07c6` 2026-11-18 **Merge pull request #93 from Nofal-Amr/fix/offline-stale-after-save** — Offline layer: no flicker back to old data after a save
+- `1668477` 2026-11-18 **Merge pull request #92 from Nofal-Amr/fix/connect-sms-sender** — Life Connect: forwarded SMS keep their sender
+- `74aad27` 2026-11-18 **PROJECT_FULL.md: the whole project in one file** — Header, progress and plan, build and run (env var names only), architecture and a map of every tracked file, version history (git log --all and tags), decision log, errors and fixes, and the full text of every tracked text file. Images, fonts and lockfiles are listed by name. Secret-looking values are redacted (.env values, the Supabase publishable key fallback, the debug keystore password).
 - `1572c60` 2026-11-18 **Merge pull request #90 from Nofal-Amr/fix/space-projects** — Work and Study: a Projects tab; moved projects leave personal Projects
 - `23fa4ed` 2026-11-18 **Merge main into fix/space-projects** — # Conflicts: # src/lib/i18n.ar.ts
 - `316710a` 2026-11-18 **Merge pull request #87 from Nofal-Amr/fix/connect-music-session** — Life Connect: music remote as a real player, with volume keys
@@ -2807,6 +2832,7 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
   | -------------------------------------- | -------------------- | ------- |
   | Standard phone app (web view)          | `life-os-debug.apk`  | 0.3.1   |
   | Full phone app (adds bank-SMS reading) | `life-os-full.apk`   | 0.3.1   |
+  | Global phone app (no Life Connect)     | `life-os-global.apk` | 0.3.1   |
   | Native Kotlin/Compose app              | `life-os-native.apk` | 0.2     |
   | Wear OS watch app                      | `life-os-wear.apk`   | 1.0     |
 
@@ -2817,6 +2843,15 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
 
 ## Done (most recent first)
 
+- **#93** Lists no longer flick back to old data right after a save (the prayer "Log" flicker).
+- **#92** Forwarded texts keep their real sender (they had all merged into one "sim" thread).
+- **#91** `PROJECT_FULL.md`: the whole project in one file, secrets removed.
+- **#90** Work and Study have a Projects tab; a moved project leaves personal Projects.
+- **#89** Three Android builds: Full, Standard and Global (no Life Connect, for app stores).
+- **#88** The SIM phone's battery shows on the main phone, with alerts at 20% and 10%.
+- **#87** Life Connect music remote works as a real player, volume keys included.
+- **#86** Life Connect no longer crashes when a setting is changed.
+- **#85** This progress file and the second brain for 2026-11-18.
 - **#84** Study → Timetable → "Make my schedule". The user shows a screenshot to any AI chat
   with our prompt and pastes the answer back. They can also read the screenshot on the phone
   instead. They check a preview before anything is added.
@@ -2851,6 +2886,9 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
   - It is missing what the website gained since late October, plus fingerprint clock-in
     and the workplace location.
   - It needs the owner's go-ahead.
+- **Phone checks for the owner:** #87, #88, #89, #92 and #93 are only tested on the emulator.
+  Also check the Full app's battery use on the POCO after a day (more than 5% → lengthen the
+  heartbeat).
 - **One data fix for the owner:** remove the wrong 9:12 tap on 17 Nov in Work → Sheets.
 - **Local branches kept for reference:** some are behind `main` and some have no pull request.
   Any branch with commits that weren't on GitHub was pushed on 2026-11-18.
@@ -2872,7 +2910,9 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
    - The remaining short Arabic labels.
    - InBody input.
    - Photos next to to-dos (needs an owner decision).
-4. **Native app:** catch up to the website once the owner approves.
+4. **Native app:** catch up to the website once the owner approves, then add Life Connect and
+   the Full / Standard / Global builds.
+5. **Optional:** make the Global build ready for Google Play (release key and AAB).
 
 ## Ground rules (short version)
 
@@ -9931,12 +9971,28 @@ package app.lifeos;
 /**
  * Life Connect messages go out through the relay's broadcast endpoint, and the
  * relay hands each one to every phone listening, the sender included. Each
- * message carries the sender's role ("main" or "sim"), so a phone can tell its
- * own message coming back and leave it alone (pressing Find on the main phone
- * must not ring the main phone too).
+ * message carries the sender's role ("main" or "sim") in its own field, "by",
+ * so a phone can tell its own message coming back and leave it alone (pressing
+ * Find on the main phone must not ring the main phone too).
+ *
+ * The role used to go in "from", which an SMS also uses for the number it came
+ * from: every forwarded SMS then showed as from "sim" and replies went nowhere.
  */
 final class ConnectEcho {
+    /** The field that names the sending phone's role. */
+    static final String FIELD = "by";
+
     private ConnectEcho() {}
+
+    /**
+     * The sending phone's role: "by", or for apps from before it, "from" when it
+     * holds a role (an SMS's "from" is a phone number or a name, never a role).
+     */
+    static String senderRole(String by, String from) {
+        if (by != null && !by.isEmpty()) return by;
+        if ("main".equals(from) || "sim".equals(from)) return from;
+        return "";
+    }
 
     /** Whether a message from `from` is this phone's own, coming back. */
     static boolean isOwn(String from, String role) {
@@ -10156,8 +10212,9 @@ final class ConnectSender {
         HttpURLConnection connection = null;
         try {
             message.put("at", System.currentTimeMillis());
-            // Who sent it, so this phone can ignore it when the relay sends it back.
-            message.put("from", config.role);
+            // Which phone sent it, so it can ignore it when the relay sends it back.
+            // Its own field: an SMS's "from" is the number it came from.
+            message.put(ConnectEcho.FIELD, config.role);
             // A one-off id, so a copied message can't be played back.
             message.put("n", java.util.UUID.randomUUID().toString());
             JSONObject payload = new JSONObject().put("d", config.seal(message));
@@ -10414,7 +10471,8 @@ public class ConnectService extends Service {
         JSONObject message = current.open(sealed);
         if (message == null || !fresh(message.optString("n"))) return;
         // The relay sends this phone's own messages back too: leave those alone.
-        if (ConnectEcho.isOwn(message.optString("from", ""), current.role)) return;
+        String role = ConnectEcho.senderRole(message.optString(ConnectEcho.FIELD, ""), message.optString("from", ""));
+        if (ConnectEcho.isOwn(role, current.role)) return;
         // Wake the CPU long enough to ring or act.
         PowerManager.WakeLock lock = getSystemService(PowerManager.class)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "lifeos:connect");
@@ -14460,6 +14518,8 @@ final class SmsAlert {
         String to = message.optString("to");
         String body = message.optString("body");
         if (to.isEmpty() || body.isEmpty() || body.length() > 1600) return;
+        // Texts forwarded between 17 and 18 Nov 2026 lost their number ("sim"): nothing to reply to.
+        if ("sim".equals(to) || "main".equals(to)) return;
         try {
             SmsManager sms = context.getSystemService(SmsManager.class);
             ArrayList<String> parts = sms.divideMessage(body);
@@ -15505,6 +15565,13 @@ public class ConnectEchoTest {
         check(!ConnectEcho.isOwn("main", "sim"), "Find from the main phone rings the SIM phone");
         check(!ConnectEcho.isOwn("", "main"), "an older app sends no role: act on it");
         check(!ConnectEcho.isOwn(null, "sim"), "no role at all: act on it");
+        check(ConnectEcho.senderRole("sim", "+201001234567").equals("sim"), "role comes from \"by\"");
+        check(ConnectEcho.senderRole("", "+201001234567").isEmpty(), "an SMS number is never a role");
+        check(ConnectEcho.senderRole("", "Wafarha").isEmpty(), "a sender name is never a role");
+        check(ConnectEcho.senderRole("", "main").equals("main"), "older app: role in \"from\"");
+        check(ConnectEcho.senderRole(null, null).isEmpty(), "nothing at all: no role");
+        check(!ConnectEcho.isOwn(ConnectEcho.senderRole("sim", "+201001234567"), "main"),
+            "an SMS from the SIM phone shows on the main phone");
         System.out.println("ConnectEcho ok");
     }
 }
@@ -34958,6 +35025,21 @@ A wrong tap mid-day (e.g. out 9:12, in 9:44) is removed with a correction whose 
 
 ## Evening ritual (2026-11-18)
 "Close the day" from 6 pm on Today and in the daily review: tick what's done, move the rest to tomorrow, with Undo. (PR 80)
+
+## Three Android builds (2026-11-18)
+Full (the owner's: Life Connect + SMS and notification reading), Standard (Life Connect without SMS/notification reading) and Global (no Life Connect at all; the one for Google Play and other stores). Manifest markers `full:` and `connect:` decide what each build keeps. The native app will get the same split once it has Life Connect. (PR 89)
+
+## Life Connect: sender role in its own field (2026-11-18)
+Every Life Connect message names the sending phone in `by` ("main" or "sim"). `from` belongs to the payload (an SMS's number). Older apps that put the role in `from` are still understood. (PR 92)
+
+## Life Connect: music remote and battery (2026-11-18)
+The remote is a system media player (like KDE Connect's), so the lock screen, notification shade and volume keys control the SIM phone. The SIM phone's battery shows on the main phone with alerts at 20% and 10%, no more until it climbs back past 25%; charging clears the alert. Real readings only, no estimates. (PRs 87, 88)
+
+## Space projects (2026-11-18)
+A project belongs to one place: personal Projects, Work or Study. Projects shows a small "In Work: N projects" link instead of listing them twice. (PR 90)
+
+## Offline layer: device copy first, then answer (2026-11-18)
+A write that succeeds online updates the device copy before the app is told it's done, so the re-read after a save never shows old data. (PR 93)
 ```
 
 ### second-brain/Features.md
@@ -35515,7 +35597,22 @@ updated: 2026-11-18
 
 # Handoff for the next session
 
-## Latest: 2026-11-18 (READ FIRST)
+## Latest: 2026-11-18, part 2 (READ FIRST)
+Read [[2026-11-18 - Life Connect fixes, three builds, space projects]]. Merged and live (CI green, live site 200):
+- **PR 86** Life Connect: no crash when a setting (the OTP switch) is changed; the socket closes off the main thread.
+- **PR 87** Music remote is a real player (MediaSession): play/pause/next/previous, phone volume keys and slider change the SIM phone's volume. "Show what's playing" needs notification access on the SIM phone (new checklist item).
+- **PR 88** SIM phone battery on the main phone ("POCO battery 64%"), alerts at 20% and 10%, re-arms at 25%, cleared when charging.
+- **PR 89** Three web-view builds: **Full** (`life-os-full.apk`, everything), **Standard** (`life-os-debug.apk`, no SMS/notification reading), **Global** (`life-os-global.apk`, no Life Connect at all, for the Play Store). `npm run build:android:global`.
+- **PR 90** Work and Study get a Projects tab; a project moved there leaves personal Projects ("In Work: N projects" link).
+- **PR 91** `PROJECT_FULL.md`: whole project in one file, secrets redacted. Regenerate with scratchpad `pf_build.py` (copy kept in `C:\Users\ASUS 030T\life-os-backup\2026-11-18\`).
+- **PR 92** Forwarded SMS keep their real sender. The phone role now travels in its own `by` field (it used to overwrite `from`). Texts forwarded 17–18 Nov stay in one "sim" thread; their number is lost.
+- **PR 93** Offline layer: a save now updates the phone's copy before answering, so lists no longer flick back to old data (the prayer "Log" flicker).
+
+Not yet checked on the real phones: PRs 87, 88, 89, 92, 93. Full APK from `8fc07c6` was sent. Battery cost of the Full app on the POCO is estimated at 2–6%/day (unmeasured); if Settings → Battery shows more than 5%, lengthen the 25 s heartbeat.
+
+Waiting on the owner (unchanged): PR 74 DB OK; native app catch-up (then port Life Connect and the Full/Standard/Global split there; the native app has no Life Connect today); optional: make the Global build Play-ready (release key, AAB).
+
+## 2026-11-18, part 1
 Merged and live on lifeos0.vercel.app (all CI green, live pages return 200):
 - **PR 78** Work and Study as spaces (Tasks, Notes, Ideas, Calendar tabs; calendar show/hide in Settings).
 - **PR 80** Close the day (evening ritual): from 6 pm, move unfinished tasks to tomorrow, with Undo.
@@ -36619,6 +36716,58 @@ official holidays · #65 Gym plan, exercise library · #66 verse signs · #67 Eg
 | `Sessions/2026-11-17 - Work fixes, Gym plan, verse signs, …` | New: this log.            |
 | `Handoff - next session.md`                                  | New top "Next" section.   |
 | `Decisions.md`                                               | Today's decisions, below. |
+```
+
+### second-brain/Sessions/2026-11-18 - Life Connect fixes, three builds, space projects.md
+
+```markdown
+---
+tags: [session]
+date: 2026-11-18
+---
+
+# Session 2026-11-18 (part 2): Life Connect fixes, three builds, space projects
+
+The owner's prompts are quoted as written; Claude's answers are summarised.
+
+## 1. "make and send the whole apps the debug watch and also the full and the native"
+Built from `main` and sent: Standard 0.3.1, Full 0.3.1, native 0.2, watch 1.0.
+
+## 2. Housekeeping (git status, commit, push every branch, back up env files, PROGRESS.md)
+Every branch pushed; gitignored env and config copied to `C:\Users\ASUS 030T\life-os-backup\2026-11-18\`; `PROGRESS.md` written (PR 85).
+
+## 3. "how is the messeges share from the poco to the s25 ulta" / Play Protect blocks the Full app
+The POCO reads the SMS, seals it (AES-GCM, key from the shared secret) and sends it over Supabase Realtime; the S25 opens it and shows it. Play Protect: install with adb (cable or wireless), or switch Play Protect off for one install.
+
+## 4. "when the i turn otp switch on the app crashes … i want also my version … and the global app"
+Crash: the socket was closed on the main thread. **PR 86.** Three builds (Full, Standard, Global): **PR 89.**
+
+## 5. Battery of the POCO on the S25 with low alerts
+**PR 88.** Alerts at 20% and 10%.
+
+## 6. "the music and volume controls dont work lol" / "see how kde connect handles things" / "doesnt show me what is playing"
+Rebuilt as a system media session like KDE Connect's: **PR 87.** "What's playing" needs notification access on the POCO (checklist item added).
+
+## 7. "how does all of this reflect on the native version?"
+The native app has no Life Connect. Plan: catch the native app up with the website, then port Life Connect with the same three builds. **Waiting for the owner's go.**
+
+## 8. "when i sent a work project to work it still apears in the personal projects and no interface with projects"
+**PR 90:** Projects tab in Work and Study; moved projects leave personal Projects.
+
+## 9. "Will the full app drain the pocos battery heavily?"
+Estimate 2–6% a day (one socket with a 25 s heartbeat; unmeasured). Check Settings → Battery after a day.
+
+## 10. PROJECT_FULL.md
+**PR 91**, ~6 MB, secrets redacted, copy outside the repo.
+
+## 11. "Pasta 2 Go was sent by wafarha not mohamed abdelaziz"
+The phone role overwrote the SMS sender since 17 Nov, so all texts merged into one "sim" thread. **PR 92.** Old texts can't be repaired.
+
+## 12. Screen recording: "Whyis this" (prayer flicks back to "Log")
+The re-read after a save answered from the phone's copy before it was updated. **PR 93**, for every list. Couldn't be reproduced in demo mode; check on the phone.
+
+## 13. "push the new changes and update the .md and the second brain"
+Everything was already on GitHub. This note, the Handoff, Decisions, `PROGRESS.md` and `PROJECT_FULL.md` updated.
 ```
 
 ### second-brain/Vision/Competitors and ADHD apps.md
@@ -103378,9 +103527,11 @@ type Write = {
 };
 
 function sameRow(existing: Row, row: Row, conflict: string[] | undefined): boolean {
-  if (conflict?.length)
-    return conflict.every((column) => String(existing[column]) === String(row[column]));
-  return existing["id"] !== undefined && existing["id"] === row["id"];
+  if (existing["id"] !== undefined && existing["id"] === row["id"]) return true;
+  return (
+    !!conflict?.length &&
+    conflict.every((column) => String(existing[column]) === String(row[column]))
+  );
 }
 
 async function applyToCache(write: Write): Promise<Row[]> {
@@ -103655,8 +103806,11 @@ async function handleWrite(request: Request, url: URL, table: string): Promise<R
     try {
       const response = await nativeFetch(request);
       if (!status.online) setStatus({ online: true });
+      // Update the device copy before answering: the app re-reads right after a
+      // save, and reads answer from the device copy first. Answering earlier
+      // showed the old data for a moment (a logged prayer flicked back to "Log").
       if (response.ok)
-        void mirrorOnlineWrite(user, request.method, url, table, bodyText, response.clone());
+        await mirrorOnlineWrite(user, request.method, url, table, bodyText, response.clone());
       return response;
     } catch (error) {
       if (!isNetworkError(error)) throw error;
@@ -103682,8 +103836,10 @@ async function mirrorOnlineWrite(
       const parsed = (text ? JSON.parse(text) : bodyText ? JSON.parse(bodyText) : []) as
         Row | Row[];
       const rows = Array.isArray(parsed) ? parsed : [parsed];
+      // Upserts (?on_conflict=...) replace the row they match instead of adding one.
+      const conflict = params.get("on_conflict")?.split(",").filter(Boolean);
       if (rows.every((row) => row["id"] !== undefined))
-        await applyToCache({ user, kind: "insert", table, params, rows, patch: {} });
+        await applyToCache({ user, kind: "insert", table, params, rows, patch: {}, conflict });
     } else if (method === "PATCH") {
       await applyToCache({
         user,
