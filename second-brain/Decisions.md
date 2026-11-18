@@ -114,3 +114,18 @@ Nager.Date is the source, with its decree-shifted dates (moved to Thursday). Egy
 ## InBody (2026-11-17, next)
 
 InBody results go into `health_samples` (`source: "inbody"`), no new table.
+
+## Work and Study as spaces, no new tables (2026-11-18)
+Work and Study each have Tasks, Notes, Ideas and Calendar tabs. Tasks live in one project per space, notes and ideas carry the `work`/`study` (+`idea`) tags. The main calendar shows or hides each space (Settings → Calendar), stored as `calendar:hide-work` / `calendar:hide-study` in `enabled_modules`. Work is an opt-in module and shows without a company. (PR 78)
+
+## Move whole projects into a space (2026-11-18)
+A project (with every task and subtask) can be moved to Work or Study and back: Projects ⋯ menu, or "Bring in a project" in the space's Tasks tab. Stored as `space:<work|study>:<projectId>` in `enabled_modules`; no task is touched, so moving back is lossless. Moving in switches the space on. (PR 83)
+
+## Study schedule from a screenshot, the user's own AI (2026-11-18)
+Like Bring a plan: copy a prompt, paste it with the screenshot into any AI chat, paste the answer back, check the list, add. Life OS sends nothing to an AI. "Read it on this phone" uses the on-device reader (tesseract) for clean lists; grids are better read by the AI chat. Format: `CLASS | weekday | HH:MM | HH:MM | course | room` and `EXAM | YYYY-MM-DD | HH:MM | course | name`. (PR 84)
+
+## Attendance: admins can remove any single tap (2026-11-18)
+A wrong tap mid-day (e.g. out 9:12, in 9:44) is removed with a correction whose value is `drop:<time>` (no DB change). The sheet, clock card and Excel all read it via `tapCorrection`. (PR 82)
+
+## Evening ritual (2026-11-18)
+"Close the day" from 6 pm on Today and in the daily review: tick what's done, move the rest to tomorrow, with Undo. (PR 80)

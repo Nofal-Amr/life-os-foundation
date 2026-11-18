@@ -1,9 +1,27 @@
 ---
 tags: [handoff]
-updated: 2026-11-17
+updated: 2026-11-18
 ---
 
 # Handoff for the next session
+
+## Latest: 2026-11-18 (READ FIRST)
+Merged and live on lifeos0.vercel.app (all CI green, live pages return 200):
+- **PR 78** Work and Study as spaces (Tasks, Notes, Ideas, Calendar tabs; calendar show/hide in Settings).
+- **PR 80** Close the day (evening ritual): from 6 pm, move unfinished tasks to tomorrow, with Undo.
+- **PR 81** Arabic across the app: ~1,300 strings, Arabic dates (`src/lib/dates.ts`). English left in Arabic mode went 818 → 428, mostly demo data. Full-site sweep: 38 pages × 375/1280 px × en/ar × light/dark, 0 errors, 0 overflow.
+- **PR 82** Work attendance: admins can remove any mid-day tap (`drop:<time>` correction); correction form opens fresh per day with the time filled in. Owner's 17 Nov has a wrong out 9:12 / in 9:44: the owner removes it in Sheets (the day opens on that option). Full Work test 55/55.
+- **PR 83** Move a whole project (tasks + subtasks) into Work or Study and back.
+- **PR 84** Study → Timetable → "Make my schedule": prompt for any AI chat + screenshot, paste the answer, preview, add; or read the screenshot on the phone.
+
+Test scripts (headless, demo, Playwright msedge, `NODE_PATH` = main checkout node_modules) live in `.claude/worktrees/work-fix/.shots/`: `sweep.mjs` (whole site), `work-full.mjs`, `move.mjs`, `sched.mjs`, `close.mjs`, `spaces.mjs`; `merge-ar.mjs` adds Arabic strings from JSON.
+
+Waiting on the owner:
+- **PR 74** (excuses, incentives, allowances): DB OK needed for `20261117140000_work_excuses.sql` and `20261117150000_work_pay_items.sql`.
+- **Native app catch-up**: schedule it or start now? (paused since 2026-11-12; missing everything the web gained since late October, plus fingerprint clock-in and workplace location.)
+- Owner to-dos: fill `src/lib/legal.ts`, leaked-password protection + PKCE, Google Calendar client ID, production domain, base salary in Work → People. claude-mem needs `/login` (failing since 2026-10-20).
+
+Still open from the plan: website error tracking (needs an outside service OK), prayer-anchored day timeline, purchase goals tied to payday, remaining short Arabic labels (achievements, some tabs, weekday arrays), photos next to to-dos (owner decision), InBody input, APKs from main were built and sent on 2026-11-18 (standard 0.3.1, Full 0.3.1, native 0.2, watch 1.0).
 
 ## Next, after 2026-11-17 part 2 (read [[2026-11-17 - Work fixes, Gym plan, verse signs, holidays]])
 
