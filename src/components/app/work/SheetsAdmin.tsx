@@ -32,7 +32,7 @@ import {
   type WorkMember,
   type WorkOrg,
 } from "@/data/work/api";
-import { monthSheet, type DayRow, type WorkRules } from "@/data/work/rules";
+import { DROP_PREFIX, monthSheet, type DayRow, type WorkRules } from "@/data/work/rules";
 import { exportSheets } from "@/data/work/sheetExport";
 import { t } from "@/lib/i18n";
 import { saveFile } from "@/lib/native";
@@ -265,6 +265,18 @@ export function SheetsAdmin({ org, rules }: { org: WorkOrg; rules: WorkRules }) 
   );
 }
 
+/** "HH:mm" of an ISO time in the company's time zone, for the time box. */
+function clockOf(iso: string, timeZone: string): string {
+  return new Date(iso).toLocaleTimeString("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+}
+
+type CorrectionField = "in" | "out" | "leave" | "remove-in" | "remove-out" | `drop-${number}`;
+
 function CorrectionDialog({
   open,
   onOpenChange,
@@ -281,10 +293,6 @@ function CorrectionDialog({
   allowance: { used: number; total: number } | null;
   onSave: (field: "in" | "out" | "leave", value: string | null, reason: string) => void;
 }) {
-  const [field, setField] = useState<"in" | "out" | "leave" | "remove-in" | "remove-out">("out");
-  const [clock, setClock] = useState("16:30");
-  const [leave, setLeave] = useState(rules.leaveTypes[0]?.id ?? "");
-  const [reason, setReason] = useState("");
   if (!day) return null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -293,81 +301,144 @@ function CorrectionDialog({
           <DialogTitle>{t("Correct this day")}</DialogTitle>
           <DialogDescription>{`${day.member.display_name} · ${day.row.day}`}</DialogDescription>
         </DialogHeader>
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!reason.trim()) return;
-            if (field === "remove-in" || field === "remove-out")
-              onSave(field === "remove-in" ? "in" : "out", null, reason.trim());
-            else
-              onSave(
-                field,
-                field === "leave" ? leave : zonedIso(day.row.day, clock, rules.timezone),
-                reason.trim(),
-              );
-            setReason("");
-          }}
-        >
-          <select
-            className="h-10 w-full rounded-lg border border-border bg-card px-2 text-sm"
-            value={field}
-            onChange={(event) => setField(event.target.value as typeof field)}
-          >
-            <option value="in">{t("Set the clock-in time")}</option>
-            <option value="out">{t("Set the clock-out time")}</option>
-            {day.row.out ? (
-              <option value="remove-out">{t("Remove the clock-out (a wrong tap)")}</option>
-            ) : null}
-            {day.row.in ? <option value="remove-in">{t("Remove the clock-in")}</option> : null}
-            <option value="leave">{t("Mark as leave")}</option>
-          </select>
-          {field === "leave" ? (
-            <select
-              className="h-10 w-full rounded-lg border border-border bg-card px-2 text-sm"
-              value={leave}
-              onChange={(event) => setLeave(event.target.value)}
-            >
-              {rules.leaveTypes.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {t(type.name)}
-                </option>
-              ))}
-            </select>
-          ) : null}
-          {field === "leave" &&
-          allowance &&
-          usesAllowance(rules.leaveTypes.find((type) => type.id === leave)) ? (
-            <p
-              className={
-                allowance.used >= allowance.total
-                  ? "text-xs text-destructive"
-                  : "text-xs text-muted-foreground"
-              }
-            >
-              {`${t("Paid vacation used this year")}: ${allowance.used} ${t("of")} ${allowance.total} ${t("days")}`}
-              {allowance.used >= allowance.total
-                ? `. ${t("This day goes past their allowance; it can still be saved.")}`
-                : ""}
-            </p>
-          ) : null}
-          {field === "in" || field === "out" ? (
-            <Input type="time" value={clock} onChange={(event) => setClock(event.target.value)} />
-          ) : null}
-          <Input
-            value={reason}
-            maxLength={300}
-            placeholder={t("Reason (shown on the sheet)")}
-            onChange={(event) => setReason(event.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            {t("The original stays stored; the sheet shows this as a correction.")}
-          </p>
-          <Button type="submit" className="w-full" disabled={!reason.trim()}>
-            {t("Save correction")}
-          </Button>
-        </form>
+        {/* Keyed by the day, so each day opens fresh rather than on the last day's choice. */}
+        <CorrectionForm
+          key={`${day.member.user_id}-${day.row.day}`}
+          row={day.row}
+          rules={rules}
+          allowance={allowance}
+          onSave={onSave}
+        />
       </DialogContent>
     </Dialog>
+  );
+}
+
+function CorrectionForm({
+  row,
+  rules,
+  allowance,
+  onSave,
+}: {
+  row: DayRow;
+  rules: WorkRules;
+  allowance: { used: number; total: number } | null;
+  onSave: (field: "in" | "out" | "leave", value: string | null, reason: string) => void;
+}) {
+  const clockFor = (kind: "in" | "out") => {
+    const current = kind === "in" ? row.in : row.out;
+    if (current) return clockOf(current, rules.timezone);
+    return kind === "in" ? rules.dayStart : rules.dayEnd;
+  };
+  const initial: CorrectionField = !row.in ? "in" : row.between.length ? "drop-0" : "out";
+  const [field, setField] = useState<CorrectionField>(initial);
+  const [clock, setClock] = useState(() => clockFor(initial === "in" ? "in" : "out"));
+  const [leave, setLeave] = useState(rules.leaveTypes[0]?.id ?? "");
+  const [reason, setReason] = useState("");
+  const time = (iso: string) =>
+    new Date(iso).toLocaleTimeString([], {
+      timeZone: rules.timezone,
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  const dropTap = field.startsWith("drop-") ? row.between[Number(field.slice(5))] : undefined;
+
+  const choose = (next: CorrectionField) => {
+    setField(next);
+    if (next === "in" || next === "out") setClock(clockFor(next));
+  };
+
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const why = reason.trim();
+        if (!why) return;
+        if (dropTap) onSave(dropTap.kind, `${DROP_PREFIX}${dropTap.at}`, why);
+        else if (field === "remove-in" || field === "remove-out")
+          onSave(field === "remove-in" ? "in" : "out", null, why);
+        else if (field === "leave") onSave("leave", leave, why);
+        else if (field === "in" || field === "out")
+          onSave(field, zonedIso(row.day, clock, rules.timezone), why);
+      }}
+    >
+      <select
+        className="h-10 w-full rounded-lg border border-border bg-card px-2 text-sm"
+        value={field}
+        aria-label={t("What to change")}
+        onChange={(event) => choose(event.target.value as CorrectionField)}
+      >
+        <option value="in">{t("Set the clock-in time")}</option>
+        <option value="out">{t("Set the clock-out time")}</option>
+        {row.between.map((tap, index) => (
+          <option key={tap.at} value={`drop-${index}`}>
+            {`${t(tap.kind === "in" ? "Remove the clock-in at" : "Remove the clock-out at")} ${time(tap.at)}`}
+          </option>
+        ))}
+        {row.out ? (
+          <option value="remove-out">{t("Remove the clock-out (a wrong tap)")}</option>
+        ) : null}
+        {row.in ? <option value="remove-in">{t("Remove the clock-in")}</option> : null}
+        <option value="leave">{t("Mark as leave")}</option>
+      </select>
+      {dropTap ? (
+        <p className="text-xs text-muted-foreground">
+          {t(
+            "A tap in the middle of the day, like a clock-out by mistake. Removing it joins the day back into one stretch.",
+          )}
+        </p>
+      ) : null}
+      {field === "leave" ? (
+        <select
+          className="h-10 w-full rounded-lg border border-border bg-card px-2 text-sm"
+          value={leave}
+          aria-label={t("Kind of leave")}
+          onChange={(event) => setLeave(event.target.value)}
+        >
+          {rules.leaveTypes.map((type) => (
+            <option key={type.id} value={type.id}>
+              {t(type.name)}
+            </option>
+          ))}
+        </select>
+      ) : null}
+      {field === "leave" &&
+      allowance &&
+      usesAllowance(rules.leaveTypes.find((type) => type.id === leave)) ? (
+        <p
+          className={
+            allowance.used >= allowance.total
+              ? "text-xs text-destructive"
+              : "text-xs text-muted-foreground"
+          }
+        >
+          {`${t("Paid vacation used this year")}: ${allowance.used} ${t("of")} ${allowance.total} ${t("days")}`}
+          {allowance.used >= allowance.total
+            ? `. ${t("This day goes past their allowance; it can still be saved.")}`
+            : ""}
+        </p>
+      ) : null}
+      {field === "in" || field === "out" ? (
+        <Input
+          type="time"
+          value={clock}
+          aria-label={t(field === "in" ? "Clock-in time" : "Clock-out time")}
+          onChange={(event) => setClock(event.target.value)}
+        />
+      ) : null}
+      <Input
+        value={reason}
+        maxLength={300}
+        placeholder={t("Reason (shown on the sheet)")}
+        onChange={(event) => setReason(event.target.value)}
+      />
+      <p className="text-xs text-muted-foreground">
+        {t("The original stays stored; the sheet shows this as a correction.")}
+      </p>
+      <Button type="submit" className="w-full" disabled={!reason.trim()}>
+        {t("Save correction")}
+      </Button>
+    </form>
   );
 }

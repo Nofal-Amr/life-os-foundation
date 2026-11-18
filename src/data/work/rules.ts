@@ -121,8 +121,20 @@ export const ADO_PRESET: WorkRules = {
 };
 
 export type ClockEvent = { kind: "in" | "out"; at: string; placeKind?: "office" | "site" };
-/** An admin's change to a day's time; `at: null` removes it. */
-export type Correction = { day: string; field: "in" | "out"; at: string | null; reason: string };
+/**
+ * An admin's change to a day's time; `at: null` removes it. With `drop`, it
+ * instead removes the one tap at `at` (a wrong tap in the middle of the day).
+ */
+export type Correction = {
+  day: string;
+  field: "in" | "out";
+  at: string | null;
+  reason: string;
+  drop?: boolean;
+};
+
+/** How a dropped tap is stored in a correction's value: `drop:` and the tap's time. */
+export const DROP_PREFIX = "drop:";
 export type Leave = { day: string; typeId: string };
 
 export type DayRow = {
@@ -263,7 +275,7 @@ type Tap = { kind: "in" | "out"; at: string };
  */
 export function dayTaps<T extends Tap>(
   raw: T[],
-  corrections: { field: "in" | "out"; at: string | null }[],
+  corrections: { field: "in" | "out"; at: string | null; drop?: boolean }[],
 ): {
   in: string | null;
   out: string | null;
@@ -273,13 +285,19 @@ export function dayTaps<T extends Tap>(
   /** The taps between the anchors. */
   between: T[];
 } {
-  const sorted = [...raw].sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const dropped = new Set(
+    corrections.filter((item) => item.drop && item.at).map((item) => Date.parse(item.at!)),
+  );
+  const sorted = [...raw]
+    .filter((tap) => !dropped.has(Date.parse(tap.at)))
+    .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   const firstIn = sorted.find((tap) => tap.kind === "in") ?? null;
   const lastOut = sorted.filter((tap) => tap.kind === "out").at(-1) ?? null;
   let inAt = firstIn?.at ?? null;
   let outAt = lastOut?.at ?? null;
   const corrected: ("in" | "out")[] = [];
   for (const item of corrections) {
+    if (item.drop) continue;
     if (item.field === "in") inAt = item.at;
     else outAt = item.at;
     if (!corrected.includes(item.field)) corrected.push(item.field);

@@ -9,7 +9,7 @@ import { useMonthSheet } from "@/components/app/work/useMonthSheet";
 import { LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { XLSX_MIME } from "@/data/exportData";
-import type { WorkMember, WorkOrg } from "@/data/work/api";
+import { isDrop, tapCorrection, type WorkMember, type WorkOrg } from "@/data/work/api";
 import type { DayRow, WorkRules } from "@/data/work/rules";
 import { exportSheets } from "@/data/work/sheetExport";
 import { t } from "@/lib/i18n";
@@ -114,6 +114,7 @@ export function MemberMonth({
           day: item.day,
           field: item.field,
           reason: item.reason,
+          ...(isDrop(item) ? { dropped: tapCorrection(item).at! } : {}),
         }))}
       />
     </div>

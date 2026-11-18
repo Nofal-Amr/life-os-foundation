@@ -241,10 +241,15 @@ export function demoSeed(now = new Date()): DemoDb {
     if ([5, 6].includes(date.getDay())) continue;
     const inAt = `08:${String((back * 7) % 40).padStart(2, "0")}`;
     const outAt = back % 4 === 0 ? "18:20" : "16:35";
-    for (const [kind, time] of [
-      ["in", inAt],
-      ["out", outAt],
-    ] as const) {
+    // One day has a clock-out tapped by mistake and a clock-in straight after.
+    const slip =
+      back === 3
+        ? ([
+            ["out", "09:12"],
+            ["in", "09:44"],
+          ] as const)
+        : [];
+    for (const [kind, time] of [["in", inAt] as const, ...slip, ["out", outAt] as const]) {
       workEvents.push({
         id: id("wevent"),
         org_id: org,
