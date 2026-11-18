@@ -11,6 +11,7 @@ import { unwrap } from "@/lib/supabase-helpers";
 
 import {
   ADO_PRESET,
+  DROP_PREFIX,
   dayTaps,
   type ClockEvent,
   type Correction,
@@ -292,6 +293,25 @@ export function nextClockKind(events: Pick<WorkEvent, "kind" | "at">[], now: num
 /* ------------------------------------------------------- rows → the engine */
 
 /**
+ * An in/out correction row as the rules engine reads it: a new time, a
+ * removed time (`null`), or one wrong tap dropped (`drop:` and its time).
+ */
+export function tapCorrection(item: Pick<WorkCorrection, "field" | "value">): {
+  field: "in" | "out";
+  at: string | null;
+  drop?: boolean;
+} {
+  const field = item.field as "in" | "out";
+  if (item.value?.startsWith(DROP_PREFIX))
+    return { field, at: item.value.slice(DROP_PREFIX.length), drop: true };
+  return { field, at: item.value };
+}
+
+/** Whether a correction row drops one tap rather than moving a time. */
+export const isDrop = (item: Pick<WorkCorrection, "value">) =>
+  !!item.value?.startsWith(DROP_PREFIX);
+
+/**
  * One member's month as the rules engine's input. Attempts stay out of the
  * sheet; a leave correction counts as a leave; only approved leave counts.
  */
@@ -315,12 +335,7 @@ export function sheetInputFor(args: {
     }));
   const corrections: Correction[] = args.corrections
     .filter((item) => item.field === "in" || item.field === "out")
-    .map((item) => ({
-      day: item.day,
-      field: item.field as "in" | "out",
-      at: item.value,
-      reason: item.reason,
-    }));
+    .map((item) => ({ day: item.day, reason: item.reason, ...tapCorrection(item) }));
   const leaves: Leave[] = [
     ...args.leaves
       .filter((leave) => leave.status === "approved")
@@ -380,7 +395,7 @@ export function todayClock<T extends Pick<WorkEvent, "kind" | "at">>(args: {
     clocks,
     args.corrections
       .filter((item) => item.day === args.day && (item.field === "in" || item.field === "out"))
-      .map((item) => ({ field: item.field as "in" | "out", at: item.value })),
+      .map(tapCorrection),
   );
   // A clock-out an admin removed or moved ahead of now means the day is still open.
   const reopened =

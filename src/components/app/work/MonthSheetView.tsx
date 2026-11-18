@@ -19,7 +19,7 @@ export function MonthSheetView({
   rules: WorkRules;
   /** Admins: tap a day to correct it. */
   onDay?: (row: DayRow) => void;
-  corrections?: { day: string; field: string; reason: string }[];
+  corrections?: { day: string; field: string; reason: string; dropped?: string }[];
 }) {
   const time = (iso: string) =>
     new Date(iso).toLocaleTimeString([], {
@@ -227,8 +227,10 @@ export function MonthSheetView({
           {corrections.map((item, index) => (
             <p key={`${item.day}-${index}`}>
               {Number(item.day.slice(8))} ·{" "}
-              {t(item.field === "leave" ? "Leave" : item.field === "in" ? "In" : "Out")}:{" "}
-              {item.reason}
+              {item.dropped
+                ? `${t(item.field === "in" ? "Removed a clock-in at" : "Removed a clock-out at")} ${time(item.dropped)}`
+                : t(item.field === "leave" ? "Leave" : item.field === "in" ? "In" : "Out")}
+              : {item.reason}
             </p>
           ))}
         </div>

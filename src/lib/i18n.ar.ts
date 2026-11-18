@@ -2558,4 +2558,14 @@ export const AR: Record<string, string> = {
   "Something went wrong on our end. You can try refreshing or head back home.":
     "حدث خطأ من جهتنا. يمكنك التحديث أو العودة للرئيسية.",
   "Life OS · Calm personal productivity": "Life OS · إنتاجية شخصية هادئة",
+  "What to change": "ما الذي تريد تغييره",
+  "Remove the clock-in at": "احذف تسجيل الحضور في",
+  "Remove the clock-out at": "احذف تسجيل الانصراف في",
+  "A tap in the middle of the day, like a clock-out by mistake. Removing it joins the day back into one stretch.":
+    "ضغطة في منتصف اليوم، مثل تسجيل انصراف بالخطأ. حذفها يعيد اليوم فترة واحدة متصلة.",
+  "Kind of leave": "نوع الإجازة",
+  "Clock-in time": "وقت الحضور",
+  "Clock-out time": "وقت الانصراف",
+  "Removed a clock-in at": "حُذف تسجيل حضور في",
+  "Removed a clock-out at": "حُذف تسجيل انصراف في",
 };
