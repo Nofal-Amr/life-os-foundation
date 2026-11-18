@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, PhoneCall, Send } from "lucide-react";
+import { BatteryCharging, BatteryFull, BatteryLow, Check, PhoneCall, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -21,7 +21,7 @@ import {
 import { toError } from "@/lib/supabase-helpers";
 import { cn } from "@/lib/utils";
 import { MusicRemote } from "@/components/app/MusicRemote";
-import { t } from "@/lib/i18n";
+import { getLang, t } from "@/lib/i18n";
 
 /** Per phone: which role this phone plays, and what to call it. */
 const ROLE_KEY = "life-connect:role";
@@ -312,6 +312,7 @@ export function LifeConnectCard() {
       ) : null}
       {role === "main" ? (
         <div className="space-y-3">
+          <PeerBatteryLine peer={status?.peer} reading={status?.peerBattery} />
           <p className="text-xs text-muted-foreground">
             {t(
               "For your watch: in Galaxy Wearable → Watch settings → Notifications → App notifications, turn on Life OS. Calls then ring on the watch with Decline.",
@@ -384,5 +385,46 @@ export function LifeConnectCard() {
         )}
       </p>
     </section>
+  );
+}
+
+/**
+ * Main phone: the SIM phone's battery, as last sent (it sends on every change).
+ * Low-battery alerts come as phone notifications at 20% and 10%.
+ */
+function PeerBatteryLine({
+  peer,
+  reading,
+}: {
+  peer?: string | undefined;
+  reading?: { level?: number; charging?: boolean; at?: number } | undefined;
+}) {
+  const name = peer?.trim() || t("SIM phone");
+  if (reading?.level === undefined) {
+    return (
+      <p className="text-xs text-muted-foreground">
+        {`${name}: ${t("battery shows here once it's connected.")}`}
+      </p>
+    );
+  }
+  const Icon = reading.charging ? BatteryCharging : reading.level <= 20 ? BatteryLow : BatteryFull;
+  const time = reading.at
+    ? new Date(reading.at).toLocaleTimeString(getLang() === "ar" ? "ar-EG" : "en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  return (
+    <p className="flex items-center gap-2 text-sm">
+      <Icon className="size-4 shrink-0" aria-hidden="true" />
+      <span>
+        {`${name}: `}
+        <span className="font-medium tabular-nums">{`${reading.level}%`}</span>
+        {reading.charging ? ` · ${t("charging")}` : ""}
+        {time ? (
+          <span className="text-xs text-muted-foreground">{` · ${t("as of")} ${time}`}</span>
+        ) : null}
+      </span>
+    </p>
   );
 }

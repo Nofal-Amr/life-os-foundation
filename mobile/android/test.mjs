@@ -24,6 +24,7 @@ const sources = [
   "FindTiming",
   "WakeAlarm",
   "ConnectEcho",
+  "BatteryRules",
 ].map((name) => join(here, `src/app/lifeos/${name}.java`));
 const tests = readdirSync(join(here, "test")).filter((name) => name.endsWith("Test.java"));
 

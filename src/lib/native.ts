@@ -262,6 +262,8 @@ export type ConnectStatus = {
   brand?: string;
   /** SIM phone: notification access, so the main phone sees the song and the app. */
   media?: boolean;
+  /** Main phone: the SIM phone's last battery reading (at = when it arrived, ms). */
+  peerBattery?: { level?: number; charging?: boolean; at?: number };
   /** Main phone: the SIM phone's name, once it has introduced itself. */
   peer?: string;
 };

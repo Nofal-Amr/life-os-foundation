@@ -618,6 +618,7 @@ public class MainActivity extends Activity {
                         || getSystemService(android.app.NotificationManager.class).canUseFullScreenIntent())
                     .put("battery", getSystemService(android.os.PowerManager.class)
                         .isIgnoringBatteryOptimizations(getPackageName()))
+                    .put("peerBattery", PeerBattery.last(MainActivity.this))
                     .put("brand", android.os.Build.MANUFACTURER.toLowerCase(java.util.Locale.ROOT))
                     .put("media", hasNotificationAccess())
                     .put("peer", ConnectConfig.peer(MainActivity.this));
