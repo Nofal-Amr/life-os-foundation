@@ -14,6 +14,7 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
   | -------------------------------------- | -------------------- | ------- |
   | Standard phone app (web view)          | `life-os-debug.apk`  | 0.3.1   |
   | Full phone app (adds bank-SMS reading) | `life-os-full.apk`   | 0.3.1   |
+  | Global phone app (no Life Connect)     | `life-os-global.apk` | 0.3.1   |
   | Native Kotlin/Compose app              | `life-os-native.apk` | 0.2     |
   | Wear OS watch app                      | `life-os-wear.apk`   | 1.0     |
 
@@ -24,6 +25,15 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
 
 ## Done (most recent first)
 
+- **#93** Lists no longer flick back to old data right after a save (the prayer "Log" flicker).
+- **#92** Forwarded texts keep their real sender (they had all merged into one "sim" thread).
+- **#91** `PROJECT_FULL.md`: the whole project in one file, secrets removed.
+- **#90** Work and Study have a Projects tab; a moved project leaves personal Projects.
+- **#89** Three Android builds: Full, Standard and Global (no Life Connect, for app stores).
+- **#88** The SIM phone's battery shows on the main phone, with alerts at 20% and 10%.
+- **#87** Life Connect music remote works as a real player, volume keys included.
+- **#86** Life Connect no longer crashes when a setting is changed.
+- **#85** This progress file and the second brain for 2026-11-18.
 - **#84** Study → Timetable → "Make my schedule". The user shows a screenshot to any AI chat
   with our prompt and pastes the answer back. They can also read the screenshot on the phone
   instead. They check a preview before anything is added.
@@ -58,6 +68,9 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
   - It is missing what the website gained since late October, plus fingerprint clock-in
     and the workplace location.
   - It needs the owner's go-ahead.
+- **Phone checks for the owner:** #87, #88, #89, #92 and #93 are only tested on the emulator.
+  Also check the Full app's battery use on the POCO after a day (more than 5% → lengthen the
+  heartbeat).
 - **One data fix for the owner:** remove the wrong 9:12 tap on 17 Nov in Work → Sheets.
 - **Local branches kept for reference:** some are behind `main` and some have no pull request.
   Any branch with commits that weren't on GitHub was pushed on 2026-11-18.
@@ -79,7 +92,9 @@ decisions are in [`second-brain/Decisions.md`](second-brain/Decisions.md)._
    - The remaining short Arabic labels.
    - InBody input.
    - Photos next to to-dos (needs an owner decision).
-4. **Native app:** catch up to the website once the owner approves.
+4. **Native app:** catch up to the website once the owner approves, then add Life Connect and
+   the Full / Standard / Global builds.
+5. **Optional:** make the Global build ready for Google Play (release key and AAB).
 
 ## Ground rules (short version)
 
