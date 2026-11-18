@@ -38,6 +38,7 @@ public class ConnectService extends Service {
 
     /** Starts or stops the service to match the saved role. */
     static void sync(Context context) {
+        if (!inBuild(context)) return;
         Intent intent = new Intent(context, ConnectService.class);
         if (ConnectConfig.load(context) == null) {
             context.stopService(intent);
@@ -47,6 +48,17 @@ public class ConnectService extends Service {
             context.startForegroundService(intent);
         } catch (Exception e) {
             // Not allowed from the background right now; it starts with the app or after a reboot.
+        }
+    }
+
+    /** False in the Global (Play Store) build, which leaves Life Connect out. */
+    static boolean inBuild(Context context) {
+        try {
+            context.getPackageManager().getServiceInfo(
+                new android.content.ComponentName(context, ConnectService.class), 0);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

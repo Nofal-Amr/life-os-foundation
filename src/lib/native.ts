@@ -426,14 +426,15 @@ export const spendingInbox = {
 };
 
 /** Optional parts of the Android build: SMS forwarding and spending from notifications are Full-build only. */
-export function buildFeatures(): { sms: boolean; spending: boolean } {
+export function buildFeatures(): { sms: boolean; spending: boolean; connect: boolean } {
   try {
     const raw = bridge()?.buildFeatures?.();
-    if (!raw) return { sms: true, spending: true };
-    const value = JSON.parse(raw) as { sms?: boolean; spending?: boolean };
-    return { sms: !!value.sms, spending: !!value.spending };
+    if (!raw) return { sms: true, spending: true, connect: true };
+    const value = JSON.parse(raw) as { sms?: boolean; spending?: boolean; connect?: boolean };
+    // Apps from before the Global build don't say: they all have Life Connect.
+    return { sms: !!value.sms, spending: !!value.spending, connect: value.connect !== false };
   } catch {
-    return { sms: false, spending: false };
+    return { sms: false, spending: false, connect: true };
   }
 }
 

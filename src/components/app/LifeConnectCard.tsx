@@ -129,6 +129,8 @@ export function LifeConnectCard() {
     window.setTimeout(() => lifeConnect.requestPermissions(), 300);
   }
 
+  // The Global (Play Store) app leaves Life Connect out entirely.
+  if (!buildFeatures().connect) return null;
   if (!available) {
     return (
       <section className="stat-card space-y-2 p-4 sm:p-5">

@@ -24,6 +24,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/app/PageHeader";
 import { t } from "@/lib/i18n";
+import { buildFeatures } from "@/lib/native";
 import { SectionBoundary } from "@/components/app/SectionBoundary";
 import {
   SETTINGS_SECTIONS,
@@ -427,7 +428,7 @@ function SettingsPage() {
                       {t(item.label)}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      {t(item.description)}
+                      {t(sectionDescription(item))}
                     </span>
                   </span>
                   <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
@@ -454,7 +455,7 @@ function SettingsPage() {
           <SectionIcon section={current.key} large />
         </span>
         <div className="min-w-0 flex-1">
-          <PageHeader title={current.label} description={current.description} />
+          <PageHeader title={current.label} description={sectionDescription(current)} />
         </div>
       </div>
 
@@ -1222,4 +1223,12 @@ function SettingsPage() {
       </SectionBoundary>
     </>
   );
+}
+
+/** The Global (Play Store) app has no Life Connect, so its Phone section doesn't mention it. */
+function sectionDescription(item: { key: string; description: string }): string {
+  if (item.key === "phone" && !buildFeatures().connect) {
+    return "The watch and the on-phone assistant.";
+  }
+  return item.description;
 }

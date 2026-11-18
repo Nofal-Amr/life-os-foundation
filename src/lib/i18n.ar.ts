@@ -2632,4 +2632,5 @@ export const AR: Record<string, string> = {
   "No projects in": "لا مشاريع في",
   "Start one here, or move one in from Projects with its ⋯ menu.":
     "ابدأ مشروعًا هنا، أو انقل واحدًا من المشاريع عبر قائمة ⋯.",
+  "The watch and the on-phone assistant.": "الساعة والمساعد على الهاتف.",
 };
