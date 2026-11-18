@@ -424,9 +424,11 @@ type Write = {
 };
 
 function sameRow(existing: Row, row: Row, conflict: string[] | undefined): boolean {
-  if (conflict?.length)
-    return conflict.every((column) => String(existing[column]) === String(row[column]));
-  return existing["id"] !== undefined && existing["id"] === row["id"];
+  if (existing["id"] !== undefined && existing["id"] === row["id"]) return true;
+  return (
+    !!conflict?.length &&
+    conflict.every((column) => String(existing[column]) === String(row[column]))
+  );
 }
 
 async function applyToCache(write: Write): Promise<Row[]> {
@@ -701,8 +703,11 @@ async function handleWrite(request: Request, url: URL, table: string): Promise<R
     try {
       const response = await nativeFetch(request);
       if (!status.online) setStatus({ online: true });
+      // Update the device copy before answering: the app re-reads right after a
+      // save, and reads answer from the device copy first. Answering earlier
+      // showed the old data for a moment (a logged prayer flicked back to "Log").
       if (response.ok)
-        void mirrorOnlineWrite(user, request.method, url, table, bodyText, response.clone());
+        await mirrorOnlineWrite(user, request.method, url, table, bodyText, response.clone());
       return response;
     } catch (error) {
       if (!isNetworkError(error)) throw error;
@@ -728,8 +733,10 @@ async function mirrorOnlineWrite(
       const parsed = (text ? JSON.parse(text) : bodyText ? JSON.parse(bodyText) : []) as
         Row | Row[];
       const rows = Array.isArray(parsed) ? parsed : [parsed];
+      // Upserts (?on_conflict=...) replace the row they match instead of adding one.
+      const conflict = params.get("on_conflict")?.split(",").filter(Boolean);
       if (rows.every((row) => row["id"] !== undefined))
-        await applyToCache({ user, kind: "insert", table, params, rows, patch: {} });
+        await applyToCache({ user, kind: "insert", table, params, rows, patch: {}, conflict });
     } else if (method === "PATCH") {
       await applyToCache({
         user,
