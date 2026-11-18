@@ -1,7 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "@/lib/dates";
-import { BookOpen, CalendarClock, FileUp, GraduationCap, Plus, Trash2 } from "lucide-react";
+import {
+  BookOpen,
+  CalendarClock,
+  Camera,
+  Copy,
+  FileUp,
+  GraduationCap,
+  Loader2,
+  Plus,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +25,9 @@ import { ErrorState, LoadingState } from "@/components/app/States";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { SCHEDULE_PROMPT, parseSchedule, type ScheduleResult } from "@/data/scheduleImport";
+import { readPhoto } from "@/lib/ocr";
 import {
   Select,
   SelectContent,
@@ -40,6 +55,8 @@ import {
   upcomingItems,
   updateStudyItem,
   type Course,
+  type ImportedExam,
+  type ImportedSlot,
   type StudyKind,
 } from "@/data/study";
 import { usePreferences } from "@/hooks/usePreferences";
@@ -424,6 +441,7 @@ function TimetableTab({ courses }: { courses: Course[] }) {
 
   return (
     <div className="space-y-5">
+      <ScheduleFromAi courses={courses} />
       <IcsImport courses={courses} />
       {courses.length ? (
         <form
@@ -536,6 +554,270 @@ function TimetableTab({ courses }: { courses: Course[] }) {
   );
 }
 
+/** Adds classes and exams, making a course for each new course name. */
+async function importSchedule(
+  courses: Course[],
+  result: { slots: ImportedSlot[]; exams: ImportedExam[] },
+): Promise<void> {
+  const byName = new Map(courses.map((course) => [course.name.toLowerCase(), course.id]));
+  const courseFor = async (name: string) => {
+    const key = name.toLowerCase();
+    const existing = byName.get(key);
+    if (existing) return existing;
+    const created = await addCourse({
+      name: name.slice(0, 100),
+      code: null,
+      teacher: null,
+      color: null,
+    });
+    byName.set(key, created.id);
+    return created.id;
+  };
+  for (const slot of result.slots) {
+    await addSession({
+      course_id: await courseFor(slot.course),
+      weekday: slot.weekday,
+      starts: slot.starts,
+      ends: slot.ends,
+      room: slot.room?.slice(0, 60) ?? null,
+      kind: null,
+    });
+  }
+  for (const exam of result.exams) {
+    await addStudyItem({
+      kind: "exam",
+      title: exam.title.slice(0, 200),
+      course_id: byName.get(exam.course.toLowerCase()) ?? null,
+      due_at: exam.dueAt,
+      weight: null,
+      note: null,
+    });
+  }
+}
+
+/**
+ * A schedule from a screenshot: copy a prompt into any AI chat with the
+ * screenshot and paste its answer, or let the phone read the screenshot.
+ * Nothing is sent anywhere by Life OS; you check the list before importing.
+ */
+function ScheduleFromAi({ courses }: { courses: Course[] }) {
+  const invalidate = useInvalidate();
+  const photo = useRef<HTMLInputElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [reading, setReading] = useState(false);
+  const [preview, setPreview] = useState<ScheduleResult | null>(null);
+
+  const run = useMutation({
+    mutationFn: (result: ScheduleResult) => importSchedule(courses, result),
+    onSuccess: (_, result) => {
+      toast.success(`${t("Added")} ${countLabel(result)}`);
+      setPreview(null);
+      setText("");
+      setOpen(false);
+      invalidate();
+    },
+    onError: (error) => toast.error(toError(error).message),
+  });
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(SCHEDULE_PROMPT);
+      toast.success(t("Prompt copied. Paste it in your AI chat with the screenshot."));
+    } catch {
+      toast.error(t("Couldn't copy. Select the prompt and copy it yourself."));
+    }
+  };
+  const check = (value = text) => {
+    const result = parseSchedule(value);
+    if (!result.slots.length && !result.exams.length)
+      toast.error(t("No classes or exams found in that text."));
+    setPreview(result);
+  };
+  const dropSlot = (index: number) =>
+    preview && setPreview({ ...preview, slots: preview.slots.filter((_, i) => i !== index) });
+  const dropExam = (index: number) =>
+    preview && setPreview({ ...preview, exams: preview.exams.filter((_, i) => i !== index) });
+
+  if (!open)
+    return (
+      <section className="rounded-xl border border-dashed border-border p-4">
+        <p className="flex items-center gap-2 text-sm font-semibold">
+          <Sparkles className="size-4" /> {t("From a screenshot of your schedule")}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {t(
+            "Show your timetable to any AI chat with our prompt, then paste its answer here. You check the list before anything is added.",
+          )}
+        </p>
+        <Button size="sm" variant="outline" className="mt-3" onClick={() => setOpen(true)}>
+          {t("Make my schedule")}
+        </Button>
+      </section>
+    );
+
+  return (
+    <section className="space-y-3 rounded-xl border border-border bg-card p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <Sparkles className="size-4" /> {t("From a screenshot of your schedule")}
+      </p>
+      <ol className="list-decimal space-y-1 ps-5 text-sm text-muted-foreground">
+        <li>{t("Copy the prompt.")}</li>
+        <li>
+          {t("In ChatGPT, Gemini, Claude or any AI chat, paste it and attach the screenshot.")}
+        </li>
+        <li>{t("Paste its answer below and check the list.")}</li>
+      </ol>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" onClick={copy}>
+          <Copy className="size-4" /> {t("Copy the prompt")}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={reading}
+          onClick={() => photo.current?.click()}
+        >
+          {reading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}{" "}
+          {t("Or read it on this phone")}
+        </Button>
+      </div>
+      <input
+        ref={photo}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (!file) return;
+          setReading(true);
+          try {
+            const read = await readPhoto(file, "text");
+            setText(read.trim());
+            check(read);
+          } catch {
+            toast.error(t("Couldn't read the photo on this device."));
+          } finally {
+            setReading(false);
+          }
+        }}
+      />
+      <Textarea
+        value={text}
+        rows={6}
+        onChange={(event) => setText(event.target.value)}
+        aria-label={t("The AI's answer")}
+        placeholder={
+          "CLASS | Sunday | 09:00 | 10:30 | Calculus I | Room 204\nEXAM | 2026-12-14 | 10:00 | Calculus I | Midterm"
+        }
+        dir="ltr"
+        className="font-mono text-xs"
+      />
+      <p className="text-xs text-muted-foreground">
+        {t(
+          "Reading on the phone works best on a clear list; for a grid, the AI chat reads it better. Life OS doesn't send your screenshot anywhere.",
+        )}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={!text.trim()}
+          onClick={() => check()}
+        >
+          {t("Check the list")}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            setOpen(false);
+            setPreview(null);
+          }}
+        >
+          {t("Cancel")}
+        </Button>
+      </div>
+
+      {preview && (preview.slots.length || preview.exams.length) ? (
+        <div className="space-y-3 border-t border-border pt-3">
+          {preview.slots.length ? (
+            <ul className="space-y-1.5" aria-label={t("Classes")}>
+              {preview.slots.map((slot, index) => (
+                <li
+                  key={`${slot.course}-${slot.weekday}-${slot.starts}`}
+                  className="flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-sm"
+                >
+                  <span className="w-20 shrink-0 text-muted-foreground">
+                    {t(DAYS[slot.weekday]!)}
+                  </span>
+                  <span
+                    dir="ltr"
+                    className="shrink-0 tabular-nums"
+                  >{`${slot.starts}–${slot.ends}`}</span>
+                  <span className="min-w-0 flex-1 break-words">
+                    {slot.course}
+                    {slot.room ? (
+                      <span className="text-muted-foreground"> · {slot.room}</span>
+                    ) : null}
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-8"
+                    aria-label={`${t("Leave out")} ${slot.course}`}
+                    onClick={() => dropSlot(index)}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {preview.exams.length ? (
+            <ul className="space-y-1.5" aria-label={t("Exams")}>
+              {preview.exams.map((exam, index) => (
+                <li
+                  key={`${exam.title}-${exam.dueAt}`}
+                  className="flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-sm"
+                >
+                  <span className="shrink-0 text-muted-foreground">
+                    {format(new Date(exam.dueAt), "d MMM, HH:mm")}
+                  </span>
+                  <span className="min-w-0 flex-1 break-words">{exam.title}</span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-8"
+                    aria-label={`${t("Leave out")} ${exam.title}`}
+                    onClick={() => dropExam(index)}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {preview.skipped.length ? (
+            <p className="text-xs text-muted-foreground">
+              {`${preview.skipped.length} ${t("lines couldn't be read and were left out")}: ${preview.skipped.slice(0, 3).join(" / ")}`}
+            </p>
+          ) : null}
+          <Button type="button" onClick={() => run.mutate(preview)} disabled={run.isPending}>
+            {`${t("Add")} ${countLabel(preview)}`}
+          </Button>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 /** Import a timetable from the .ics file a university portal exports. */
 function IcsImport({ courses }: { courses: Course[] }) {
   const invalidate = useInvalidate();
@@ -543,44 +825,9 @@ function IcsImport({ courses }: { courses: Course[] }) {
   const [preview, setPreview] = useState<ReturnType<typeof parseIcs> | null>(null);
 
   const run = useMutation({
-    mutationFn: async (result: ReturnType<typeof parseIcs>) => {
-      const byName = new Map(courses.map((course) => [course.name.toLowerCase(), course.id]));
-      const courseFor = async (name: string) => {
-        const key = name.toLowerCase();
-        const existing = byName.get(key);
-        if (existing) return existing;
-        const created = await addCourse({
-          name: name.slice(0, 100),
-          code: null,
-          teacher: null,
-          color: null,
-        });
-        byName.set(key, created.id);
-        return created.id;
-      };
-      for (const slot of result.slots) {
-        await addSession({
-          course_id: await courseFor(slot.course),
-          weekday: slot.weekday,
-          starts: slot.starts,
-          ends: slot.ends,
-          room: slot.room?.slice(0, 60) ?? null,
-          kind: null,
-        });
-      }
-      for (const exam of result.exams) {
-        await addStudyItem({
-          kind: "exam",
-          title: exam.title.slice(0, 200),
-          course_id: null,
-          due_at: exam.dueAt,
-          weight: null,
-          note: null,
-        });
-      }
-    },
+    mutationFn: (result: ReturnType<typeof parseIcs>) => importSchedule(courses, result),
     onSuccess: () => {
-      toast.success("Timetable imported.");
+      toast.success(t("Timetable imported."));
       setPreview(null);
       invalidate();
     },
@@ -593,8 +840,9 @@ function IcsImport({ courses }: { courses: Course[] }) {
         <FileUp className="size-4" /> {t("Import from your university portal")}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Export your timetable as a calendar file (.ics) and choose it here. Repeating classes become
-        timetable slots; exams become exam items.
+        {t(
+          "Export your timetable as a calendar file (.ics) and choose it here. Repeating classes become timetable slots; exams become exam items.",
+        )}
       </p>
       <input
         ref={input}
@@ -606,34 +854,30 @@ function IcsImport({ courses }: { courses: Course[] }) {
           event.target.value = "";
           if (!file) return;
           if (file.size > 2_000_000) {
-            toast.error("That file is too big for a timetable.");
+            toast.error(t("That file is too big for a timetable."));
             return;
           }
           const result = parseIcs(await file.text());
           if (!result.slots.length && !result.exams.length)
-            toast.error("No repeating classes or exams found in that file.");
+            toast.error(t("No repeating classes or exams found in that file."));
           else setPreview(result);
         }}
       />
       {preview ? (
         <div className="mt-3 space-y-2 text-sm">
-          <p>
-            {t("Found")} {preview.slots.length} weekly{" "}
-            {preview.slots.length === 1 ? "class" : "classes"} and {preview.exams.length}{" "}
-            {preview.exams.length === 1 ? "exam" : "exams"}.
-          </p>
+          <p>{`${t("Found")} ${countLabel(preview)}`}</p>
           <div className="flex gap-2">
             <Button size="sm" onClick={() => run.mutate(preview)} disabled={run.isPending}>
-              Import
+              {t("Import")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setPreview(null)}>
-              Cancel
+              {t("Cancel")}
             </Button>
           </div>
         </div>
       ) : (
         <Button size="sm" variant="outline" className="mt-3" onClick={() => input.current?.click()}>
-          Choose .ics file
+          {t("Choose .ics file")}
         </Button>
       )}
     </section>
@@ -732,4 +976,11 @@ function CoursesTab({ courses }: { courses: Course[] }) {
       )}
     </div>
   );
+}
+
+/** "3 classes · 1 exam". */
+function countLabel(result: { slots: unknown[]; exams: unknown[] }): string {
+  const classes = result.slots.length;
+  const exams = result.exams.length;
+  return `${classes} ${t(classes === 1 ? "class" : "classes")} · ${exams} ${t(exams === 1 ? "exam" : "exams")}`;
 }
