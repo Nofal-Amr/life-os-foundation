@@ -7,14 +7,23 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
+import android.media.MediaMetadata;
+import android.media.VolumeProvider;
+import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
+import android.os.Handler;
+import android.os.Looper;
 
 import org.json.JSONObject;
 
 /**
- * The main phone's side of the music remote: a quiet media-style
- * notification for what's playing on the SIM phone, with Previous,
- * Play/Pause, Next and volume buttons (on the lock screen and the watch
- * too), and the last state for the remote on the Life Connect card.
+ * The main phone's side of the music remote. What's playing on the SIM phone
+ * becomes a media session here, so it shows up like any player: in the
+ * phone's media controls, on the lock screen and on the watch, with Previous,
+ * Play/Pause, Next and volume buttons. The session's volume is the SIM
+ * phone's music volume, so this phone's own volume keys turn it up and down
+ * while the controls are showing. The last state also feeds the remote on
+ * the Life Connect card.
  */
 final class MediaAlert {
     static final String CHANNEL = "connect_media";
@@ -23,6 +32,11 @@ final class MediaAlert {
 
     /** Tells the web view a new state arrived (set by MainActivity while it's open). */
     static volatile Runnable onState;
+
+    private static final String VOL_DOWN = "vol_down";
+    private static final String VOL_UP = "vol_up";
+    private static MediaSession session;
+    private static RemoteVolume volume;
 
     private MediaAlert() {}
 
@@ -57,6 +71,7 @@ final class MediaAlert {
         if (!title.isEmpty()) detail.append(detail.length() > 0 ? " · " : "").append("on ").append(device);
         detail.append(detail.length() > 0 ? " · " : "").append("Volume ").append(Math.round(volume * 100f / max)).append("%");
 
+        MediaSession media = session(context, device, playing, title, artist, app, volume, max);
         Notification notification = new Notification.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_music)
             .setContentTitle(heading)
@@ -66,7 +81,10 @@ final class MediaAlert {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setCategory(Notification.CATEGORY_TRANSPORT)
-            .setStyle(new Notification.MediaStyle().setShowActionsInCompactView(1, 2, 3))
+            .setDeleteIntent(broadcast(context, "dismiss", 6))
+            .setStyle(new Notification.MediaStyle()
+                .setMediaSession(media.getSessionToken())
+                .setShowActionsInCompactView(1, 2, 3))
             .addAction(action(context, "vol_down", R.drawable.ic_media_vol_down, "Volume down", 1))
             .addAction(action(context, "previous", R.drawable.ic_media_prev, "Previous", 2))
             .addAction(action(context, "toggle", playing ? R.drawable.ic_media_pause : R.drawable.ic_media_play, playing ? "Pause" : "Play", 3))
@@ -74,6 +92,88 @@ final class MediaAlert {
             .addAction(action(context, "vol_up", R.drawable.ic_media_vol_up, "Volume up", 5))
             .build();
         context.getSystemService(NotificationManager.class).notify(ID, notification);
+    }
+
+    /**
+     * The stand-in player for the SIM phone: commands from the media controls
+     * (here, the lock screen, the watch) go to the SIM phone, and so do this
+     * phone's volume keys while it is the active player.
+     */
+    private static synchronized MediaSession session(Context context, String device, boolean playing,
+                                                     String title, String artist, String app, int level, int max) {
+        Context appContext = context.getApplicationContext();
+        if (session == null) {
+            session = new MediaSession(appContext, "LifeConnectRemote");
+            session.setCallback(new MediaSession.Callback() {
+                @Override public void onPlay() { send(appContext, "play", 0); }
+                @Override public void onPause() { send(appContext, "pause", 0); }
+                @Override public void onSkipToNext() { send(appContext, "next", 0); }
+                @Override public void onSkipToPrevious() { send(appContext, "previous", 0); }
+                @Override public void onStop() { send(appContext, "pause", 0); }
+                @Override public void onCustomAction(String action, android.os.Bundle extras) {
+                    if (VOL_DOWN.equals(action) || VOL_UP.equals(action)) send(appContext, action, 0);
+                }
+            }, new Handler(Looper.getMainLooper()));
+            session.setSessionActivity(open(appContext));
+        }
+        int clamped = Math.max(0, Math.min(max, level));
+        if (volume == null || volume.getMaxVolume() != max) {
+            volume = new RemoteVolume(appContext, max, clamped);
+            session.setPlaybackToRemote(volume);
+        } else {
+            volume.setCurrentVolume(clamped);
+        }
+        session.setMetadata(new MediaMetadata.Builder()
+            .putString(MediaMetadata.METADATA_KEY_TITLE, !title.isEmpty() ? title : (playing ? "Playing" : "Paused") + " on " + device)
+            .putString(MediaMetadata.METADATA_KEY_ARTIST, !artist.isEmpty() ? artist : device)
+            .putString(MediaMetadata.METADATA_KEY_ALBUM, app.isEmpty() ? device : app + " on " + device)
+            .build());
+        session.setPlaybackState(new PlaybackState.Builder()
+            .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_PLAY_PAUSE
+                | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS)
+            .addCustomAction(new PlaybackState.CustomAction.Builder(VOL_DOWN, "Volume down", R.drawable.ic_media_vol_down).build())
+            .addCustomAction(new PlaybackState.CustomAction.Builder(VOL_UP, "Volume up", R.drawable.ic_media_vol_up).build())
+            .setState(playing ? PlaybackState.STATE_PLAYING : PlaybackState.STATE_PAUSED,
+                PlaybackState.PLAYBACK_POSITION_UNKNOWN, playing ? 1f : 0f)
+            .build());
+        session.setActive(true);
+        return session;
+    }
+
+    /** The controls were swiped away: stop standing in as a player (and taking the volume keys). */
+    static synchronized void release(Context context) {
+        if (session != null) {
+            session.setActive(false);
+            session.release();
+        }
+        session = null;
+        volume = null;
+        context.getSystemService(NotificationManager.class).cancel(ID);
+    }
+
+    /** The SIM phone's music volume, moved by this phone's volume keys and sliders. */
+    private static final class RemoteVolume extends VolumeProvider {
+        private final Context context;
+
+        RemoteVolume(Context context, int max, int level) {
+            super(VolumeProvider.VOLUME_CONTROL_ABSOLUTE, max, level);
+            this.context = context;
+        }
+
+        @Override
+        public void onSetVolumeTo(int level) {
+            int clamped = Math.max(0, Math.min(getMaxVolume(), level));
+            setCurrentVolume(clamped);
+            send(context, "vol_set", clamped);
+        }
+
+        @Override
+        public void onAdjustVolume(int direction) {
+            if (direction == 0) return;
+            int next = Math.max(0, Math.min(getMaxVolume(), getCurrentVolume() + (direction > 0 ? 1 : -1)));
+            setCurrentVolume(next);
+            send(context, direction > 0 ? VOL_UP : VOL_DOWN, 0);
+        }
     }
 
     /** The last state heard from the SIM phone, with when it came; "{}" if none. */
@@ -95,9 +195,12 @@ final class MediaAlert {
     }
 
     private static Notification.Action action(Context context, String what, int icon, String label, int code) {
+        return new Notification.Action.Builder(Icon.createWithResource(context, icon), label, broadcast(context, what, code)).build();
+    }
+
+    private static PendingIntent broadcast(Context context, String what, int code) {
         Intent intent = new Intent(context, ConnectActionReceiver.class).setAction("app.lifeos.CONNECT_media_" + what);
-        PendingIntent pending = PendingIntent.getBroadcast(context, 7230 + code, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        return new Notification.Action.Builder(Icon.createWithResource(context, icon), label, pending).build();
+        return PendingIntent.getBroadcast(context, 7230 + code, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private static PendingIntent open(Context context) {

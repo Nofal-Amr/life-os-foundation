@@ -260,6 +260,8 @@ export type ConnectStatus = {
   fullScreen: boolean;
   /** Phone maker, lower case (e.g. "xiaomi", "samsung"). */
   brand?: string;
+  /** SIM phone: notification access, so the main phone sees the song and the app. */
+  media?: boolean;
   /** Main phone: the SIM phone's name, once it has introduced itself. */
   peer?: string;
 };

@@ -14,6 +14,7 @@ import {
   buildFeatures,
   forwardsOneTimeCodes,
   lifeConnect,
+  spendingInbox,
   type ConnectRole,
   type ConnectStatus,
 } from "@/lib/native";
@@ -168,6 +169,15 @@ export function LifeConnectCard() {
                   label: "Pass on SMS and send replies",
                   ok: !!status?.sms,
                   fix: lifeConnect.requestPermissions,
+                },
+              ]
+            : []),
+          ...(buildFeatures().spending
+            ? [
+                {
+                  label: "Show what's playing (song and app)",
+                  ok: !!status?.media,
+                  fix: spendingInbox.openAccess,
                 },
               ]
             : []),
