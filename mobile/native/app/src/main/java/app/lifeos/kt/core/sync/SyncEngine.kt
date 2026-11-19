@@ -70,6 +70,11 @@ val SYNCED_TABLES = listOf(
     SyncedTable("workout_routines"),
     SyncedTable("workouts"),
     SyncedTable("workout_sets"),
+    // People before what points at them.
+    SyncedTable("people"),
+    SyncedTable("person_interactions"),
+    SyncedTable("person_links"),
+    SyncedTable("relationship_rules"),
 )
 
 data class SyncState(

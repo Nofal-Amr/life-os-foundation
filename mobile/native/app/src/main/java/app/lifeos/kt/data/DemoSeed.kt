@@ -145,7 +145,7 @@ object DemoSeed {
             "user_preferences" to listOf(
                 base(
                     "id" to id("prefs"), "onboarding_completed_at" to stamp(-40),
-                    "enabled_modules" to listOf("do", "money", "body", "spirit", "habits", "notes", "calendar", "study", "food", "resources"),
+                    "enabled_modules" to listOf("do", "money", "body", "spirit", "habits", "notes", "calendar", "study", "food", "resources", "relationships"),
                     "skin" to "serious", "currency" to "EGP", "date_format" to "dmy", "time_format" to "12h", "unit_system" to "metric",
                     "week_start" to 6, "dimension_order" to null, "food_prefs" to null, "connect_key" to null,
                 ),
@@ -196,7 +196,7 @@ object DemoSeed {
                 base("id" to id("event"), "title" to "Mona's birthday", "description" to null, "start_at" to iso(5, "00:00"), "end_at" to null),
             ),
             "daily_reviews" to listOf(base("id" to id("review"), "review_date" to day(0), "energy" to 3, "mood" to 4, "wins" to null, "challenges" to null, "gratitude" to null, "tomorrow_focus" to null)),
-        ) + gym(::id, ::day, ::base) + time(::id, ::iso, ::base)
+        ) + gym(::id, ::day, ::base) + time(::id, ::iso, ::base) + people(::id, ::day, today, ::base)
     }
 
     /** A push routine and three workouts, so Gym shows its history in demo. */
@@ -221,6 +221,29 @@ object DemoSeed {
             ))),
             "workouts" to w.map { (workout, offset) -> base(arrayOf("id" to workout, "performed_on" to day(offset), "name" to "Push day", "note" to null, "routine_id" to push)) },
             "workout_sets" to sets,
+        )
+    }
+
+    /** A few people: a birthday in two days, and two check-ins with their last calls. */
+    private fun people(id: (String) -> String, day: (Long) -> String, today: LocalDate, base: (Array<out Pair<String, Any?>>) -> JsonObject): Map<String, List<JsonObject>> {
+        val sara = id("person")
+        val samir = id("person")
+        val ahmed = id("person")
+        val birthday = today.plusDays(2)
+        fun person(pid: String, name: String, relation: String, circle: String, every: Int?, month: Int? = null, dayOfMonth: Int? = null) = base(arrayOf(
+            "id" to pid, "name" to name, "is_me" to false, "relation" to relation, "circle" to circle, "birthday_month" to month, "birthday_day" to dayOfMonth,
+            "birth_year" to null, "phone" to null, "notes" to null, "goal" to null, "checkin_every_days" to every, "checkin_since" to day(-60),
+        ))
+        return mapOf(
+            "people" to listOf(
+                person(sara, "Sara", "friend", "closest", null, birthday.monthValue, birthday.dayOfMonth),
+                person(samir, "Uncle Samir", "uncle_aunt", "relatives", 30),
+                person(ahmed, "Ahmed", "friend", "friends", 7),
+            ),
+            "person_interactions" to listOf(
+                base(arrayOf("id" to id("contact"), "person_id" to samir, "kind" to "call", "occurred_on" to day(-40), "note" to null)),
+                base(arrayOf("id" to id("contact"), "person_id" to ahmed, "kind" to "call", "occurred_on" to day(-12), "note" to "Talked about the trip")),
+            ),
         )
     }
 

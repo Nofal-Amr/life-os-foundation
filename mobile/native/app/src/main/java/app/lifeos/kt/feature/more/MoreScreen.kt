@@ -80,6 +80,7 @@ val TOOLS = listOf(
     Tool("messages", "Messages", Icons.Outlined.ChatBubbleOutline, false, "/messages"),
     Tool("time", "Time", Icons.Outlined.Timer, true, "/time"),
     Tool("gym", "Gym", Icons.Outlined.FitnessCenter, true, "/gym", "body"),
+    Tool("people", "People", Icons.Outlined.Groups, true, "/relationships", "relationships"),
     Tool("insights", "Insights", Icons.Outlined.AutoGraph, true, "/insights"),
     Tool("together", "Together", Icons.Outlined.Groups, false, "/together"),
     Tool("review", "Review", Icons.Outlined.NightsStay, true, "/review"),
@@ -164,6 +165,7 @@ fun ToolScreen(key: String, close: () -> Unit, openTarget: (app.lifeos.kt.data.l
         "review" -> app.lifeos.kt.feature.review.ReviewScreen(back)
         "time" -> app.lifeos.kt.feature.time.TimeScreen(back)
         "gym" -> app.lifeos.kt.feature.gym.GymScreen(back)
+        "people" -> app.lifeos.kt.feature.people.PeopleScreen(back)
         "insights" -> app.lifeos.kt.feature.insights.InsightsScreen(back)
         "settings" -> app.lifeos.kt.feature.settings.SettingsScreen(back)
         else -> WebsiteOnly(tool, back)

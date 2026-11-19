@@ -449,3 +449,49 @@ data class WorkoutRoutine(
     val exercises: List<PlannedExercise> = emptyList(),
     val note: String? = null,
 ) : Row
+
+@Serializable
+data class Person(
+    override val id: String,
+    val name: String,
+    @SerialName("is_me") val isMe: Boolean = false,
+    val relation: String = "other",
+    val circle: String = "friends",
+    @SerialName("birthday_month") val birthdayMonth: Int? = null,
+    @SerialName("birthday_day") val birthdayDay: Int? = null,
+    @SerialName("birth_year") val birthYear: Int? = null,
+    val phone: String? = null,
+    val notes: String? = null,
+    val goal: String? = null,
+    @SerialName("checkin_every_days") val checkinEveryDays: Int? = null,
+    @SerialName("checkin_since") val checkinSince: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+) : Row
+
+@Serializable
+data class PersonInteraction(
+    override val id: String,
+    @SerialName("person_id") val personId: String,
+    val kind: String,
+    @SerialName("occurred_on") val occurredOn: String,
+    val note: String? = null,
+) : Row
+
+@Serializable
+data class PersonLink(
+    override val id: String,
+    @SerialName("from_person") val fromPerson: String,
+    @SerialName("to_person") val toPerson: String,
+    val kind: String,
+) : Row
+
+@Serializable
+data class RelationshipRule(
+    override val id: String,
+    @SerialName("scope_type") val scopeType: String,
+    @SerialName("scope_value") val scopeValue: String? = null,
+    val topic: String,
+    val action: String,
+    @SerialName("except_person_ids") val exceptPersonIds: List<String> = emptyList(),
+    @SerialName("created_at") val createdAt: String? = null,
+) : Row

@@ -222,6 +222,7 @@ fun TodayScreen(open: (Section) -> Unit, openTool: (String) -> Unit, openTask: (
             }
         }
 
+        item(key = "people") { app.lifeos.kt.feature.people.PeopleToday(openPeople = { openTool("people") }) }
         item(key = "checkin") { CheckInCard(s.review?.mood, s.review?.energy, model::setMood, model::setEnergy, onReset = { breathing = true }) }
 
         // Body and money: one row each, acting on itself.

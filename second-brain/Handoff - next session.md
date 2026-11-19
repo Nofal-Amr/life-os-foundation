@@ -5,6 +5,15 @@ updated: 2026-11-18
 
 # Handoff for the next session
 
+## 2026-11-19, part 2: native app without the website (branch `claude/quirky-gauss-i1mhjp`, not merged)
+Owner asked: "the native app should not need the website at all, made with an app in mind". Built in the native app (`mobile/native`), each with ported rules and tests, screenshot-checked with `ScreenTour`:
+- **Settings** (profile, units/time/week start/dates, areas that hide tabs and tools, reminders, prayer, money, body, this phone, look, your data: sync, export JSON, sign out, delete account).
+- **Reminders that ring**: prayers (before, at, near the end), azkar, daily tasks, timed tasks, water, personal reminders; log a prayer from the notification. Settings → Reminders. `core/notify/`.
+- **Review** (reflect, close the day, mood/energy, written review, week recap, recent), **Time**, **Insights**, **Gym**, **People** (with a Today card).
+- New synced tables: activities, health_samples, workout_routines, workouts, workout_sets, people, person_interactions, person_links, relationship_rules. Demo has gym, time and people data.
+- **Still on the website** (next, in this order): Food plan (meal_plan_items), Resources, Study, Work, Together, Messages, Quests, Search, Import a plan, Canvas; then widgets and Life Connect (phone features).
+- Test tools: `gradle :app:testDebugUnitTest` (all); screenshots: add `-Dlifeos.shots=<folder>`. This container needed the Android SDK (dl.google.com, allowed in the "life-os-foundation" cloud environment) and a local Maven mirror init script for Robolectric's big jars.
+
 ## 2026-11-19: native app design pass (branch `claude/quirky-gauss-i1mhjp`, not merged)
 Owner asked for a refined native Kotlin app (`mobile/native`), the first native work since the pause. Pushed to the branch only; no pull request yet (owner wants to approve first). Version 0.3 (code 3).
 - One brand colour: teal by day and by night (light was blue). Splash icon keeps its dark disc on the light splash.
