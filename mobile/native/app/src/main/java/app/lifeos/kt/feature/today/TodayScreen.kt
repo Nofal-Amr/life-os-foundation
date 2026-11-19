@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.Stop
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.Medication
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.HorizontalDivider
@@ -301,6 +302,7 @@ fun TodayScreen(open: (Section) -> Unit, openTool: (String) -> Unit, openTask: (
             Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 QuietAction(Icons.Outlined.CalendarMonth, "Calendar") { haptics.tick(); openTool("calendar") }
                 QuietAction(Icons.Outlined.EditNote, "Notes") { haptics.tick(); openTool("notes") }
+                QuietAction(Icons.Outlined.NightsStay, "Review") { haptics.tick(); openTool("review") }
             }
         }
     }

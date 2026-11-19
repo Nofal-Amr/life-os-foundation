@@ -173,6 +173,7 @@ data class Note(
     /** When set, the note is a checklist and body is unused (as on the web). */
     val checklist: List<ChecklistItem>? = null,
     @SerialName("updated_at") val updatedAt: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
 ) : Row
 
 @Serializable

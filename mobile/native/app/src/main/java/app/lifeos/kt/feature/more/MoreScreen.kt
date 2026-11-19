@@ -78,7 +78,7 @@ val TOOLS = listOf(
     Tool("messages", "Messages", Icons.Outlined.ChatBubbleOutline, false, "/messages"),
     Tool("insights", "Insights", Icons.Outlined.AutoGraph, false, "/insights"),
     Tool("together", "Together", Icons.Outlined.Groups, false, "/together"),
-    Tool("review", "Daily review", Icons.Outlined.NightsStay, false, "/review"),
+    Tool("review", "Review", Icons.Outlined.NightsStay, true, "/review"),
 )
 
 private const val WEBSITE = "https://lifeos0.vercel.app"
@@ -157,6 +157,7 @@ fun ToolScreen(key: String, close: () -> Unit, openTarget: (app.lifeos.kt.data.l
         "calendar" -> app.lifeos.kt.feature.calendar.CalendarScreen(back, openTarget)
         "notes" -> app.lifeos.kt.feature.notes.NotesScreen(back)
         "reminders" -> RemindersTool(back)
+        "review" -> app.lifeos.kt.feature.review.ReviewScreen(back)
         "settings" -> app.lifeos.kt.feature.settings.SettingsScreen(back)
         else -> WebsiteOnly(tool, back)
     }

@@ -53,7 +53,24 @@ class ScreenTour {
             shot("$theme-${i + 2}-${section.lowercase()}")
             scrollShots("$theme-${i + 2}-${section.lowercase()}")
         }
-        if (theme == "light") settingsTour()
+        if (theme == "light") {
+            toolTour("Review", "light-8-review")
+            settingsTour()
+        }
+    }
+
+    /** From More: open a tool, picture it (and further down), then come back. */
+    private fun toolTour(label: String, name: String) {
+        tap(label)
+        settle()
+        shot(name)
+        scrollShots(name)
+        back()
+    }
+
+    private fun back() {
+        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        settle()
     }
 
     /** More → Settings, then each part of it. */
