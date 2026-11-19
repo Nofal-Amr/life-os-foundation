@@ -150,8 +150,12 @@ private val LifeShapes = Shapes(
 )
 
 @Composable
-fun LifeOsTheme(dynamicColor: Boolean = false, content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+fun LifeOsTheme(dynamicColor: Boolean = false, theme: String = "system", content: @Composable () -> Unit) {
+    val dark = when (theme) {
+        "light" -> false
+        "dark" -> true
+        else -> isSystemInDarkTheme()
+    }
     val scheme: ColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (dark) dynamicDarkColorScheme(LocalContext.current) else dynamicLightColorScheme(LocalContext.current)

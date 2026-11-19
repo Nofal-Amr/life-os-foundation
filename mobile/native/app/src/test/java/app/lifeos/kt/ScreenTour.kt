@@ -53,6 +53,21 @@ class ScreenTour {
             shot("$theme-${i + 2}-${section.lowercase()}")
             scrollShots("$theme-${i + 2}-${section.lowercase()}")
         }
+        if (theme == "light") settingsTour()
+    }
+
+    /** More → Settings, then each part of it. */
+    private fun settingsTour() {
+        tap("Settings", last = true)
+        settle()
+        shot("light-7-settings")
+        for (part in listOf("Profile", "Areas", "Prayer", "Money", "Body", "This phone", "Look", "Your data")) {
+            tap(part)
+            settle()
+            shot("light-7-settings-${part.lowercase().replace(' ', '-')}")
+            rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            settle()
+        }
     }
 
     private fun tap(text: String, last: Boolean = false) {

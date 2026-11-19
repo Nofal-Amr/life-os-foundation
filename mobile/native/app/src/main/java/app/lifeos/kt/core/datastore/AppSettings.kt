@@ -42,6 +42,10 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) : Sy
     val dynamicColor: Flow<Boolean> = store.data.map { it[DYNAMIC_COLOR] ?: false }
     suspend fun setDynamicColor(on: Boolean) = store.edit { it[DYNAMIC_COLOR] = on }
 
+    /** Light, dark, or "system" (follow the phone). The phone's choice by default. */
+    val theme: Flow<String> = store.data.map { it[THEME] ?: "system" }
+    suspend fun setTheme(value: String) = store.edit { it[THEME] = value }
+
     /** Touch feedback on actions. On by default; the phone's own setting still applies. */
     val haptics: Flow<Boolean> = store.data.map { it[HAPTICS] ?: true }
     suspend fun setHaptics(on: Boolean) = store.edit { it[HAPTICS] = on }
@@ -74,6 +78,7 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) : Sy
         val LAST_SYNCED = longPreferencesKey("lastSynced")
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamicColor")
         val HAPTICS = booleanPreferencesKey("haptics")
+        val THEME = stringPreferencesKey("theme")
         val NOTES_FOCUS = stringPreferencesKey("notesFocus")
         val VAULT_WRAPPED = stringPreferencesKey("vaultWrapped")
         val FOCUS_SESSION = stringPreferencesKey("focusSession")

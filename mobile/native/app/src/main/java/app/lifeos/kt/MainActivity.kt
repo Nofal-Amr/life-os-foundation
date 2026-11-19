@@ -35,7 +35,8 @@ class MainActivity : FragmentActivity() {
             val session by app.session.collectAsStateWithLifecycle()
             val dynamicColor by app.dynamicColor.collectAsStateWithLifecycle()
             val haptics by app.haptics.collectAsStateWithLifecycle()
-            LifeOsTheme(dynamicColor = dynamicColor) {
+            val theme by app.theme.collectAsStateWithLifecycle()
+            LifeOsTheme(dynamicColor = dynamicColor, theme = theme) {
                 CompositionLocalProvider(LocalHapticsEnabled provides haptics) {
                     Crossfade(targetState = session is SessionState.SignedIn, label = "session") { signedIn ->
                         when {

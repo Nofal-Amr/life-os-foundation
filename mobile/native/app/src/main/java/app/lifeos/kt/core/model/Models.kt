@@ -232,6 +232,7 @@ data class UserPreferences(
     @SerialName("enabled_modules") val enabledModules: List<String> = emptyList(),
     @SerialName("dimension_order") val dimensionOrder: List<String>? = null,
     @SerialName("unit_system") val unitSystem: String = "metric",
+    @SerialName("date_format") val dateFormat: String? = null,
     @SerialName("food_prefs") val foodPrefs: kotlinx.serialization.json.JsonObject? = null,
 ) : Row
 

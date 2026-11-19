@@ -33,6 +33,10 @@ abstract class RowDao {
     @Query("SELECT * FROM synced_rows WHERE tbl = :tbl AND deleted = 0")
     abstract fun observe(tbl: String): Flow<List<RowEntity>>
 
+    /** Everything on the phone (for "Export my data"). */
+    @Query("SELECT * FROM synced_rows WHERE deleted = 0 ORDER BY tbl")
+    abstract suspend fun all(): List<RowEntity>
+
     @Query("SELECT * FROM synced_rows WHERE tbl = :tbl AND id = :id")
     abstract suspend fun get(tbl: String, id: String): RowEntity?
 

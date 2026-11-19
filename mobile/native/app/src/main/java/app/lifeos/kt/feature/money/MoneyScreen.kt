@@ -629,7 +629,7 @@ internal fun TransactionSheet(s: MoneyState, model: MoneyViewModel, existing: Tr
 /** Pay and buffer: when pay arrives (a day of the month, or every few weeks), what usually comes in, and what to keep back. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun PaydaySheet(s: MoneyState, model: MoneyViewModel, close: () -> Unit) {
+internal fun PaydaySheet(s: MoneyState, model: MoneyViewModel, close: () -> Unit) {
     val haptics = rememberHaptics()
     val c = s.payday
     var schedule by rememberSaveable { mutableStateOf(c?.schedule ?: "monthly") }

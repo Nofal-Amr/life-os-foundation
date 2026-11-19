@@ -41,6 +41,7 @@ class FakeRowDao : RowDao() {
     val rows = linkedMapOf<Pair<String, String>, RowEntity>()
     override fun observe(tbl: String): Flow<List<RowEntity>> = flowOf(rows.values.filter { it.tbl == tbl && !it.deleted })
     override suspend fun get(tbl: String, id: String) = rows[tbl to id]
+    override suspend fun all() = rows.values.filter { !it.deleted }.sortedBy { it.tbl }
     override fun observePending(): Flow<Int> = flowOf(rows.values.count { it.dirty })
     override suspend fun pending(tbl: String) = rows.values.filter { it.tbl == tbl && it.dirty }
     override suspend fun upsert(row: RowEntity) { rows[row.tbl to row.id] = row }

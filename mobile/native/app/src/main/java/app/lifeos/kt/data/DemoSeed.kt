@@ -146,7 +146,7 @@ object DemoSeed {
                 base(
                     "id" to id("prefs"), "onboarding_completed_at" to stamp(-40),
                     "enabled_modules" to listOf("do", "money", "body", "spirit", "habits", "notes", "calendar", "study", "food", "resources"),
-                    "skin" to "serious", "currency" to "EGP", "date_format" to "d MMM yyyy", "time_format" to "12h", "unit_system" to "metric",
+                    "skin" to "serious", "currency" to "EGP", "date_format" to "dmy", "time_format" to "12h", "unit_system" to "metric",
                     "week_start" to 6, "dimension_order" to null, "food_prefs" to null, "connect_key" to null,
                 ),
             ),

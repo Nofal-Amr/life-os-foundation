@@ -28,12 +28,10 @@ import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.Work
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,6 +41,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.outlined.Settings
+import app.lifeos.kt.data.moduleOn
+import kotlinx.coroutines.flow.map
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -50,8 +51,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import app.lifeos.kt.core.datastore.AppSettings
-import app.lifeos.kt.core.datastore.SessionState
 import app.lifeos.kt.core.designsystem.IconBadge
 import app.lifeos.kt.core.designsystem.LifeCard
 import app.lifeos.kt.core.designsystem.LifePage
@@ -61,7 +60,6 @@ import app.lifeos.kt.core.designsystem.SectionHeader
 import app.lifeos.kt.core.designsystem.SyncAction
 import app.lifeos.kt.core.designsystem.rememberHaptics
 import app.lifeos.kt.core.designsystem.syncLine
-import app.lifeos.kt.data.AccountRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -69,14 +67,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /** A tool from the web app's Tools menu. [native] ones work offline here; the rest open the website for now. */
-data class Tool(val key: String, val label: String, val icon: ImageVector, val native: Boolean, val path: String)
+data class Tool(val key: String, val label: String, val icon: ImageVector, val native: Boolean, val path: String, val module: String? = null)
 
 val TOOLS = listOf(
-    Tool("calendar", "Calendar", Icons.Outlined.CalendarMonth, true, "/calendar"),
-    Tool("notes", "Notes", Icons.Outlined.EditNote, true, "/notes"),
+    Tool("calendar", "Calendar", Icons.Outlined.CalendarMonth, true, "/calendar", "calendar"),
+    Tool("notes", "Notes", Icons.Outlined.EditNote, true, "/notes", "notes"),
     Tool("reminders", "Reminders", Icons.Outlined.Alarm, true, "/reminders"),
-    Tool("work", "Work", Icons.Outlined.Work, false, "/work"),
-    Tool("study", "Study", Icons.Outlined.School, false, "/study"),
+    Tool("work", "Work", Icons.Outlined.Work, false, "/work", "work"),
+    Tool("study", "Study", Icons.Outlined.School, false, "/study", "study"),
     Tool("messages", "Messages", Icons.Outlined.ChatBubbleOutline, false, "/messages"),
     Tool("insights", "Insights", Icons.Outlined.AutoGraph, false, "/insights"),
     Tool("together", "Together", Icons.Outlined.Groups, false, "/together"),
@@ -86,29 +84,22 @@ val TOOLS = listOf(
 private const val WEBSITE = "https://lifeos0.vercel.app"
 
 @HiltViewModel
-class MoreViewModel @Inject constructor(private val settings: AppSettings, private val account: AccountRepository) : ViewModel() {
-    val haptics = settings.haptics.stateIn(viewModelScope, SharingStarted.Eagerly, true)
-    val dynamicColor = settings.dynamicColor.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-    val email: String? get() = (account.state.value as? SessionState.SignedIn)?.session?.email
-
-    fun setHaptics(on: Boolean) = viewModelScope.launch { settings.setHaptics(on) }
-    fun setDynamicColor(on: Boolean) = viewModelScope.launch { settings.setDynamicColor(on) }
-    fun signOut() = viewModelScope.launch { account.signOut() }
+class MoreViewModel @Inject constructor(prefs: app.lifeos.kt.data.PreferencesRepository) : ViewModel() {
+    /** The areas that are on (Settings → Areas); tools for areas that are off are left out. */
+    val enabled = prefs.preferences.map { it?.enabledModules }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 }
 
 @Composable
 fun MoreScreen(open: (String) -> Unit, model: MoreViewModel = hiltViewModel()) {
     val sync = LocalSyncStatus.current
-    val haptics by model.haptics.collectAsStateWithLifecycle()
-    val dynamicColor by model.dynamicColor.collectAsStateWithLifecycle()
-    var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    val enabled by model.enabled.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    LifePage(title = "More", actions = { SyncAction() }) {
+    LifePage(title = "More", actions = { SyncAction(); IconButton(onClick = { open("settings") }) { Icon(Icons.Outlined.Settings, "Settings") } }) {
         item { SectionHeader("Tools") }
         item {
             LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                for (tool in TOOLS.filter { it.native }) {
+                for (tool in TOOLS.filter { it.native && (it.module == null || moduleOn(enabled, it.module)) }) {
                     ToolRow(tool) { open(tool.key) }
                 }
             }
@@ -118,7 +109,7 @@ fun MoreScreen(open: (String) -> Unit, model: MoreViewModel = hiltViewModel()) {
         item { SectionHeader("On the website") }
         item {
             LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                for (tool in TOOLS.filter { !it.native }) {
+                for (tool in TOOLS.filter { !it.native && (it.module == null || moduleOn(enabled, it.module)) }) {
                     ToolRow(tool) { openWebsite(context, tool) }
                 }
                 Muted(
@@ -128,39 +119,13 @@ fun MoreScreen(open: (String) -> Unit, model: MoreViewModel = hiltViewModel()) {
                 )
             }
         }
-        item { SectionHeader("This phone") }
+        item { SectionHeader("Settings") }
         item {
             LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                SwitchRow("Haptic feedback", "A light touch when you finish, log or swipe.", haptics, model::setHaptics)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    SwitchRow("Wallpaper colours", "Use your wallpaper's colours instead of Life OS's.", dynamicColor, model::setDynamicColor)
-                }
+                ToolRow(Tool("settings", "Settings", Icons.Outlined.Settings, true, "/settings")) { open("settings") }
             }
         }
-        item { SectionHeader("Account") }
-        item {
-            LifeCard {
-                model.email?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
-                Muted(syncLine(sync.state, sync.pending), style = MaterialTheme.typography.bodySmall)
-                Spacer(Modifier.height(8.dp))
-                TextButton(onClick = { confirmSignOut = true }, contentPadding = PaddingValues(0.dp)) { Text("Sign out") }
-            }
-        }
-    }
-
-    if (confirmSignOut) {
-        AlertDialog(
-            onDismissRequest = { confirmSignOut = false },
-            title = { Text("Sign out?") },
-            text = {
-                Text(
-                    if (sync.pending > 0) "${sync.pending} ${if (sync.pending == 1) "change hasn't" else "changes haven't"} reached the server yet and will be lost."
-                    else "Everything is on the server. This phone forgets it until you sign in again.",
-                )
-            },
-            confirmButton = { TextButton(onClick = { confirmSignOut = false; model.signOut() }) { Text("Sign out") } },
-            dismissButton = { TextButton(onClick = { confirmSignOut = false }) { Text("Cancel") } },
-        )
+        item { Muted(syncLine(sync.state, sync.pending), Modifier.padding(horizontal = 4.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall) }
     }
 }
 
@@ -182,26 +147,17 @@ private fun ToolRow(tool: Tool, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun SwitchRow(title: String, caption: String, on: Boolean, set: (Boolean) -> Unit) {
-    val haptics = rememberHaptics()
-    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Muted(caption, style = MaterialTheme.typography.bodySmall)
-        }
-        Switch(checked = on, onCheckedChange = { haptics.tick(); set(it) })
-    }
-}
 
 @Composable
 fun ToolScreen(key: String, close: () -> Unit, openTarget: (app.lifeos.kt.data.logic.Target) -> Unit = {}) {
+    if (key == "settings") return app.lifeos.kt.feature.settings.SettingsScreen({ IconButton(onClick = close) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } })
     val tool = TOOLS.firstOrNull { it.key == key } ?: return
     val back: @Composable () -> Unit = { IconButton(onClick = close) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") } }
     when (key) {
         "calendar" -> app.lifeos.kt.feature.calendar.CalendarScreen(back, openTarget)
         "notes" -> app.lifeos.kt.feature.notes.NotesScreen(back)
         "reminders" -> RemindersTool(back)
+        "settings" -> app.lifeos.kt.feature.settings.SettingsScreen(back)
         else -> WebsiteOnly(tool, back)
     }
 }

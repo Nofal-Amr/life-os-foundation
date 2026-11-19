@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class AppViewModel @Inject constructor(
     private val account: AccountRepository,
+    prefs: app.lifeos.kt.data.PreferencesRepository,
     private val sync: SyncEngine,
     store: LocalStore,
     settings: AppSettings,
@@ -37,6 +38,10 @@ class AppViewModel @Inject constructor(
 
     val dynamicColor = settings.dynamicColor.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     val haptics = settings.haptics.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val theme = settings.theme.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
+
+    /** Areas that are on (Settings → Areas); null until the preferences row is read. */
+    val enabledModules = prefs.preferences.map { it?.enabledModules }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun syncNow() = sync.request()
 

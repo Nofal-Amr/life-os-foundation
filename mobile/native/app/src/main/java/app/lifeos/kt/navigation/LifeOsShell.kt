@@ -86,12 +86,12 @@ import kotlinx.serialization.Serializable
 @Serializable data class ToolRoute(val key: String)
 
 /** The five sections at the bottom, as in the web app, plus More for the tools. */
-enum class Section(val label: String, val route: Any, val routeClass: KClass<*>, val icon: ImageVector, val selectedIcon: ImageVector) {
+enum class Section(val label: String, val route: Any, val routeClass: KClass<*>, val icon: ImageVector, val selectedIcon: ImageVector, val module: String? = null) {
     Today("Today", TodayRoute, TodayRoute::class, Icons.Outlined.Dashboard, Icons.Filled.Dashboard),
-    Do("Do", DoRoute(), DoRoute::class, Icons.Outlined.CheckBox, Icons.Filled.CheckBox),
-    Money("Money", MoneyRoute, MoneyRoute::class, Icons.Outlined.AccountBalanceWallet, Icons.Filled.AccountBalanceWallet),
-    Body("Body", BodyRoute, BodyRoute::class, Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite),
-    Spirit("Spirit", SpiritRoute, SpiritRoute::class, Icons.Outlined.DarkMode, Icons.Filled.DarkMode),
+    Do("Do", DoRoute(), DoRoute::class, Icons.Outlined.CheckBox, Icons.Filled.CheckBox, "do"),
+    Money("Money", MoneyRoute, MoneyRoute::class, Icons.Outlined.AccountBalanceWallet, Icons.Filled.AccountBalanceWallet, "money"),
+    Body("Body", BodyRoute, BodyRoute::class, Icons.Outlined.FavoriteBorder, Icons.Filled.Favorite, "body"),
+    Spirit("Spirit", SpiritRoute, SpiritRoute::class, Icons.Outlined.DarkMode, Icons.Filled.DarkMode, "spirit"),
     More("More", MoreRoute, MoreRoute::class, Icons.Outlined.GridView, Icons.Filled.GridView),
 }
 
@@ -111,7 +111,7 @@ fun LifeOsShell(app: AppViewModel) {
             containerColor = MaterialTheme.colorScheme.background,
             contentWindowInsets = WindowInsets(0),
             snackbarHost = { SnackbarHost(snackbar) },
-            bottomBar = { BottomBar(nav) },
+            bottomBar = { BottomBar(nav, app.enabledModules.collectAsStateWithLifecycle().value) },
         ) { padding ->
             val demo by app.isDemo.collectAsStateWithLifecycle()
             Column(Modifier.fillMaxSize().padding(padding)) {
@@ -171,12 +171,13 @@ private fun NavHostController.goToSection(section: Section) = navigate(section.r
 }
 
 @Composable
-private fun BottomBar(nav: NavHostController) {
+private fun BottomBar(nav: NavHostController, enabled: List<String>?) {
     val haptics = rememberHaptics()
     val entry by nav.currentBackStackEntryAsState()
     val destination = entry?.destination
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer, tonalElevation = 0.dp) {
-        for (section in Section.entries) {
+        // An area switched off in Settings leaves the bar (its data stays).
+        for (section in Section.entries.filter { it.module == null || app.lifeos.kt.data.moduleOn(enabled, it.module) }) {
             val selected = destination?.hierarchy?.any { it.hasRoute(section.routeClass) } == true ||
                 (section == Section.More && destination?.hasRoute(ToolRoute::class) == true)
             NavigationBarItem(
