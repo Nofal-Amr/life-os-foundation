@@ -152,6 +152,7 @@ data class Habit(
     val category: String? = null,
     val icon: String? = null,
     val color: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
 ) : Row
 
 @Serializable
@@ -384,4 +385,27 @@ data class DhikrLog(
     val count: Int,
     val label: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
+) : Row
+
+@Serializable
+data class Activity(
+    override val id: String,
+    val name: String,
+    val icon: String? = null,
+    val color: String? = null,
+    val archived: Boolean = false,
+    val position: Int = 0,
+) : Row
+
+/** One reading from a health app (Samsung Health, Health Connect…): steps, sleep minutes, weight… */
+@Serializable
+data class HealthSample(
+    override val id: String,
+    val kind: String,
+    val value: Double,
+    val unit: String = "",
+    @SerialName("start_at") val startAt: String,
+    @SerialName("end_at") val endAt: String? = null,
+    @SerialName("external_id") val externalId: String = "",
+    val source: String? = null,
 ) : Row

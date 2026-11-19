@@ -64,6 +64,8 @@ val SYNCED_TABLES = listOf(
     SyncedTable("notes"),
     SyncedTable("reminders"),
     SyncedTable("events"),
+    SyncedTable("activities"),
+    SyncedTable("health_samples", "user_id,kind,external_id"),
 )
 
 data class SyncState(

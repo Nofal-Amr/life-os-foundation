@@ -54,14 +54,17 @@ class ScreenTour {
             scrollShots("$theme-${i + 2}-${section.lowercase()}")
         }
         if (theme == "light") {
-            toolTour("Review", "light-8-review")
+            toolTour("review", "light-8-review")
+            toolTour("time", "light-9-time")
+            toolTour("insights", "light-10-insights")
             settingsTour()
         }
     }
 
     /** From More: open a tool, picture it (and further down), then come back. */
-    private fun toolTour(label: String, name: String) {
-        tap(label)
+    private fun toolTour(key: String, name: String) {
+        // Straight to the tool, as a notification would open it.
+        rule.runOnUiThread { androidx.lifecycle.ViewModelProvider(rule.activity)[AppViewModel::class.java].open("tool:$key") }
         settle()
         shot(name)
         scrollShots(name)

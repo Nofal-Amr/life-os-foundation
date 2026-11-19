@@ -115,6 +115,7 @@ fun LifeOsShell(app: AppViewModel) {
             target == "do" -> nav.goToSection(Section.Do)
             target.startsWith("task:") -> nav.navigate(DoRoute(target.removePrefix("task:"))) { launchSingleTop = true }
             target == "reminders" -> nav.navigate(ToolRoute("reminders")) { launchSingleTop = true }
+            target.startsWith("tool:") -> nav.navigate(ToolRoute(target.removePrefix("tool:"))) { launchSingleTop = true }
             else -> nav.goToSection(Section.Today)
         }
     }

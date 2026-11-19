@@ -216,6 +216,7 @@ class MoneyRepository @Inject constructor(private val store: LocalStore) {
 @Singleton
 class BodyRepository @Inject constructor(private val store: LocalStore) {
     val healthLogs: Flow<List<HealthLog>> = store.observe("health_logs", HealthLog.serializer())
+    val samples: Flow<List<app.lifeos.kt.core.model.HealthSample>> = store.observe("health_samples", app.lifeos.kt.core.model.HealthSample.serializer())
     val medications: Flow<List<Medication>> = store.observe("medications", Medication.serializer())
     val foods: Flow<List<Food>> = store.observe("foods", Food.serializer())
     val bodyStats: Flow<BodyStats?> = store.observe("body_stats", BodyStats.serializer()).map { it.firstOrNull() }
@@ -329,6 +330,33 @@ class TimerRepository @Inject constructor(private val store: LocalStore) {
     }
 
     suspend fun stop(entry: TimeEntry) = store.save("time_entries", TimeEntry.serializer(), entry.copy(endedAt = nowIso()))
+
+    val activities: Flow<List<app.lifeos.kt.core.model.Activity>> = store.observe("activities", app.lifeos.kt.core.model.Activity.serializer())
+
+    /** Starts timing an activity (or a task); whatever was running stops first. */
+    suspend fun startActivity(activity: app.lifeos.kt.core.model.Activity, all: List<TimeEntry>) {
+        all.filter { it.endedAt == null }.forEach { store.save("time_entries", TimeEntry.serializer(), it.copy(endedAt = nowIso())) }
+        store.save("time_entries", TimeEntry.serializer(), TimeEntry(newId(), startedAt = nowIso(), activityId = activity.id, label = activity.name))
+    }
+
+    /** Time logged afterwards: [minutes] ending at [endedAt]. */
+    suspend fun log(label: String, activityId: String?, taskId: String?, minutes: Int, endedAt: java.time.Instant, note: String?) {
+        val start = endedAt.minusSeconds(minutes * 60L)
+        store.save("time_entries", TimeEntry.serializer(), TimeEntry(newId(), startedAt = start.toString(), endedAt = endedAt.toString(), activityId = activityId, taskId = taskId, label = label, note = note?.trim()?.ifEmpty { null }))
+    }
+
+    suspend fun delete(entry: TimeEntry) = store.delete("time_entries", entry.id)
+    suspend fun restore(entry: TimeEntry) = store.save("time_entries", TimeEntry.serializer(), entry)
+
+    suspend fun save(activity: app.lifeos.kt.core.model.Activity) = store.save("activities", app.lifeos.kt.core.model.Activity.serializer(), activity)
+
+    /** The web's starter activities, skipping names already there. */
+    suspend fun addStarterActivities(existing: List<app.lifeos.kt.core.model.Activity>) {
+        val names = existing.map { it.name.lowercase() }.toSet()
+        app.lifeos.kt.data.logic.STARTER_ACTIVITIES.forEachIndexed { i, (name, icon, color) ->
+            if (name.lowercase() !in names) save(app.lifeos.kt.core.model.Activity(newId(), name, icon, color, position = existing.size + i))
+        }
+    }
 }
 
 /** What an action created, so Undo can remove it again. */
