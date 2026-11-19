@@ -196,6 +196,49 @@ object DemoSeed {
                 base("id" to id("event"), "title" to "Mona's birthday", "description" to null, "start_at" to iso(5, "00:00"), "end_at" to null),
             ),
             "daily_reviews" to listOf(base("id" to id("review"), "review_date" to day(0), "energy" to 3, "mood" to 4, "wins" to null, "challenges" to null, "gratitude" to null, "tomorrow_focus" to null)),
+        ) + gym(::id, ::day, ::base) + time(::id, ::iso, ::base)
+    }
+
+    /** A push routine and three workouts, so Gym shows its history in demo. */
+    private fun gym(id: (String) -> String, day: (Long) -> String, base: (Array<out Pair<String, Any?>>) -> JsonObject): Map<String, List<JsonObject>> {
+        val push = id("routine")
+        val w = listOf(id("workout") to -9L, id("workout") to -5L, id("workout") to -2L)
+        val bench = listOf(60, 62.5, 65)
+        val sets = mutableListOf<JsonObject>()
+        w.forEachIndexed { i, (workout, _) ->
+            repeat(3) { n -> sets += base(arrayOf("id" to id("set"), "workout_id" to workout, "exercise" to "Bench press", "position" to n, "reps" to 8, "weight" to bench[i], "unit" to "kg", "seconds" to null)) }
+            repeat(3) { n -> sets += base(arrayOf("id" to id("set"), "workout_id" to workout, "exercise" to "Overhead press", "position" to 3 + n, "reps" to 10, "weight" to 30 + i * 2.5, "unit" to "kg", "seconds" to null)) }
+            sets += base(arrayOf("id" to id("set"), "workout_id" to workout, "exercise" to "Plank", "position" to 6, "reps" to null, "weight" to null, "unit" to "kg", "seconds" to 45 + i * 15))
+        }
+        return mapOf(
+            "workout_routines" to listOf(base(arrayOf(
+                "id" to push, "name" to "Push day", "weekdays" to listOf(0, 3), "note" to "Warm up 5 minutes first.",
+                "exercises" to listOf(
+                    mapOf("exercise" to "Bench press", "sets" to 3, "reps" to 8, "weight" to 65, "seconds" to null),
+                    mapOf("exercise" to "Overhead press", "sets" to 3, "reps" to 10, "weight" to null, "seconds" to null),
+                    mapOf("exercise" to "Plank", "sets" to 1, "reps" to null, "weight" to null, "seconds" to 60),
+                ),
+            ))),
+            "workouts" to w.map { (workout, offset) -> base(arrayOf("id" to workout, "performed_on" to day(offset), "name" to "Push day", "note" to null, "routine_id" to push)) },
+            "workout_sets" to sets,
+        )
+    }
+
+    /** Two activities and a few timed sessions, so Time shows a week in demo. */
+    private fun time(id: (String) -> String, iso: (Long, String) -> String, base: (Array<out Pair<String, Any?>>) -> JsonObject): Map<String, List<JsonObject>> {
+        val reading = id("activity")
+        val learning = id("activity")
+        return mapOf(
+            "activities" to listOf(
+                base(arrayOf("id" to reading, "name" to "Reading", "icon" to "book-open", "color" to "amber", "archived" to false, "position" to 0)),
+                base(arrayOf("id" to learning, "name" to "Learning", "icon" to "graduation-cap", "color" to "blue", "archived" to false, "position" to 1)),
+            ),
+            "time_entries" to listOf(
+                base(arrayOf("id" to id("entry"), "activity_id" to reading, "task_id" to null, "label" to "Reading", "started_at" to iso(-3, "21:00"), "ended_at" to iso(-3, "21:40"), "note" to null)),
+                base(arrayOf("id" to id("entry"), "activity_id" to learning, "task_id" to null, "label" to "Learning", "started_at" to iso(-2, "18:00"), "ended_at" to iso(-2, "19:15"), "note" to "Kotlin course")),
+                base(arrayOf("id" to id("entry"), "activity_id" to reading, "task_id" to null, "label" to "Reading", "started_at" to iso(-1, "22:00"), "ended_at" to iso(-1, "22:30"), "note" to null)),
+                base(arrayOf("id" to id("entry"), "activity_id" to learning, "task_id" to null, "label" to "Learning", "started_at" to iso(0, "08:00"), "ended_at" to iso(0, "08:45"), "note" to null)),
+            ),
         )
     }
 }

@@ -57,6 +57,7 @@ class ScreenTour {
             toolTour("review", "light-8-review")
             toolTour("time", "light-9-time")
             toolTour("insights", "light-10-insights")
+            toolTour("gym", "light-11-gym")
             settingsTour()
         }
     }

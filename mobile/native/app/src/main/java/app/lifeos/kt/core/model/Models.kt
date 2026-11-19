@@ -409,3 +409,43 @@ data class HealthSample(
     @SerialName("external_id") val externalId: String = "",
     val source: String? = null,
 ) : Row
+
+@Serializable
+data class Workout(
+    override val id: String,
+    @SerialName("performed_on") val performedOn: String,
+    val name: String? = null,
+    val note: String? = null,
+    @SerialName("routine_id") val routineId: String? = null,
+) : Row
+
+@Serializable
+data class WorkoutSet(
+    override val id: String,
+    @SerialName("workout_id") val workoutId: String,
+    val exercise: String,
+    val position: Int = 0,
+    val reps: Int? = null,
+    val weight: Double? = null,
+    val unit: String = "kg",
+    val seconds: Int? = null,
+) : Row
+
+@Serializable
+data class PlannedExercise(
+    val exercise: String,
+    val sets: Int = 1,
+    val reps: Int? = null,
+    val weight: Double? = null,
+    val seconds: Int? = null,
+)
+
+@Serializable
+data class WorkoutRoutine(
+    override val id: String,
+    val name: String,
+    /** 0 = Sunday. Empty: any day. */
+    val weekdays: List<Int> = emptyList(),
+    val exercises: List<PlannedExercise> = emptyList(),
+    val note: String? = null,
+) : Row

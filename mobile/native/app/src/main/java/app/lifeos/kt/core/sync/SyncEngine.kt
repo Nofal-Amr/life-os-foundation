@@ -66,6 +66,10 @@ val SYNCED_TABLES = listOf(
     SyncedTable("events"),
     SyncedTable("activities"),
     SyncedTable("health_samples", "user_id,kind,external_id"),
+    // Routines before workouts before sets: each points at the one before.
+    SyncedTable("workout_routines"),
+    SyncedTable("workouts"),
+    SyncedTable("workout_sets"),
 )
 
 data class SyncState(
