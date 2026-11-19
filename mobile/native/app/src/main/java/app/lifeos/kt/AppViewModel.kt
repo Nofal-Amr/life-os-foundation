@@ -14,6 +14,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -25,7 +26,7 @@ class AppViewModel @Inject constructor(
     prefs: app.lifeos.kt.data.PreferencesRepository,
     private val sync: SyncEngine,
     store: LocalStore,
-    settings: AppSettings,
+    private val settingsStore: AppSettings,
 ) : ViewModel() {
     val session: StateFlow<SessionState> = account.state
 
@@ -36,14 +37,22 @@ class AppViewModel @Inject constructor(
         SyncStatus(if (demo && !state.demo) state.copy(demo = true) else state, pending, sync::request)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SyncStatus(syncNow = sync::request))
 
-    val dynamicColor = settings.dynamicColor.stateIn(viewModelScope, SharingStarted.Eagerly, false)
-    val haptics = settings.haptics.stateIn(viewModelScope, SharingStarted.Eagerly, true)
-    val theme = settings.theme.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
+    val dynamicColor = settingsStore.dynamicColor.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val haptics = settingsStore.haptics.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val theme = settingsStore.theme.stateIn(viewModelScope, SharingStarted.Eagerly, "system")
 
     /** Areas that are on (Settings → Areas); null until the preferences row is read. */
     val enabledModules = prefs.preferences.map { it?.enabledModules }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun syncNow() = sync.request()
+
+    /** A part of the app a notification asked to open; the shell takes it and clears it. */
+    val pendingOpen = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    fun open(target: String) { pendingOpen.value = target }
+    fun opened() { pendingOpen.value = null }
+
+    suspend fun askedNotifications(): Boolean = settingsStore.askedNotifications.first()
+    fun markAskedNotifications() = viewModelScope.launch { settingsStore.setAskedNotifications() }
 
     val isDemo: StateFlow<Boolean> = account.state.map { (it as? SessionState.SignedIn)?.session?.userId == app.lifeos.kt.data.DemoSeed.USER }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)

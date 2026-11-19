@@ -19,6 +19,10 @@ class LifeOsApp : Application(), Configuration.Provider {
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var sync: SyncEngine
     @Inject lateinit var vault: Vault
+    @Inject lateinit var reminders: app.lifeos.kt.core.notify.ReminderScheduler
+
+    /** Lives as long as the app's process: keeps the week's reminders in step with the data. */
+    private val appScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default)
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
@@ -26,6 +30,7 @@ class LifeOsApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         SyncWorker.schedule(this)
+        reminders.start(appScope)
         // Locked notes close as soon as the app leaves the screen.
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) vault.lock() })
         // Back online: send what was saved on the phone meanwhile.

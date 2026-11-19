@@ -13,17 +13,25 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import app.lifeos.kt.core.auth.PendingSignIn
 import app.lifeos.kt.core.datastore.SessionState
 import app.lifeos.kt.core.designsystem.LifeOsTheme
 import app.lifeos.kt.core.designsystem.LocalHapticsEnabled
 import app.lifeos.kt.feature.auth.SignInScreen
 import app.lifeos.kt.navigation.LifeOsShell
+import app.lifeos.kt.data.DemoSeed
+import app.lifeos.kt.core.notify.canNotify
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
     private val app: AppViewModel by viewModels()
+
+    /** Android 13+: asked once, after signing in, so reminders can show. */
+    private val askNotifications = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // The splash stays only until the phone's session store has opened (milliseconds).
@@ -31,6 +39,8 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         handleCallback(intent)
+        handleOpen(intent)
+        askForNotificationsOnce()
         setContent {
             val session by app.session.collectAsStateWithLifecycle()
             val dynamicColor by app.dynamicColor.collectAsStateWithLifecycle()
@@ -53,6 +63,30 @@ class MainActivity : FragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleCallback(intent)
+        handleOpen(intent)
+    }
+
+    /** A notification tapped: open the part of the app it's about. */
+    private fun handleOpen(intent: Intent?) {
+        val open = intent?.getStringExtra(EXTRA_OPEN) ?: return
+        intent.removeExtra(EXTRA_OPEN)
+        app.open(open)
+    }
+
+    private fun askForNotificationsOnce() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        lifecycleScope.launch {
+            val signedIn = app.session.first { it is SessionState.SignedIn } as SessionState.SignedIn
+            if (signedIn.session.userId == DemoSeed.USER) return@launch
+            if (app.askedNotifications() || canNotify(this@MainActivity)) return@launch
+            app.markAskedNotifications()
+            askNotifications.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    companion object {
+        /** Which part to open, from a notification ("spirit", "do", "task:<id>", "reminders"…). */
+        const val EXTRA_OPEN = "app.lifeos.kt.OPEN"
     }
 
     override fun onResume() {

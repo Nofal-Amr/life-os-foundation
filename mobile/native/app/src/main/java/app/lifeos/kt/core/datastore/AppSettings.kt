@@ -46,6 +46,18 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) : Sy
     val theme: Flow<String> = store.data.map { it[THEME] ?: "system" }
     suspend fun setTheme(value: String) = store.edit { it[THEME] = value }
 
+    /** Phone reminders (prayers, tasks, azkar, water) as JSON; null = the defaults. Per phone, as on the web. */
+    val reminders: Flow<String?> = store.data.map { it[REMINDERS] }
+    suspend fun setReminders(json: String) = store.edit { it[REMINDERS] = json }
+
+    /** The ids of the alarms set last time, so they can be cancelled before setting new ones. */
+    val scheduledAlarms: Flow<String?> = store.data.map { it[SCHEDULED] }
+    suspend fun setScheduledAlarms(json: String) = store.edit { it[SCHEDULED] = json }
+
+    /** Whether the app has asked for notification permission once already. */
+    val askedNotifications: Flow<Boolean> = store.data.map { it[ASKED_NOTIFY] ?: false }
+    suspend fun setAskedNotifications() = store.edit { it[ASKED_NOTIFY] = true }
+
     /** Touch feedback on actions. On by default; the phone's own setting still applies. */
     val haptics: Flow<Boolean> = store.data.map { it[HAPTICS] ?: true }
     suspend fun setHaptics(on: Boolean) = store.edit { it[HAPTICS] = on }
@@ -79,6 +91,9 @@ class AppSettings @Inject constructor(@ApplicationContext context: Context) : Sy
         val DYNAMIC_COLOR = booleanPreferencesKey("dynamicColor")
         val HAPTICS = booleanPreferencesKey("haptics")
         val THEME = stringPreferencesKey("theme")
+        val REMINDERS = stringPreferencesKey("reminders")
+        val SCHEDULED = stringPreferencesKey("scheduledAlarms")
+        val ASKED_NOTIFY = booleanPreferencesKey("askedNotifications")
         val NOTES_FOCUS = stringPreferencesKey("notesFocus")
         val VAULT_WRAPPED = stringPreferencesKey("vaultWrapped")
         val FOCUS_SESSION = stringPreferencesKey("focusSession")

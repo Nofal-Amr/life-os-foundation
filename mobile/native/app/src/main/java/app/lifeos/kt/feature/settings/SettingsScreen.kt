@@ -31,6 +31,18 @@ import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import app.lifeos.kt.core.designsystem.PickTime
+import app.lifeos.kt.core.notify.canNotify
+import app.lifeos.kt.core.notify.canRingOnTime
+import app.lifeos.kt.core.notify.readReminderSettings
+import app.lifeos.kt.core.notify.writeReminderSettings
+import app.lifeos.kt.data.logic.ReminderSettings
+import kotlinx.coroutines.flow.map
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Storage
@@ -105,6 +117,7 @@ import kotlinx.coroutines.launch
 enum class SettingsPart(val label: String, val description: String, val icon: ImageVector, val module: String? = null) {
     Profile("Profile", "Your name, units and formats.", Icons.Outlined.PersonOutline),
     Areas("Areas", "Choose which parts of Life OS you see.", Icons.Outlined.Dashboard),
+    Reminders("Reminders", "Prayers, azkar, tasks and water, on this phone.", Icons.Outlined.NotificationsNone),
     Prayer("Prayer", "Location and calculation method.", Icons.Outlined.DarkMode, "spirit"),
     Money("Money", "Payday, buffer and currency.", Icons.Outlined.AccountBalanceWallet, "money"),
     Body("Body", "Height and target weight.", Icons.Outlined.FavoriteBorder, "body"),
@@ -141,6 +154,8 @@ class SettingsViewModel @Inject constructor(
     fun saveName(s: SettingsState, name: String) = viewModelScope.launch { repo.saveName(s.profile, name) }
     fun saveBody(s: SettingsState, heightCm: Double?, targetKg: Double?) = viewModelScope.launch { repo.saveBody(s.body, heightCm, targetKg) }
     fun setTheme(value: String) = viewModelScope.launch { settings.setTheme(value) }
+    val reminders: StateFlow<ReminderSettings> = settings.reminders.map(::readReminderSettings).stateIn(viewModelScope, SharingStarted.Eagerly, ReminderSettings())
+    fun setReminders(change: (ReminderSettings) -> ReminderSettings) = viewModelScope.launch { settings.setReminders(writeReminderSettings(change(reminders.value))) }
     fun setHaptics(on: Boolean) = viewModelScope.launch { settings.setHaptics(on) }
     fun setDynamicColor(on: Boolean) = viewModelScope.launch { settings.setDynamicColor(on) }
     fun signOut() = viewModelScope.launch { account.signOut() }
@@ -170,6 +185,7 @@ fun SettingsScreen(back: @Composable () -> Unit, model: SettingsViewModel = hilt
             when (current) {
                 SettingsPart.Profile -> ProfilePage(state, model, up)
                 SettingsPart.Areas -> AreasPage(state, model, up)
+                SettingsPart.Reminders -> RemindersPage(model, up)
                 SettingsPart.Prayer -> PrayerPage(up)
                 SettingsPart.Money -> MoneyPage(state, model, up)
                 SettingsPart.Body -> BodyPage(state, model, up)
@@ -267,6 +283,115 @@ private fun ProfilePage(s: SettingsState, model: SettingsViewModel, up: @Composa
                 }
             }
         }
+    }
+}
+
+/* ------------------------------- reminders ------------------------------- */
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun RemindersPage(model: SettingsViewModel, up: @Composable () -> Unit) {
+    val r by model.reminders.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val haptics = rememberHaptics()
+    // Permissions can change in the phone's settings; read them again whenever we come back.
+    var resumed by remember { mutableIntStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumed++ }
+    val notify = remember(resumed) { canNotify(context) }
+    val onTime = remember(resumed) { canRingOnTime(context) }
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { resumed++ }
+    var pickTasks by rememberSaveable { mutableStateOf(false) }
+    var pickWaterFrom by rememberSaveable { mutableStateOf(false) }
+    var pickWaterTo by rememberSaveable { mutableStateOf(false) }
+
+    LifePage(title = "Reminders", subtitle = "They ring on this phone, even with no internet.", navigationIcon = up) {
+        if (!notify || !onTime) item {
+            LifeCard {
+                if (!notify) {
+                    Text("Notifications are off for Life OS", style = MaterialTheme.typography.titleMedium)
+                    Muted("Nothing below can ring until they're allowed.", Modifier.padding(top = 4.dp))
+                    Spacer(Modifier.height(10.dp))
+                    Button(onClick = {
+                        haptics.tick()
+                        if (Build.VERSION.SDK_INT >= 33) ask.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                        else context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName))
+                    }, shape = MaterialTheme.shapes.medium) { Text("Allow notifications") }
+                }
+                if (notify && !onTime && Build.VERSION.SDK_INT >= 31) {
+                    Text("Reminders may come a few minutes late", style = MaterialTheme.typography.titleMedium)
+                    Muted("Allow \"Alarms and reminders\" so a prayer reminder rings on the minute.", Modifier.padding(top = 4.dp))
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(onClick = {
+                        haptics.tick()
+                        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, android.net.Uri.parse("package:${context.packageName}")))
+                    }, shape = MaterialTheme.shapes.medium) { Text("Allow on-time reminders") }
+                }
+            }
+        }
+        item { SectionHeader("Prayers") }
+        item {
+            LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
+                SwitchRow("Before each prayer", "Only for prayers you haven't logged yet.", r.enabled) { on -> model.setReminders { it.copy(enabled = on) } }
+                if (r.enabled) {
+                    Column(Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp)) {
+                        Muted("How long before", style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(6.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            for (m in listOf(5, 10, 15, 20, 30)) SelectChip(r.leadMinutes == m, "$m min", { haptics.tick(); model.setReminders { it.copy(leadMinutes = m) } })
+                            SelectChip(r.leadMinutes == 0, "Only at the time", { haptics.tick(); model.setReminders { it.copy(leadMinutes = 0) } })
+                        }
+                    }
+                    Divider()
+                    SwitchRow("At the prayer time", "With buttons to log it right from the notification.", r.atTime || r.leadMinutes == 0) { on -> model.setReminders { it.copy(atTime = on) } }
+                    Divider()
+                    SwitchRow("Before the time ends", "If it still isn't logged 5 minutes before its time runs out.", r.clutch) { on -> model.setReminders { it.copy(clutch = on) } }
+                }
+                Divider()
+                SwitchRow("Morning and evening azkar", "After Fajr and after Asr, until you've read them.", r.azkar) { on -> model.setReminders { it.copy(azkar = on) } }
+                if (r.azkar) {
+                    FlowRow(Modifier.padding(horizontal = 16.dp).padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (m in listOf(10, 20, 30, 45, 60)) SelectChip(r.azkarDelay == m, "$m min after", { haptics.tick(); model.setReminders { it.copy(azkarDelay = m) } })
+                    }
+                }
+            }
+        }
+        item { SectionHeader("Tasks") }
+        item {
+            LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
+                SwitchRow("What's due today", "One list each morning, and tasks with a time ring at that time.", r.tasksEnabled) { on -> model.setReminders { it.copy(tasksEnabled = on) } }
+                if (r.tasksEnabled) TimeRow("Each day at", r.taskTime) { haptics.tick(); pickTasks = true }
+            }
+        }
+        item { SectionHeader("Water") }
+        item {
+            LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
+                SwitchRow("A glass of water", "Every so often through the day.", r.water) { on -> model.setReminders { it.copy(water = on) } }
+                if (r.water) {
+                    FlowRow(Modifier.padding(horizontal = 16.dp).padding(bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (m in listOf(60, 90, 120)) SelectChip(r.waterEvery == m, if (m % 60 == 0) "Every ${m / 60} h" else "Every ${m / 60} h ${m % 60} min", { haptics.tick(); model.setReminders { it.copy(waterEvery = m) } })
+                    }
+                    TimeRow("From", r.waterFrom) { haptics.tick(); pickWaterFrom = true }
+                    TimeRow("Until", r.waterTo) { haptics.tick(); pickWaterTo = true }
+                }
+            }
+        }
+        item { Muted("Your own reminders (More → Reminders) always ring, whatever is set here.", Modifier.padding(horizontal = 4.dp, vertical = 8.dp), style = MaterialTheme.typography.bodySmall) }
+    }
+    fun timeOf(v: String) = runCatching { java.time.LocalTime.parse(v.take(5)) }.getOrDefault(java.time.LocalTime.of(9, 0))
+    fun hhmm(t: java.time.LocalTime) = "%02d:%02d".format(t.hour, t.minute)
+    if (pickTasks) PickTime(timeOf(r.taskTime), { pickTasks = false }) { t -> model.setReminders { it.copy(taskTime = hhmm(t)) }; pickTasks = false }
+    if (pickWaterFrom) PickTime(timeOf(r.waterFrom), { pickWaterFrom = false }) { t -> model.setReminders { it.copy(waterFrom = hhmm(t)) }; pickWaterFrom = false }
+    if (pickWaterTo) PickTime(timeOf(r.waterTo), { pickWaterTo = false }) { t -> model.setReminders { it.copy(waterTo = hhmm(t)) }; pickWaterTo = false }
+}
+
+@Composable
+private fun Divider() = HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.outlineVariant)
+
+@Composable
+private fun TimeRow(label: String, value: String, onClick: () -> Unit) {
+    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.small, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.titleMedium)
     }
 }
 

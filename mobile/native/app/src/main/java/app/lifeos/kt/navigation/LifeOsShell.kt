@@ -105,6 +105,19 @@ fun LifeOsShell(app: AppViewModel) {
     val nav = rememberNavController()
     val snackbar = remember { SnackbarHostState() }
     val sync by app.syncStatus.collectAsStateWithLifecycle()
+    val pendingOpen by app.pendingOpen.collectAsStateWithLifecycle()
+    // A tapped notification opens the part it's about.
+    androidx.compose.runtime.LaunchedEffect(pendingOpen) {
+        val target = pendingOpen ?: return@LaunchedEffect
+        app.opened()
+        when {
+            target == "spirit" || target == "azkar" -> nav.goToSection(Section.Spirit)
+            target == "do" -> nav.goToSection(Section.Do)
+            target.startsWith("task:") -> nav.navigate(DoRoute(target.removePrefix("task:"))) { launchSingleTop = true }
+            target == "reminders" -> nav.navigate(ToolRoute("reminders")) { launchSingleTop = true }
+            else -> nav.goToSection(Section.Today)
+        }
+    }
 
     CompositionLocalProvider(LocalSnackbar provides snackbar, LocalSyncStatus provides sync) {
         Scaffold(
