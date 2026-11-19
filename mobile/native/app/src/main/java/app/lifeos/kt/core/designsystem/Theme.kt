@@ -22,17 +22,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// The web app's tokens (src/styles.css), converted from OKLCH.
+// One brand colour, Life OS teal, in both themes: the same hue as the dark web theme and the
+// app icon's arc, so the app looks like one product whichever way the phone is set.
+// (It used to be blue by day and teal by night.)
+
+/** The brand teal, for checks and tests: by day, and by night. */
+internal val BrandLight = Color(0xFF0B7A75)
+internal val BrandDark = Color(0xFF3CC6C4)
 
 private val Light = lightColorScheme(
-    primary = Color(0xFF0284C7),
+    primary = BrandLight,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE0EFF8),
-    onPrimaryContainer = Color(0xFF0B4F78),
-    secondary = Color(0xFF0E7C78),
+    primaryContainer = Color(0xFFDCF1EF),
+    onPrimaryContainer = Color(0xFF07403D),
+    secondary = Color(0xFF2B6C99),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE0EFF8),
-    onSecondaryContainer = Color(0xFF0B4F78),
+    secondaryContainer = Color(0xFFE4EEF5),
+    onSecondaryContainer = Color(0xFF173F5C),
     tertiary = Color(0xFF6A5AE0),
     background = Color(0xFFF8F9FB),
     onBackground = Color(0xFF141B2D),
@@ -53,7 +59,7 @@ private val Light = lightColorScheme(
 )
 
 private val Dark = darkColorScheme(
-    primary = Color(0xFF3CC6C4),
+    primary = BrandDark,
     onPrimary = Color(0xFF0E1014),
     primaryContainer = Color(0xFF173A3D),
     onPrimaryContainer = Color(0xFFBFF0EE),

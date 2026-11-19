@@ -5,6 +5,17 @@ updated: 2026-11-18
 
 # Handoff for the next session
 
+## 2026-11-19: native app design pass (branch `claude/quirky-gauss-i1mhjp`, not merged)
+Owner asked for a refined native Kotlin app (`mobile/native`), the first native work since the pause. Pushed to the branch only; no pull request yet (owner wants to approve first). Version 0.3 (code 3).
+- One brand colour: teal by day and by night (light was blue). Splash icon keeps its dark disc on the light splash.
+- No colour verdicts: priority is a neutral "High"/"Urgent" word (medium unlabelled); Today's count tiles share one tint; mood/energy/stress scales and money over-budget/negative amounts no longer turn red/amber/green.
+- Today: "Also open: N from earlier days." replaces "N open tasks are past their date."; the seven prayer tiles fit (no "Magh…", times without AM/PM).
+- Do opens on its list (no "chart appears later" note). More: website-only tools under "On the website", opened straight in the browser.
+- Demo: no sync cloud/flask in page headers (the demo bar says it). Sign-in: the app's ring mark, a line saying what Life OS is, centred and scrollable.
+- Spirit: each status summary has a colour swatch, so the heatmap colours always have words.
+- Tests: `DesignRulesTest` (brand hue, contrast, priority words, wording, tile clock). `ScreenTour` (Robolectric) saves screenshots of the real app in demo: `gradle :app:testDebugUnitTest --tests '*ScreenTour*' -Dlifeos.shots=<folder>` (skipped without the property).
+- Not done, left for the owner: Arabic in the native app (all English today); "Clutch"/"Missed" names (shared with the web); 6 bottom tabs; the web's light theme is still blue.
+
 ## Latest: 2026-11-18, part 2 (READ FIRST)
 Read [[2026-11-18 - Life Connect fixes, three builds, space projects]]. Merged and live (CI green, live site 200):
 - **PR 86** Life Connect: no crash when a setting (the OTP switch) is changed; the socket closes off the main thread.

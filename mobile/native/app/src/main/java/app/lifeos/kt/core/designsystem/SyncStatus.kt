@@ -11,7 +11,6 @@ import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.CloudSync
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.Science
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
@@ -59,6 +58,8 @@ fun SyncAction() {
     val spin = rememberInfiniteTransition(label = "sync")
     val pulse by spin.animateFloat(0.35f, 1f, infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Reverse), label = "pulse")
     val sync = status.state
+    // In demo the bar across the top already says "nothing is sent"; a second flask here was noise.
+    if (sync.demo) return
     IconButton(onClick = {
         haptics.tick()
         status.syncNow()
@@ -70,7 +71,6 @@ fun SyncAction() {
         // Demo never syncs, so a count of "unsent" changes would mean nothing there.
         BadgedBox(badge = { if (status.pending > 0 && !sync.demo) Badge { Text("${status.pending}") } }) {
             when {
-                sync.demo -> Icon(Icons.Outlined.Science, "Demo", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 sync.running -> Icon(Icons.Outlined.CloudSync, "Syncing", Modifier.graphicsLayer { alpha = pulse })
                 sync.error != null -> Icon(Icons.Outlined.ErrorOutline, "Sync problem", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 sync.offline -> Icon(Icons.Outlined.CloudOff, "Offline", tint = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -253,10 +253,8 @@ private fun TasksPage(s: DoState, model: DoViewModel, openTaskId: String?) {
                 BarChart(weekly.map { (week, n) -> week.format(DateTimeFormatter.ofPattern("d MMM")) to n.toDouble() }, { "${it.toInt()} done" })
                 Muted("${weekly.sumOf { it.second }} completed in the last 8 weeks. Steps are not counted.", Modifier.padding(top = 6.dp), style = MaterialTheme.typography.bodySmall)
             }
-        } else {
-            // No chart until there is something to chart: one quiet line, not a big empty card.
-            Muted("The weekly chart appears once you've finished tasks in two different weeks.", Modifier.padding(start = 4.dp), style = MaterialTheme.typography.bodySmall)
         }
+        // No chart yet: Do simply opens on the list. A note about a missing chart is just noise.
 
         Row(Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (option in TaskFilter.entries) {

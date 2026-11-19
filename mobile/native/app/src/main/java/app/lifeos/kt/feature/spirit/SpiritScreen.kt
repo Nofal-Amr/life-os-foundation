@@ -415,7 +415,7 @@ private fun PrayerStats(s: SpiritState) {
             }
         }
         Spacer(Modifier.height(8.dp))
-        Muted("Outlined: sunnah, not counted in the five.", style = MaterialTheme.typography.labelSmall)
+        Muted("Outlined: sunnah, not counted in the five. The colours are explained below.", style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.height(12.dp))
         // The share of each status, of the five that were logged.
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -424,9 +424,13 @@ private fun PrayerStats(s: SpiritState) {
                     for ((status, _) in pair) {
                         val n = counts[status] ?: 0
                         Column(Modifier.weight(1f).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)).padding(12.dp)) {
+                            // Each summary doubles as the chart's key: the swatch is the exact colour of
+                            // that status in the squares above, so colour never stands alone.
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(STATUS_ICONS.getValue(status), null, tint = statusColor(status), modifier = Modifier.size(15.dp))
+                                Box(Modifier.size(10.dp).clip(RoundedCornerShape(3.dp)).background(if (status == "missed") missed else statusColor(status)))
                                 Spacer(Modifier.width(6.dp))
+                                Icon(STATUS_ICONS.getValue(status), null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+                                Spacer(Modifier.width(4.dp))
                                 Text(statusLabel(status), style = MaterialTheme.typography.labelMedium)
                             }
                             Text("${(n * 100.0 / logged).roundToInt()}%", style = MaterialTheme.typography.headlineSmall.merge(Numbers))

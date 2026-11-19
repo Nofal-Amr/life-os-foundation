@@ -343,13 +343,12 @@ internal fun ScaleRow(label: String, kind: String, value: Int?, set: (Int?) -> U
     }
 }
 
+/**
+ * Every mood, energy or stress level wears the same brand colour. A red "1" or a green "5"
+ * would judge the day; the number and its end labels already say what it is.
+ */
 @Composable
-internal fun toneColor(tone: String): Color = when (tone) {
-    "danger" -> MaterialTheme.colorScheme.error
-    "warning" -> LifeTheme.colors.entity.getValue("amber")
-    "positive" -> LifeTheme.colors.entity.getValue("green")
-    else -> MaterialTheme.colorScheme.primary
-}
+internal fun toneColor(@Suppress("UNUSED_PARAMETER") tone: String): Color = MaterialTheme.colorScheme.primary
 
 /** Everything else the web's "More fields" holds, folded away until wanted. */
 @Composable

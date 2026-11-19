@@ -25,8 +25,8 @@ android {
         applicationId = "app.lifeos.kt"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2"
+        versionCode = 3
+        versionName = "0.3"
         buildConfigField("String", "SUPABASE_URL", "\"${env["VITE_SUPABASE_URL"].orEmpty()}\"")
         buildConfigField("String", "SUPABASE_KEY", "\"${env["VITE_SUPABASE_PUBLISHABLE_KEY"].orEmpty()}\"")
         // Google's Web client ID (the one in Supabase → Auth → Google). Empty: Google sign-in goes through the website.
@@ -77,6 +77,17 @@ android {
 
     lint {
         abortOnError = false
+    }
+
+    // Robolectric runs the real app on the computer for the screenshot tour (ScreenTour).
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { test ->
+                test.systemProperty("lifeos.shots", System.getProperty("lifeos.shots") ?: "")
+                test.maxHeapSize = "3g"
+            }
+        }
     }
 }
 
@@ -129,4 +140,8 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     // The real org.json; Android's is only a stub in JVM tests.
     testImplementation("org.json:json:20240303")
+    // The screenshot tour: the whole app on the computer, drawn by Android's real renderer.
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

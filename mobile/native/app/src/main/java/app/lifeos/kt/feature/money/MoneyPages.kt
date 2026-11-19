@@ -484,7 +484,8 @@ private fun CategoriesPage(s: MoneyState, model: MoneyViewModel) {
                                 Text(
                                     s.money.format(spent) + (c.monthlyBudget?.let { " of " + s.money.format(it) } ?: ""),
                                     style = MaterialTheme.typography.bodyMedium.merge(Numbers),
-                                    color = if (c.monthlyBudget != null && spent > c.monthlyBudget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    // Over the budget is a fact the numbers already show; no red verdict.
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                         }
@@ -493,7 +494,7 @@ private fun CategoriesPage(s: MoneyState, model: MoneyViewModel) {
                             LinearProgressIndicator(
                                 progress = { (spent / budget).toFloat().coerceIn(0f, 1f) },
                                 modifier = Modifier.fillMaxWidth().padding(start = 42.dp),
-                                color = if (spent > budget) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.primary,
                                 trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                                 drawStopIndicator = {},
                             )

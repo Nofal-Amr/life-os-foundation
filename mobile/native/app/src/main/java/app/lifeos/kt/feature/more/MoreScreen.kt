@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -101,14 +102,30 @@ fun MoreScreen(open: (String) -> Unit, model: MoreViewModel = hiltViewModel()) {
     val haptics by model.haptics.collectAsStateWithLifecycle()
     val dynamicColor by model.dynamicColor.collectAsStateWithLifecycle()
     var confirmSignOut by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LifePage(title = "More", actions = { SyncAction() }) {
         item { SectionHeader("Tools") }
         item {
             LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
-                for (tool in TOOLS) {
+                for (tool in TOOLS.filter { it.native }) {
                     ToolRow(tool) { open(tool.key) }
                 }
+            }
+        }
+        // Said once, as a heading, instead of "Website" on every row; a tap opens the page
+        // straight away (no in-between screen that only holds a button).
+        item { SectionHeader("On the website") }
+        item {
+            LifeCard(contentPadding = PaddingValues(vertical = 4.dp)) {
+                for (tool in TOOLS.filter { !it.native }) {
+                    ToolRow(tool) { openWebsite(context, tool) }
+                }
+                Muted(
+                    "These open in your browser and need internet. They're coming to the app.",
+                    Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 10.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
         item { SectionHeader("This phone") }
@@ -159,8 +176,9 @@ private fun ToolRow(tool: Tool, onClick: () -> Unit) {
         IconBadge(tool.icon, size = 34.dp)
         Spacer(Modifier.width(14.dp))
         Text(tool.label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
-        if (!tool.native) Muted("Website", style = MaterialTheme.typography.bodySmall)
-        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        // In the app: a chevron. On the website: the "opens outside" arrow, said for screen readers too.
+        if (tool.native) Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        else Icon(Icons.AutoMirrored.Filled.OpenInNew, "Opens on the website", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -186,6 +204,11 @@ fun ToolScreen(key: String, close: () -> Unit, openTarget: (app.lifeos.kt.data.l
         "reminders" -> RemindersTool(back)
         else -> WebsiteOnly(tool, back)
     }
+}
+
+/** Opens a website-only tool in the browser. */
+internal fun openWebsite(context: android.content.Context, tool: Tool) {
+    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(WEBSITE + tool.path))) }
 }
 
 @Composable

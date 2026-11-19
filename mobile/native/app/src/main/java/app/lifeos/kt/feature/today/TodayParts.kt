@@ -62,6 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -91,7 +92,6 @@ import app.lifeos.kt.data.logic.prayerLabel
 import app.lifeos.kt.data.logic.prayerStatus
 import app.lifeos.kt.data.logic.relativeDay
 import app.lifeos.kt.data.logic.timeKeyOf
-import java.text.DateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -148,6 +148,9 @@ fun RingLegend(segments: List<RingSegment>) {
 
 /* ----------------------------- next action ----------------------------- */
 
+/** A plain count of what's still open from earlier days: no "overdue", no "past", nothing to feel behind on. */
+fun fromEarlierLine(n: Int) = "Also open: $n from earlier ${if (n == 1) "day" else "days"}."
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun NextActionCard(
@@ -168,7 +171,7 @@ fun NextActionCard(
             Text("Next action", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             if (action != null) IconButton(onClick = { haptics.tick(); onOpen() }) { Icon(Icons.AutoMirrored.Outlined.OpenInNew, "Open task", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
-        if (fromEarlier > 0) Muted("$fromEarlier open ${if (fromEarlier == 1) "task is" else "tasks are"} past their date.", Modifier.padding(top = 2.dp))
+        if (fromEarlier > 0) Muted(fromEarlierLine(fromEarlier), Modifier.padding(top = 2.dp))
         Spacer(Modifier.height(14.dp))
         if (action == null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -243,24 +246,24 @@ fun StuckCard(item: StuckTask, onHelp: () -> Unit, onSnooze: () -> Unit) {
 
 /* ------------------------------ count tiles ------------------------------ */
 
-/** Four counts, each in its own identity colour; the word says what it counts. */
+/** Four counts, each with its own icon in the one brand tint; the word says what it counts (no warning colours). */
 @Composable
 fun CountTiles(counts: List<Pair<String, Int>>, onTap: (String) -> Unit) {
-    val colors = LifeTheme.colors.entity
+    val color = MaterialTheme.colorScheme.primary
     val style = mapOf(
-        "Unsorted" to (Icons.Outlined.Inbox to colors.getValue("amber")),
-        "Due today" to (Icons.Outlined.EventAvailable to colors.getValue("green")),
-        "From earlier" to (Icons.Outlined.History to colors.getValue("coral")),
-        "Active projects" to (Icons.Outlined.Folder to colors.getValue("blue")),
+        "Unsorted" to Icons.Outlined.Inbox,
+        "Due today" to Icons.Outlined.EventAvailable,
+        "From earlier" to Icons.Outlined.History,
+        "Active projects" to Icons.Outlined.Folder,
     )
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         counts.chunked(2).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for ((label, value) in row) {
-                    val (icon, color) = style[label] ?: (Icons.Outlined.Inbox to MaterialTheme.colorScheme.primary)
+                    val icon = style[label] ?: Icons.Outlined.Inbox
                     LifeCard(Modifier.weight(1f), onClick = { onTap(label) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(color.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
+                            Box(Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(color.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
                                 Icon(icon, null, tint = color, modifier = Modifier.size(19.dp))
                             }
                             Spacer(Modifier.width(12.dp))
@@ -278,21 +281,28 @@ fun CountTiles(counts: List<Pair<String, Int>>, onTap: (String) -> Unit) {
 
 /* ----------------------------- today's focus ----------------------------- */
 
-/** Priority wears a colour and always a word, so colour is never the only signal. */
+/** The word for a priority badge, or null when there is nothing to say (medium is the default, low is quiet). */
+fun priorityLabel(priority: String): String? = when (priority) {
+    "critical" -> "Urgent"
+    "high" -> "High"
+    else -> null
+}
+
+/**
+ * Priority as a quiet word on a neutral chip. No red or amber: colour never judges a task,
+ * and the default (medium) isn't labelled at all, so the label means something when it shows.
+ */
 @Composable
 fun PriorityBadge(priority: String) {
-    val colors = LifeTheme.colors.entity
-    val (label, color) = when (priority) {
-        "critical" -> "URGENT" to colors.getValue("rose")
-        "high" -> "HIGH" to colors.getValue("coral")
-        "medium" -> "MEDIUM" to colors.getValue("amber")
-        else -> return
-    }
+    val label = priorityLabel(priority) ?: return
     Text(
         label,
-        color = color,
-        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.5.sp),
-        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(color.copy(alpha = 0.14f)).padding(horizontal = 6.dp, vertical = 2.dp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+        modifier = Modifier
+            .clip(RoundedCornerShape(6.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
+            .padding(horizontal = 6.dp, vertical = 1.dp),
     )
 }
 
@@ -497,13 +507,20 @@ fun statusLabel(status: String) = when (status) {
     else -> status
 }
 
+/**
+ * The clock on a prayer tile: "4:52", without AM/PM. The seven run in order through one day,
+ * so the half of the day is never in doubt, and seven tiles across a phone have no room for it.
+ */
+fun tileClock(twentyFourHour: Boolean): java.text.SimpleDateFormat =
+    java.text.SimpleDateFormat(if (twentyFourHour) "HH:mm" else "h:mm", java.util.Locale.getDefault())
+
 /** The seven of the day (Sunnah, the five, Witr) as tiles; tap one to say how it was prayed. */
 @Composable
 fun PrayerTiles(today: LocalDate, logs: List<PrayerLog>, times: List<PrayerSlot>?, onPick: (String) -> Unit) {
-    val clock = DateFormat.getTimeInstance(DateFormat.SHORT)
+    val clock = tileClock(android.text.format.DateFormat.is24HourFormat(LocalContext.current))
     val nextKey = times?.firstOrNull { it.at.after(java.util.Date()) }?.key
     val sunnahRing = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-    Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
         for ((name, _) in DAY_ORDER) {
             val status = prayerStatus(logs.firstOrNull { it.prayerDate == today.toString() && it.prayerName == name })
             val time = times?.firstOrNull { it.key == timeKeyOf(name) }?.at
@@ -516,13 +533,13 @@ fun PrayerTiles(today: LocalDate, logs: List<PrayerLog>, times: List<PrayerSlot>
                     .background(bg)
                     .border(if (isSunnah(name)) 1.5.dp else 1.dp, if (status != null) Color.Transparent else if (isSunnah(name)) sunnahRing else MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
                     .clickable { onPick(name) }
-                    .padding(vertical = 8.dp, horizontal = 2.dp),
+                    .padding(vertical = 8.dp, horizontal = 1.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
                 val onBg = if (status != null) Color.White else MaterialTheme.colorScheme.onSurface
-                Text(prayerLabel(name, today), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium, color = onBg, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (time != null) Text(clock.format(time).replace(" ", " "), style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp).merge(Numbers), color = onBg.copy(alpha = 0.8f), maxLines = 1)
+                Text(prayerLabel(name, today), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.sp), fontWeight = FontWeight.Medium, color = onBg, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (time != null) Text(clock.format(time), style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, letterSpacing = 0.sp).merge(Numbers), color = onBg.copy(alpha = 0.8f), maxLines = 1)
                 Text(
                     when {
                         status != null -> statusLabel(status)

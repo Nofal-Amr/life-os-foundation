@@ -28,8 +28,11 @@ class AppViewModel @Inject constructor(
 ) : ViewModel() {
     val session: StateFlow<SessionState> = account.state
 
-    val syncStatus: StateFlow<SyncStatus> = combine(sync.state, store.pending) { state, pending ->
-        SyncStatus(state, pending, sync::request)
+    // Demo is known from the session straight away; the sync engine only learns it on its first
+    // run, so until then the top bar showed a cloud ("not synced yet") for sample data.
+    val syncStatus: StateFlow<SyncStatus> = combine(sync.state, store.pending, account.state) { state, pending, session ->
+        val demo = (session as? SessionState.SignedIn)?.session?.userId == app.lifeos.kt.data.DemoSeed.USER
+        SyncStatus(if (demo && !state.demo) state.copy(demo = true) else state, pending, sync::request)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, SyncStatus(syncNow = sync::request))
 
     val dynamicColor = settings.dynamicColor.stateIn(viewModelScope, SharingStarted.Eagerly, false)

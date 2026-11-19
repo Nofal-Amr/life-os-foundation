@@ -28,6 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -150,5 +152,22 @@ fun IdentityPicker(icon: String?, color: String?, set: (icon: String?, color: St
                 )
             }
         }
+    }
+}
+
+/**
+ * The Life OS mark, drawn the way the app icon is: a dark disc, a faint ring and one teal arc.
+ * Used where the app introduces itself (sign-in), so it matches what's on the home screen.
+ */
+@Composable
+fun BrandMark(size: Dp = 64.dp) {
+    androidx.compose.foundation.Canvas(Modifier.size(size).semantics { contentDescription = "Life OS" }) {
+        val unit = this.size.minDimension / 108f
+        drawCircle(Color(0xFF0A0C10))
+        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f * unit, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+        val topLeft = androidx.compose.ui.geometry.Offset(36f * unit, 36f * unit)
+        val ring = androidx.compose.ui.geometry.Size(36f * unit, 36f * unit)
+        drawArc(Color(0x33FFFFFF), 0f, 360f, false, topLeft, ring, style = stroke)
+        drawArc(Color(0xFF30D5C8), -90f, 90f, false, topLeft, ring, style = stroke)
     }
 }

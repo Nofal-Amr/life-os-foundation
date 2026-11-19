@@ -326,7 +326,8 @@ private fun Hero(s: MoneyState, add: (String) -> Unit, editPayday: () -> Unit, s
             s.totals.available,
             s.money::format,
             MaterialTheme.typography.displayMedium,
-            color = if (s.totals.available < 0) MaterialTheme.colorScheme.error else onHero,
+            // A negative amount keeps the hero's colour: the minus sign and the line below say it plainly.
+            color = onHero,
         )
         Text(
             listOfNotNull(until, "After upcoming recurring costs and your safety buffer.").joinToString(" · "),
@@ -351,7 +352,7 @@ private fun Hero(s: MoneyState, add: (String) -> Unit, editPayday: () -> Unit, s
         s.nextPayday?.let { HeroLine("Next payday", it.format(DateTimeFormatter.ofPattern("EEE d MMM")), onHero, line) }
         if (s.totals.available < 0) {
             Spacer(Modifier.height(6.dp))
-            Text("Upcoming costs are ${s.money.format(abs(s.totals.available))} more than you have.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            Text("Upcoming costs are ${s.money.format(abs(s.totals.available))} more than you have.", color = onHero, style = MaterialTheme.typography.bodySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium))
         }
         if (s.separate.isNotEmpty()) {
             Spacer(Modifier.height(6.dp))

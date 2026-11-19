@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -15,8 +17,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -43,7 +43,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.lifeos.kt.core.auth.PendingSignIn
-import app.lifeos.kt.core.designsystem.IconBadge
+import app.lifeos.kt.core.designsystem.BrandMark
 import app.lifeos.kt.core.designsystem.rememberHaptics
 import app.lifeos.kt.data.AccountRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -113,20 +113,31 @@ fun SignInScreen(model: SignInViewModel = hiltViewModel()) {
     LaunchedEffect(state.error) { if (state.error != null) haptics.reject() }
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        // Centred on the screen, and scrolls when the keyboard or large text needs the room.
         Column(
-            Modifier.safeDrawingPadding().imePadding().padding(horizontal = 24.dp),
+            Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.Center,
         ) {
-            IconBadge(Icons.Outlined.AutoAwesome, size = 56.dp)
-            Spacer(Modifier.height(20.dp))
+            BrandMark(size = 64.dp)
+            Spacer(Modifier.height(24.dp))
             Text("Life OS", style = MaterialTheme.typography.headlineLarge)
             Spacer(Modifier.height(6.dp))
             Text(
-                "Sign in once. Everything is kept on this phone after that, with or without internet.",
-                style = MaterialTheme.typography.bodyLarge,
+                "Your day, money, body and prayers in one calm place.",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Normal),
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Sign in once. After that everything is kept on this phone, with or without internet.",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(32.dp))
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -182,7 +193,7 @@ fun SignInScreen(model: SignInViewModel = hiltViewModel()) {
                 modifier = Modifier.fillMaxWidth().height(52.dp),
             ) { Text("Continue with Google") }
             Spacer(Modifier.height(4.dp))
-            TextButton(onClick = { haptics.tick(); model.demo() }, modifier = Modifier.fillMaxWidth()) { Text("Try the demo — sample data, nothing sent") }
+            TextButton(onClick = { haptics.tick(); model.demo() }, enabled = !state.pending, modifier = Modifier.fillMaxWidth()) { Text("Try the demo — sample data, nothing sent") }
         }
     }
 }
